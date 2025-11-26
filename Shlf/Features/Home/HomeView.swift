@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import UniformTypeIdentifiers
 
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
@@ -19,6 +20,7 @@ struct HomeView: View {
     }
 
     @State private var showAddBook = false
+    @State private var isEditingCards = false
 
     private var profile: UserProfile {
         if let existing = profiles.first {
@@ -38,13 +40,41 @@ struct HomeView: View {
         }
     }
 
+    private var engine: GamificationEngine {
+        GamificationEngine(modelContext: modelContext)
+    }
+
+    // Helper function to get value for each card type
+    private func getValue(for cardType: StatCardType) -> String {
+        switch cardType {
+        case .currentStreak:
+            return "\(profile.currentStreak)"
+        case .longestStreak:
+            return "\(profile.longestStreak)"
+        case .level:
+            return "\(profile.currentLevel)"
+        case .totalXP:
+            return "\(profile.totalXP)"
+        case .booksRead:
+            return "\(engine.totalBooksRead())"
+        case .pagesRead:
+            return "\(engine.totalPagesRead())"
+        case .thisYear:
+            return "\(engine.booksReadThisYear())"
+        case .thisMonth:
+            return "\(engine.booksReadThisMonth())"
+        }
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: Theme.Spacing.xl) {
                     heroSection
 
-                    statsSection
+                    if !profile.homeCards.isEmpty {
+                        statsSection
+                    }
 
                     if currentlyReading.isEmpty {
                         emptyCurrentlyReading
@@ -58,13 +88,32 @@ struct HomeView: View {
             .navigationTitle("Shlf")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        showAddBook = true
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(Theme.Colors.primary)
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    HStack(spacing: Theme.Spacing.sm) {
+                        Menu {
+                            Button {
+                                if !profile.homeCards.isEmpty {
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                        isEditingCards.toggle()
+                                    }
+                                }
+                            } label: {
+                                Label(isEditingCards ? "Done" : "Edit Cards", systemImage: isEditingCards ? "checkmark" : "square.grid.3x3")
+                            }
+                            .disabled(profile.homeCards.isEmpty)
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                                .font(.title2)
+                                .foregroundStyle(Theme.Colors.secondaryText)
+                        }
+
+                        Button {
+                            showAddBook = true
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title2)
+                                .foregroundStyle(Theme.Colors.primary)
+                        }
                     }
                 }
             }
@@ -99,26 +148,64 @@ struct HomeView: View {
 
     private var statsSection: some View {
         HStack(spacing: Theme.Spacing.sm) {
-            StatCard(
-                title: "Day Streak",
-                value: "\(profile.currentStreak)",
-                icon: "flame.fill",
-                gradient: Theme.Colors.streakGradient
-            )
-
-            StatCard(
-                title: "Level",
-                value: "\(profile.currentLevel)",
-                icon: "star.fill",
-                gradient: Theme.Colors.xpGradient
-            )
-
-            StatCard(
-                title: "Finished",
-                value: "\(GamificationEngine(modelContext: modelContext).totalBooksRead())",
-                icon: "books.vertical.fill",
-                gradient: Theme.Colors.successGradient
-            )
+            ForEach(profile.homeCards) { cardType in
+                StatCard(
+                    title: cardType.title,
+                    value: getValue(for: cardType),
+                    icon: cardType.icon,
+                    gradient: cardType.gradient,
+                    isEditing: isEditingCards,
+                    onRemove: {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            profile.removeHomeCard(cardType)
+                        }
+                    }
+                )
+                .onLongPressGesture(minimumDuration: 0.5) {
+                    if !isEditingCards {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            isEditingCards = true
+                        }
+                    }
+                }
+                .onDrag {
+                    if isEditingCards {
+                        return NSItemProvider(object: cardType.rawValue as NSString)
+                    }
+                    return NSItemProvider()
+                }
+                .onDrop(of: [.text], delegate: CardDropDelegate(
+                    item: cardType,
+                    items: profile.homeCards,
+                    onMove: { from, to in
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            profile.homeCardOrder.move(
+                                fromOffsets: IndexSet(integer: from),
+                                toOffset: to
+                            )
+                        }
+                    }
+                ))
+            }
+        }
+        .overlay(alignment: .topTrailing) {
+            if isEditingCards {
+                Button {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        isEditingCards = false
+                    }
+                } label: {
+                    Text("Done")
+                        .font(Theme.Typography.headline)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, Theme.Spacing.md)
+                        .padding(.vertical, Theme.Spacing.xs)
+                        .background(Theme.Colors.primary)
+                        .clipShape(Capsule())
+                }
+                .offset(y: -48)
+            }
         }
     }
 
@@ -233,6 +320,33 @@ struct CurrentlyReadingCard: View {
         }
         .padding(Theme.Spacing.md)
         .cardStyle(elevation: Theme.Elevation.level3)
+    }
+}
+
+// MARK: - Card Drop Delegate
+
+struct CardDropDelegate: DropDelegate {
+    let item: StatCardType
+    let items: [StatCardType]
+    let onMove: (Int, Int) -> Void
+
+    func performDrop(info: DropInfo) -> Bool {
+        return true
+    }
+
+    func dropEntered(info: DropInfo) {
+        guard let fromIndex = items.firstIndex(of: item) else { return }
+
+        // Find the drop target
+        if let toIndex = items.firstIndex(where: { cardType in
+            _ = info.location
+            // Simple logic: if dragging past halfway, move to next position
+            return cardType != item
+        }) {
+            if fromIndex != toIndex {
+                onMove(fromIndex, toIndex > fromIndex ? toIndex + 1 : toIndex)
+            }
+        }
     }
 }
 

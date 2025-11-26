@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import SwiftUI
 
 @Model
 final class UserProfile {
@@ -38,6 +39,9 @@ final class UserProfile {
     var useProgressSlider: Bool // false = stepper, true = slider
     var showSliderButtons: Bool // show +/- buttons with slider
 
+    // Home Card Preferences
+    var homeCardOrder: [String] // Array of StatCardType rawValues in order
+
     @Relationship(deleteRule: .cascade)
     var readingGoals: [ReadingGoal]
 
@@ -65,7 +69,12 @@ final class UserProfile {
         showReadingTime: Bool = true,
         pageIncrementAmount: Int = 1,
         useProgressSlider: Bool = false,
-        showSliderButtons: Bool = false
+        showSliderButtons: Bool = false,
+        homeCardOrder: [String] = [
+            StatCardType.currentStreak.rawValue,
+            StatCardType.level.rawValue,
+            StatCardType.booksRead.rawValue
+        ]
     ) {
         self.id = id
         self.totalXP = totalXP
@@ -88,8 +97,29 @@ final class UserProfile {
         self.pageIncrementAmount = pageIncrementAmount
         self.useProgressSlider = useProgressSlider
         self.showSliderButtons = showSliderButtons
+        self.homeCardOrder = homeCardOrder
         self.readingGoals = []
         self.achievements = []
+    }
+
+    // Helper computed property to get StatCardType array from strings
+    var homeCards: [StatCardType] {
+        homeCardOrder.compactMap { StatCardType(rawValue: $0) }
+    }
+
+    // Helper methods for managing home cards
+    func addHomeCard(_ card: StatCardType) {
+        if !homeCardOrder.contains(card.rawValue) {
+            homeCardOrder.append(card.rawValue)
+        }
+    }
+
+    func removeHomeCard(_ card: StatCardType) {
+        homeCardOrder.removeAll { $0 == card.rawValue }
+    }
+
+    func moveHomeCard(from source: IndexSet, to destination: Int) {
+        homeCardOrder.move(fromOffsets: source, toOffset: destination)
     }
 
     var currentLevel: Int {

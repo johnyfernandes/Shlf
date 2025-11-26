@@ -32,7 +32,13 @@ struct SettingsView: View {
             Form {
                 proSection
 
-                Section("Reading") {
+                Section("Customization") {
+                    NavigationLink {
+                        HomeCardSettingsView(profile: profile)
+                    } label: {
+                        Label("Home Page Cards", systemImage: "square.grid.3x3")
+                    }
+
                     NavigationLink {
                         ReadingPreferencesView(profile: profile)
                     } label: {
