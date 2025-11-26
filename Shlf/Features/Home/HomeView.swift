@@ -91,21 +91,20 @@ struct HomeView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     HStack(spacing: Theme.Spacing.sm) {
-                        Menu {
-                            Button {
-                                if !profile.homeCards.isEmpty {
+                        if !profile.homeCards.isEmpty {
+                            Menu {
+                                Button {
                                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                                         isEditingCards.toggle()
                                     }
+                                } label: {
+                                    Label(isEditingCards ? "Done" : "Edit Cards", systemImage: isEditingCards ? "checkmark" : "square.grid.3x3")
                                 }
                             } label: {
-                                Label(isEditingCards ? "Done" : "Edit Cards", systemImage: isEditingCards ? "checkmark" : "square.grid.3x3")
+                                Image(systemName: "ellipsis.circle")
+                                    .font(.title2)
+                                    .foregroundStyle(Theme.Colors.secondaryText)
                             }
-                            .disabled(profile.homeCards.isEmpty)
-                        } label: {
-                            Image(systemName: "ellipsis.circle")
-                                .font(.title2)
-                                .foregroundStyle(Theme.Colors.secondaryText)
                         }
 
                         Button {
