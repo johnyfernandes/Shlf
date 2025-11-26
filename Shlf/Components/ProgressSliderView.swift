@@ -65,7 +65,7 @@ struct ProgressSliderView: View {
                         }
                         .animation(.snappy(duration: 0.2), value: currentPage)
 
-                        if let total = book.totalPages {
+                        if book.totalPages != nil {
                             Text("\(Int(progressPercentage))% complete")
                                 .font(Theme.Typography.caption)
                                 .foregroundStyle(Theme.Colors.secondaryText)
@@ -102,7 +102,7 @@ struct ProgressSliderView: View {
                     }
                     .animation(.snappy(duration: 0.2), value: currentPage)
 
-                    if let total = book.totalPages {
+                    if book.totalPages != nil {
                         Text("\(Int(progressPercentage))% complete")
                             .font(Theme.Typography.subheadline)
                             .foregroundStyle(Theme.Colors.secondaryText)
