@@ -92,18 +92,14 @@ struct HomeView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     HStack(spacing: Theme.Spacing.sm) {
                         if !profile.homeCards.isEmpty {
-                            Menu {
-                                Button {
-                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                        isEditingCards.toggle()
-                                    }
-                                } label: {
-                                    Label(isEditingCards ? "Done" : "Edit Cards", systemImage: isEditingCards ? "checkmark" : "square.grid.3x3")
+                            Button {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    isEditingCards.toggle()
                                 }
                             } label: {
-                                Image(systemName: "ellipsis.circle")
+                                Image(systemName: isEditingCards ? "checkmark.circle.fill" : "ellipsis.circle")
                                     .font(.title2)
-                                    .foregroundStyle(Theme.Colors.secondaryText)
+                                    .foregroundStyle(isEditingCards ? Theme.Colors.success : Theme.Colors.secondaryText)
                             }
                         }
 
@@ -193,25 +189,6 @@ struct HomeView: View {
                             }
                         ))
                 }
-            }
-        }
-        .overlay(alignment: .topTrailing) {
-            if isEditingCards {
-                Button {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        isEditingCards = false
-                        draggingCard = nil
-                    }
-                } label: {
-                    Text("Done")
-                        .font(Theme.Typography.headline)
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, Theme.Spacing.md)
-                        .padding(.vertical, Theme.Spacing.xs)
-                        .background(Theme.Colors.primary)
-                        .clipShape(Capsule())
-                }
-                .offset(y: -48)
             }
         }
     }
