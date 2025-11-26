@@ -42,8 +42,6 @@ struct BookDetailView: View {
                             onSave: handleProgressSave
                         )
                     }
-
-                    quickActions
                 }
 
                 if let description = book.bookDescription, profile?.showDescription ?? true {
@@ -78,6 +76,28 @@ struct BookDetailView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Menu {
+                    if book.readingStatus == .currentlyReading {
+                        Button {
+                            showLogSession = true
+                        } label: {
+                            Label("Log Reading Session", systemImage: "plus.circle")
+                        }
+
+                        Button {
+                            markAsFinished()
+                        } label: {
+                            Label("Mark Finished", systemImage: "checkmark.circle")
+                        }
+
+                        Button {
+                            book.readingStatus = .didNotFinish
+                        } label: {
+                            Label("Mark as DNF", systemImage: "xmark.circle")
+                        }
+
+                        Divider()
+                    }
+
                     Button {
                         showEditBook = true
                     } label: {
@@ -148,38 +168,6 @@ struct BookDetailView: View {
                 }
                 .font(Theme.Typography.caption)
                 .foregroundStyle(Theme.Colors.tertiaryText)
-            }
-        }
-    }
-
-    private var quickActions: some View {
-        VStack(spacing: Theme.Spacing.sm) {
-            Button {
-                showLogSession = true
-            } label: {
-                Label("Log Reading Session", systemImage: "plus.circle.fill")
-                    .frame(maxWidth: .infinity)
-                    .primaryButton()
-            }
-
-            HStack(spacing: Theme.Spacing.sm) {
-                Button {
-                    markAsFinished()
-                } label: {
-                    Label("Mark Finished", systemImage: "checkmark.circle")
-                        .font(Theme.Typography.callout)
-                        .frame(maxWidth: .infinity)
-                        .secondaryButton()
-                }
-
-                Button {
-                    book.readingStatus = .didNotFinish
-                } label: {
-                    Label("DNF", systemImage: "xmark.circle")
-                        .font(Theme.Typography.callout)
-                        .frame(maxWidth: .infinity)
-                        .secondaryButton()
-                }
             }
         }
     }
