@@ -1,0 +1,49 @@
+//
+//  ReadingSession.swift
+//  Shlf
+//
+//  Created by João Fernandes on 26/11/2025.
+//
+
+import Foundation
+import SwiftData
+
+@Model
+final class ReadingSession {
+    var id: UUID
+    var startDate: Date
+    var endDate: Date?
+    var startPage: Int
+    var endPage: Int
+    var durationMinutes: Int
+    var xpEarned: Int
+    var book: Book?
+
+    init(
+        id: UUID = UUID(),
+        startDate: Date = Date(),
+        endDate: Date? = nil,
+        startPage: Int,
+        endPage: Int,
+        durationMinutes: Int = 0,
+        xpEarned: Int = 0,
+        book: Book? = nil
+    ) {
+        self.id = id
+        self.startDate = startDate
+        self.endDate = endDate
+        self.startPage = startPage
+        self.endPage = endPage
+        self.durationMinutes = durationMinutes
+        self.xpEarned = xpEarned
+        self.book = book
+    }
+
+    var pagesRead: Int {
+        max(0, endPage - startPage)
+    }
+
+    var isActive: Bool {
+        endDate == nil
+    }
+}

@@ -6,5 +6,9 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Shlf needs access to your camera to scan book barcodes.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Shlf needs access to your photo library to select book covers.</string>
 </dict>
 </plist>
