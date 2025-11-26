@@ -363,6 +363,8 @@ struct BookDetailView: View {
             if let totalPages = book.totalPages {
                 book.currentPage = totalPages
             }
+            // Update goals when finishing a book
+            handleProgressSave()
         case .wantToRead:
             // Reset progress if moving back to want to read
             if previousStatus != .wantToRead {
@@ -382,8 +384,11 @@ struct BookDetailView: View {
     }
 
     private func handleProgressSave() {
-        // Optional: Add XP award here if you want
-        // Or create a mini reading session
+        // Update goals whenever progress is saved
+        if let profile = profile {
+            let tracker = GoalTracker(modelContext: modelContext)
+            tracker.updateGoals(for: profile)
+        }
     }
 
     private func deleteBook() {

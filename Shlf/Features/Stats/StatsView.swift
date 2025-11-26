@@ -345,9 +345,121 @@ struct GoalCard: View {
 }
 
 struct ManageGoalsView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Query private var profiles: [UserProfile]
+    @State private var showAddGoal = false
+
+    private var profile: UserProfile? {
+        profiles.first
+    }
+
     var body: some View {
-        Text("Manage Goals - Coming Soon")
-            .navigationTitle("Goals")
+        List {
+            if let profile = profile {
+                if !profile.readingGoals.isEmpty {
+                    Section("Active Goals") {
+                        ForEach(profile.readingGoals.filter { $0.isActive }) { goal in
+                            GoalRow(goal: goal, profile: profile)
+                        }
+                    }
+
+                    let completedGoals = profile.readingGoals.filter { $0.isCompleted }
+                    if !completedGoals.isEmpty {
+                        Section("Completed") {
+                            ForEach(completedGoals) { goal in
+                                GoalRow(goal: goal, profile: profile)
+                            }
+                        }
+                    }
+
+                    let expiredGoals = profile.readingGoals.filter { !$0.isActive && !$0.isCompleted && $0.endDate < Date() }
+                    if !expiredGoals.isEmpty {
+                        Section("Expired") {
+                            ForEach(expiredGoals) { goal in
+                                GoalRow(goal: goal, profile: profile)
+                            }
+                        }
+                    }
+                } else {
+                    ContentUnavailableView(
+                        "No Goals Yet",
+                        systemImage: "target",
+                        description: Text("Tap the + button to create your first reading goal")
+                    )
+                }
+            }
+        }
+        .navigationTitle("Goals")
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    showAddGoal = true
+                } label: {
+                    Image(systemName: "plus")
+                }
+            }
+        }
+        .sheet(isPresented: $showAddGoal) {
+            if let profile = profile {
+                AddGoalView(profile: profile)
+            }
+        }
+    }
+}
+
+struct GoalRow: View {
+    let goal: ReadingGoal
+    let profile: UserProfile
+    @Environment(\.modelContext) private var modelContext
+    @State private var showEditGoal = false
+
+    var body: some View {
+        Button {
+            showEditGoal = true
+        } label: {
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                HStack {
+                    Image(systemName: goal.type.icon)
+                        .foregroundStyle(goal.isCompleted ? Theme.Colors.success : Theme.Colors.primary)
+
+                    Text(goal.type.rawValue)
+                        .font(Theme.Typography.headline)
+                        .foregroundStyle(Theme.Colors.text)
+
+                    Spacer()
+
+                    if goal.isCompleted {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(Theme.Colors.success)
+                    }
+                }
+
+                ProgressView(value: goal.progressPercentage, total: 100)
+                    .tint(goal.isCompleted ? Theme.Colors.success : Theme.Colors.primary)
+
+                HStack {
+                    Text("\(goal.currentValue) / \(goal.targetValue) \(goal.type.unit)")
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(Theme.Colors.secondaryText)
+
+                    Spacer()
+
+                    if let daysLeft = Calendar.current.dateComponents([.day], from: Date(), to: goal.endDate).day, daysLeft >= 0 {
+                        Text("\(daysLeft) days left")
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(Theme.Colors.tertiaryText)
+                    } else if !goal.isCompleted {
+                        Text("Expired")
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(Theme.Colors.error)
+                    }
+                }
+            }
+            .padding(.vertical, Theme.Spacing.xxs)
+        }
+        .sheet(isPresented: $showEditGoal) {
+            EditGoalView(goal: goal, profile: profile)
+        }
     }
 }
 

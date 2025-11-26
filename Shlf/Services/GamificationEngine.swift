@@ -46,6 +46,10 @@ final class GamificationEngine {
         if newLevel > previousLevel {
             checkLevelAchievements(level: newLevel, profile: profile)
         }
+
+        // Update goals
+        let tracker = GoalTracker(modelContext: modelContext)
+        tracker.updateGoals(for: profile)
     }
 
     // MARK: - Streak Management
