@@ -77,72 +77,21 @@ struct HomeView: View {
     // MARK: - Hero Section
 
     private var heroSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-            HStack(spacing: Theme.Spacing.xs) {
-                Text(greeting)
-                    .font(Theme.Typography.title3)
-                    .foregroundStyle(Theme.Colors.secondaryText)
+        HStack(spacing: Theme.Spacing.xs) {
+            Text(greeting)
+                .font(.title3)
+                .fontWeight(.semibold)
+                .foregroundStyle(Theme.Colors.text)
 
-                Text("•")
-                    .font(Theme.Typography.title3)
-                    .foregroundStyle(Theme.Colors.tertiaryText)
+            Text("•")
+                .font(.title3)
+                .foregroundStyle(Theme.Colors.tertiaryText)
 
-                Text("Ready to read?")
-                    .font(Theme.Typography.title3)
-                    .foregroundStyle(Theme.Colors.text)
-            }
+            Text("Ready to read?")
+                .font(.title3)
+                .foregroundStyle(Theme.Colors.secondaryText)
 
-            HStack(spacing: Theme.Spacing.lg) {
-                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                    HStack(spacing: Theme.Spacing.xs) {
-                        Image(systemName: "star.fill")
-                            .font(.title3)
-                            .foregroundStyle(Theme.Colors.xpGradient)
-
-                        Text("Level \(profile.currentLevel)")
-                            .font(Theme.Typography.title)
-                            .foregroundStyle(Theme.Colors.text)
-                    }
-
-                    VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
-                        HStack(spacing: Theme.Spacing.xs) {
-                            Text("\(profile.totalXP)")
-                                .font(Theme.Typography.headline)
-                                .foregroundStyle(Theme.Colors.text)
-
-                            Text("/ \(profile.xpForNextLevel) XP")
-                                .font(Theme.Typography.callout)
-                                .foregroundStyle(Theme.Colors.tertiaryText)
-                        }
-
-                        ProgressView(value: profile.xpProgressPercentage, total: 100)
-                            .tint(Theme.Colors.primary)
-                            .scaleEffect(y: 1.5)
-                    }
-                }
-
-                Spacer()
-
-                ProgressRing(
-                    progress: profile.xpProgressPercentage / 100,
-                    lineWidth: 10,
-                    gradient: Theme.Colors.xpGradient,
-                    size: 90
-                )
-                .overlay {
-                    VStack(spacing: 0) {
-                        Text("\(Int(profile.xpProgressPercentage))")
-                            .font(Theme.Typography.title2)
-                            .foregroundStyle(Theme.Colors.text)
-
-                        Text("%")
-                            .font(Theme.Typography.caption)
-                            .foregroundStyle(Theme.Colors.tertiaryText)
-                    }
-                }
-            }
-            .padding(Theme.Spacing.lg)
-            .heroCard()
+            Spacer()
         }
     }
 
