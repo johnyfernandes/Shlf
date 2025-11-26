@@ -14,6 +14,7 @@ struct StatsView: View {
     @Query private var profiles: [UserProfile]
     @Query private var allSessions: [ReadingSession]
     @Query private var allBooks: [Book]
+    @State private var showAddGoal = false
 
     private var profile: UserProfile {
         if let existing = profiles.first {
@@ -162,11 +163,15 @@ struct StatsView: View {
             }
 
             if profile.achievements.isEmpty {
-                EmptyStateView(
-                    icon: "trophy",
-                    title: "No Achievements Yet",
-                    message: "Keep reading to unlock achievements"
-                )
+                HStack {
+                    Spacer()
+                    EmptyStateView(
+                        icon: "trophy",
+                        title: "No Achievements Yet",
+                        message: "Keep reading to unlock achievements"
+                    )
+                    Spacer()
+                }
             } else {
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Spacing.sm) {
                     ForEach(profile.achievements.sorted { $0.unlockedAt > $1.unlockedAt }) { achievement in
@@ -196,18 +201,27 @@ struct StatsView: View {
             }
 
             if profile.readingGoals.isEmpty {
-                EmptyStateView(
-                    icon: "target",
-                    title: "No Goals Set",
-                    message: "Set reading goals to track your progress",
-                    actionTitle: "Add Goal",
-                    action: {}
-                )
+                HStack {
+                    Spacer()
+                    EmptyStateView(
+                        icon: "target",
+                        title: "No Goals Set",
+                        message: "Set reading goals to track your progress",
+                        actionTitle: "Add Goal",
+                        action: {
+                            showAddGoal = true
+                        }
+                    )
+                    Spacer()
+                }
             } else {
                 ForEach(profile.readingGoals.filter { $0.isActive }) { goal in
                     GoalCard(goal: goal)
                 }
             }
+        }
+        .sheet(isPresented: $showAddGoal) {
+            AddGoalView(profile: profile)
         }
     }
 }

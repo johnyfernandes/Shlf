@@ -45,7 +45,7 @@ struct EmptyStateView: View {
                     .foregroundStyle(Theme.Colors.primary.opacity(0.6))
             }
 
-            VStack(spacing: Theme.Spacing.sm) {
+            VStack(spacing: Theme.Spacing.xs) {
                 Text(title)
                     .font(Theme.Typography.title2)
                     .foregroundStyle(Theme.Colors.text)
@@ -54,8 +54,8 @@ struct EmptyStateView: View {
                     .font(Theme.Typography.callout)
                     .foregroundStyle(Theme.Colors.secondaryText)
                     .multilineTextAlignment(.center)
-                    .lineSpacing(4)
-                    .padding(.horizontal, Theme.Spacing.md)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, Theme.Spacing.lg)
             }
 
             if let actionTitle, let action {
@@ -68,7 +68,6 @@ struct EmptyStateView: View {
                     }
                     .primaryButton()
                 }
-                .padding(.top, Theme.Spacing.sm)
             }
         }
         .padding(Theme.Spacing.xl)
