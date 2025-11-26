@@ -26,25 +26,25 @@ struct StatCard: View {
     }
 
     var body: some View {
-        HStack(spacing: Theme.Spacing.md) {
+        HStack(spacing: Theme.Spacing.sm) {
             // Icon
             ZStack {
                 if let gradient {
                     Circle()
                         .fill(gradient)
-                        .frame(width: 52, height: 52)
+                        .frame(width: 44, height: 44)
 
                     Image(systemName: icon)
-                        .font(.system(size: 22))
+                        .font(.system(size: 19))
                         .fontWeight(.semibold)
                         .foregroundStyle(.white)
                 } else {
                     Circle()
                         .fill(Theme.Colors.primary.opacity(0.12))
-                        .frame(width: 52, height: 52)
+                        .frame(width: 44, height: 44)
 
                     Image(systemName: icon)
-                        .font(.system(size: 22))
+                        .font(.system(size: 19))
                         .fontWeight(.semibold)
                         .foregroundStyle(Theme.Colors.primary)
                 }
@@ -53,23 +53,25 @@ struct StatCard: View {
             // Value and title
             VStack(alignment: .leading, spacing: 2) {
                 Text(value)
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
                     .foregroundStyle(Theme.Colors.text)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    .minimumScaleFactor(0.7)
                     .contentTransition(.numericText())
 
                 Text(title)
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.system(size: 9, weight: .semibold))
                     .foregroundStyle(Theme.Colors.secondaryText)
                     .textCase(.uppercase)
-                    .tracking(0.6)
+                    .tracking(0.5)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
 
             Spacer(minLength: 0)
         }
-        .padding(Theme.Spacing.md)
+        .padding(.horizontal, Theme.Spacing.sm)
+        .padding(.vertical, Theme.Spacing.sm)
         .frame(maxWidth: .infinity, alignment: .leading)
         .cardStyle(elevation: Theme.Elevation.level2)
     }
