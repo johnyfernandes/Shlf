@@ -59,9 +59,11 @@ class ConfettiUIView: UIView {
 
     private func setupEmitter() {
         let emitter = CAEmitterLayer()
-        emitter.emitterPosition = CGPoint(x: UIScreen.main.bounds.width / 2, y: -50)
+        // Use placeholder position, will be updated in layoutSubviews
+        emitter.emitterPosition = CGPoint(x: 200, y: -50)
         emitter.emitterShape = .line
-        emitter.emitterSize = CGSize(width: UIScreen.main.bounds.width, height: 1)
+        emitter.emitterSize = CGSize(width: 400, height: 1)
+        emitter.birthRate = 0  // Start with 0 - no confetti until triggered
 
         var cells: [CAEmitterCell] = []
         let colors: [UIColor] = [.systemRed, .systemBlue, .systemGreen, .systemYellow, .systemOrange, .systemPurple, .systemPink]
