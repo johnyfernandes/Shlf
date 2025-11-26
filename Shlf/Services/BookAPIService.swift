@@ -79,7 +79,8 @@ final class BookAPIService {
 
     private func searchOpenLibrary(query: String) async throws -> [BookInfo] {
         let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
-        let urlString = "https://openlibrary.org/search.json?q=\(encodedQuery)&limit=20"
+        let fields = "title,author_name,cover_i,number_of_pages_median,first_publish_year,isbn"
+        let urlString = "https://openlibrary.org/search.json?q=\(encodedQuery)&fields=\(fields)&limit=20"
 
         guard let url = URL(string: urlString) else {
             throw BookAPIError.invalidResponse
