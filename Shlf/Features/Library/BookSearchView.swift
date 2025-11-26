@@ -24,10 +24,29 @@ struct BookSearchView: View {
     // Client-side filter results based on query
     private func filterResults(_ results: [BookInfo], query: String) -> [BookInfo] {
         let lowercaseQuery = query.lowercased()
-        return results.filter { book in
+        let filtered = results.filter { book in
             book.title.lowercased().contains(lowercaseQuery) ||
             book.author.lowercased().contains(lowercaseQuery) ||
             book.isbn?.lowercased().contains(lowercaseQuery) == true
+        }
+
+        // Prioritize books with cover images
+        return sortByCovers(filtered)
+    }
+
+    // Sort results: books with covers first, then without
+    private func sortByCovers(_ results: [BookInfo]) -> [BookInfo] {
+        return results.sorted { book1, book2 in
+            let hasCover1 = book1.coverImageURL != nil
+            let hasCover2 = book2.coverImageURL != nil
+
+            if hasCover1 && !hasCover2 {
+                return true // book1 has cover, book2 doesn't - book1 comes first
+            } else if !hasCover1 && hasCover2 {
+                return false // book2 has cover, book1 doesn't - book2 comes first
+            } else {
+                return false // both have covers or both don't - keep original order
+            }
         }
     }
 
@@ -108,15 +127,6 @@ struct BookSearchView: View {
             return
         }
 
-        // If query extends lastAPIQuery and we have cached results, filter client-side
-        if !cachedResults.isEmpty && query.lowercased().hasPrefix(lastAPIQuery.lowercased()) && lastAPIQuery.count >= 3 {
-            await MainActor.run {
-                searchResults = filterResults(cachedResults, query: query)
-                isSearching = false
-            }
-            return
-        }
-
         await MainActor.run {
             isSearching = true
         }
@@ -135,6 +145,7 @@ struct BookSearchView: View {
             let results = try await bookAPI.searchBooks(query: query)
 
             guard !Task.isCancelled else {
+                // Don't touch cached results on cancellation
                 await MainActor.run {
                     isSearching = false
                 }
@@ -142,17 +153,24 @@ struct BookSearchView: View {
             }
 
             await MainActor.run {
-                // Cache results for client-side filtering
-                cachedResults = results
-                searchResults = results
+                // Cache results for client-side filtering, sorted by covers
+                let sortedResults = sortByCovers(results)
+                cachedResults = sortedResults
+                searchResults = sortedResults
                 lastAPIQuery = query
                 isSearching = false
             }
-        } catch {
-            print("Search error: \(error.localizedDescription)")
-
+        } catch is CancellationError {
+            // Task was cancelled - keep existing cache
             await MainActor.run {
                 isSearching = false
+            }
+        } catch {
+            // Real error - keep cache but show current results
+            print("Search error: \(error)")
+            await MainActor.run {
+                isSearching = false
+                // Don't clear searchResults or cache - keep what we have
             }
         }
     }
