@@ -14,6 +14,7 @@ struct BookSearchView: View {
     @State private var searchText = ""
     @State private var searchResults: [BookInfo] = []
     @State private var isSearching = false
+    @State private var searchTask: Task<Void, Never>?
 
     private let bookAPI = BookAPIService()
 
@@ -33,7 +34,7 @@ struct BookSearchView: View {
                         message: "Enter a title, author, or ISBN to search"
                     )
                 } else {
-                    List(searchResults, id: \.title) { bookInfo in
+                    List(Array(searchResults.enumerated()), id: \.offset) { index, bookInfo in
                         Button {
                             onSelect(bookInfo)
                             dismiss()
@@ -47,7 +48,8 @@ struct BookSearchView: View {
             .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $searchText, prompt: "Title, author, or ISBN")
             .onChange(of: searchText) { oldValue, newValue in
-                Task {
+                searchTask?.cancel()
+                searchTask = Task {
                     await performSearch(query: newValue)
                 }
             }
@@ -69,27 +71,42 @@ struct BookSearchView: View {
 
     private func performSearch(query: String) async {
         guard !query.isEmpty else {
-            searchResults = []
+            await MainActor.run {
+                searchResults = []
+                isSearching = false
+            }
             return
         }
 
-        isSearching = true
-        defer { isSearching = false }
+        await MainActor.run {
+            isSearching = true
+        }
 
-        // Debounce
-        try? await Task.sleep(for: .milliseconds(500))
+        // Debounce - wait for user to stop typing
+        try? await Task.sleep(for: .milliseconds(600))
 
-        guard !Task.isCancelled else { return }
+        guard !Task.isCancelled else {
+            await MainActor.run {
+                isSearching = false
+            }
+            return
+        }
 
         do {
             let results = try await bookAPI.searchBooks(query: query)
+            guard !Task.isCancelled else { return }
+
             await MainActor.run {
                 searchResults = results
+                isSearching = false
             }
         } catch {
             print("Search error: \(error)")
+            guard !Task.isCancelled else { return }
+
             await MainActor.run {
                 searchResults = []
+                isSearching = false
             }
         }
     }

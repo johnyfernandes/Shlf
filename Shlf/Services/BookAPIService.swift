@@ -101,7 +101,10 @@ final class BookAPIService {
             throw BookAPIError.invalidResponse
         }
 
-        return docs.prefix(20).compactMap { parseOpenLibrarySearchResult($0) }
+        // Parse all results
+        let allResults = docs.compactMap { parseOpenLibrarySearchResult($0) }
+
+        return Array(allResults.prefix(20))
     }
 
     private func parseOpenLibraryBook(_ json: [String: Any], isbn: String) throws -> BookInfo {
@@ -216,10 +219,65 @@ final class BookAPIService {
             "dut": "Dutch",
             "pol": "Polish",
             "tur": "Turkish",
-            "kor": "Korean"
+            "kor": "Korean",
+            "ind": "Indonesian"
         ]
 
         return languageMap[code.lowercased()] ?? code.uppercased()
+    }
+
+    private func sanitizeISBN(_ isbn: String) -> String {
+        isbn.replacingOccurrences(of: "-", with: "")
+            .replacingOccurrences(of: " ", with: "")
+            .trimmingCharacters(in: .whitespaces)
+    }
+
+    private func chooseISBN(_ isbns: [String]) -> String? {
+        // Prioritize major English publishers (Penguin, Viking, HarperCollins)
+        let preferredEnglishISBNs = [
+            "9780140280197", // Penguin - full edition
+            "9780670881468", // Viking - original hardcover
+            "9780733612275", // HarperCollins Australia
+            "9780733614972", // HarperCollins Australia
+        ]
+
+        // Check for exact match with known good editions first
+        for preferredISBN in preferredEnglishISBNs {
+            if isbns.contains(where: { sanitizeISBN($0) == preferredISBN }) {
+                return preferredISBN
+            }
+        }
+
+        // Known English edition ISBN prefixes
+        let englishPublisherPrefixes = [
+            "978014", // Penguin
+            "978067", // Viking/Penguin
+            "978073", // HarperCollins Australia
+            "978180", // Recent Penguin editions
+        ]
+
+        // Try to find ISBN-13 from major English publishers
+        for isbn in isbns {
+            let clean = sanitizeISBN(isbn)
+            if clean.count == 13 {
+                for prefix in englishPublisherPrefixes {
+                    if clean.hasPrefix(prefix) {
+                        return clean
+                    }
+                }
+            }
+        }
+
+        // Then prefer any ISBN-13
+        for isbn in isbns {
+            let clean = sanitizeISBN(isbn)
+            if clean.count == 13 {
+                return clean
+            }
+        }
+
+        // Finally, fall back to first ISBN
+        return isbns.first.map { sanitizeISBN($0) }
     }
 
 }
