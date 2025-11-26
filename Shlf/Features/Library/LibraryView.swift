@@ -48,8 +48,6 @@ struct LibraryView: View {
                     }
                 }
                 .padding(.horizontal, Theme.Spacing.lg)
-                .padding(.top, Theme.Spacing.sm)
-                .padding(.bottom, Theme.Spacing.xxxl)
             }
             .background(Theme.Colors.background)
             .navigationDestination(for: Book.self) { book in

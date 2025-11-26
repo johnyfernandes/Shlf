@@ -53,8 +53,6 @@ struct HomeView: View {
                     }
                 }
                 .padding(.horizontal, Theme.Spacing.lg)
-                .padding(.top, Theme.Spacing.sm)
-                .padding(.bottom, Theme.Spacing.xxxl)
             }
             .background(Theme.Colors.background)
             .navigationTitle("Shlf")
