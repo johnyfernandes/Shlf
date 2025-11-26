@@ -13,11 +13,23 @@ struct BookSearchView: View {
 
     @State private var searchText = ""
     @State private var searchResults: [BookInfo] = []
+    @State private var cachedResults: [BookInfo] = [] // Cache for client-side filtering
     @State private var isSearching = false
     @State private var searchTask: Task<Void, Never>?
+    @State private var lastAPIQuery = ""
     @FocusState private var isSearchFocused: Bool
 
     private let bookAPI = BookAPIService()
+
+    // Client-side filter results based on query
+    private func filterResults(_ results: [BookInfo], query: String) -> [BookInfo] {
+        let lowercaseQuery = query.lowercased()
+        return results.filter { book in
+            book.title.lowercased().contains(lowercaseQuery) ||
+            book.author.lowercased().contains(lowercaseQuery) ||
+            book.isbn?.lowercased().contains(lowercaseQuery) == true
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -89,6 +101,17 @@ struct BookSearchView: View {
         guard !query.isEmpty else {
             await MainActor.run {
                 searchResults = []
+                cachedResults = []
+                lastAPIQuery = ""
+                isSearching = false
+            }
+            return
+        }
+
+        // If query extends lastAPIQuery and we have cached results, filter client-side
+        if !cachedResults.isEmpty && query.lowercased().hasPrefix(lastAPIQuery.lowercased()) && lastAPIQuery.count >= 3 {
+            await MainActor.run {
+                searchResults = filterResults(cachedResults, query: query)
                 isSearching = false
             }
             return
@@ -98,8 +121,8 @@ struct BookSearchView: View {
             isSearching = true
         }
 
-        // Debounce - wait for user to stop typing
-        try? await Task.sleep(for: .milliseconds(600))
+        // Debounce
+        try? await Task.sleep(for: .milliseconds(400))
 
         guard !Task.isCancelled else {
             await MainActor.run {
@@ -110,18 +133,25 @@ struct BookSearchView: View {
 
         do {
             let results = try await bookAPI.searchBooks(query: query)
-            guard !Task.isCancelled else { return }
+
+            guard !Task.isCancelled else {
+                await MainActor.run {
+                    isSearching = false
+                }
+                return
+            }
 
             await MainActor.run {
+                // Cache results for client-side filtering
+                cachedResults = results
                 searchResults = results
+                lastAPIQuery = query
                 isSearching = false
             }
         } catch {
-            print("Search error: \(error)")
-            guard !Task.isCancelled else { return }
+            print("Search error: \(error.localizedDescription)")
 
             await MainActor.run {
-                searchResults = []
                 isSearching = false
             }
         }
