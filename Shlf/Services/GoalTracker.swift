@@ -61,7 +61,10 @@ class GoalTracker {
             }
 
             let totalPages = sessions.reduce(0) { $0 + $1.pagesRead }
-            let daysElapsed = max(1, calendar.dateComponents([.day], from: goal.startDate, to: Date()).day ?? 1)
+
+            // Calculate days elapsed, capping at goal end date if goal has ended
+            let endPoint = min(Date(), goal.endDate)
+            let daysElapsed = max(1, calendar.dateComponents([.day], from: goal.startDate, to: endPoint).day ?? 1)
 
             return totalPages / daysElapsed
 
@@ -76,7 +79,10 @@ class GoalTracker {
             }
 
             let totalMinutes = sessions.reduce(0) { $0 + $1.durationMinutes }
-            let daysElapsed = max(1, calendar.dateComponents([.day], from: goal.startDate, to: Date()).day ?? 1)
+
+            // Calculate days elapsed, capping at goal end date if goal has ended
+            let endPoint = min(Date(), goal.endDate)
+            let daysElapsed = max(1, calendar.dateComponents([.day], from: goal.startDate, to: endPoint).day ?? 1)
 
             return totalMinutes / daysElapsed
 
