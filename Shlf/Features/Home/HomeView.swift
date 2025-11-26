@@ -22,6 +22,7 @@ struct HomeView: View {
     @State private var showAddBook = false
     @State private var isEditingCards = false
     @State private var draggingCard: StatCardType?
+    @State private var showLevelDetail = false
 
     private var profile: UserProfile {
         if let existing = profiles.first {
@@ -133,6 +134,9 @@ struct HomeView: View {
             .sheet(isPresented: $showAddBook) {
                 AddBookView()
             }
+            .sheet(isPresented: $showLevelDetail) {
+                LevelDetailView(profile: profile)
+            }
         }
     }
 
@@ -162,18 +166,25 @@ struct HomeView: View {
     private var statsSection: some View {
         HStack(spacing: Theme.Spacing.sm) {
             ForEach(Array(profile.homeCards.enumerated()), id: \.element) { index, cardType in
-                StatCard(
-                    title: cardType.title,
-                    value: getValue(for: cardType),
-                    icon: cardType.icon,
-                    gradient: cardType.gradient,
-                    isEditing: isEditingCards,
-                    onRemove: {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            profile.removeHomeCard(cardType)
-                        }
+                Button {
+                    if !isEditingCards && cardType == .level {
+                        showLevelDetail = true
                     }
-                )
+                } label: {
+                    StatCard(
+                        title: cardType.title,
+                        value: getValue(for: cardType),
+                        icon: cardType.icon,
+                        gradient: cardType.gradient,
+                        isEditing: isEditingCards,
+                        onRemove: {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                profile.removeHomeCard(cardType)
+                            }
+                        }
+                    )
+                }
+                .buttonStyle(.plain)
                 .scaleEffect(draggingCard == cardType && isEditingCards ? 1.05 : 1.0)
                 .onLongPressGesture(minimumDuration: 0.3) {
                     if !isEditingCards {
