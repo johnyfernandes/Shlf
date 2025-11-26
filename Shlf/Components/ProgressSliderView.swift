@@ -17,6 +17,7 @@ struct ProgressSliderView: View {
     @State private var isDragging = false
     @State private var showSaveButton = false
     @State private var lastHapticPage: Int = 0
+    @State private var showFinishAlert = false
 
     private var currentPage: Int {
         Int(sliderValue)
@@ -208,6 +209,27 @@ struct ProgressSliderView: View {
                 showSaveButton = newValue
             }
         }
+        .alert("Finished Reading?", isPresented: $showFinishAlert) {
+            Button("Mark as Finished") {
+                book.currentPage = currentPage
+                book.readingStatus = .finished
+                book.dateFinished = Date()
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                    showSaveButton = false
+                }
+                onSave()
+            }
+            Button("Keep Reading") {
+                applyProgressUpdate()
+            }
+            Button("Cancel", role: .cancel) {
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                    showSaveButton = false
+                }
+            }
+        } message: {
+            Text("You've reached the last page of \(book.title). Would you like to mark it as finished?")
+        }
     }
 
     private func handleDragChanged(_ value: DragGesture.Value, in width: CGFloat) {
@@ -238,6 +260,15 @@ struct ProgressSliderView: View {
     private func saveProgress() {
         UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
 
+        // Check if user reached the last page
+        if let totalPages = book.totalPages, currentPage >= totalPages && book.readingStatus == .currentlyReading {
+            showFinishAlert = true
+        } else {
+            applyProgressUpdate()
+        }
+    }
+
+    private func applyProgressUpdate() {
         book.currentPage = currentPage
 
         if book.readingStatus == .wantToRead && currentPage > 0 {

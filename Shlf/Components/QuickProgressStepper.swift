@@ -16,6 +16,7 @@ struct QuickProgressStepper: View {
     @State private var showSaveButton = false
     @State private var longPressTimer: Timer?
     @State private var accelerationMultiplier: Double = 1.0
+    @State private var showFinishAlert = false
 
     private var totalPendingPages: Int {
         book.currentPage + pendingPages
@@ -121,6 +122,29 @@ struct QuickProgressStepper: View {
                 showSaveButton = newValue != 0
             }
         }
+        .alert("Finished Reading?", isPresented: $showFinishAlert) {
+            Button("Mark as Finished") {
+                book.currentPage = totalPendingPages
+                book.readingStatus = .finished
+                book.dateFinished = Date()
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                    pendingPages = 0
+                    showSaveButton = false
+                }
+                onSave()
+            }
+            Button("Keep Reading") {
+                applyProgressUpdate()
+            }
+            Button("Cancel", role: .cancel) {
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                    pendingPages = 0
+                    showSaveButton = false
+                }
+            }
+        } message: {
+            Text("You've reached the last page of \(book.title). Would you like to mark it as finished?")
+        }
     }
 
     private func incrementPage() {
@@ -188,6 +212,15 @@ struct QuickProgressStepper: View {
         let impact = UIImpactFeedbackGenerator(style: .heavy)
         impact.impactOccurred()
 
+        // Check if user reached the last page
+        if let totalPages = book.totalPages, totalPendingPages >= totalPages && book.readingStatus == .currentlyReading {
+            showFinishAlert = true
+        } else {
+            applyProgressUpdate()
+        }
+    }
+
+    private func applyProgressUpdate() {
         book.currentPage = totalPendingPages
 
         if book.readingStatus == .wantToRead && totalPendingPages > 0 {
