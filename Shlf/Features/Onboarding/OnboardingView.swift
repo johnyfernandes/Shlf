@@ -10,6 +10,7 @@ import SwiftData
 
 struct OnboardingView: View {
     @Environment(\.modelContext) private var modelContext
+    @Query private var profiles: [UserProfile]
     @Binding var isPresented: Bool
 
     @State private var currentPage = 0
@@ -75,9 +76,16 @@ struct OnboardingView: View {
     }
 
     private func completeOnboarding() {
-        // Mark onboarding as complete
-        let profile = UserProfile(hasCompletedOnboarding: true)
-        modelContext.insert(profile)
+        // Get or create profile and mark onboarding as complete
+        if let existingProfile = profiles.first {
+            existingProfile.hasCompletedOnboarding = true
+        } else {
+            let profile = UserProfile(hasCompletedOnboarding: true)
+            modelContext.insert(profile)
+        }
+
+        // Save context
+        try? modelContext.save()
 
         withAnimation {
             isPresented = false
