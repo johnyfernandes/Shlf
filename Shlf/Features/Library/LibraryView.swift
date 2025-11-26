@@ -169,27 +169,60 @@ struct LibraryView: View {
 struct BookRow: View {
     let book: Book
 
+    private var yearPublished: String? {
+        guard let publishedDate = book.publishedDate else { return nil }
+        // Extract first 4 digits (year) from the published date
+        let year = publishedDate.prefix(4)
+        return year.count == 4 ? String(year) : nil
+    }
+
     var body: some View {
-        HStack(spacing: Theme.Spacing.md) {
+        HStack(spacing: Theme.Spacing.sm) {
             BookCoverView(
                 imageURL: book.coverImageURL,
                 title: book.title,
-                width: 70,
-                height: 105
+                width: 60,
+                height: 90
             )
-            .shadow(color: Theme.Shadow.medium, radius: 8, y: 4)
+            .shadow(color: Theme.Shadow.medium, radius: 6, y: 3)
 
-            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
-                    Text(book.title)
-                        .font(Theme.Typography.headline)
-                        .foregroundStyle(Theme.Colors.text)
-                        .lineLimit(2)
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                Text(book.title)
+                    .font(Theme.Typography.headline)
+                    .foregroundStyle(Theme.Colors.text)
+                    .lineLimit(2)
 
-                    Text(book.author)
-                        .font(Theme.Typography.subheadline)
-                        .foregroundStyle(Theme.Colors.secondaryText)
-                        .lineLimit(1)
+                Text(book.author)
+                    .font(Theme.Typography.subheadline)
+                    .foregroundStyle(Theme.Colors.secondaryText)
+                    .lineLimit(1)
+
+                HStack(spacing: Theme.Spacing.xs) {
+                    if let totalPages = book.totalPages {
+                        HStack(spacing: 3) {
+                            Image(systemName: "book.pages")
+                                .font(.caption2)
+                            Text("\(totalPages)")
+                                .font(Theme.Typography.caption)
+                        }
+                        .foregroundStyle(Theme.Colors.tertiaryText)
+                    }
+
+                    if let year = yearPublished {
+                        if book.totalPages != nil {
+                            Text("•")
+                                .font(Theme.Typography.caption2)
+                                .foregroundStyle(Theme.Colors.tertiaryText)
+                        }
+
+                        HStack(spacing: 3) {
+                            Image(systemName: "calendar")
+                                .font(.caption2)
+                            Text(year)
+                                .font(Theme.Typography.caption)
+                        }
+                        .foregroundStyle(Theme.Colors.tertiaryText)
+                    }
                 }
 
                 StatusBadge(status: book.readingStatus)
@@ -227,7 +260,7 @@ struct BookRow: View {
                 .fontWeight(.semibold)
                 .foregroundStyle(Theme.Colors.tertiaryText)
         }
-        .padding(Theme.Spacing.md)
+        .padding(Theme.Spacing.sm)
         .cardStyle(elevation: Theme.Elevation.level3)
     }
 }
