@@ -14,6 +14,7 @@ struct HomeView: View {
     @Query private var profiles: [UserProfile]
     @Query(sort: \Book.dateAdded, order: .reverse)
     private var allBooks: [Book]
+    @Binding var selectedTab: Int
 
     private var currentlyReading: [Book] {
         allBooks.filter { $0.readingStatus == .currentlyReading }
@@ -65,6 +66,17 @@ struct HomeView: View {
             return "\(engine.booksReadThisYear())"
         case .thisMonth:
             return "\(engine.booksReadThisMonth())"
+        }
+    }
+
+    // Helper function to handle card taps
+    private func handleCardTap(_ cardType: StatCardType) {
+        if cardType == .level {
+            // Open Level detail view
+            showLevelDetail = true
+        } else {
+            // Navigate to Stats tab for all other cards
+            selectedTab = 2
         }
     }
 
@@ -167,8 +179,8 @@ struct HomeView: View {
         HStack(spacing: Theme.Spacing.sm) {
             ForEach(Array(profile.homeCards.enumerated()), id: \.element) { index, cardType in
                 Button {
-                    if !isEditingCards && cardType == .level {
-                        showLevelDetail = true
+                    if !isEditingCards {
+                        handleCardTap(cardType)
                     }
                 } label: {
                     StatCard(
@@ -376,6 +388,6 @@ struct CardDropDelegate: DropDelegate {
 }
 
 #Preview {
-    HomeView()
+    HomeView(selectedTab: .constant(0))
         .modelContainer(for: [Book.self, UserProfile.self], inMemory: true)
 }
