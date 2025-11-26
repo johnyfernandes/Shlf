@@ -116,7 +116,18 @@ struct BookDetailView: View {
                 HStack(spacing: Theme.Spacing.sm) {
                     Label(book.bookType.rawValue, systemImage: book.bookType.icon)
                     Text("•")
-                    Label(book.readingStatus.rawValue, systemImage: book.readingStatus.icon)
+
+                    Menu {
+                        ForEach(ReadingStatus.allCases, id: \.self) { status in
+                            Button {
+                                updateReadingStatus(to: status)
+                            } label: {
+                                Label(status.rawValue, systemImage: status.icon)
+                            }
+                        }
+                    } label: {
+                        Label(book.readingStatus.rawValue, systemImage: book.readingStatus.icon)
+                    }
                 }
                 .font(Theme.Typography.caption)
                 .foregroundStyle(Theme.Colors.tertiaryText)
@@ -321,13 +332,36 @@ struct BookDetailView: View {
         }
     }
 
-    private func markAsFinished() {
-        book.readingStatus = .finished
-        book.dateFinished = Date()
+    private func updateReadingStatus(to status: ReadingStatus) {
+        let previousStatus = book.readingStatus
+        book.readingStatus = status
 
-        if let totalPages = book.totalPages {
-            book.currentPage = totalPages
+        switch status {
+        case .currentlyReading:
+            if book.dateStarted == nil {
+                book.dateStarted = Date()
+            }
+        case .finished:
+            book.dateFinished = Date()
+            if let totalPages = book.totalPages {
+                book.currentPage = totalPages
+            }
+        case .wantToRead:
+            // Reset progress if moving back to want to read
+            if previousStatus != .wantToRead {
+                book.currentPage = 0
+                book.dateStarted = nil
+                book.dateFinished = nil
+            }
+        case .didNotFinish:
+            if book.dateFinished == nil {
+                book.dateFinished = Date()
+            }
         }
+    }
+
+    private func markAsFinished() {
+        updateReadingStatus(to: .finished)
     }
 
     private func deleteBook() {
