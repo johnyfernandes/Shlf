@@ -459,6 +459,9 @@ struct BookDetailCustomizationView: View {
 }
 
 struct DataManagementView: View {
+    @State private var showClearCacheAlert = false
+    @State private var isClearing = false
+
     var body: some View {
         Form {
             Section {
@@ -473,17 +476,47 @@ struct DataManagementView: View {
                 }
             }
 
-            Section("Danger Zone") {
-                Button("Clear Cache") {
-                    // TODO: Implement clear cache
+            Section("Cache") {
+                Button("Clear Image Cache") {
+                    showClearCacheAlert = true
                 }
+                .disabled(isClearing)
 
+                if isClearing {
+                    HStack {
+                        ProgressView()
+                        Text("Clearing cache...")
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(Theme.Colors.secondaryText)
+                    }
+                }
+            }
+
+            Section("Danger Zone") {
                 Button("Reset App", role: .destructive) {
                     // TODO: Implement reset
                 }
             }
         }
         .navigationTitle("Data Management")
+        .alert("Clear Image Cache?", isPresented: $showClearCacheAlert) {
+            Button("Clear", role: .destructive) {
+                clearCache()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will remove all cached book cover images. They will be downloaded again when needed.")
+        }
+    }
+
+    private func clearCache() {
+        isClearing = true
+        Task {
+            await ImageCacheManager.shared.clearCache()
+            await MainActor.run {
+                isClearing = false
+            }
+        }
     }
 }
 

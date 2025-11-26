@@ -28,19 +28,12 @@ struct BookCoverView: View {
     var body: some View {
         Group {
             if let imageURL {
-                AsyncImage(url: imageURL) { phase in
-                    switch phase {
-                    case .empty:
-                        placeholderView
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    case .failure:
-                        placeholderView
-                    @unknown default:
-                        placeholderView
-                    }
+                CachedAsyncImage(url: imageURL) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    placeholderView
                 }
             } else {
                 placeholderView
