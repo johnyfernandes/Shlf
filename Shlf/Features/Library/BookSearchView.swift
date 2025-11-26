@@ -66,18 +66,22 @@ struct BookSearchView: View {
                         Text("Find books by title, author, or ISBN")
                     }
                 } else {
-                    List {
-                        ForEach(Array(searchResults.enumerated()), id: \.offset) { index, bookInfo in
-                            Button {
-                                onSelect(bookInfo)
-                                dismiss()
-                            } label: {
-                                BookSearchResultRow(bookInfo: bookInfo)
+                    ScrollView {
+                        LazyVStack(spacing: Theme.Spacing.md) {
+                            ForEach(Array(searchResults.enumerated()), id: \.offset) { index, bookInfo in
+                                Button {
+                                    onSelect(bookInfo)
+                                    dismiss()
+                                } label: {
+                                    BookSearchResultRow(bookInfo: bookInfo)
+                                }
+                                .buttonStyle(.plain)
                             }
-                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                         }
+                        .padding(.horizontal, Theme.Spacing.md)
+                        .padding(.top, Theme.Spacing.sm)
+                        .padding(.bottom, Theme.Spacing.xl)
                     }
-                    .listStyle(.plain)
                 }
             }
             .navigationTitle("Search Books")
@@ -179,44 +183,84 @@ struct BookSearchView: View {
 struct BookSearchResultRow: View {
     let bookInfo: BookInfo
 
+    private var yearPublished: String? {
+        guard let publishedDate = bookInfo.publishedDate else { return nil }
+        // Extract first 4 digits (year) from the published date
+        let year = publishedDate.prefix(4)
+        return year.count == 4 ? String(year) : nil
+    }
+
     var body: some View {
         HStack(spacing: Theme.Spacing.md) {
+            // Book cover with shadow
             BookCoverView(
                 imageURL: bookInfo.coverImageURL,
                 title: bookInfo.title,
-                width: 50,
-                height: 75
+                width: 64,
+                height: 96
             )
+            .shadow(color: Theme.Shadow.medium, radius: 8, y: 4)
 
-            VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
+            // Content
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                // Title
                 Text(bookInfo.title)
                     .font(Theme.Typography.headline)
                     .foregroundStyle(Theme.Colors.text)
                     .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
 
+                // Author
                 Text(bookInfo.author)
-                    .font(Theme.Typography.callout)
+                    .font(Theme.Typography.subheadline)
                     .foregroundStyle(Theme.Colors.secondaryText)
                     .lineLimit(1)
 
+                Spacer()
+
+                // Metadata
                 HStack(spacing: Theme.Spacing.xs) {
                     if let pages = bookInfo.totalPages {
-                        Text("\(pages) pages")
-                            .font(Theme.Typography.caption)
-                            .foregroundStyle(Theme.Colors.tertiaryText)
+                        HStack(spacing: 3) {
+                            Image(systemName: "book.pages")
+                                .font(.caption2)
+                            Text("\(pages)")
+                                .font(Theme.Typography.caption)
+                        }
+                        .foregroundStyle(Theme.Colors.tertiaryText)
                     }
 
-                    if let published = bookInfo.publishedDate {
-                        Text("•")
-                            .foregroundStyle(Theme.Colors.tertiaryText)
-                        Text(published)
-                            .font(Theme.Typography.caption)
-                            .foregroundStyle(Theme.Colors.tertiaryText)
+                    if let year = yearPublished {
+                        if bookInfo.totalPages != nil {
+                            Text("•")
+                                .font(Theme.Typography.caption2)
+                                .foregroundStyle(Theme.Colors.tertiaryText)
+                        }
+
+                        HStack(spacing: 3) {
+                            Image(systemName: "calendar")
+                                .font(.caption2)
+                            Text(year)
+                                .font(Theme.Typography.caption)
+                        }
+                        .foregroundStyle(Theme.Colors.tertiaryText)
                     }
                 }
             }
+
+            Spacer(minLength: 0)
+
+            // Chevron
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(Theme.Colors.tertiaryText)
         }
-        .padding(.vertical, Theme.Spacing.xxs)
+        .padding(Theme.Spacing.md)
+        .frame(minHeight: 112)
+        .background(Theme.Colors.secondaryBackground)
+        .clipShape(RoundedRectangle(cornerRadius: Theme.CornerRadius.lg, style: .continuous))
+        .shadow(color: Theme.Shadow.small, radius: Theme.Elevation.level2, y: 2)
     }
 }
 
