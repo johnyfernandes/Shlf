@@ -9,6 +9,8 @@ import SwiftUI
 
 struct ProgressSliderView: View {
     @Bindable var book: Book
+    let incrementAmount: Int
+    let showButtons: Bool
     let onSave: () -> Void
 
     @State private var sliderValue: Double = 0
@@ -31,28 +33,81 @@ struct ProgressSliderView: View {
 
     var body: some View {
         VStack(spacing: Theme.Spacing.lg) {
-            // Page display
-            VStack(spacing: Theme.Spacing.xs) {
-                HStack(spacing: Theme.Spacing.sm) {
-                    Text("\(currentPage)")
-                        .font(.system(size: 48, weight: .bold, design: .rounded))
-                        .foregroundStyle(isDragging ? Theme.Colors.primary : Theme.Colors.text)
-                        .monospacedDigit()
-                        .contentTransition(.numericText())
+            // Page display with optional buttons
+            if showButtons {
+                HStack(spacing: Theme.Spacing.md) {
+                    // Decrement button
+                    Button {
+                        decrementPage()
+                    } label: {
+                        Image(systemName: "minus.circle.fill")
+                            .font(.system(size: 40))
+                            .foregroundStyle(
+                                sliderValue > 0 ? Theme.Colors.tertiaryText : Theme.Colors.tertiaryText.opacity(0.3),
+                                Theme.Colors.secondaryBackground
+                            )
+                    }
+                    .disabled(sliderValue <= 0)
+
+                    VStack(spacing: Theme.Spacing.xs) {
+                        HStack(spacing: Theme.Spacing.sm) {
+                            Text("\(currentPage)")
+                                .font(.system(size: 44, weight: .bold, design: .rounded))
+                                .foregroundStyle(isDragging ? Theme.Colors.primary : Theme.Colors.text)
+                                .monospacedDigit()
+                                .contentTransition(.numericText())
+
+                            if let total = book.totalPages {
+                                Text("/ \(total)")
+                                    .font(Theme.Typography.title3)
+                                    .foregroundStyle(Theme.Colors.tertiaryText)
+                            }
+                        }
+                        .animation(.snappy(duration: 0.2), value: currentPage)
+
+                        if let total = book.totalPages {
+                            Text("\(Int(progressPercentage))% complete")
+                                .font(Theme.Typography.caption)
+                                .foregroundStyle(Theme.Colors.secondaryText)
+                                .contentTransition(.numericText())
+                        }
+                    }
+
+                    // Increment button
+                    Button {
+                        incrementPage()
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 40))
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(.white, Theme.Colors.primary)
+                    }
+                    .disabled(book.totalPages != nil && sliderValue >= Double(book.totalPages!))
+                    .opacity(book.totalPages != nil && sliderValue >= Double(book.totalPages!) ? 0.3 : 1.0)
+                }
+            } else {
+                VStack(spacing: Theme.Spacing.xs) {
+                    HStack(spacing: Theme.Spacing.sm) {
+                        Text("\(currentPage)")
+                            .font(.system(size: 48, weight: .bold, design: .rounded))
+                            .foregroundStyle(isDragging ? Theme.Colors.primary : Theme.Colors.text)
+                            .monospacedDigit()
+                            .contentTransition(.numericText())
+
+                        if let total = book.totalPages {
+                            Text("/ \(total)")
+                                .font(Theme.Typography.title2)
+                                .foregroundStyle(Theme.Colors.tertiaryText)
+                        }
+                    }
+                    .animation(.snappy(duration: 0.2), value: currentPage)
 
                     if let total = book.totalPages {
-                        Text("/ \(total)")
-                            .font(Theme.Typography.title2)
-                            .foregroundStyle(Theme.Colors.tertiaryText)
+                        Text("\(Int(progressPercentage))% complete")
+                            .font(Theme.Typography.subheadline)
+                            .foregroundStyle(Theme.Colors.secondaryText)
+                            .contentTransition(.numericText())
                     }
-                }
-                .animation(.snappy(duration: 0.2), value: currentPage)
-
-                if let total = book.totalPages {
-                    Text("\(Int(progressPercentage))% complete")
-                        .font(Theme.Typography.subheadline)
-                        .foregroundStyle(Theme.Colors.secondaryText)
-                        .contentTransition(.numericText())
                 }
             }
 
@@ -196,17 +251,49 @@ struct ProgressSliderView: View {
 
         onSave()
     }
+
+    private func incrementPage() {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+
+        withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) {
+            sliderValue = min(Double(book.totalPages ?? 100), sliderValue + Double(incrementAmount))
+        }
+    }
+
+    private func decrementPage() {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+
+        withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) {
+            sliderValue = max(0, sliderValue - Double(incrementAmount))
+        }
+    }
 }
 
 #Preview {
-    ProgressSliderView(
-        book: Book(
-            title: "Test Book",
-            author: "Author",
-            totalPages: 300,
-            currentPage: 145
-        ),
-        onSave: {}
-    )
+    VStack(spacing: 20) {
+        ProgressSliderView(
+            book: Book(
+                title: "Test Book",
+                author: "Author",
+                totalPages: 300,
+                currentPage: 145
+            ),
+            incrementAmount: 5,
+            showButtons: false,
+            onSave: {}
+        )
+
+        ProgressSliderView(
+            book: Book(
+                title: "Test Book",
+                author: "Author",
+                totalPages: 300,
+                currentPage: 145
+            ),
+            incrementAmount: 5,
+            showButtons: true,
+            onSave: {}
+        )
+    }
     .padding()
 }

@@ -31,6 +31,8 @@ struct BookDetailView: View {
                     if profile?.useProgressSlider == true {
                         ProgressSliderView(
                             book: book,
+                            incrementAmount: profile?.pageIncrementAmount ?? 1,
+                            showButtons: profile?.showSliderButtons ?? false,
                             onSave: handleProgressSave
                         )
                     } else {

@@ -335,7 +335,19 @@ struct ReadingPreferencesView: View {
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
 
-            if !profile.useProgressSlider {
+            if profile.useProgressSlider {
+                Section("Slider Options") {
+                    Toggle(isOn: $profile.showSliderButtons) {
+                        Label("Show +/- Buttons", systemImage: "plus.forwardslash.minus")
+                    }
+
+                    Text("Add increment/decrement buttons alongside the slider for quick adjustments")
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(Theme.Colors.secondaryText)
+                }
+            }
+
+            if !profile.useProgressSlider || profile.showSliderButtons {
                 Section("Quick Progress Increment") {
                     Picker("Pages per tap", selection: $profile.pageIncrementAmount) {
                         Text("1 page").tag(1)
