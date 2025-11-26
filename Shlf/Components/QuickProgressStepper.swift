@@ -36,10 +36,13 @@ struct QuickProgressStepper: View {
                             Theme.Colors.secondaryBackground
                         )
                 }
-                .simultaneousGesture(
-                    LongPressGesture(minimumDuration: 0.5)
-                        .onEnded { _ in startContinuousDecrement() }
-                )
+                .onLongPressGesture(minimumDuration: 0.5, pressing: { isPressing in
+                    if isPressing {
+                        startContinuousDecrement()
+                    } else {
+                        stopContinuousAction()
+                    }
+                }, perform: {})
                 .disabled(book.currentPage + pendingPages <= 0)
                 .opacity(book.currentPage + pendingPages <= 0 ? 0.3 : 1.0)
 
@@ -84,10 +87,13 @@ struct QuickProgressStepper: View {
                         .symbolRenderingMode(.palette)
                         .foregroundStyle(.white, Theme.Colors.primary)
                 }
-                .simultaneousGesture(
-                    LongPressGesture(minimumDuration: 0.5)
-                        .onEnded { _ in startContinuousIncrement() }
-                )
+                .onLongPressGesture(minimumDuration: 0.5, pressing: { isPressing in
+                    if isPressing {
+                        startContinuousIncrement()
+                    } else {
+                        stopContinuousAction()
+                    }
+                }, perform: {})
                 .disabled(book.totalPages != nil && totalPendingPages >= book.totalPages!)
                 .opacity(book.totalPages != nil && totalPendingPages >= book.totalPages! ? 0.3 : 1.0)
             }
