@@ -197,9 +197,16 @@ final class GamificationEngine {
     }
 
     func totalPagesRead() -> Int {
-        let descriptor = FetchDescriptor<ReadingSession>()
-        guard let sessions = try? modelContext.fetch(descriptor) else { return 0 }
-        return sessions.reduce(0) { $0 + $1.pagesRead }
+        // Get pages from reading sessions
+        let sessionDescriptor = FetchDescriptor<ReadingSession>()
+        let sessionPages = (try? modelContext.fetch(sessionDescriptor))?.reduce(0) { $0 + $1.pagesRead } ?? 0
+
+        // Also count current progress in books (for users who don't log sessions)
+        let bookDescriptor = FetchDescriptor<Book>()
+        let bookPages = (try? modelContext.fetch(bookDescriptor))?.reduce(0) { $0 + $1.currentPage } ?? 0
+
+        // Return the higher value (avoid double counting if sessions exist)
+        return max(sessionPages, bookPages)
     }
 
     func totalReadingMinutes() -> Int {

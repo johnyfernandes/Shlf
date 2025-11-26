@@ -118,11 +118,30 @@ struct StatsView: View {
                     .padding(Theme.Spacing.md)
                     .cardStyle()
                     .frame(height: 250)
+            } else if allBooks.contains(where: { $0.currentPage > 0 }) {
+                // Show simple progress indicator if no sessions but books have progress
+                VStack(spacing: Theme.Spacing.md) {
+                    Image(systemName: "chart.bar.fill")
+                        .font(.system(size: 48))
+                        .foregroundStyle(Theme.Colors.primary.opacity(0.3))
+
+                    Text("You've read \(engine.totalPagesRead()) pages!")
+                        .font(Theme.Typography.headline)
+                        .foregroundStyle(Theme.Colors.text)
+
+                    Text("Log reading sessions to see detailed activity charts")
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(Theme.Colors.secondaryText)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(Theme.Spacing.xl)
+                .cardStyle()
             } else {
                 EmptyStateView(
                     icon: "chart.bar",
                     title: "No Data Yet",
-                    message: "Start logging reading sessions to see your activity"
+                    message: "Start reading to see your activity"
                 )
             }
         }
