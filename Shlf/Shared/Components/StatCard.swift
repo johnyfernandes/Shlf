@@ -53,8 +53,10 @@ struct StatCard: View {
             // Value and title
             VStack(alignment: .leading, spacing: 2) {
                 Text(value)
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundStyle(Theme.Colors.text)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                     .contentTransition(.numericText())
 
                 Text(title)
@@ -62,6 +64,7 @@ struct StatCard: View {
                     .foregroundStyle(Theme.Colors.secondaryText)
                     .textCase(.uppercase)
                     .tracking(0.6)
+                    .lineLimit(1)
             }
 
             Spacer(minLength: 0)
