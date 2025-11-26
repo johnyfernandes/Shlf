@@ -116,4 +116,13 @@ enum ReadingStatus: String, Codable, CaseIterable {
         case .didNotFinish: return "xmark.circle"
         }
     }
+
+    var shortName: String {
+        switch self {
+        case .wantToRead: return "Want to Read"
+        case .currentlyReading: return "Reading"
+        case .finished: return "Finished"
+        case .didNotFinish: return "DNF"
+        }
+    }
 }

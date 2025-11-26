@@ -31,27 +31,64 @@ struct AddBookView: View {
         NavigationStack {
             Form {
                 Section {
-                    HStack {
-                        Button {
-                            Task {
-                                await viewModel.scanBarcode()
+                    Button {
+                        viewModel.showSearch = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundStyle(Theme.Colors.primary)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Search for a Book")
+                                    .font(Theme.Typography.body)
+                                    .foregroundStyle(Theme.Colors.text)
+
+                                Text("Find by title, author, or ISBN")
+                                    .font(Theme.Typography.caption)
+                                    .foregroundStyle(Theme.Colors.secondaryText)
                             }
-                        } label: {
-                            Label("Scan Barcode", systemImage: "barcode.viewfinder")
+
+                            Spacer()
+
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(Theme.Colors.tertiaryText)
                         }
+                    }
 
-                        Spacer()
+                    Button {
+                        Task {
+                            await viewModel.scanBarcode()
+                        }
+                    } label: {
+                        HStack {
+                            Image(systemName: "barcode.viewfinder")
+                                .foregroundStyle(Theme.Colors.primary)
 
-                        Button("Search") {
-                            viewModel.showSearch = true
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Scan Barcode")
+                                    .font(Theme.Typography.body)
+                                    .foregroundStyle(Theme.Colors.text)
+
+                                Text("Use your camera to scan ISBN")
+                                    .font(Theme.Typography.caption)
+                                    .foregroundStyle(Theme.Colors.secondaryText)
+                            }
+
+                            Spacer()
+
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(Theme.Colors.tertiaryText)
                         }
                     }
                 }
 
-                Section("Book Information") {
+                Section("Or Add Manually") {
                     TextField("Title", text: $viewModel.title)
                     TextField("Author", text: $viewModel.author)
                     TextField("ISBN (Optional)", text: $viewModel.isbn)
+                        .keyboardType(.numberPad)
                     TextField("Total Pages (Optional)", value: $viewModel.totalPages, format: .number)
                         .keyboardType(.numberPad)
                 }

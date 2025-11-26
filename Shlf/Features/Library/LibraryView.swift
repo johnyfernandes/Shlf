@@ -71,12 +71,10 @@ struct LibraryView: View {
                             .font(.title2)
                     }
                 }
-            }
-            .safeAreaInset(edge: .top) {
-                filterPicker
-                    .padding(.horizontal, Theme.Spacing.md)
-                    .padding(.vertical, Theme.Spacing.xs)
-                    .background(.ultraThinMaterial)
+
+                ToolbarItem(placement: .secondaryAction) {
+                    filterPicker
+                }
             }
             .sheet(isPresented: $showAddBook) {
                 AddBookView()
@@ -86,23 +84,26 @@ struct LibraryView: View {
 
     private var filterPicker: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: Theme.Spacing.xs) {
+            HStack(spacing: Theme.Spacing.sm) {
                 FilterChip(
                     title: "All",
+                    count: allBooks.count,
                     isSelected: selectedFilter == nil,
                     action: { selectedFilter = nil }
                 )
 
                 ForEach(ReadingStatus.allCases, id: \.self) { status in
+                    let count = allBooks.filter { $0.readingStatus == status }.count
                     FilterChip(
-                        title: status.rawValue,
+                        title: status.shortName,
                         icon: status.icon,
-                        count: allBooks.filter { $0.readingStatus == status }.count,
+                        count: count,
                         isSelected: selectedFilter == status,
                         action: { selectedFilter = status }
                     )
                 }
             }
+            .padding(.horizontal, 4)
         }
     }
 }
@@ -170,33 +171,35 @@ struct BookRow: View {
 
 struct FilterChip: View {
     let title: String
-    var icon: String?
-    var count: Int?
+    var icon: String? = nil
+    var count: Int? = nil
     let isSelected: Bool
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: Theme.Spacing.xxs) {
+            HStack(spacing: 6) {
                 if let icon {
                     Image(systemName: icon)
-                        .font(.caption)
+                        .font(.system(size: 14, weight: .medium))
                 }
 
                 Text(title)
-                    .font(Theme.Typography.callout)
+                    .font(.system(size: 15, weight: isSelected ? .semibold : .regular))
 
                 if let count {
                     Text("(\(count))")
-                        .font(Theme.Typography.caption)
+                        .font(.system(size: 13, weight: .regular))
+                        .opacity(0.8)
                 }
             }
-            .padding(.horizontal, Theme.Spacing.sm)
-            .padding(.vertical, Theme.Spacing.xs)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
             .background(isSelected ? Theme.Colors.primary : Theme.Colors.secondaryBackground)
             .foregroundStyle(isSelected ? .white : Theme.Colors.text)
             .clipShape(Capsule())
         }
+        .buttonStyle(.plain)
     }
 }
 
