@@ -15,6 +15,9 @@ struct BookInfo {
     let totalPages: Int?
     let publishedDate: String?
     let description: String?
+    let subjects: [String]?
+    let publisher: String?
+    let language: String?
 }
 
 enum BookAPIError: Error {
@@ -79,7 +82,7 @@ final class BookAPIService {
 
     private func searchOpenLibrary(query: String) async throws -> [BookInfo] {
         let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
-        let fields = "title,author_name,cover_i,number_of_pages_median,first_publish_year,isbn"
+        let fields = "title,author_name,cover_i,number_of_pages_median,first_publish_year,isbn,subject,publisher,language"
         let urlString = "https://openlibrary.org/search.json?q=\(encodedQuery)&fields=\(fields)&limit=20"
 
         guard let url = URL(string: urlString) else {
@@ -119,6 +122,22 @@ final class BookAPIService {
 
         let publishedDate = json["publish_date"] as? String
 
+        let description: String?
+        if let desc = json["description"] as? String {
+            description = desc
+        } else if let descDict = json["description"] as? [String: Any],
+                  let value = descDict["value"] as? String {
+            description = value
+        } else {
+            description = nil
+        }
+
+        let subjects = (json["subjects"] as? [[String: Any]])?.compactMap { $0["name"] as? String }
+        let publishers = (json["publishers"] as? [[String: Any]])?.compactMap { $0["name"] as? String }
+        let publisher = publishers?.first
+
+        let language = extractLanguage(from: json)
+
         return BookInfo(
             title: title,
             author: author,
@@ -126,7 +145,10 @@ final class BookAPIService {
             coverImageURL: coverURL,
             totalPages: pages,
             publishedDate: publishedDate,
-            description: nil
+            description: description,
+            subjects: subjects,
+            publisher: publisher,
+            language: language
         )
     }
 
@@ -145,6 +167,12 @@ final class BookAPIService {
         }
 
         let publishedDate = json["first_publish_year"].flatMap { String(describing: $0) }
+        let subjects = (json["subject"] as? [String])?.prefix(8).map { String($0) }
+        let publisher = (json["publisher"] as? [String])?.first
+
+        // Extract language from search results
+        let languageCodes = json["language"] as? [String]
+        let language = languageCodes?.first.map { formatLanguageCode($0) }
 
         return BookInfo(
             title: title,
@@ -153,8 +181,45 @@ final class BookAPIService {
             coverImageURL: coverURL,
             totalPages: pages,
             publishedDate: publishedDate,
-            description: nil
+            description: nil,
+            subjects: subjects,
+            publisher: publisher,
+            language: language
         )
+    }
+
+    // MARK: - Helper Functions
+
+    private func extractLanguage(from json: [String: Any]) -> String? {
+        if let languages = json["languages"] as? [[String: Any]],
+           let firstLang = languages.first,
+           let key = firstLang["key"] as? String {
+            let code = key.replacingOccurrences(of: "/languages/", with: "")
+            return formatLanguageCode(code)
+        }
+        return nil
+    }
+
+    private func formatLanguageCode(_ code: String) -> String {
+        let languageMap: [String: String] = [
+            "eng": "English",
+            "ger": "German",
+            "spa": "Spanish",
+            "fre": "French",
+            "ita": "Italian",
+            "por": "Portuguese",
+            "rus": "Russian",
+            "jpn": "Japanese",
+            "chi": "Chinese",
+            "ara": "Arabic",
+            "hin": "Hindi",
+            "dut": "Dutch",
+            "pol": "Polish",
+            "tur": "Turkish",
+            "kor": "Korean"
+        ]
+
+        return languageMap[code.lowercased()] ?? code.uppercased()
     }
 
 }

@@ -25,6 +25,13 @@ final class Book {
     var notes: String
     var rating: Int?
 
+    // Additional metadata
+    var bookDescription: String?
+    var subjects: [String]?
+    var publisher: String?
+    var publishedDate: String?
+    var language: String?
+
     @Relationship(deleteRule: .cascade, inverse: \ReadingSession.book)
     var readingSessions: [ReadingSession]
 
@@ -42,7 +49,12 @@ final class Book {
         dateStarted: Date? = nil,
         dateFinished: Date? = nil,
         notes: String = "",
-        rating: Int? = nil
+        rating: Int? = nil,
+        bookDescription: String? = nil,
+        subjects: [String]? = nil,
+        publisher: String? = nil,
+        publishedDate: String? = nil,
+        language: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -58,6 +70,11 @@ final class Book {
         self.dateFinished = dateFinished
         self.notes = notes
         self.rating = rating
+        self.bookDescription = bookDescription
+        self.subjects = subjects
+        self.publisher = publisher
+        self.publishedDate = publishedDate
+        self.language = language
         self.readingSessions = []
     }
 

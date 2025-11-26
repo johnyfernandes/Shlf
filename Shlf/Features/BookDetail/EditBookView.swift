@@ -23,12 +23,37 @@ struct EditBookView: View {
                     ))
                 }
 
-                Section("Details") {
+                Section("Reading Progress") {
                     TextField("Total Pages", value: $book.totalPages, format: .number)
                         .keyboardType(.numberPad)
 
                     TextField("Current Page", value: $book.currentPage, format: .number)
                         .keyboardType(.numberPad)
+                }
+
+                Section("Publishing Details") {
+                    TextField("Publisher", text: Binding(
+                        get: { book.publisher ?? "" },
+                        set: { book.publisher = $0.isEmpty ? nil : $0 }
+                    ))
+
+                    TextField("Published Date", text: Binding(
+                        get: { book.publishedDate ?? "" },
+                        set: { book.publishedDate = $0.isEmpty ? nil : $0 }
+                    ))
+
+                    TextField("Language", text: Binding(
+                        get: { book.language ?? "" },
+                        set: { book.language = $0.isEmpty ? nil : $0 }
+                    ))
+                }
+
+                Section("Description") {
+                    TextEditor(text: Binding(
+                        get: { book.bookDescription ?? "" },
+                        set: { book.bookDescription = $0.isEmpty ? nil : $0 }
+                    ))
+                    .frame(minHeight: 100)
                 }
 
                 Section("Type & Status") {

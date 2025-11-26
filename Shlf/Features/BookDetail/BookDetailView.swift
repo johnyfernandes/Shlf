@@ -26,7 +26,17 @@ struct BookDetailView: View {
                     quickActions
                 }
 
+                if let description = book.bookDescription {
+                    descriptionSection(description)
+                }
+
+                metadataSection
+
                 progressSection
+
+                if let subjects = book.subjects, !subjects.isEmpty {
+                    subjectsSection(subjects)
+                }
 
                 if !book.readingSessions.isEmpty {
                     readingHistorySection
@@ -207,6 +217,95 @@ struct BookDetailView: View {
         }
     }
 
+    @ViewBuilder
+    private func descriptionSection(_ description: String) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Text("About This Book")
+                .font(Theme.Typography.title3)
+                .foregroundStyle(Theme.Colors.text)
+
+            Text(description)
+                .font(Theme.Typography.body)
+                .foregroundStyle(Theme.Colors.secondaryText)
+                .lineLimit(5)
+                .padding(Theme.Spacing.md)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .cardStyle()
+        }
+    }
+
+    @ViewBuilder
+    private var metadataSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Text("Details")
+                .font(Theme.Typography.title3)
+                .foregroundStyle(Theme.Colors.text)
+
+            VStack(spacing: Theme.Spacing.xs) {
+                if let publisher = book.publisher {
+                    MetadataRow(label: "Publisher", value: publisher, icon: "building.2")
+                }
+
+                if let publishedDate = book.publishedDate {
+                    MetadataRow(label: "Published", value: publishedDate, icon: "calendar")
+                }
+
+                if let language = book.language {
+                    MetadataRow(label: "Language", value: language, icon: "globe")
+                }
+
+                if let isbn = book.isbn {
+                    MetadataRow(label: "ISBN", value: isbn, icon: "barcode")
+                }
+
+                if let totalPages = book.totalPages {
+                    let readingTime = estimateReadingTime(pages: totalPages)
+                    MetadataRow(label: "Reading Time", value: readingTime, icon: "clock")
+                }
+            }
+            .padding(Theme.Spacing.md)
+            .cardStyle()
+        }
+    }
+
+    @ViewBuilder
+    private func subjectsSection(_ subjects: [String]) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Text("Genres & Topics")
+                .font(Theme.Typography.title3)
+                .foregroundStyle(Theme.Colors.text)
+
+            FlowLayout(spacing: Theme.Spacing.xs) {
+                ForEach(subjects.prefix(10), id: \.self) { subject in
+                    Text(subject)
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(Theme.Colors.primary)
+                        .padding(.horizontal, Theme.Spacing.sm)
+                        .padding(.vertical, Theme.Spacing.xxs)
+                        .background(Theme.Colors.primary.opacity(0.1))
+                        .clipShape(Capsule())
+                }
+            }
+            .padding(Theme.Spacing.md)
+            .cardStyle()
+        }
+    }
+
+    private func estimateReadingTime(pages: Int) -> String {
+        let minutesPerPage = 2.0
+        let totalMinutes = Double(pages) * minutesPerPage
+        let hours = Int(totalMinutes / 60)
+
+        if hours < 1 {
+            return "\(Int(totalMinutes)) min"
+        } else if hours < 24 {
+            return "~\(hours) hours"
+        } else {
+            let days = hours / 24
+            return "~\(days) days"
+        }
+    }
+
     private func markAsFinished() {
         book.readingStatus = .finished
         book.dateFinished = Date()
@@ -275,6 +374,81 @@ struct ReadingSessionRow: View {
     }
 }
 
+struct MetadataRow: View {
+    let label: String
+    let value: String
+    let icon: String
+
+    var body: some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            Image(systemName: icon)
+                .font(.caption)
+                .foregroundStyle(Theme.Colors.tertiaryText)
+                .frame(width: 20)
+
+            Text(label)
+                .font(Theme.Typography.callout)
+                .foregroundStyle(Theme.Colors.secondaryText)
+
+            Spacer()
+
+            Text(value)
+                .font(Theme.Typography.callout)
+                .foregroundStyle(Theme.Colors.text)
+        }
+    }
+}
+
+struct FlowLayout: Layout {
+    var spacing: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let result = FlowResult(
+            in: proposal.replacingUnspecifiedDimensions().width,
+            subviews: subviews,
+            spacing: spacing
+        )
+        return result.size
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let result = FlowResult(
+            in: bounds.width,
+            subviews: subviews,
+            spacing: spacing
+        )
+        for (index, subview) in subviews.enumerated() {
+            subview.place(at: CGPoint(x: bounds.minX + result.frames[index].minX, y: bounds.minY + result.frames[index].minY), proposal: .unspecified)
+        }
+    }
+
+    struct FlowResult {
+        var size = CGSize.zero
+        var frames = [CGRect]()
+
+        init(in maxWidth: CGFloat, subviews: Subviews, spacing: CGFloat) {
+            var currentX: CGFloat = 0
+            var currentY: CGFloat = 0
+            var lineHeight: CGFloat = 0
+
+            for subview in subviews {
+                let size = subview.sizeThatFits(.unspecified)
+                if currentX + size.width > maxWidth && currentX > 0 {
+                    currentX = 0
+                    currentY += lineHeight + spacing
+                    lineHeight = 0
+                }
+
+                frames.append(CGRect(x: currentX, y: currentY, width: size.width, height: size.height))
+                lineHeight = max(lineHeight, size.height)
+                currentX += size.width + spacing
+            }
+
+            self.size = CGSize(width: maxWidth, height: currentY + lineHeight)
+        }
+    }
+}
+
 #Preview {
     NavigationStack {
         BookDetailView(book: Book(
@@ -282,7 +456,12 @@ struct ReadingSessionRow: View {
             author: "F. Scott Fitzgerald",
             totalPages: 180,
             currentPage: 45,
-            readingStatus: .currentlyReading
+            readingStatus: .currentlyReading,
+            bookDescription: "A classic novel set in the Jazz Age, exploring themes of wealth, love, and the American Dream.",
+            subjects: ["Fiction", "Classic Literature", "Romance", "American Literature"],
+            publisher: "Scribner",
+            publishedDate: "1925",
+            language: "EN"
         ))
     }
     .modelContainer(for: [Book.self, ReadingSession.self], inMemory: true)

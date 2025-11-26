@@ -144,7 +144,12 @@ struct AddBookView: View {
             totalPages: viewModel.totalPages,
             currentPage: viewModel.currentPage,
             bookType: viewModel.bookType,
-            readingStatus: viewModel.readingStatus
+            readingStatus: viewModel.readingStatus,
+            bookDescription: viewModel.bookDescription,
+            subjects: viewModel.subjects,
+            publisher: viewModel.publisher,
+            publishedDate: viewModel.publishedDate,
+            language: viewModel.language
         )
 
         modelContext.insert(book)
@@ -162,6 +167,13 @@ final class AddBookViewModel {
     var bookType: BookType = .physical
     var readingStatus: ReadingStatus = .wantToRead
     var coverImageURL: URL?
+
+    // Additional metadata
+    var bookDescription: String?
+    var subjects: [String]?
+    var publisher: String?
+    var publishedDate: String?
+    var language: String?
 
     var showScanner = false
     var showSearch = false
@@ -203,6 +215,11 @@ final class AddBookViewModel {
         }
         coverImageURL = bookInfo.coverImageURL
         totalPages = bookInfo.totalPages
+        bookDescription = bookInfo.description
+        subjects = bookInfo.subjects
+        publisher = bookInfo.publisher
+        publishedDate = bookInfo.publishedDate
+        language = bookInfo.language
     }
 }
 
