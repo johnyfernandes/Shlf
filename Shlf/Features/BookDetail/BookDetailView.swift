@@ -45,7 +45,9 @@ struct BookDetailView: View {
                     metadataSection
                 }
 
-                progressSection
+                if book.readingStatus == .currentlyReading {
+                    progressSection
+                }
 
                 if let subjects = book.subjects, !subjects.isEmpty, profile?.showSubjects ?? true {
                     subjectsSection(subjects)
