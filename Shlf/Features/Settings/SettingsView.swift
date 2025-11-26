@@ -309,6 +309,7 @@ struct AboutView: View {
 }
 
 struct ReadingPreferencesView: View {
+    @Environment(\.modelContext) private var modelContext
     @Bindable var profile: UserProfile
 
     var body: some View {
@@ -327,6 +328,9 @@ struct ReadingPreferencesView: View {
                         .tag(true)
                 }
                 .pickerStyle(.inline)
+                .onChange(of: profile.useProgressSlider) { oldValue, newValue in
+                    try? modelContext.save()
+                }
 
                 Text(profile.useProgressSlider ?
                     "Drag the slider to quickly jump to any page" :
@@ -339,6 +343,9 @@ struct ReadingPreferencesView: View {
                 Section("Slider Options") {
                     Toggle(isOn: $profile.showSliderButtons) {
                         Label("Show +/- Buttons", systemImage: "plus.forwardslash.minus")
+                    }
+                    .onChange(of: profile.showSliderButtons) { oldValue, newValue in
+                        try? modelContext.save()
                     }
 
                     Text("Add increment/decrement buttons alongside the slider for quick adjustments")
