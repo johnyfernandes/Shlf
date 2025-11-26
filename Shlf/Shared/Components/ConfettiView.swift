@@ -68,16 +68,18 @@ class ConfettiUIView: UIView {
 
         for color in colors {
             let cell = CAEmitterCell()
-            cell.birthRate = 10
-            cell.lifetime = 4.0
-            cell.velocity = 200
-            cell.velocityRange = 100
-            cell.emissionLongitude = .pi
-            cell.emissionRange = .pi / 4
-            cell.spin = 3.5
-            cell.spinRange = 4.0
-            cell.scaleRange = 0.5
+            cell.birthRate = 6
+            cell.lifetime = 10.0  // Live longer
+            cell.lifetimeRange = 1.0
+            cell.velocity = 150  // Slower falling
+            cell.velocityRange = 50
+            cell.emissionLongitude = .pi  // Downward
+            cell.emissionRange = .pi / 6  // Narrow spread
+            cell.spin = 2.0  // Less spinning
+            cell.spinRange = 1.0
+            cell.scaleRange = 0.3
             cell.scale = 0.1
+            cell.yAcceleration = 100  // Gentle gravity
             cell.contents = createConfettiImage(color: color).cgImage
             cells.append(cell)
         }
@@ -100,8 +102,8 @@ class ConfettiUIView: UIView {
     func startConfetti() {
         emitterLayer?.birthRate = 1
 
-        // Stop emitting after 1 second
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        // Emit for 1.5 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             self.emitterLayer?.birthRate = 0
         }
     }
