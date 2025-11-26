@@ -44,13 +44,7 @@ final class BookAPIService {
     // MARK: - Public API
 
     func fetchBook(isbn: String) async throws -> BookInfo {
-        // Try Open Library first, fallback to Google Books
-        do {
-            return try await fetchFromOpenLibrary(isbn: isbn)
-        } catch {
-            print("Open Library failed, trying Google Books: \(error)")
-            return try await fetchFromGoogleBooks(isbn: isbn)
-        }
+        try await fetchFromOpenLibrary(isbn: isbn)
     }
 
     func searchBooks(query: String) async throws -> [BookInfo] {
@@ -162,62 +156,4 @@ final class BookAPIService {
         )
     }
 
-    // MARK: - Google Books API
-
-    private func fetchFromGoogleBooks(isbn: String) async throws -> BookInfo {
-        let cleanISBN = isbn.replacingOccurrences(of: "-", with: "")
-        let urlString = "https://www.googleapis.com/books/v1/volumes?q=isbn:\(cleanISBN)"
-
-        guard let url = URL(string: urlString) else {
-            throw BookAPIError.invalidISBN
-        }
-
-        let (data, response) = try await urlSession.data(from: url)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw BookAPIError.networkError
-        }
-
-        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let items = json["items"] as? [[String: Any]],
-              let firstItem = items.first,
-              let volumeInfo = firstItem["volumeInfo"] as? [String: Any] else {
-            throw BookAPIError.bookNotFound
-        }
-
-        return try parseGoogleBook(volumeInfo, isbn: isbn)
-    }
-
-    private func parseGoogleBook(_ volumeInfo: [String: Any], isbn: String) throws -> BookInfo {
-        guard let title = volumeInfo["title"] as? String else {
-            throw BookAPIError.invalidResponse
-        }
-
-        let authors = (volumeInfo["authors"] as? [String]) ?? []
-        let author = authors.first ?? "Unknown Author"
-
-        let pages = volumeInfo["pageCount"] as? Int
-
-        var coverURL: URL?
-        if let imageLinks = volumeInfo["imageLinks"] as? [String: String],
-           let thumbnail = imageLinks["thumbnail"] ?? imageLinks["smallThumbnail"] {
-            // Replace http with https for security
-            let secureURL = thumbnail.replacingOccurrences(of: "http://", with: "https://")
-            coverURL = URL(string: secureURL)
-        }
-
-        let publishedDate = volumeInfo["publishedDate"] as? String
-        let description = volumeInfo["description"] as? String
-
-        return BookInfo(
-            title: title,
-            author: author,
-            isbn: isbn,
-            coverImageURL: coverURL,
-            totalPages: pages,
-            publishedDate: publishedDate,
-            description: description
-        )
-    }
 }
