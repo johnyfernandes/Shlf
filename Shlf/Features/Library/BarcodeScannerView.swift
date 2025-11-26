@@ -7,18 +7,20 @@
 
 import SwiftUI
 import VisionKit
+import Vision
 
 struct BarcodeScannerView: View {
     @Environment(\.dismiss) private var dismiss
     let onScan: (String) -> Void
 
-    @State private var scanner = BarcodeScannerService()
-
     var body: some View {
         ZStack {
-            if let scannerVC = scanner.createScannerView() {
-                DataScannerRepresentable(scanner: scannerVC)
-                    .ignoresSafeArea()
+            if DataScannerViewController.isSupported && DataScannerViewController.isAvailable {
+                DataScannerRepresentable { isbn in
+                    onScan(isbn)
+                    dismiss()
+                }
+                .ignoresSafeArea()
             } else {
                 VStack(spacing: Theme.Spacing.lg) {
                     Image(systemName: "barcode.viewfinder")
@@ -66,27 +68,107 @@ struct BarcodeScannerView: View {
                     .padding(Theme.Spacing.lg)
             }
         }
-        .task {
-            do {
-                let isbn = try await scanner.scanBarcode()
-                onScan(isbn)
-                dismiss()
-            } catch {
-                print("Scan error: \(error)")
-                dismiss()
-            }
-        }
     }
 }
 
 struct DataScannerRepresentable: UIViewControllerRepresentable {
-    let scanner: DataScannerViewController
+    let onScan: (String) -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onScan: onScan)
+    }
 
     func makeUIViewController(context: Context) -> DataScannerViewController {
+        let recognizedDataTypes: Set<DataScannerViewController.RecognizedDataType> = [
+            .barcode(symbologies: [.ean13, .ean8, .upce, .code128])
+        ]
+
+        let scanner = DataScannerViewController(
+            recognizedDataTypes: recognizedDataTypes,
+            qualityLevel: .accurate,
+            recognizesMultipleItems: false,
+            isHighFrameRateTrackingEnabled: false,
+            isPinchToZoomEnabled: true,
+            isGuidanceEnabled: true,
+            isHighlightingEnabled: true
+        )
+
+        scanner.delegate = context.coordinator
+
+        // Start scanning immediately
+        try? scanner.startScanning()
+
+        print("✅ Scanner initialized with Coordinator delegate")
+
         return scanner
     }
 
     func updateUIViewController(_ uiViewController: DataScannerViewController, context: Context) {}
+
+    // MARK: - Coordinator
+
+    class Coordinator: NSObject, DataScannerViewControllerDelegate {
+        let onScan: (String) -> Void
+
+        init(onScan: @escaping (String) -> Void) {
+            self.onScan = onScan
+            super.init()
+            print("✅ Coordinator created")
+        }
+
+        func dataScanner(
+            _ dataScanner: DataScannerViewController,
+            didAdd addedItems: [RecognizedItem],
+            allItems: [RecognizedItem]
+        ) {
+            print("📱 Delegate called: didAdd \(addedItems.count) items")
+
+            // Process first barcode immediately
+            for item in addedItems {
+                if case .barcode(let barcode) = item,
+                   let payloadString = barcode.payloadStringValue {
+                    print("✅ Detected barcode: \(payloadString)")
+
+                    // Validate ISBN format
+                    let cleanBarcode = payloadString.replacingOccurrences(of: "-", with: "")
+
+                    if cleanBarcode.count == 10 || cleanBarcode.count == 13,
+                       cleanBarcode.allSatisfy({ $0.isNumber || $0 == "X" }) {
+                        print("✅ Valid ISBN: \(cleanBarcode)")
+                        dataScanner.stopScanning()
+                        onScan(cleanBarcode)
+                        return
+                    } else {
+                        print("⚠️ Invalid ISBN format: \(payloadString)")
+                    }
+                }
+            }
+        }
+
+        func dataScanner(
+            _ dataScanner: DataScannerViewController,
+            didTapOn item: RecognizedItem
+        ) {
+            print("📱 Delegate called: didTapOn")
+
+            if case .barcode(let barcode) = item,
+               let payloadString = barcode.payloadStringValue {
+                print("✅ Tapped barcode: \(payloadString)")
+
+                let cleanBarcode = payloadString.replacingOccurrences(of: "-", with: "")
+
+                if cleanBarcode.count == 10 || cleanBarcode.count == 13,
+                   cleanBarcode.allSatisfy({ $0.isNumber || $0 == "X" }) {
+                    dataScanner.stopScanning()
+                    onScan(cleanBarcode)
+                }
+            }
+        }
+
+        deinit {
+            print("❌ Coordinator deallocated")
+        }
+    }
 }
 
 #Preview {
