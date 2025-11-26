@@ -319,18 +319,36 @@ struct ReadingPreferencesView: View {
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
 
-            Section("Quick Progress Increment") {
-                Picker("Pages per tap", selection: $profile.pageIncrementAmount) {
-                    Text("1 page").tag(1)
-                    Text("5 pages").tag(5)
-                    Text("10 pages").tag(10)
-                    Text("25 pages").tag(25)
+            Section("Progress Tracking Mode") {
+                Picker("Tracking Style", selection: $profile.useProgressSlider) {
+                    Label("Stepper", systemImage: "plus.forwardslash.minus")
+                        .tag(false)
+                    Label("Slider", systemImage: "slider.horizontal.3")
+                        .tag(true)
                 }
                 .pickerStyle(.inline)
 
-                Text("When using +/- buttons, this is how many pages to add or remove with each tap")
+                Text(profile.useProgressSlider ?
+                    "Drag the slider to quickly jump to any page" :
+                    "Use +/- buttons to increment page by page")
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
+            }
+
+            if !profile.useProgressSlider {
+                Section("Quick Progress Increment") {
+                    Picker("Pages per tap", selection: $profile.pageIncrementAmount) {
+                        Text("1 page").tag(1)
+                        Text("5 pages").tag(5)
+                        Text("10 pages").tag(10)
+                        Text("25 pages").tag(25)
+                    }
+                    .pickerStyle(.inline)
+
+                    Text("When using +/- buttons, this is how many pages to add or remove with each tap")
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(Theme.Colors.secondaryText)
+                }
             }
         }
         .navigationTitle("Reading Preferences")

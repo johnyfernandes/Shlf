@@ -28,11 +28,18 @@ struct BookDetailView: View {
                 bookHeader
 
                 if book.readingStatus == .currentlyReading {
-                    QuickProgressStepper(
-                        book: book,
-                        incrementAmount: profile?.pageIncrementAmount ?? 1,
-                        onSave: handleProgressSave
-                    )
+                    if profile?.useProgressSlider == true {
+                        ProgressSliderView(
+                            book: book,
+                            onSave: handleProgressSave
+                        )
+                    } else {
+                        QuickProgressStepper(
+                            book: book,
+                            incrementAmount: profile?.pageIncrementAmount ?? 1,
+                            onSave: handleProgressSave
+                        )
+                    }
 
                     quickActions
                 }
