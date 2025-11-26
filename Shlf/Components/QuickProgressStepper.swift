@@ -22,63 +22,56 @@ struct QuickProgressStepper: View {
     }
 
     var body: some View {
-        VStack(spacing: Theme.Spacing.md) {
-            // Current page display with pending indicator
-            HStack(spacing: Theme.Spacing.sm) {
-                Text("Page")
-                    .font(Theme.Typography.callout)
-                    .foregroundStyle(Theme.Colors.secondaryText)
-
-                Text("\(book.currentPage)")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .foregroundStyle(Theme.Colors.text)
-                    .monospacedDigit()
-
-                if pendingPages != 0 {
-                    HStack(spacing: 4) {
-                        Image(systemName: "arrow.right")
-                            .font(.caption)
-                        Text("\(totalPendingPages)")
-                            .font(.system(size: 24, weight: .semibold, design: .rounded))
-                            .monospacedDigit()
-                    }
-                    .foregroundStyle(Theme.Colors.primary)
-                    .transition(.scale.combined(with: .opacity))
-                }
-
-                if let total = book.totalPages {
-                    Text("of \(total)")
-                        .font(Theme.Typography.callout)
-                        .foregroundStyle(Theme.Colors.tertiaryText)
-                }
-            }
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: pendingPages)
-
-            // Stepper buttons
-            HStack(spacing: Theme.Spacing.lg) {
+        VStack(spacing: Theme.Spacing.lg) {
+            // Compact stepper
+            HStack(spacing: Theme.Spacing.md) {
                 // Decrement button
                 Button {
                     decrementPage()
                 } label: {
-                    Image(systemName: "minus")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.white)
-                        .frame(width: 60, height: 60)
-                        .background(
-                            Circle()
-                                .fill(pendingPages <= -incrementAmount ? Theme.Colors.error : Theme.Colors.secondaryText)
+                    Image(systemName: "minus.circle.fill")
+                        .font(.system(size: 44))
+                        .foregroundStyle(
+                            pendingPages < 0 ? Theme.Colors.error : Theme.Colors.tertiaryText,
+                            Theme.Colors.secondaryBackground
                         )
-                        .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
                 }
                 .simultaneousGesture(
                     LongPressGesture(minimumDuration: 0.5)
-                        .onEnded { _ in
-                            startContinuousDecrement()
-                        }
+                        .onEnded { _ in startContinuousDecrement() }
                 )
                 .disabled(book.currentPage + pendingPages <= 0)
-                .opacity(book.currentPage + pendingPages <= 0 ? 0.5 : 1.0)
+                .opacity(book.currentPage + pendingPages <= 0 ? 0.3 : 1.0)
+
+                Spacer()
+
+                // Page display
+                VStack(spacing: 2) {
+                    HStack(spacing: 6) {
+                        Text("\(book.currentPage)")
+                            .font(.system(size: 36, weight: .bold, design: .rounded))
+                            .foregroundStyle(Theme.Colors.text)
+                            .monospacedDigit()
+
+                        if pendingPages != 0 {
+                            Image(systemName: "arrow.right")
+                                .font(.title3)
+                                .foregroundStyle(Theme.Colors.primary)
+
+                            Text("\(totalPendingPages)")
+                                .font(.system(size: 36, weight: .bold, design: .rounded))
+                                .foregroundStyle(Theme.Colors.primary)
+                                .monospacedDigit()
+                        }
+                    }
+                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: pendingPages)
+
+                    if let total = book.totalPages {
+                        Text("of \(total)")
+                            .font(Theme.Typography.subheadline)
+                            .foregroundStyle(Theme.Colors.tertiaryText)
+                    }
+                }
 
                 Spacer()
 
@@ -86,39 +79,29 @@ struct QuickProgressStepper: View {
                 Button {
                     incrementPage()
                 } label: {
-                    Image(systemName: "plus")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.white)
-                        .frame(width: 60, height: 60)
-                        .background(
-                            Circle()
-                                .fill(Theme.Colors.primary)
-                        )
-                        .shadow(color: Theme.Colors.primary.opacity(0.3), radius: 8, y: 4)
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 44))
+                        .symbolRenderingMode(.palette)
+                        .foregroundStyle(.white, Theme.Colors.primary)
                 }
                 .simultaneousGesture(
                     LongPressGesture(minimumDuration: 0.5)
-                        .onEnded { _ in
-                            startContinuousIncrement()
-                        }
+                        .onEnded { _ in startContinuousIncrement() }
                 )
                 .disabled(book.totalPages != nil && totalPendingPages >= book.totalPages!)
-                .opacity(book.totalPages != nil && totalPendingPages >= book.totalPages! ? 0.5 : 1.0)
+                .opacity(book.totalPages != nil && totalPendingPages >= book.totalPages! ? 0.3 : 1.0)
             }
-            .padding(.horizontal, Theme.Spacing.xl)
 
             // Save button (appears when there are pending changes)
             if showSaveButton {
                 Button {
                     saveProgress()
                 } label: {
-                    HStack {
+                    HStack(spacing: Theme.Spacing.xs) {
                         Text(pendingPages > 0 ? "Save +\(pendingPages) pages" : "Save \(pendingPages) pages")
-                            .font(Theme.Typography.headline)
-
-                        Image(systemName: "checkmark.circle.fill")
+                        Image(systemName: "checkmark")
                     }
+                    .font(Theme.Typography.headline)
                     .frame(maxWidth: .infinity)
                     .primaryButton()
                 }
