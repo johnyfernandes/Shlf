@@ -21,6 +21,7 @@ struct HomeView: View {
 
     @State private var showAddBook = false
     @State private var isEditingCards = false
+    @State private var draggingCard: StatCardType?
 
     private var profile: UserProfile {
         if let existing = profiles.first {
@@ -148,7 +149,7 @@ struct HomeView: View {
 
     private var statsSection: some View {
         HStack(spacing: Theme.Spacing.sm) {
-            ForEach(profile.homeCards) { cardType in
+            ForEach(Array(profile.homeCards.enumerated()), id: \.element) { index, cardType in
                 StatCard(
                     title: cardType.title,
                     value: getValue(for: cardType),
@@ -161,7 +162,8 @@ struct HomeView: View {
                         }
                     }
                 )
-                .onLongPressGesture(minimumDuration: 0.5) {
+                .opacity(draggingCard == cardType && isEditingCards ? 0.5 : 1.0)
+                .onLongPressGesture(minimumDuration: 0.3) {
                     if !isEditingCards {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -169,24 +171,26 @@ struct HomeView: View {
                         }
                     }
                 }
-                .onDrag {
-                    if isEditingCards {
-                        return NSItemProvider(object: cardType.rawValue as NSString)
-                    }
-                    return NSItemProvider()
-                }
-                .onDrop(of: [.text], delegate: CardDropDelegate(
-                    item: cardType,
-                    items: profile.homeCards,
-                    onMove: { from, to in
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            profile.homeCardOrder.move(
-                                fromOffsets: IndexSet(integer: from),
-                                toOffset: to
-                            )
+                .if(isEditingCards) { view in
+                    view
+                        .onDrag {
+                            self.draggingCard = cardType
+                            return NSItemProvider(object: cardType.rawValue as NSString)
                         }
-                    }
-                ))
+                        .onDrop(of: [.text], delegate: CardDropDelegate(
+                            item: cardType,
+                            items: profile.homeCards,
+                            draggingItem: $draggingCard,
+                            onMove: { from, to in
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    profile.homeCardOrder.move(
+                                        fromOffsets: IndexSet(integer: from),
+                                        toOffset: to
+                                    )
+                                }
+                            }
+                        ))
+                }
             }
         }
         .overlay(alignment: .topTrailing) {
@@ -194,6 +198,7 @@ struct HomeView: View {
                 Button {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                         isEditingCards = false
+                        draggingCard = nil
                     }
                 } label: {
                     Text("Done")
@@ -323,29 +328,46 @@ struct CurrentlyReadingCard: View {
     }
 }
 
+// MARK: - View Extension for Conditional Modifiers
+
+extension View {
+    @ViewBuilder
+    func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
+        }
+    }
+}
+
 // MARK: - Card Drop Delegate
 
 struct CardDropDelegate: DropDelegate {
     let item: StatCardType
     let items: [StatCardType]
+    @Binding var draggingItem: StatCardType?
     let onMove: (Int, Int) -> Void
 
     func performDrop(info: DropInfo) -> Bool {
+        draggingItem = nil
         return true
     }
 
-    func dropEntered(info: DropInfo) {
-        guard let fromIndex = items.firstIndex(of: item) else { return }
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        return DropProposal(operation: .move)
+    }
 
-        // Find the drop target
-        if let toIndex = items.firstIndex(where: { cardType in
-            _ = info.location
-            // Simple logic: if dragging past halfway, move to next position
-            return cardType != item
-        }) {
-            if fromIndex != toIndex {
-                onMove(fromIndex, toIndex > fromIndex ? toIndex + 1 : toIndex)
-            }
+    func dropEntered(info: DropInfo) {
+        guard let draggingItem = draggingItem,
+              draggingItem != item,
+              let fromIndex = items.firstIndex(of: draggingItem),
+              let toIndex = items.firstIndex(of: item) else {
+            return
+        }
+
+        if fromIndex != toIndex {
+            onMove(fromIndex, toIndex > fromIndex ? toIndex + 1 : toIndex)
         }
     }
 }
