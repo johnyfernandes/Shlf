@@ -113,9 +113,8 @@ struct LibraryView: View {
     // MARK: - Empty State
 
     private var emptyState: some View {
-        VStack(spacing: Theme.Spacing.xl) {
+        VStack {
             Spacer()
-                .frame(height: Theme.Spacing.xxxl)
 
             if searchText.isEmpty {
                 EmptyStateView(
@@ -135,6 +134,7 @@ struct LibraryView: View {
 
             Spacer()
         }
+        .frame(maxHeight: .infinity)
     }
 
     // MARK: - Books Section

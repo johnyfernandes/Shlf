@@ -165,9 +165,8 @@ struct HomeView: View {
     // MARK: - Empty State
 
     private var emptyCurrentlyReading: some View {
-        VStack(spacing: Theme.Spacing.xl) {
+        VStack {
             Spacer()
-                .frame(height: Theme.Spacing.xxl)
 
             EmptyStateView(
                 icon: "book.pages",
@@ -179,6 +178,7 @@ struct HomeView: View {
 
             Spacer()
         }
+        .frame(maxHeight: .infinity)
     }
 
     // MARK: - Currently Reading Section
