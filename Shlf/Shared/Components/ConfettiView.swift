@@ -19,6 +19,7 @@ struct ConfettiModifier: ViewModifier {
                     if isActive {
                         ConfettiEffectView()
                             .allowsHitTesting(false)
+                            .transition(.opacity.animation(.easeInOut(duration: 0.3)))
                     }
                 }
             )
@@ -28,7 +29,9 @@ struct ConfettiModifier: ViewModifier {
                     counter += 1
                     // Auto-dismiss after animation
                     DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
-                        isActive = false
+                        withAnimation(.easeOut(duration: 0.5)) {
+                            isActive = false
+                        }
                     }
                 }
             }
@@ -37,11 +40,13 @@ struct ConfettiModifier: ViewModifier {
 
 struct ConfettiEffectView: UIViewRepresentable {
     func makeUIView(context: Context) -> ConfettiUIView {
-        return ConfettiUIView()
+        let view = ConfettiUIView()
+        view.startConfetti()
+        return view
     }
 
     func updateUIView(_ uiView: ConfettiUIView, context: Context) {
-        uiView.startConfetti()
+        // Do nothing - only start confetti once when view is created
     }
 }
 

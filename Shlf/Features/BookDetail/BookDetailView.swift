@@ -37,6 +37,10 @@ struct BookDetailView: View {
                             showConfetti: $showConfetti,
                             onSave: handleProgressSave
                         )
+                        .transition(.asymmetric(
+                            insertion: .scale.combined(with: .opacity),
+                            removal: .scale(scale: 0.95).combined(with: .opacity)
+                        ))
                     } else {
                         QuickProgressStepper(
                             book: book,
@@ -44,6 +48,10 @@ struct BookDetailView: View {
                             showConfetti: $showConfetti,
                             onSave: handleProgressSave
                         )
+                        .transition(.asymmetric(
+                            insertion: .scale.combined(with: .opacity),
+                            removal: .scale(scale: 0.95).combined(with: .opacity)
+                        ))
                     }
                 }
 

@@ -125,14 +125,19 @@ struct QuickProgressStepper: View {
         }
         .alert("Finished Reading?", isPresented: $showFinishAlert) {
             Button("Mark as Finished") {
-                book.currentPage = totalPendingPages
-                book.readingStatus = .finished
-                book.dateFinished = Date()
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.75)) {
+                    book.currentPage = totalPendingPages
+                    book.readingStatus = .finished
+                    book.dateFinished = Date()
                     pendingPages = 0
                     showSaveButton = false
                 }
-                showConfetti = true
+
+                // Delay confetti slightly for smoother transition
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    showConfetti = true
+                }
+
                 onSave()
             }
             Button("Keep Reading") {

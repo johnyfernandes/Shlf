@@ -212,13 +212,18 @@ struct ProgressSliderView: View {
         }
         .alert("Finished Reading?", isPresented: $showFinishAlert) {
             Button("Mark as Finished") {
-                book.currentPage = currentPage
-                book.readingStatus = .finished
-                book.dateFinished = Date()
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.75)) {
+                    book.currentPage = currentPage
+                    book.readingStatus = .finished
+                    book.dateFinished = Date()
                     showSaveButton = false
                 }
-                showConfetti = true
+
+                // Delay confetti slightly for smoother transition
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    showConfetti = true
+                }
+
                 onSave()
             }
             Button("Keep Reading") {
