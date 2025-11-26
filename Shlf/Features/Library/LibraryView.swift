@@ -37,26 +37,42 @@ struct LibraryView: View {
         NavigationStack {
             Group {
                 if filteredBooks.isEmpty {
-                    EmptyStateView(
-                        icon: "books.vertical",
-                        title: searchText.isEmpty ? "No Books" : "No Results",
-                        message: searchText.isEmpty ? "Add your first book to get started" : "Try a different search term",
-                        actionTitle: searchText.isEmpty ? "Add Book" : nil,
-                        action: searchText.isEmpty ? { showAddBook = true } : nil
-                    )
+                    VStack(spacing: 0) {
+                        filterPicker
+                            .padding(.horizontal)
+                            .padding(.vertical, 8)
+
+                        Spacer()
+
+                        EmptyStateView(
+                            icon: "books.vertical",
+                            title: searchText.isEmpty ? "No Books" : "No Results",
+                            message: searchText.isEmpty ? "Add your first book to get started" : "Try a different search term",
+                            actionTitle: searchText.isEmpty ? "Add Book" : nil,
+                            action: searchText.isEmpty ? { showAddBook = true } : nil
+                        )
+
+                        Spacer()
+                    }
                 } else {
                     ScrollView {
-                        LazyVStack(spacing: Theme.Spacing.md) {
-                            ForEach(filteredBooks) { book in
-                                NavigationLink {
-                                    BookDetailView(book: book)
-                                } label: {
-                                    BookRow(book: book)
+                        VStack(spacing: 0) {
+                            filterPicker
+                                .padding(.horizontal)
+                                .padding(.vertical, 8)
+
+                            LazyVStack(spacing: Theme.Spacing.md) {
+                                ForEach(filteredBooks) { book in
+                                    NavigationLink {
+                                        BookDetailView(book: book)
+                                    } label: {
+                                        BookRow(book: book)
+                                    }
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
                             }
+                            .padding(Theme.Spacing.md)
                         }
-                        .padding(Theme.Spacing.md)
                     }
                 }
             }
@@ -70,10 +86,6 @@ struct LibraryView: View {
                         Image(systemName: "plus.circle.fill")
                             .font(.title2)
                     }
-                }
-
-                ToolbarItem(placement: .secondaryAction) {
-                    filterPicker
                 }
             }
             .sheet(isPresented: $showAddBook) {
