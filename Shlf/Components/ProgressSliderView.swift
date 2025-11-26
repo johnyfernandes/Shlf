@@ -226,7 +226,7 @@ struct ProgressSliderView: View {
                     showConfetti = true
                 }
 
-                onSave(abs(pagesRead))
+                onSave(pagesRead)
             }
             Button("Keep Reading") {
                 applyProgressUpdate()
@@ -291,7 +291,7 @@ struct ProgressSliderView: View {
             showSaveButton = false
         }
 
-        onSave(abs(pagesRead))
+        onSave(pagesRead)
     }
 
     private func incrementPage() {

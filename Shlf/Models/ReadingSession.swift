@@ -43,7 +43,7 @@ final class ReadingSession {
     }
 
     var pagesRead: Int {
-        max(0, endPage - startPage)
+        endPage - startPage // Allow negative values for corrections
     }
 
     var isActive: Bool {

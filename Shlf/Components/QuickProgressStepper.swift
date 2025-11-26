@@ -140,7 +140,7 @@ struct QuickProgressStepper: View {
                     showConfetti = true
                 }
 
-                onSave(abs(pagesRead))
+                onSave(pagesRead)
             }
             Button("Keep Reading") {
                 applyProgressUpdate()
@@ -244,7 +244,7 @@ struct QuickProgressStepper: View {
             showSaveButton = false
         }
 
-        onSave(abs(pagesRead))
+        onSave(pagesRead)
     }
 }
 

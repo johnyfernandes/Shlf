@@ -201,16 +201,12 @@ final class GamificationEngine {
     }
 
     func totalPagesRead() -> Int {
-        // Get pages from reading sessions
+        // ONLY count reading sessions (including auto-generated ones)
+        // Auto-generated sessions now handle corrections with negative values
         let sessionDescriptor = FetchDescriptor<ReadingSession>()
         let sessionPages = (try? modelContext.fetch(sessionDescriptor))?.reduce(0) { $0 + $1.pagesRead } ?? 0
 
-        // Also count current progress in books (for users who don't log sessions)
-        let bookDescriptor = FetchDescriptor<Book>()
-        let bookPages = (try? modelContext.fetch(bookDescriptor))?.reduce(0) { $0 + $1.currentPage } ?? 0
-
-        // Return the higher value (avoid double counting if sessions exist)
-        return max(sessionPages, bookPages)
+        return max(0, sessionPages) // Don't show negative if user makes big corrections
     }
 
     func totalReadingMinutes() -> Int {
