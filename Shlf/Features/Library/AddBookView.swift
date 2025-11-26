@@ -217,9 +217,7 @@ final class AddBookViewModel {
         totalPages = bookInfo.totalPages
         bookDescription = bookInfo.description
         subjects = bookInfo.subjects
-        publisher = bookInfo.publisher
-        publishedDate = bookInfo.publishedDate
-        language = bookInfo.language
+        // Don't populate publisher, publishedDate, language from API
     }
 }
 

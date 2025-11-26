@@ -12,10 +12,15 @@ struct BookDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Bindable var book: Book
+    @Query private var profiles: [UserProfile]
 
     @State private var showLogSession = false
     @State private var showEditBook = false
     @State private var showDeleteAlert = false
+
+    private var profile: UserProfile? {
+        profiles.first
+    }
 
     var body: some View {
         ScrollView {
@@ -26,23 +31,25 @@ struct BookDetailView: View {
                     quickActions
                 }
 
-                if let description = book.bookDescription {
+                if let description = book.bookDescription, profile?.showDescription ?? true {
                     descriptionSection(description)
                 }
 
-                metadataSection
+                if profile?.showMetadata ?? true {
+                    metadataSection
+                }
 
                 progressSection
 
-                if let subjects = book.subjects, !subjects.isEmpty {
+                if let subjects = book.subjects, !subjects.isEmpty, profile?.showSubjects ?? true {
                     subjectsSection(subjects)
                 }
 
-                if !book.readingSessions.isEmpty {
+                if !book.readingSessions.isEmpty, profile?.showReadingHistory ?? true {
                     readingHistorySection
                 }
 
-                if !book.notes.isEmpty {
+                if !book.notes.isEmpty, profile?.showNotes ?? true {
                     notesSection
                 }
             }
@@ -236,35 +243,43 @@ struct BookDetailView: View {
 
     @ViewBuilder
     private var metadataSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("Details")
-                .font(Theme.Typography.title3)
-                .foregroundStyle(Theme.Colors.text)
+        let hasAnyVisibleMetadata = (book.publisher != nil && (profile?.showPublisher ?? true)) ||
+                                   (book.publishedDate != nil && (profile?.showPublishedDate ?? true)) ||
+                                   (book.language != nil && (profile?.showLanguage ?? true)) ||
+                                   (book.isbn != nil && (profile?.showISBN ?? true)) ||
+                                   (book.totalPages != nil && (profile?.showReadingTime ?? true))
 
-            VStack(spacing: Theme.Spacing.xs) {
-                if let publisher = book.publisher {
-                    MetadataRow(label: "Publisher", value: publisher, icon: "building.2")
-                }
+        if hasAnyVisibleMetadata {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                Text("Details")
+                    .font(Theme.Typography.title3)
+                    .foregroundStyle(Theme.Colors.text)
 
-                if let publishedDate = book.publishedDate {
-                    MetadataRow(label: "Published", value: publishedDate, icon: "calendar")
-                }
+                VStack(spacing: Theme.Spacing.xs) {
+                    if let publisher = book.publisher, profile?.showPublisher ?? true {
+                        MetadataRow(label: "Publisher", value: publisher, icon: "building.2")
+                    }
 
-                if let language = book.language {
-                    MetadataRow(label: "Language", value: language, icon: "globe")
-                }
+                    if let publishedDate = book.publishedDate, profile?.showPublishedDate ?? true {
+                        MetadataRow(label: "Published", value: publishedDate, icon: "calendar")
+                    }
 
-                if let isbn = book.isbn {
-                    MetadataRow(label: "ISBN", value: isbn, icon: "barcode")
-                }
+                    if let language = book.language, profile?.showLanguage ?? true {
+                        MetadataRow(label: "Language", value: language, icon: "globe")
+                    }
 
-                if let totalPages = book.totalPages {
-                    let readingTime = estimateReadingTime(pages: totalPages)
-                    MetadataRow(label: "Reading Time", value: readingTime, icon: "clock")
+                    if let isbn = book.isbn, profile?.showISBN ?? true {
+                        MetadataRow(label: "ISBN", value: isbn, icon: "barcode")
+                    }
+
+                    if let totalPages = book.totalPages, profile?.showReadingTime ?? true {
+                        let readingTime = estimateReadingTime(pages: totalPages)
+                        MetadataRow(label: "Reading Time", value: readingTime, icon: "clock")
+                    }
                 }
+                .padding(Theme.Spacing.md)
+                .cardStyle()
             }
-            .padding(Theme.Spacing.md)
-            .cardStyle()
         }
     }
 

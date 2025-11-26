@@ -32,6 +32,14 @@ struct SettingsView: View {
             Form {
                 proSection
 
+                Section("Book Details") {
+                    NavigationLink {
+                        BookDetailCustomizationView(profile: profile)
+                    } label: {
+                        Label("Customize Book Details", systemImage: "slider.horizontal.3")
+                    }
+                }
+
                 Section("Sync") {
                     Toggle("iCloud Sync", isOn: Binding(
                         get: { profile.cloudSyncEnabled },
@@ -290,6 +298,83 @@ struct AboutView: View {
             .padding(Theme.Spacing.xl)
         }
         .navigationTitle("About")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+struct BookDetailCustomizationView: View {
+    @Bindable var profile: UserProfile
+
+    var body: some View {
+        Form {
+            Section {
+                Text("Choose which sections to show on book detail pages")
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(Theme.Colors.secondaryText)
+            }
+
+            Section("Sections") {
+                Toggle(isOn: $profile.showDescription) {
+                    Label("Description", systemImage: "text.alignleft")
+                }
+
+                Toggle(isOn: $profile.showMetadata) {
+                    Label("Details", systemImage: "info.circle")
+                }
+
+                Toggle(isOn: $profile.showSubjects) {
+                    Label("Genres & Topics", systemImage: "tag")
+                }
+
+                Toggle(isOn: $profile.showReadingHistory) {
+                    Label("Reading History", systemImage: "clock")
+                }
+
+                Toggle(isOn: $profile.showNotes) {
+                    Label("Notes", systemImage: "note.text")
+                }
+            }
+
+            if profile.showMetadata {
+                Section("Details Fields") {
+                    Toggle(isOn: $profile.showPublisher) {
+                        Label("Publisher", systemImage: "building.2")
+                    }
+
+                    Toggle(isOn: $profile.showPublishedDate) {
+                        Label("Published Date", systemImage: "calendar")
+                    }
+
+                    Toggle(isOn: $profile.showLanguage) {
+                        Label("Language", systemImage: "globe")
+                    }
+
+                    Toggle(isOn: $profile.showISBN) {
+                        Label("ISBN", systemImage: "barcode")
+                    }
+
+                    Toggle(isOn: $profile.showReadingTime) {
+                        Label("Reading Time", systemImage: "clock")
+                    }
+                }
+            }
+
+            Section {
+                Button("Reset to Defaults") {
+                    profile.showDescription = true
+                    profile.showMetadata = true
+                    profile.showSubjects = true
+                    profile.showReadingHistory = true
+                    profile.showNotes = true
+                    profile.showPublisher = true
+                    profile.showPublishedDate = true
+                    profile.showLanguage = true
+                    profile.showISBN = true
+                    profile.showReadingTime = true
+                }
+            }
+        }
+        .navigationTitle("Customize Book Details")
         .navigationBarTitleDisplayMode(.inline)
     }
 }

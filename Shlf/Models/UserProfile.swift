@@ -19,6 +19,20 @@ final class UserProfile {
     var isProUser: Bool
     var cloudSyncEnabled: Bool
 
+    // Book Detail Display Preferences
+    var showDescription: Bool
+    var showMetadata: Bool
+    var showSubjects: Bool
+    var showReadingHistory: Bool
+    var showNotes: Bool
+
+    // Metadata Field Preferences
+    var showPublisher: Bool
+    var showPublishedDate: Bool
+    var showLanguage: Bool
+    var showISBN: Bool
+    var showReadingTime: Bool
+
     @Relationship(deleteRule: .cascade)
     var readingGoals: [ReadingGoal]
 
@@ -33,7 +47,17 @@ final class UserProfile {
         lastReadingDate: Date? = nil,
         hasCompletedOnboarding: Bool = false,
         isProUser: Bool = false,
-        cloudSyncEnabled: Bool = false
+        cloudSyncEnabled: Bool = false,
+        showDescription: Bool = true,
+        showMetadata: Bool = true,
+        showSubjects: Bool = true,
+        showReadingHistory: Bool = true,
+        showNotes: Bool = true,
+        showPublisher: Bool = true,
+        showPublishedDate: Bool = true,
+        showLanguage: Bool = true,
+        showISBN: Bool = true,
+        showReadingTime: Bool = true
     ) {
         self.id = id
         self.totalXP = totalXP
@@ -43,6 +67,16 @@ final class UserProfile {
         self.hasCompletedOnboarding = hasCompletedOnboarding
         self.isProUser = isProUser
         self.cloudSyncEnabled = cloudSyncEnabled
+        self.showDescription = showDescription
+        self.showMetadata = showMetadata
+        self.showSubjects = showSubjects
+        self.showReadingHistory = showReadingHistory
+        self.showNotes = showNotes
+        self.showPublisher = showPublisher
+        self.showPublishedDate = showPublishedDate
+        self.showLanguage = showLanguage
+        self.showISBN = showISBN
+        self.showReadingTime = showReadingTime
         self.readingGoals = []
         self.achievements = []
     }
