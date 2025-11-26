@@ -26,32 +26,52 @@ struct StatCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             HStack {
-                if let gradient {
-                    Image(systemName: icon)
-                        .font(.title3)
-                        .foregroundStyle(gradient)
-                } else {
-                    Image(systemName: icon)
-                        .font(.title3)
-                        .foregroundStyle(Theme.Colors.primary)
+                ZStack {
+                    if let gradient {
+                        Circle()
+                            .fill(gradient)
+                            .frame(width: 48, height: 48)
+
+                        Image(systemName: icon)
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white)
+                    } else {
+                        Circle()
+                            .fill(Theme.Colors.primary.opacity(0.15))
+                            .frame(width: 48, height: 48)
+
+                        Image(systemName: icon)
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(Theme.Colors.primary)
+                    }
                 }
 
                 Spacer()
             }
 
-            Text(value)
-                .font(Theme.Typography.title)
-                .foregroundStyle(Theme.Colors.text)
+            Spacer()
 
-            Text(title)
-                .font(Theme.Typography.caption)
-                .foregroundStyle(Theme.Colors.secondaryText)
+            VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
+                Text(value)
+                    .font(Theme.Typography.title)
+                    .foregroundStyle(Theme.Colors.text)
+                    .contentTransition(.numericText())
+
+                Text(title)
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(Theme.Colors.secondaryText)
+                    .textCase(.uppercase)
+                    .tracking(0.5)
+            }
         }
-        .padding(Theme.Spacing.md)
+        .padding(Theme.Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .cardStyle()
+        .frame(height: 140)
+        .cardStyle(elevation: Theme.Elevation.level2)
     }
 }
 

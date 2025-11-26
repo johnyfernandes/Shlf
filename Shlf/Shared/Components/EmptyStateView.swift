@@ -29,27 +29,46 @@ struct EmptyStateView: View {
     }
 
     var body: some View {
-        VStack(spacing: Theme.Spacing.lg) {
-            Image(systemName: icon)
-                .font(.system(size: 60))
-                .foregroundStyle(Theme.Colors.tertiaryText)
+        VStack(spacing: Theme.Spacing.xl) {
+            ZStack {
+                Circle()
+                    .fill(Theme.Colors.primary.opacity(0.08))
+                    .frame(width: 120, height: 120)
 
-            VStack(spacing: Theme.Spacing.xs) {
+                Circle()
+                    .fill(Theme.Colors.primary.opacity(0.05))
+                    .frame(width: 100, height: 100)
+
+                Image(systemName: icon)
+                    .font(.system(size: 48))
+                    .fontWeight(.medium)
+                    .foregroundStyle(Theme.Colors.primary.opacity(0.6))
+            }
+
+            VStack(spacing: Theme.Spacing.sm) {
                 Text(title)
                     .font(Theme.Typography.title2)
                     .foregroundStyle(Theme.Colors.text)
 
                 Text(message)
-                    .font(Theme.Typography.body)
+                    .font(Theme.Typography.callout)
                     .foregroundStyle(Theme.Colors.secondaryText)
                     .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+                    .padding(.horizontal, Theme.Spacing.md)
             }
 
             if let actionTitle, let action {
                 Button(action: action) {
-                    Text(actionTitle)
-                        .primaryButton()
+                    HStack(spacing: Theme.Spacing.xs) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.body)
+
+                        Text(actionTitle)
+                    }
+                    .primaryButton()
                 }
+                .padding(.top, Theme.Spacing.sm)
             }
         }
         .padding(Theme.Spacing.xl)
