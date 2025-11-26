@@ -162,7 +162,7 @@ struct HomeView: View {
                         }
                     }
                 )
-                .opacity(draggingCard == cardType && isEditingCards ? 0.5 : 1.0)
+                .scaleEffect(draggingCard == cardType && isEditingCards ? 1.05 : 1.0)
                 .onLongPressGesture(minimumDuration: 0.3) {
                     if !isEditingCards {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
@@ -174,7 +174,10 @@ struct HomeView: View {
                 .if(isEditingCards) { view in
                     view
                         .onDrag {
-                            self.draggingCard = cardType
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
+                                self.draggingCard = cardType
+                            }
                             return NSItemProvider(object: cardType.rawValue as NSString)
                         }
                         .onDrop(of: [.text], delegate: CardDropDelegate(
@@ -349,26 +352,22 @@ struct CardDropDelegate: DropDelegate {
     @Binding var draggingItem: StatCardType?
     let onMove: (Int, Int) -> Void
 
-    func performDrop(info: DropInfo) -> Bool {
-        draggingItem = nil
-        return true
-    }
-
-    func dropUpdated(info: DropInfo) -> DropProposal? {
-        return DropProposal(operation: .move)
-    }
-
     func dropEntered(info: DropInfo) {
         guard let draggingItem = draggingItem,
-              draggingItem != item,
-              let fromIndex = items.firstIndex(of: draggingItem),
-              let toIndex = items.firstIndex(of: item) else {
-            return
-        }
+              draggingItem != item else { return }
 
-        if fromIndex != toIndex {
+        if let fromIndex = items.firstIndex(of: draggingItem),
+           let toIndex = items.firstIndex(of: item),
+           fromIndex != toIndex {
             onMove(fromIndex, toIndex > fromIndex ? toIndex + 1 : toIndex)
         }
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+        withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
+            draggingItem = nil
+        }
+        return true
     }
 }
 
