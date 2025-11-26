@@ -15,6 +15,7 @@ struct BookSearchView: View {
     @State private var searchResults: [BookInfo] = []
     @State private var isSearching = false
     @State private var searchTask: Task<Void, Never>?
+    @FocusState private var isSearchFocused: Bool
 
     private let bookAPI = BookAPIService()
 
@@ -22,31 +23,39 @@ struct BookSearchView: View {
         NavigationStack {
             Group {
                 if searchResults.isEmpty && !isSearching && !searchText.isEmpty {
-                    EmptyStateView(
-                        icon: "magnifyingglass",
-                        title: "No Results",
-                        message: "Try a different search term"
-                    )
-                } else if searchResults.isEmpty {
-                    EmptyStateView(
-                        icon: "books.vertical",
-                        title: "Search for Books",
-                        message: "Enter a title, author, or ISBN to search"
-                    )
+                    ContentUnavailableView {
+                        Label("No Results", systemImage: "magnifyingglass")
+                    } description: {
+                        Text("Try searching with a different title, author, or ISBN")
+                    }
+                } else if searchResults.isEmpty && !isSearching {
+                    ContentUnavailableView {
+                        Label("Search for Books", systemImage: "books.vertical")
+                    } description: {
+                        Text("Find books by title, author, or ISBN")
+                    }
                 } else {
-                    List(Array(searchResults.enumerated()), id: \.offset) { index, bookInfo in
-                        Button {
-                            onSelect(bookInfo)
-                            dismiss()
-                        } label: {
-                            BookSearchResultRow(bookInfo: bookInfo)
+                    List {
+                        ForEach(Array(searchResults.enumerated()), id: \.offset) { index, bookInfo in
+                            Button {
+                                onSelect(bookInfo)
+                                dismiss()
+                            } label: {
+                                BookSearchResultRow(bookInfo: bookInfo)
+                            }
+                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                         }
                     }
+                    .listStyle(.plain)
                 }
             }
             .navigationTitle("Search Books")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.large)
             .searchable(text: $searchText, prompt: "Title, author, or ISBN")
+            .searchFocused($isSearchFocused)
+            .onAppear {
+                isSearchFocused = true
+            }
             .onChange(of: searchText) { oldValue, newValue in
                 searchTask?.cancel()
                 searchTask = Task {
@@ -55,8 +64,15 @@ struct BookSearchView: View {
             }
             .overlay {
                 if isSearching {
-                    ProgressView()
-                        .scaleEffect(1.5)
+                    VStack {
+                        Spacer()
+                        ProgressView()
+                            .scaleEffect(1.5)
+                            .padding()
+                            .background(.ultraThinMaterial)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        Spacer()
+                    }
                 }
             }
             .toolbar {

@@ -35,46 +35,46 @@ struct LibraryView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
+            List {
+                Section {
+                    filterPicker
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
+
                 if filteredBooks.isEmpty {
-                    VStack(spacing: 0) {
-                        filterPicker
-                            .padding(.horizontal)
-                            .padding(.vertical, 8)
-
-                        Spacer()
-
-                        EmptyStateView(
-                            icon: "books.vertical",
-                            title: searchText.isEmpty ? "No Books" : "No Results",
-                            message: searchText.isEmpty ? "Add your first book to get started" : "Try a different search term",
-                            actionTitle: searchText.isEmpty ? "Add Book" : nil,
-                            action: searchText.isEmpty ? { showAddBook = true } : nil
-                        )
-
-                        Spacer()
-                    }
-                } else {
-                    ScrollView {
-                        VStack(spacing: 0) {
-                            filterPicker
-                                .padding(.horizontal)
-                                .padding(.vertical, 8)
-
-                            LazyVStack(spacing: Theme.Spacing.md) {
-                                ForEach(filteredBooks) { book in
-                                    NavigationLink {
-                                        BookDetailView(book: book)
-                                    } label: {
-                                        BookRow(book: book)
-                                    }
-                                    .buttonStyle(.plain)
+                    Section {
+                        if searchText.isEmpty {
+                            ContentUnavailableView {
+                                Label("No Books", systemImage: "books.vertical")
+                            } description: {
+                                Text("Add your first book to get started")
+                            } actions: {
+                                Button("Add Book") {
+                                    showAddBook = true
                                 }
+                                .buttonStyle(.borderedProminent)
                             }
-                            .padding(Theme.Spacing.md)
+                        } else {
+                            ContentUnavailableView.search(text: searchText)
+                        }
+                    }
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+                } else {
+                    Section {
+                        ForEach(filteredBooks) { book in
+                            NavigationLink(value: book) {
+                                BookRow(book: book)
+                            }
+                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                         }
                     }
                 }
+            }
+            .listStyle(.plain)
+            .navigationDestination(for: Book.self) { book in
+                BookDetailView(book: book)
             }
             .navigationTitle("Library")
             .searchable(text: $searchText, prompt: "Search books")
@@ -115,7 +115,8 @@ struct LibraryView: View {
                     )
                 }
             }
-            .padding(.horizontal, 4)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
         }
     }
 }
@@ -128,8 +129,8 @@ struct BookRow: View {
             BookCoverView(
                 imageURL: book.coverImageURL,
                 title: book.title,
-                width: 70,
-                height: 105
+                width: 60,
+                height: 90
             )
 
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
@@ -171,13 +172,7 @@ struct BookRow: View {
             }
 
             Spacer()
-
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundStyle(Theme.Colors.tertiaryText)
         }
-        .padding(Theme.Spacing.md)
-        .cardStyle()
     }
 }
 
