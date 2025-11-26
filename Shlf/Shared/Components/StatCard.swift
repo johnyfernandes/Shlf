@@ -26,51 +26,48 @@ struct StatCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-            HStack {
-                ZStack {
-                    if let gradient {
-                        Circle()
-                            .fill(gradient)
-                            .frame(width: 48, height: 48)
+        HStack(spacing: Theme.Spacing.md) {
+            // Icon
+            ZStack {
+                if let gradient {
+                    Circle()
+                        .fill(gradient)
+                        .frame(width: 52, height: 52)
 
-                        Image(systemName: icon)
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.white)
-                    } else {
-                        Circle()
-                            .fill(Theme.Colors.primary.opacity(0.15))
-                            .frame(width: 48, height: 48)
+                    Image(systemName: icon)
+                        .font(.system(size: 22))
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                } else {
+                    Circle()
+                        .fill(Theme.Colors.primary.opacity(0.12))
+                        .frame(width: 52, height: 52)
 
-                        Image(systemName: icon)
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(Theme.Colors.primary)
-                    }
+                    Image(systemName: icon)
+                        .font(.system(size: 22))
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Theme.Colors.primary)
                 }
-
-                Spacer()
             }
 
-            Spacer()
-
-            VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
+            // Value and title
+            VStack(alignment: .leading, spacing: 2) {
                 Text(value)
-                    .font(Theme.Typography.title)
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundStyle(Theme.Colors.text)
                     .contentTransition(.numericText())
 
                 Text(title)
-                    .font(Theme.Typography.caption)
+                    .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(Theme.Colors.secondaryText)
                     .textCase(.uppercase)
-                    .tracking(0.5)
+                    .tracking(0.6)
             }
+
+            Spacer(minLength: 0)
         }
-        .padding(Theme.Spacing.lg)
+        .padding(Theme.Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .frame(height: 140)
         .cardStyle(elevation: Theme.Elevation.level2)
     }
 }
