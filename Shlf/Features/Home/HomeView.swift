@@ -78,13 +78,17 @@ struct HomeView: View {
 
     private var heroSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-            VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
+            HStack(spacing: Theme.Spacing.xs) {
                 Text(greeting)
                     .font(Theme.Typography.title3)
                     .foregroundStyle(Theme.Colors.secondaryText)
 
+                Text("•")
+                    .font(Theme.Typography.title3)
+                    .foregroundStyle(Theme.Colors.tertiaryText)
+
                 Text("Ready to read?")
-                    .font(Theme.Typography.largeTitle)
+                    .font(Theme.Typography.title3)
                     .foregroundStyle(Theme.Colors.text)
             }
 
