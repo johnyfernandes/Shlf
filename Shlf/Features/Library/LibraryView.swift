@@ -192,24 +192,7 @@ struct BookRow: View {
                         .lineLimit(1)
                 }
 
-                HStack(spacing: Theme.Spacing.xs) {
-                    StatusBadge(status: book.readingStatus)
-
-                    if let totalPages = book.totalPages {
-                        Text("•")
-                            .font(Theme.Typography.caption2)
-                            .foregroundStyle(Theme.Colors.tertiaryText)
-
-                        HStack(spacing: 2) {
-                            Image(systemName: "book.pages")
-                                .font(.caption2)
-
-                            Text("\(totalPages)")
-                                .font(Theme.Typography.caption)
-                        }
-                        .foregroundStyle(Theme.Colors.tertiaryText)
-                    }
-                }
+                StatusBadge(status: book.readingStatus)
 
                 if book.readingStatus == .currentlyReading, let totalPages = book.totalPages {
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
@@ -236,6 +219,8 @@ struct BookRow: View {
                     }
                 }
             }
+
+            Spacer(minLength: 0)
 
             Image(systemName: "chevron.right")
                 .font(.caption)
