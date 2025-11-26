@@ -92,14 +92,31 @@ struct HomeView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     HStack(spacing: Theme.Spacing.sm) {
                         if !profile.homeCards.isEmpty {
-                            Button {
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                    isEditingCards.toggle()
+                            if isEditingCards {
+                                Button {
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                        isEditingCards = false
+                                        draggingCard = nil
+                                    }
+                                } label: {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .font(.title2)
+                                        .foregroundStyle(Theme.Colors.success)
                                 }
-                            } label: {
-                                Image(systemName: isEditingCards ? "checkmark.circle.fill" : "ellipsis.circle")
-                                    .font(.title2)
-                                    .foregroundStyle(isEditingCards ? Theme.Colors.success : Theme.Colors.secondaryText)
+                            } else {
+                                Menu {
+                                    Button {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                            isEditingCards = true
+                                        }
+                                    } label: {
+                                        Label("Edit Cards", systemImage: "square.grid.3x3")
+                                    }
+                                } label: {
+                                    Image(systemName: "ellipsis.circle")
+                                        .font(.title2)
+                                        .foregroundStyle(Theme.Colors.secondaryText)
+                                }
                             }
                         }
 
