@@ -33,6 +33,9 @@ final class UserProfile {
     var showISBN: Bool
     var showReadingTime: Bool
 
+    // Reading Progress Preferences
+    var pageIncrementAmount: Int
+
     @Relationship(deleteRule: .cascade)
     var readingGoals: [ReadingGoal]
 
@@ -57,7 +60,8 @@ final class UserProfile {
         showPublishedDate: Bool = true,
         showLanguage: Bool = true,
         showISBN: Bool = true,
-        showReadingTime: Bool = true
+        showReadingTime: Bool = true,
+        pageIncrementAmount: Int = 1
     ) {
         self.id = id
         self.totalXP = totalXP
@@ -77,6 +81,7 @@ final class UserProfile {
         self.showLanguage = showLanguage
         self.showISBN = showISBN
         self.showReadingTime = showReadingTime
+        self.pageIncrementAmount = pageIncrementAmount
         self.readingGoals = []
         self.achievements = []
     }

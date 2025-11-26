@@ -28,6 +28,12 @@ struct BookDetailView: View {
                 bookHeader
 
                 if book.readingStatus == .currentlyReading {
+                    QuickProgressStepper(
+                        book: book,
+                        incrementAmount: profile?.pageIncrementAmount ?? 1,
+                        onSave: handleProgressSave
+                    )
+
                     quickActions
                 }
 
@@ -362,6 +368,11 @@ struct BookDetailView: View {
 
     private func markAsFinished() {
         updateReadingStatus(to: .finished)
+    }
+
+    private func handleProgressSave() {
+        // Optional: Add XP award here if you want
+        // Or create a mini reading session
     }
 
     private func deleteBook() {
