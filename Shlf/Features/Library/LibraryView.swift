@@ -35,54 +35,22 @@ struct LibraryView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                Section {
-                    filterPicker
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
-                        .listRowSeparator(.hidden)
-                }
+            ScrollView {
+                VStack(spacing: Theme.Spacing.xl) {
+                    // Filter section
+                    filterSection
 
-                if filteredBooks.isEmpty {
-                    Section {
-                        if searchText.isEmpty {
-                            ContentUnavailableView {
-                                Label("No Books", systemImage: "books.vertical.fill")
-                            } description: {
-                                Text("Add your first book to get started")
-                            } actions: {
-                                Button {
-                                    showAddBook = true
-                                } label: {
-                                    HStack(spacing: Theme.Spacing.xs) {
-                                        Image(systemName: "plus.circle.fill")
-                                        Text("Add Book")
-                                    }
-                                    .primaryButton()
-                                }
-                            }
-                        } else {
-                            ContentUnavailableView.search(text: searchText)
-                        }
-                    }
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-                } else {
-                    Section {
-                        ForEach(filteredBooks) { book in
-                            NavigationLink(value: book) {
-                                BookRow(book: book)
-                            }
-                            .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
-                            .listRowBackground(Color.clear)
-                            .listRowSeparator(.hidden)
-                        }
+                    // Books grid
+                    if filteredBooks.isEmpty {
+                        emptyState
+                    } else {
+                        booksSection
                     }
                 }
+                .padding(.horizontal, Theme.Spacing.lg)
+                .padding(.top, Theme.Spacing.sm)
+                .padding(.bottom, Theme.Spacing.xxxl)
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
             .background(Theme.Colors.background)
             .navigationDestination(for: Book.self) { book in
                 BookDetailView(book: book)
@@ -107,14 +75,20 @@ struct LibraryView: View {
         }
     }
 
-    private var filterPicker: some View {
+    // MARK: - Filter Section
+
+    private var filterSection: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: Theme.Spacing.sm) {
                 FilterChip(
                     title: "All",
                     count: allBooks.count,
                     isSelected: selectedFilter == nil,
-                    action: { selectedFilter = nil }
+                    action: {
+                        withAnimation(Theme.Animation.snappy) {
+                            selectedFilter = nil
+                        }
+                    }
                 )
 
                 ForEach(ReadingStatus.allCases, id: \.self) { status in
@@ -124,12 +98,72 @@ struct LibraryView: View {
                         icon: status.icon,
                         count: count,
                         isSelected: selectedFilter == status,
-                        action: { selectedFilter = status }
+                        action: {
+                            withAnimation(Theme.Animation.snappy) {
+                                selectedFilter = status
+                            }
+                        }
                     )
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 4)
+        }
+        .padding(.horizontal, -Theme.Spacing.lg)
+        .padding(.leading, Theme.Spacing.lg)
+    }
+
+    // MARK: - Empty State
+
+    private var emptyState: some View {
+        VStack(spacing: Theme.Spacing.xl) {
+            Spacer()
+                .frame(height: Theme.Spacing.xxxl)
+
+            if searchText.isEmpty {
+                EmptyStateView(
+                    icon: "books.vertical.fill",
+                    title: "No Books Yet",
+                    message: "Add your first book to start building your library",
+                    actionTitle: "Add Book",
+                    action: { showAddBook = true }
+                )
+            } else {
+                EmptyStateView(
+                    icon: "magnifyingglass",
+                    title: "No Results",
+                    message: "Try searching with a different title or author"
+                )
+            }
+
+            Spacer()
+        }
+    }
+
+    // MARK: - Books Section
+
+    private var booksSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            HStack {
+                Text(selectedFilter?.rawValue ?? "All Books")
+                    .sectionHeader()
+
+                Spacer()
+
+                Text("\(filteredBooks.count)")
+                    .font(Theme.Typography.subheadline)
+                    .foregroundStyle(Theme.Colors.tertiaryText)
+                    .padding(.horizontal, Theme.Spacing.sm)
+                    .padding(.vertical, Theme.Spacing.xxs)
+                    .background(Theme.Colors.tertiaryBackground)
+                    .clipShape(Capsule())
+            }
+
+            ForEach(filteredBooks) { book in
+                NavigationLink(value: book) {
+                    BookRow(book: book)
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 }
@@ -142,10 +176,10 @@ struct BookRow: View {
             BookCoverView(
                 imageURL: book.coverImageURL,
                 title: book.title,
-                width: 65,
-                height: 98
+                width: 70,
+                height: 105
             )
-            .shadow(color: Theme.Shadow.medium, radius: 6, y: 3)
+            .shadow(color: Theme.Shadow.medium, radius: 8, y: 4)
 
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
@@ -180,34 +214,30 @@ struct BookRow: View {
                 }
 
                 if book.readingStatus == .currentlyReading, let totalPages = book.totalPages {
-                    VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         HStack {
                             Text("\(book.currentPage)")
-                                .font(Theme.Typography.caption)
-                                .fontWeight(.semibold)
+                                .font(Theme.Typography.headline)
                                 .foregroundStyle(Theme.Colors.primary)
 
-                            Text("/ \(totalPages)")
-                                .font(Theme.Typography.caption2)
+                            Text("/ \(totalPages) pages")
+                                .font(Theme.Typography.caption)
                                 .foregroundStyle(Theme.Colors.tertiaryText)
 
                             Spacer()
 
                             Text("\(Int(book.progressPercentage))%")
-                                .font(Theme.Typography.caption)
-                                .fontWeight(.medium)
+                                .font(Theme.Typography.subheadline)
+                                .fontWeight(.semibold)
                                 .foregroundStyle(Theme.Colors.primary)
                         }
 
                         ProgressView(value: book.progressPercentage, total: 100)
                             .tint(Theme.Colors.primary)
-                            .scaleEffect(y: 0.8)
+                            .scaleEffect(y: 1.2)
                     }
-                    .padding(.top, Theme.Spacing.xxs)
                 }
             }
-
-            Spacer()
 
             Image(systemName: "chevron.right")
                 .font(.caption)
@@ -215,9 +245,7 @@ struct BookRow: View {
                 .foregroundStyle(Theme.Colors.tertiaryText)
         }
         .padding(Theme.Spacing.md)
-        .background(Theme.Colors.secondaryBackground)
-        .clipShape(RoundedRectangle(cornerRadius: Theme.CornerRadius.lg, style: .continuous))
-        .shadow(color: Theme.Shadow.small, radius: Theme.Elevation.level1, y: 1)
+        .cardStyle(elevation: Theme.Elevation.level3)
     }
 }
 
