@@ -366,9 +366,16 @@ struct BookDetailView: View {
                 book.dateStarted = Date()
             }
         case .finished:
+            let previousPage = book.currentPage
             book.dateFinished = Date()
             if let totalPages = book.totalPages {
                 book.currentPage = totalPages
+
+                // Create session for the remaining pages if finishing from menu
+                let pagesRead = totalPages - previousPage
+                if pagesRead > 0 {
+                    handleProgressSave(pagesRead: pagesRead)
+                }
             }
             // Update goals when finishing a book
             if let profile = profile {
