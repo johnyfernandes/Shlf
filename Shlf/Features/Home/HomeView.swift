@@ -98,12 +98,19 @@ struct HomeView: View {
     // MARK: - Stats Section
 
     private var statsSection: some View {
-        HStack(spacing: Theme.Spacing.md) {
+        HStack(spacing: Theme.Spacing.sm) {
             StatCard(
                 title: "Day Streak",
                 value: "\(profile.currentStreak)",
                 icon: "flame.fill",
                 gradient: Theme.Colors.streakGradient
+            )
+
+            StatCard(
+                title: "Level",
+                value: "\(profile.currentLevel)",
+                icon: "star.fill",
+                gradient: Theme.Colors.xpGradient
             )
 
             StatCard(
