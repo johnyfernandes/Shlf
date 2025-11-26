@@ -35,7 +35,9 @@ struct BookDetailView: View {
                             incrementAmount: profile?.pageIncrementAmount ?? 1,
                             showButtons: profile?.showSliderButtons ?? false,
                             showConfetti: $showConfetti,
-                            onSave: handleProgressSave
+                            onSave: { pagesRead in
+                                handleProgressSave(pagesRead: pagesRead)
+                            }
                         )
                         .transition(.asymmetric(
                             insertion: .scale.combined(with: .opacity),
@@ -46,7 +48,9 @@ struct BookDetailView: View {
                             book: book,
                             incrementAmount: profile?.pageIncrementAmount ?? 1,
                             showConfetti: $showConfetti,
-                            onSave: handleProgressSave
+                            onSave: { pagesRead in
+                                handleProgressSave(pagesRead: pagesRead)
+                            }
                         )
                         .transition(.asymmetric(
                             insertion: .scale.combined(with: .opacity),
@@ -364,7 +368,10 @@ struct BookDetailView: View {
                 book.currentPage = totalPages
             }
             // Update goals when finishing a book
-            handleProgressSave()
+            if let profile = profile {
+                let tracker = GoalTracker(modelContext: modelContext)
+                tracker.updateGoals(for: profile)
+            }
         case .wantToRead:
             // Reset progress if moving back to want to read
             if previousStatus != .wantToRead {
@@ -383,12 +390,26 @@ struct BookDetailView: View {
         updateReadingStatus(to: .finished)
     }
 
-    private func handleProgressSave() {
-        // Update goals whenever progress is saved
-        if let profile = profile {
-            let tracker = GoalTracker(modelContext: modelContext)
-            tracker.updateGoals(for: profile)
-        }
+    private func handleProgressSave(pagesRead: Int) {
+        // Create a mini reading session to track progress for goals
+        guard pagesRead > 0, let profile = profile else { return }
+
+        let endPage = book.currentPage
+        let startPage = max(0, endPage - pagesRead)
+
+        let session = ReadingSession(
+            startPage: startPage,
+            endPage: endPage,
+            durationMinutes: 0, // We don't track time for quick updates
+            xpEarned: 0,
+            book: book
+        )
+
+        modelContext.insert(session)
+
+        // Update goals
+        let tracker = GoalTracker(modelContext: modelContext)
+        tracker.updateGoals(for: profile)
     }
 
     private func deleteBook() {

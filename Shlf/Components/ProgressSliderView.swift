@@ -12,7 +12,7 @@ struct ProgressSliderView: View {
     let incrementAmount: Int
     let showButtons: Bool
     @Binding var showConfetti: Bool
-    let onSave: () -> Void
+    let onSave: (Int) -> Void
 
     @State private var sliderValue: Double = 0
     @State private var isDragging = false
@@ -212,6 +212,8 @@ struct ProgressSliderView: View {
         }
         .alert("Finished Reading?", isPresented: $showFinishAlert) {
             Button("Mark as Finished") {
+                let pagesRead = currentPage - book.currentPage
+
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.75)) {
                     book.currentPage = currentPage
                     book.readingStatus = .finished
@@ -224,7 +226,7 @@ struct ProgressSliderView: View {
                     showConfetti = true
                 }
 
-                onSave()
+                onSave(abs(pagesRead))
             }
             Button("Keep Reading") {
                 applyProgressUpdate()
@@ -276,6 +278,8 @@ struct ProgressSliderView: View {
     }
 
     private func applyProgressUpdate() {
+        let pagesRead = currentPage - book.currentPage
+
         book.currentPage = currentPage
 
         if book.readingStatus == .wantToRead && currentPage > 0 {
@@ -287,7 +291,7 @@ struct ProgressSliderView: View {
             showSaveButton = false
         }
 
-        onSave()
+        onSave(abs(pagesRead))
     }
 
     private func incrementPage() {
@@ -319,7 +323,7 @@ struct ProgressSliderView: View {
             incrementAmount: 5,
             showButtons: false,
             showConfetti: .constant(false),
-            onSave: {}
+            onSave: { _ in }
         )
 
         ProgressSliderView(
@@ -332,7 +336,7 @@ struct ProgressSliderView: View {
             incrementAmount: 5,
             showButtons: true,
             showConfetti: .constant(false),
-            onSave: {}
+            onSave: { _ in }
         )
     }
     .padding()

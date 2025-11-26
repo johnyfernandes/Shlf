@@ -50,15 +50,17 @@ class GoalTracker {
             }.count
 
         case .pagesPerDay:
-            // Count ALL pages read since goal started, regardless of when books were added
-            let bookDescriptor = FetchDescriptor<Book>()
-            let allBooks = (try? modelContext.fetch(bookDescriptor)) ?? []
+            // ONLY count pages from ReadingSessions during the goal period
+            // This ensures we only track progress made AFTER the goal was created
+            let sessionDescriptor = FetchDescriptor<ReadingSession>()
+            let allSessions = (try? modelContext.fetch(sessionDescriptor)) ?? []
 
-            // Sum up all current pages from books being read or finished
-            let totalPages = allBooks
-                .filter { $0.currentPage > 0 }
-                .reduce(0) { $0 + $1.currentPage }
+            let sessions = allSessions.filter { session in
+                session.startDate >= goal.startDate &&
+                session.startDate <= goal.endDate
+            }
 
+            let totalPages = sessions.reduce(0) { $0 + $1.pagesRead }
             let daysElapsed = max(1, calendar.dateComponents([.day], from: goal.startDate, to: Date()).day ?? 1)
 
             return totalPages / daysElapsed

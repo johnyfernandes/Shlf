@@ -11,7 +11,7 @@ struct QuickProgressStepper: View {
     @Bindable var book: Book
     let incrementAmount: Int
     @Binding var showConfetti: Bool
-    let onSave: () -> Void
+    let onSave: (Int) -> Void
 
     @State private var pendingPages: Int = 0
     @State private var showSaveButton = false
@@ -125,6 +125,8 @@ struct QuickProgressStepper: View {
         }
         .alert("Finished Reading?", isPresented: $showFinishAlert) {
             Button("Mark as Finished") {
+                let pagesRead = pendingPages
+
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.75)) {
                     book.currentPage = totalPendingPages
                     book.readingStatus = .finished
@@ -138,7 +140,7 @@ struct QuickProgressStepper: View {
                     showConfetti = true
                 }
 
-                onSave()
+                onSave(abs(pagesRead))
             }
             Button("Keep Reading") {
                 applyProgressUpdate()
@@ -228,6 +230,8 @@ struct QuickProgressStepper: View {
     }
 
     private func applyProgressUpdate() {
+        let pagesRead = pendingPages
+
         book.currentPage = totalPendingPages
 
         if book.readingStatus == .wantToRead && totalPendingPages > 0 {
@@ -240,7 +244,7 @@ struct QuickProgressStepper: View {
             showSaveButton = false
         }
 
-        onSave()
+        onSave(abs(pagesRead))
     }
 }
 
@@ -254,7 +258,7 @@ struct QuickProgressStepper: View {
         ),
         incrementAmount: 1,
         showConfetti: .constant(false),
-        onSave: {}
+        onSave: { _ in }
     )
     .padding()
 }
