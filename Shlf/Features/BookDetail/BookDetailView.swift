@@ -17,6 +17,7 @@ struct BookDetailView: View {
     @State private var showLogSession = false
     @State private var showEditBook = false
     @State private var showDeleteAlert = false
+    @State private var showConfetti = false
 
     private var profile: UserProfile? {
         profiles.first
@@ -33,12 +34,14 @@ struct BookDetailView: View {
                             book: book,
                             incrementAmount: profile?.pageIncrementAmount ?? 1,
                             showButtons: profile?.showSliderButtons ?? false,
+                            showConfetti: $showConfetti,
                             onSave: handleProgressSave
                         )
                     } else {
                         QuickProgressStepper(
                             book: book,
                             incrementAmount: profile?.pageIncrementAmount ?? 1,
+                            showConfetti: $showConfetti,
                             onSave: handleProgressSave
                         )
                     }
@@ -71,6 +74,7 @@ struct BookDetailView: View {
             .padding(Theme.Spacing.md)
         }
         .background(Theme.Colors.background)
+        .confetti(isActive: $showConfetti)
         .navigationTitle(book.title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

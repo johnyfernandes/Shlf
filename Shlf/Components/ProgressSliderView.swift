@@ -11,6 +11,7 @@ struct ProgressSliderView: View {
     @Bindable var book: Book
     let incrementAmount: Int
     let showButtons: Bool
+    @Binding var showConfetti: Bool
     let onSave: () -> Void
 
     @State private var sliderValue: Double = 0
@@ -217,6 +218,7 @@ struct ProgressSliderView: View {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                     showSaveButton = false
                 }
+                showConfetti = true
                 onSave()
             }
             Button("Keep Reading") {
@@ -311,6 +313,7 @@ struct ProgressSliderView: View {
             ),
             incrementAmount: 5,
             showButtons: false,
+            showConfetti: .constant(false),
             onSave: {}
         )
 
@@ -323,6 +326,7 @@ struct ProgressSliderView: View {
             ),
             incrementAmount: 5,
             showButtons: true,
+            showConfetti: .constant(false),
             onSave: {}
         )
     }

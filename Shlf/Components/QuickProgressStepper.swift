@@ -10,6 +10,7 @@ import SwiftUI
 struct QuickProgressStepper: View {
     @Bindable var book: Book
     let incrementAmount: Int
+    @Binding var showConfetti: Bool
     let onSave: () -> Void
 
     @State private var pendingPages: Int = 0
@@ -131,6 +132,7 @@ struct QuickProgressStepper: View {
                     pendingPages = 0
                     showSaveButton = false
                 }
+                showConfetti = true
                 onSave()
             }
             Button("Keep Reading") {
@@ -246,6 +248,7 @@ struct QuickProgressStepper: View {
             currentPage: 45
         ),
         incrementAmount: 1,
+        showConfetti: .constant(false),
         onSave: {}
     )
     .padding()
