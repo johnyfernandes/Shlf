@@ -40,20 +40,26 @@ struct LibraryView: View {
                     filterPicker
                         .listRowInsets(EdgeInsets())
                         .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
                 }
 
                 if filteredBooks.isEmpty {
                     Section {
                         if searchText.isEmpty {
                             ContentUnavailableView {
-                                Label("No Books", systemImage: "books.vertical")
+                                Label("No Books", systemImage: "books.vertical.fill")
                             } description: {
                                 Text("Add your first book to get started")
                             } actions: {
-                                Button("Add Book") {
+                                Button {
                                     showAddBook = true
+                                } label: {
+                                    HStack(spacing: Theme.Spacing.xs) {
+                                        Image(systemName: "plus.circle.fill")
+                                        Text("Add Book")
+                                    }
+                                    .primaryButton()
                                 }
-                                .buttonStyle(.borderedProminent)
                             }
                         } else {
                             ContentUnavailableView.search(text: searchText)
@@ -61,23 +67,29 @@ struct LibraryView: View {
                     }
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
                 } else {
                     Section {
                         ForEach(filteredBooks) { book in
                             NavigationLink(value: book) {
                                 BookRow(book: book)
                             }
-                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                            .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
                         }
                     }
                 }
             }
             .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(Theme.Colors.background)
             .navigationDestination(for: Book.self) { book in
                 BookDetailView(book: book)
             }
             .navigationTitle("Library")
-            .searchable(text: $searchText, prompt: "Search books")
+            .navigationBarTitleDisplayMode(.large)
+            .searchable(text: $searchText, prompt: "Search by title or author")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
@@ -85,6 +97,7 @@ struct LibraryView: View {
                     } label: {
                         Image(systemName: "plus.circle.fill")
                             .font(.title2)
+                            .foregroundStyle(Theme.Colors.primary)
                     }
                 }
             }
@@ -129,50 +142,113 @@ struct BookRow: View {
             BookCoverView(
                 imageURL: book.coverImageURL,
                 title: book.title,
-                width: 60,
-                height: 90
+                width: 65,
+                height: 98
             )
+            .shadow(color: Theme.Shadow.medium, radius: 6, y: 3)
 
-            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                Text(book.title)
-                    .font(Theme.Typography.headline)
-                    .foregroundStyle(Theme.Colors.text)
-                    .lineLimit(2)
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
+                    Text(book.title)
+                        .font(Theme.Typography.headline)
+                        .foregroundStyle(Theme.Colors.text)
+                        .lineLimit(2)
 
-                Text(book.author)
-                    .font(Theme.Typography.callout)
-                    .foregroundStyle(Theme.Colors.secondaryText)
-                    .lineLimit(1)
+                    Text(book.author)
+                        .font(Theme.Typography.subheadline)
+                        .foregroundStyle(Theme.Colors.secondaryText)
+                        .lineLimit(1)
+                }
 
                 HStack(spacing: Theme.Spacing.xs) {
-                    Image(systemName: book.bookType.icon)
-                        .font(.caption)
-
-                    Text(book.bookType.rawValue)
-                        .font(Theme.Typography.caption)
+                    StatusBadge(status: book.readingStatus)
 
                     if let totalPages = book.totalPages {
                         Text("•")
-                        Text("\(totalPages) pages")
-                            .font(Theme.Typography.caption)
+                            .font(Theme.Typography.caption2)
+                            .foregroundStyle(Theme.Colors.tertiaryText)
+
+                        HStack(spacing: 2) {
+                            Image(systemName: "book.pages")
+                                .font(.caption2)
+
+                            Text("\(totalPages)")
+                                .font(Theme.Typography.caption)
+                        }
+                        .foregroundStyle(Theme.Colors.tertiaryText)
                     }
                 }
-                .foregroundStyle(Theme.Colors.tertiaryText)
 
                 if book.readingStatus == .currentlyReading, let totalPages = book.totalPages {
                     VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
+                        HStack {
+                            Text("\(book.currentPage)")
+                                .font(Theme.Typography.caption)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(Theme.Colors.primary)
+
+                            Text("/ \(totalPages)")
+                                .font(Theme.Typography.caption2)
+                                .foregroundStyle(Theme.Colors.tertiaryText)
+
+                            Spacer()
+
+                            Text("\(Int(book.progressPercentage))%")
+                                .font(Theme.Typography.caption)
+                                .fontWeight(.medium)
+                                .foregroundStyle(Theme.Colors.primary)
+                        }
+
                         ProgressView(value: book.progressPercentage, total: 100)
                             .tint(Theme.Colors.primary)
-
-                        Text("\(book.currentPage) / \(totalPages) pages • \(Int(book.progressPercentage))%")
-                            .font(Theme.Typography.caption)
-                            .foregroundStyle(Theme.Colors.tertiaryText)
+                            .scaleEffect(y: 0.8)
                     }
+                    .padding(.top, Theme.Spacing.xxs)
                 }
             }
 
             Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(Theme.Colors.tertiaryText)
         }
+        .padding(Theme.Spacing.md)
+        .background(Theme.Colors.secondaryBackground)
+        .clipShape(RoundedRectangle(cornerRadius: Theme.CornerRadius.lg, style: .continuous))
+        .shadow(color: Theme.Shadow.small, radius: Theme.Elevation.level1, y: 1)
+    }
+}
+
+// MARK: - Status Badge
+
+struct StatusBadge: View {
+    let status: ReadingStatus
+
+    private var badgeColor: Color {
+        switch status {
+        case .wantToRead: return Theme.Colors.secondary
+        case .currentlyReading: return Theme.Colors.primary
+        case .finished: return Theme.Colors.success
+        case .didNotFinish: return Theme.Colors.tertiaryText
+        }
+    }
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: status.icon)
+                .font(.caption2)
+
+            Text(status.shortName)
+                .font(Theme.Typography.caption)
+                .fontWeight(.medium)
+        }
+        .foregroundStyle(badgeColor)
+        .padding(.horizontal, Theme.Spacing.xs)
+        .padding(.vertical, Theme.Spacing.xxs)
+        .background(badgeColor.opacity(0.12))
+        .clipShape(Capsule())
     }
 }
 
@@ -188,23 +264,42 @@ struct FilterChip: View {
             HStack(spacing: 6) {
                 if let icon {
                     Image(systemName: icon)
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 14, weight: .semibold))
+                        .imageScale(.small)
                 }
 
                 Text(title)
-                    .font(.system(size: 15, weight: isSelected ? .semibold : .regular))
+                    .font(.system(size: 15, weight: .semibold))
 
                 if let count {
-                    Text("(\(count))")
-                        .font(.system(size: 13, weight: .regular))
-                        .opacity(0.8)
+                    Text("\(count)")
+                        .font(.system(size: 13, weight: .medium))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(
+                            isSelected ?
+                                Color.white.opacity(0.25) :
+                                Theme.Colors.tertiaryBackground
+                        )
+                        .clipShape(Capsule())
                 }
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .background(isSelected ? Theme.Colors.primary : Theme.Colors.secondaryBackground)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(
+                Group {
+                    if isSelected {
+                        RoundedRectangle(cornerRadius: Theme.CornerRadius.full, style: .continuous)
+                            .fill(Theme.Colors.primary)
+                            .shadow(color: Theme.Colors.primary.opacity(0.3), radius: 8, y: 4)
+                    } else {
+                        RoundedRectangle(cornerRadius: Theme.CornerRadius.full, style: .continuous)
+                            .fill(Theme.Colors.secondaryBackground)
+                    }
+                }
+            )
             .foregroundStyle(isSelected ? .white : Theme.Colors.text)
-            .clipShape(Capsule())
+            .animation(Theme.Animation.snappy, value: isSelected)
         }
         .buttonStyle(.plain)
     }
