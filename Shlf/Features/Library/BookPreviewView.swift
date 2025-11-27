@@ -247,3 +247,26 @@ struct BookPreviewView: View {
     }
 }
 
+#Preview {
+    NavigationStack {
+        BookPreviewView(
+            bookInfo: BookInfo(
+                title: "Tunnel People",
+                author: "Teun Voeten",
+                isbn: "9781101034965",
+                coverImageURL: nil,
+                totalPages: 304,
+                publishedDate: "1998",
+                description: "Following the homeless Manhattanites who, in the mid-1990s, chose to start a new life in the tunnel systems of the city.",
+                subjects: ["Business", "Power", "Strategy"],
+                publisher: "Penguin",
+                language: "English",
+                olid: "OL24274306M"
+            ),
+            onAdd: { _ in
+                print("Added")
+            }
+        )
+    }
+}
+
