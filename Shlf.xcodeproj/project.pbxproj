@@ -64,6 +64,17 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		5223B0282ED9191D00BE0C75 /* Exceptions for "Shlf" folder in "ShlfWatch Watch App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Models/Achievement.swift,
+				Models/Book.swift,
+				Models/ReadingGoal.swift,
+				Models/ReadingSession.swift,
+				Models/UserProfile.swift,
+			);
+			target = 5223B0172ED918DB00BE0C75 /* ShlfWatch Watch App */;
+		};
 		527603FA2ED71E8600F08D36 /* Exceptions for "Shlf" folder in "Shlf" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -98,6 +109,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				527603FA2ED71E8600F08D36 /* Exceptions for "Shlf" folder in "Shlf" target */,
+				5223B0282ED9191D00BE0C75 /* Exceptions for "Shlf" folder in "ShlfWatch Watch App" target */,
 			);
 			path = Shlf;
 			sourceTree = "<group>";
