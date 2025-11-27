@@ -67,7 +67,7 @@ struct BookPreviewView: View {
                     .padding(Theme.Spacing.md)
                     .cardStyle()
                     .padding(.horizontal, Theme.Spacing.md)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+                    .transition(.opacity)
                 }
 
                 // Details Section
@@ -128,7 +128,7 @@ struct BookPreviewView: View {
                         .padding(Theme.Spacing.md)
                         .cardStyle()
                         .padding(.horizontal, Theme.Spacing.md)
-                        .transition(.opacity.combined(with: .move(edge: .top)))
+                        .transition(.opacity)
                     }
 
                     // Book Type
