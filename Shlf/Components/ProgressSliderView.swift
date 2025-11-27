@@ -205,6 +205,12 @@ struct ProgressSliderView: View {
         .onAppear {
             sliderValue = Double(book.currentPage)
         }
+        .onChange(of: book.currentPage) { oldValue, newValue in
+            // Sync slider with book's current page when it changes externally (e.g., from LogSession)
+            if !isDragging && !showSaveButton {
+                sliderValue = Double(newValue)
+            }
+        }
         .onChange(of: hasChanges) { oldValue, newValue in
             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                 showSaveButton = newValue
