@@ -10,6 +10,7 @@ import SwiftData
 
 struct BookPreviewView: View {
     let bookInfo: BookInfo
+    @Binding var selectedTab: Int
     let onDismiss: () -> Void
 
     @Environment(\.modelContext) private var modelContext
@@ -312,7 +313,8 @@ struct BookPreviewView: View {
             engine.checkAchievements(for: profile)
         }
 
-        // Dismiss the entire sheet
+        // Switch to Library tab and dismiss
+        selectedTab = 1
         onDismiss()
     }
 }
@@ -333,6 +335,7 @@ struct BookPreviewView: View {
                 language: "English",
                 olid: "OL24274306M"
             ),
+            selectedTab: .constant(1),
             onDismiss: {
                 print("Dismissed")
             }

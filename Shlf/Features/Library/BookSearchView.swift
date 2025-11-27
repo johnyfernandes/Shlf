@@ -9,6 +9,7 @@ import SwiftUI
 
 struct BookSearchView: View {
     @Environment(\.dismiss) private var dismiss
+    @Binding var selectedTab: Int
     let onDismissAll: () -> Void
 
     @State private var searchText = ""
@@ -70,7 +71,11 @@ struct BookSearchView: View {
                         LazyVStack(spacing: Theme.Spacing.md) {
                             ForEach(Array(searchResults.enumerated()), id: \.offset) { index, bookInfo in
                                 NavigationLink {
-                                    BookPreviewView(bookInfo: bookInfo, onDismiss: onDismissAll)
+                                    BookPreviewView(
+                                        bookInfo: bookInfo,
+                                        selectedTab: $selectedTab,
+                                        onDismiss: onDismissAll
+                                    )
                                 } label: {
                                     BookSearchResultRow(bookInfo: bookInfo)
                                 }
@@ -264,7 +269,10 @@ struct BookSearchResultRow: View {
 }
 
 #Preview {
-    BookSearchView(onDismissAll: {
-        print("Dismissed all")
-    })
+    BookSearchView(
+        selectedTab: .constant(1),
+        onDismissAll: {
+            print("Dismissed all")
+        }
+    )
 }

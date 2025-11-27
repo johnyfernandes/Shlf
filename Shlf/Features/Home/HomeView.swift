@@ -144,7 +144,7 @@ struct HomeView: View {
                 }
             }
             .sheet(isPresented: $showAddBook) {
-                AddBookView()
+                AddBookView(selectedTab: $selectedTab)
             }
             .sheet(isPresented: $showLevelDetail) {
                 LevelDetailView(profile: profile)

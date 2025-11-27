@@ -13,10 +13,12 @@ struct AddBookView: View {
     @Environment(\.dismiss) private var dismiss
     @Query private var profiles: [UserProfile]
     @Query private var books: [Book]
+    @Binding var selectedTab: Int
 
     @State private var viewModel: AddBookViewModel
 
-    init() {
+    init(selectedTab: Binding<Int>) {
+        _selectedTab = selectedTab
         _viewModel = State(initialValue: AddBookViewModel())
     }
 
@@ -49,9 +51,12 @@ struct AddBookView: View {
             }
             .sheet(isPresented: $viewModel.showSearch) {
                 NavigationStack {
-                    BookSearchView(onDismissAll: {
-                        dismiss()
-                    })
+                    BookSearchView(
+                        selectedTab: $selectedTab,
+                        onDismissAll: {
+                            dismiss()
+                        }
+                    )
                 }
             }
             .alert("Upgrade Required", isPresented: $viewModel.showUpgradeAlert) {
@@ -238,6 +243,6 @@ final class AddBookViewModel {
 }
 
 #Preview {
-    AddBookView()
+    AddBookView(selectedTab: .constant(1))
         .modelContainer(for: [Book.self, UserProfile.self], inMemory: true)
 }

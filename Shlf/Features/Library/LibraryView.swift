@@ -11,6 +11,7 @@ import SwiftData
 struct LibraryView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Book.dateAdded, order: .reverse) private var allBooks: [Book]
+    @Binding var selectedTab: Int
 
     @State private var selectedFilter: ReadingStatus?
     @State private var searchText = ""
@@ -68,7 +69,7 @@ struct LibraryView: View {
                 }
             }
             .sheet(isPresented: $showAddBook) {
-                AddBookView()
+                AddBookView(selectedTab: $selectedTab)
             }
         }
     }
@@ -350,6 +351,6 @@ struct FilterChip: View {
 }
 
 #Preview {
-    LibraryView()
+    LibraryView(selectedTab: .constant(1))
         .modelContainer(for: [Book.self], inMemory: true)
 }

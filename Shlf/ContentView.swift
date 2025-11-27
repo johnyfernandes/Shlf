@@ -27,7 +27,7 @@ struct ContentView: View {
                 }
                 .tag(0)
 
-            LibraryView()
+            LibraryView(selectedTab: $selectedTab)
                 .tabItem {
                     Label("Library", systemImage: "books.vertical.fill")
                 }
