@@ -97,10 +97,15 @@ actor ImageCacheManager {
         let fileURL = diskCacheURL.appendingPathComponent(filename)
 
         guard let data = image.jpegData(compressionQuality: 0.8) else {
+            AppLogger.logWarning("Failed to convert image to JPEG data for URL: \(url.absoluteString)", logger: AppLogger.cache)
             return
         }
 
-        try? data.write(to: fileURL)
+        do {
+            try data.write(to: fileURL)
+        } catch {
+            AppLogger.logError(error, context: "Failed to save image to disk for URL: \(url.absoluteString)", logger: AppLogger.cache)
+        }
     }
 
     private func cacheFilename(for url: URL) -> String {
@@ -143,8 +148,13 @@ actor ImageCacheManager {
     private func downloadImage(from url: URL) async -> UIImage? {
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
-            return UIImage(data: data)
+            guard let image = UIImage(data: data) else {
+                AppLogger.logWarning("Failed to decode image data from URL: \(url.absoluteString)", logger: AppLogger.cache)
+                return nil
+            }
+            return image
         } catch {
+            AppLogger.logError(error, context: "Failed to download image from URL: \(url.absoluteString)", logger: AppLogger.cache)
             return nil
         }
     }
