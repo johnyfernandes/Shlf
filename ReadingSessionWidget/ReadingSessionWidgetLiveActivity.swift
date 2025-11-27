@@ -54,7 +54,7 @@ struct ReadingSessionWidgetLiveActivity: Widget {
                                 .foregroundStyle(.yellow)
                         }
 
-                        Text("\(context.state.pagesRead) pages")
+                        Text("\(context.state.currentPage)/\(context.attributes.totalPages)")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
@@ -119,7 +119,7 @@ struct ReadingSessionWidgetLiveActivity: Widget {
                 Image(systemName: "book.fill")
                     .foregroundStyle(.cyan)
             } compactTrailing: {
-                Text("\(context.state.pagesRead)")
+                Text("\(context.state.currentPage)/\(context.attributes.totalPages)")
                     .foregroundStyle(.cyan)
                     .font(.caption2)
             } minimal: {
@@ -142,7 +142,7 @@ struct ReadingSessionLockScreenView: View {
                 Image(systemName: "book.fill")
                     .foregroundStyle(.cyan)
 
-                VStack(alignment: .leading) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text(context.attributes.bookTitle)
                         .font(.headline)
                         .lineLimit(1)
@@ -152,6 +152,12 @@ struct ReadingSessionLockScreenView: View {
                 }
 
                 Spacer()
+
+                // Page indicator
+                Text("\(context.state.currentPage)/\(context.attributes.totalPages)")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.cyan)
             }
 
             // Progress
