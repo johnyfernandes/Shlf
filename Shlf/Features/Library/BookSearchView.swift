@@ -69,9 +69,11 @@ struct BookSearchView: View {
                     ScrollView {
                         LazyVStack(spacing: Theme.Spacing.md) {
                             ForEach(Array(searchResults.enumerated()), id: \.offset) { index, bookInfo in
-                                Button {
-                                    onSelect(bookInfo)
-                                    dismiss()
+                                NavigationLink {
+                                    BookPreviewView(bookInfo: bookInfo, onAdd: { selectedBook in
+                                        onSelect(selectedBook)
+                                        dismiss()
+                                    })
                                 } label: {
                                     BookSearchResultRow(bookInfo: bookInfo)
                                 }

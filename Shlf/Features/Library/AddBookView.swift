@@ -63,15 +63,17 @@ struct AddBookView: View {
                 }
             }
             .sheet(isPresented: $viewModel.showSearch) {
-                BookSearchView { bookInfo in
-                    viewModel.populateFrom(bookInfo)
-                    // Fetch full details using OLID
-                    if let olid = bookInfo.olid {
-                        Task {
-                            await viewModel.fetchFullBookDetails(olid: olid)
+                NavigationStack {
+                    BookSearchView { bookInfo in
+                        viewModel.populateFrom(bookInfo)
+                        // Fetch full details using OLID
+                        if let olid = bookInfo.olid {
+                            Task {
+                                await viewModel.fetchFullBookDetails(olid: olid)
+                            }
                         }
+                        viewModel.showBookPreview = true
                     }
-                    viewModel.showBookPreview = true
                 }
             }
             .alert("Upgrade Required", isPresented: $viewModel.showUpgradeAlert) {
