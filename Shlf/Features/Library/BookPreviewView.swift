@@ -76,32 +76,37 @@ struct BookPreviewView: View {
                     if displayInfo.isbn != nil || displayInfo.totalPages != nil {
                         HStack(spacing: Theme.Spacing.md) {
                             if let isbn = displayInfo.isbn {
-                                VStack(spacing: Theme.Spacing.xxs) {
+                                VStack(spacing: 4) {
                                     Image(systemName: "barcode")
-                                        .font(.title3)
+                                        .font(.system(size: 18))
                                         .foregroundStyle(Theme.Colors.tertiaryText)
+                                        .frame(height: 18)
 
                                     Text(isbn)
                                         .font(Theme.Typography.caption)
                                         .foregroundStyle(Theme.Colors.secondaryText)
+                                        .lineLimit(1)
                                 }
                                 .frame(maxWidth: .infinity)
-                                .padding(Theme.Spacing.md)
+                                .padding(.vertical, 10)
+                                .padding(.horizontal, Theme.Spacing.sm)
                                 .cardStyle()
                             }
 
                             if let totalPages = displayInfo.totalPages {
-                                VStack(spacing: Theme.Spacing.xxs) {
+                                VStack(spacing: 4) {
                                     Image(systemName: "book.pages")
-                                        .font(.title3)
+                                        .font(.system(size: 18))
                                         .foregroundStyle(Theme.Colors.tertiaryText)
+                                        .frame(height: 18)
 
                                     Text("\(totalPages) pages")
                                         .font(Theme.Typography.caption)
                                         .foregroundStyle(Theme.Colors.secondaryText)
                                 }
                                 .frame(maxWidth: .infinity)
-                                .padding(Theme.Spacing.md)
+                                .padding(.vertical, 10)
+                                .padding(.horizontal, Theme.Spacing.sm)
                                 .cardStyle()
                             }
                         }
