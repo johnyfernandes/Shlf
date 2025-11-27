@@ -71,7 +71,9 @@
 				Models/Book.swift,
 				Models/ReadingGoal.swift,
 				Models/ReadingSession.swift,
+				Models/StatCardType.swift,
 				Models/UserProfile.swift,
+				Services/GoalTracker.swift,
 			);
 			target = 5223B0172ED918DB00BE0C75 /* ShlfWatch Watch App */;
 		};
@@ -388,7 +390,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 26.2;
+				WATCHOS_DEPLOYMENT_TARGET = 26;
 			};
 			name = Debug;
 		};
@@ -421,7 +423,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 26.2;
+				WATCHOS_DEPLOYMENT_TARGET = 26;
 			};
 			name = Release;
 		};

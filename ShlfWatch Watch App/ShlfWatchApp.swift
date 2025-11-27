@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct ShlfWatch_Watch_AppApp: App {
@@ -13,5 +14,12 @@ struct ShlfWatch_Watch_AppApp: App {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: [
+            Book.self,
+            ReadingSession.self,
+            UserProfile.self,
+            ReadingGoal.self,
+            Achievement.self
+        ])
     }
 }

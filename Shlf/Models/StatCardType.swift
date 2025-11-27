@@ -45,6 +45,7 @@ enum StatCardType: String, Codable, CaseIterable, Identifiable {
         }
     }
 
+    #if os(iOS)
     var gradient: LinearGradient? {
         switch self {
         case .currentStreak, .longestStreak:
@@ -57,6 +58,7 @@ enum StatCardType: String, Codable, CaseIterable, Identifiable {
             return nil
         }
     }
+    #endif
 
     var displayName: String {
         switch self {
