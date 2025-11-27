@@ -153,6 +153,11 @@ struct LogReadingSessionView: View {
 
     private func startTimer() {
         timerStartTime = Date()
+
+        // Start Live Activity
+        Task {
+            await ReadingSessionActivityManager.shared.startActivity(book: book)
+        }
     }
 
     private func stopTimer() {
@@ -160,6 +165,11 @@ struct LogReadingSessionView: View {
         let elapsed = Date().timeIntervalSince(startTime)
         durationMinutes = max(1, Int(elapsed / 60))
         timerStartTime = nil
+
+        // End Live Activity
+        Task {
+            await ReadingSessionActivityManager.shared.endActivity()
+        }
     }
 
     private func saveSession() {
@@ -189,6 +199,11 @@ struct LogReadingSessionView: View {
             engine.awardXP(xp, to: profile)
             engine.updateStreak(for: profile, sessionDate: sessionDate)
             engine.checkAchievements(for: profile)
+        }
+
+        // End Live Activity if still active
+        Task {
+            await ReadingSessionActivityManager.shared.endActivity()
         }
 
         dismiss()
