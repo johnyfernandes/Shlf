@@ -7,12 +7,20 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5223B0222ED918DE00BE0C75 /* ShlfWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 5223B0182ED918DB00BE0C75 /* ShlfWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		527605002ED8FDBA00F08D36 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 527604FF2ED8FDBA00F08D36 /* WidgetKit.framework */; };
 		527605022ED8FDBA00F08D36 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 527605012ED8FDBA00F08D36 /* SwiftUI.framework */; };
 		527605112ED8FDBD00F08D36 /* ReadingSessionWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 527604FD2ED8FDBA00F08D36 /* ReadingSessionWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		5223B0202ED918DE00BE0C75 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 527603E52ED71E8400F08D36 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5223B0172ED918DB00BE0C75;
+			remoteInfo = "ShlfWatch Watch App";
+		};
 		5276050F2ED8FDBD00F08D36 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 527603E52ED71E8400F08D36 /* Project object */;
@@ -23,6 +31,17 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		5223B0232ED918DE00BE0C75 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				5223B0222ED918DE00BE0C75 /* ShlfWatch Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		527605122ED8FDBD00F08D36 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -37,6 +56,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		5223B0182ED918DB00BE0C75 /* ShlfWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ShlfWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		527603ED2ED71E8400F08D36 /* Shlf.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Shlf.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		527604FD2ED8FDBA00F08D36 /* ReadingSessionWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ReadingSessionWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		527604FF2ED8FDBA00F08D36 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
@@ -69,6 +89,11 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		5223B0192ED918DB00BE0C75 /* ShlfWatch Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "ShlfWatch Watch App";
+			sourceTree = "<group>";
+		};
 		527603EF2ED71E8400F08D36 /* Shlf */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -89,6 +114,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		5223B0152ED918DB00BE0C75 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		527603EA2ED71E8400F08D36 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -113,6 +145,7 @@
 			children = (
 				527603EF2ED71E8400F08D36 /* Shlf */,
 				527605032ED8FDBA00F08D36 /* ReadingSessionWidget */,
+				5223B0192ED918DB00BE0C75 /* ShlfWatch Watch App */,
 				527604FE2ED8FDBA00F08D36 /* Frameworks */,
 				527603EE2ED71E8400F08D36 /* Products */,
 			);
@@ -123,6 +156,7 @@
 			children = (
 				527603ED2ED71E8400F08D36 /* Shlf.app */,
 				527604FD2ED8FDBA00F08D36 /* ReadingSessionWidgetExtension.appex */,
+				5223B0182ED918DB00BE0C75 /* ShlfWatch Watch App.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -139,6 +173,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		5223B0172ED918DB00BE0C75 /* ShlfWatch Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5223B0262ED918DE00BE0C75 /* Build configuration list for PBXNativeTarget "ShlfWatch Watch App" */;
+			buildPhases = (
+				5223B0142ED918DB00BE0C75 /* Sources */,
+				5223B0152ED918DB00BE0C75 /* Frameworks */,
+				5223B0162ED918DB00BE0C75 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				5223B0192ED918DB00BE0C75 /* ShlfWatch Watch App */,
+			);
+			name = "ShlfWatch Watch App";
+			packageProductDependencies = (
+			);
+			productName = "ShlfWatch Watch App";
+			productReference = 5223B0182ED918DB00BE0C75 /* ShlfWatch Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
 		527603EC2ED71E8400F08D36 /* Shlf */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 527603FB2ED71E8600F08D36 /* Build configuration list for PBXNativeTarget "Shlf" */;
@@ -147,11 +203,13 @@
 				527603EA2ED71E8400F08D36 /* Frameworks */,
 				527603EB2ED71E8400F08D36 /* Resources */,
 				527605122ED8FDBD00F08D36 /* Embed Foundation Extensions */,
+				5223B0232ED918DE00BE0C75 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				527605102ED8FDBD00F08D36 /* PBXTargetDependency */,
+				5223B0212ED918DE00BE0C75 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				527603EF2ED71E8400F08D36 /* Shlf */,
@@ -195,6 +253,9 @@
 				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
+					5223B0172ED918DB00BE0C75 = {
+						CreatedOnToolsVersion = 26.2;
+					};
 					527603EC2ED71E8400F08D36 = {
 						CreatedOnToolsVersion = 26.2;
 					};
@@ -219,11 +280,19 @@
 			targets = (
 				527603EC2ED71E8400F08D36 /* Shlf */,
 				527604FC2ED8FDBA00F08D36 /* ReadingSessionWidgetExtension */,
+				5223B0172ED918DB00BE0C75 /* ShlfWatch Watch App */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		5223B0162ED918DB00BE0C75 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		527603EB2ED71E8400F08D36 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -241,6 +310,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		5223B0142ED918DB00BE0C75 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		527603E92ED71E8400F08D36 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -258,6 +334,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		5223B0212ED918DE00BE0C75 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5223B0172ED918DB00BE0C75 /* ShlfWatch Watch App */;
+			targetProxy = 5223B0202ED918DE00BE0C75 /* PBXContainerItemProxy */;
+		};
 		527605102ED8FDBD00F08D36 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 527604FC2ED8FDBA00F08D36 /* ReadingSessionWidgetExtension */;
@@ -266,6 +347,72 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		5223B0242ED918DE00BE0C75 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WDGFKCYAU3;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = ShlfWatch;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = joaofernandes.Shlf;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = joaofernandes.Shlf.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.2;
+			};
+			name = Debug;
+		};
+		5223B0252ED918DE00BE0C75 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WDGFKCYAU3;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = ShlfWatch;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = joaofernandes.Shlf;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = joaofernandes.Shlf.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.2;
+			};
+			name = Release;
+		};
 		527603FC2ED71E8600F08D36 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -532,6 +679,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		5223B0262ED918DE00BE0C75 /* Build configuration list for PBXNativeTarget "ShlfWatch Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5223B0242ED918DE00BE0C75 /* Debug */,
+				5223B0252ED918DE00BE0C75 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		527603E82ED71E8400F08D36 /* Build configuration list for PBXProject "Shlf" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
