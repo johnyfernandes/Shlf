@@ -133,6 +133,12 @@ struct LogReadingSessionView: View {
                 }
             }
             .scrollDismissesKeyboard(.interactively)
+            .onAppear {
+                syncWithLiveActivity()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+                syncWithLiveActivity()
+            }
             .onChange(of: endPage) { oldValue, newValue in
                 // Update Live Activity when page changes during active timer
                 if timerStartTime != nil {
@@ -171,6 +177,14 @@ struct LogReadingSessionView: View {
 
     private func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+
+    private func syncWithLiveActivity() {
+        // Sync the endPage from Live Activity if timer is active
+        if timerStartTime != nil, let currentPage = ReadingSessionActivityManager.shared.getCurrentPage() {
+            endPage = currentPage
+            print("🔄 Synced page from Live Activity: \(currentPage)")
+        }
     }
 
     private func startTimer() {

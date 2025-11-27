@@ -100,4 +100,14 @@ class ReadingSessionActivityManager {
     var isActive: Bool {
         currentActivity != nil
     }
+
+    // MARK: - Get Current State
+
+    func getCurrentPage() -> Int? {
+        return currentActivity?.content.state.currentPage
+    }
+
+    func getCurrentXP() -> Int? {
+        return currentActivity?.content.state.xpEarned
+    }
 }
