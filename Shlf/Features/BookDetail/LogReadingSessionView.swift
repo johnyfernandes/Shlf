@@ -100,13 +100,13 @@ struct LogReadingSessionView: View {
                                         }
                                     }
                                     .buttonStyle(.bordered)
-                                    .frame(maxWidth: .infinity)
+                                    .tint(Theme.Colors.primary)
 
                                     Button("Finish Session") {
                                         finishSession()
                                     }
-                                    .primaryButton()
-                                    .frame(maxWidth: .infinity)
+                                    .buttonStyle(.borderedProminent)
+                                    .tint(Theme.Colors.primary)
                                 }
                             }
                             .frame(maxWidth: .infinity)
