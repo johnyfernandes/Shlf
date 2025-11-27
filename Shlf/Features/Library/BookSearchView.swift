@@ -70,8 +70,7 @@ struct BookSearchView: View {
                         LazyVStack(spacing: Theme.Spacing.md) {
                             ForEach(Array(searchResults.enumerated()), id: \.offset) { index, bookInfo in
                                 NavigationLink {
-                                    BookPreviewView(bookInfo: bookInfo, onAdd: { selectedBook in
-                                        onSelect(selectedBook)
+                                    BookPreviewView(bookInfo: bookInfo, onDismiss: {
                                         dismiss()
                                     })
                                 } label: {

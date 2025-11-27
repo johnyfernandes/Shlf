@@ -6,21 +6,34 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct BookPreviewView: View {
     let bookInfo: BookInfo
-    let onAdd: (BookInfo) -> Void
+    let onDismiss: () -> Void
+
+    @Environment(\.modelContext) private var modelContext
+    @Query private var profiles: [UserProfile]
+    @Query private var books: [Book]
 
     @State private var bookType: BookType = .physical
     @State private var readingStatus: ReadingStatus = .wantToRead
     @State private var currentPage = 0
     @State private var isLoading = false
     @State private var fullBookInfo: BookInfo?
+    @State private var showUpgradeAlert = false
 
     private let bookAPI = BookAPIService()
 
     var displayInfo: BookInfo {
         fullBookInfo ?? bookInfo
+    }
+
+    private var canAddBook: Bool {
+        if let profile = profiles.first, !profile.isProUser {
+            return books.count < 5
+        }
+        return true
     }
 
     var body: some View {
@@ -139,30 +152,29 @@ struct BookPreviewView: View {
                         .transition(.opacity)
                     }
 
-                    // Book Type
-                    VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                        Text("Book Type")
-                            .font(Theme.Typography.subheadline)
-                            .foregroundStyle(Theme.Colors.secondaryText)
-                            .padding(.horizontal, Theme.Spacing.md)
+                    // Settings Card
+                    VStack(spacing: 0) {
+                        // Book Type
+                        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                            Text("Book Type")
+                                .font(Theme.Typography.caption)
+                                .foregroundStyle(Theme.Colors.tertiaryText)
+                                .textCase(.uppercase)
 
-                        Picker("Type", selection: $bookType) {
-                            ForEach(BookType.allCases, id: \.self) { type in
-                                Label(type.rawValue, systemImage: type.icon)
-                                    .tag(type)
+                            Picker("Type", selection: $bookType) {
+                                ForEach(BookType.allCases, id: \.self) { type in
+                                    Label(type.rawValue, systemImage: type.icon)
+                                        .tag(type)
+                                }
                             }
+                            .pickerStyle(.segmented)
                         }
-                        .pickerStyle(.segmented)
-                        .padding(.horizontal, Theme.Spacing.md)
-                    }
+                        .padding(Theme.Spacing.md)
 
-                    // Reading Status
-                    VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                        Text("Reading Status")
-                            .font(Theme.Typography.subheadline)
-                            .foregroundStyle(Theme.Colors.secondaryText)
-                            .padding(.horizontal, Theme.Spacing.md)
+                        Divider()
+                            .padding(.leading, Theme.Spacing.md)
 
+                        // Reading Status
                         Menu {
                             Picker("Status", selection: $readingStatus) {
                                 ForEach(ReadingStatus.allCases, id: \.self) { status in
@@ -171,25 +183,35 @@ struct BookPreviewView: View {
                                 }
                             }
                         } label: {
-                            HStack {
-                                Image(systemName: readingStatus.icon)
-                                    .foregroundStyle(Theme.Colors.primary)
-
-                                Text(readingStatus.rawValue)
+                            HStack(spacing: Theme.Spacing.sm) {
+                                Text("Reading Status")
                                     .font(Theme.Typography.body)
                                     .foregroundStyle(Theme.Colors.text)
 
                                 Spacer()
 
-                                Image(systemName: "chevron.up.chevron.down")
-                                    .font(.caption)
-                                    .foregroundStyle(Theme.Colors.tertiaryText)
+                                HStack(spacing: 6) {
+                                    Image(systemName: readingStatus.icon)
+                                        .font(.subheadline)
+                                        .foregroundStyle(Theme.Colors.secondaryText)
+
+                                    Text(readingStatus.shortName)
+                                        .font(Theme.Typography.subheadline)
+                                        .foregroundStyle(Theme.Colors.secondaryText)
+
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundStyle(Theme.Colors.tertiaryText)
+                                }
                             }
                             .padding(Theme.Spacing.md)
-                            .cardStyle()
+                            .contentShape(Rectangle())
                         }
-                        .padding(.horizontal, Theme.Spacing.md)
                     }
+                    .background(Theme.Colors.secondaryBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: Theme.CornerRadius.lg, style: .continuous))
+                    .padding(.horizontal, Theme.Spacing.md)
 
                     // Current Progress (if reading)
                     if readingStatus == .currentlyReading, let totalPages = displayInfo.totalPages {
@@ -217,7 +239,7 @@ struct BookPreviewView: View {
 
                     // Add Button
                     Button {
-                        onAdd(displayInfo)
+                        addBookToLibrary()
                     } label: {
                         HStack {
                             Image(systemName: "plus.circle.fill")
@@ -238,6 +260,14 @@ struct BookPreviewView: View {
         .background(Theme.Colors.background)
         .navigationTitle("Book Details")
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Upgrade Required", isPresented: $showUpgradeAlert) {
+            Button("Upgrade to Pro") {
+                // Navigate to upgrade screen
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("You've reached the limit of 5 books. Upgrade to Pro for unlimited books.")
+        }
         .task {
             // Fetch full details if we have OLID
             if let olid = bookInfo.olid {
@@ -250,6 +280,40 @@ struct BookPreviewView: View {
                 isLoading = false
             }
         }
+    }
+
+    private func addBookToLibrary() {
+        guard canAddBook else {
+            showUpgradeAlert = true
+            return
+        }
+
+        let book = Book(
+            title: displayInfo.title,
+            author: displayInfo.author,
+            isbn: displayInfo.isbn,
+            coverImageURL: displayInfo.coverImageURL,
+            totalPages: displayInfo.totalPages ?? 0,
+            currentPage: readingStatus == .currentlyReading ? currentPage : 0,
+            bookType: bookType,
+            readingStatus: readingStatus,
+            bookDescription: displayInfo.description,
+            subjects: displayInfo.subjects,
+            publisher: displayInfo.publisher,
+            publishedDate: displayInfo.publishedDate,
+            language: displayInfo.language
+        )
+
+        modelContext.insert(book)
+
+        // Update profile stats if exists
+        if let profile = profiles.first {
+            let engine = GamificationEngine(modelContext: modelContext)
+            engine.checkAchievements(for: profile)
+        }
+
+        // Dismiss the entire sheet
+        onDismiss()
     }
 }
 
@@ -269,10 +333,11 @@ struct BookPreviewView: View {
                 language: "English",
                 olid: "OL24274306M"
             ),
-            onAdd: { _ in
-                print("Added")
+            onDismiss: {
+                print("Dismissed")
             }
         )
     }
+    .modelContainer(for: [Book.self, UserProfile.self], inMemory: true)
 }
 
