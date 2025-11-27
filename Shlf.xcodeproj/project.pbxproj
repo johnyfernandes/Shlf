@@ -61,6 +61,7 @@
 		5276051A2ED8FEFC00F08D36 /* Exceptions for "ReadingSessionWidget" folder in "Shlf" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				ReadingSessionIntents.swift,
 				ReadingSessionWidgetLiveActivity.swift,
 			);
 			target = 527603EC2ED71E8400F08D36 /* Shlf */;

@@ -8,9 +8,10 @@
 import ActivityKit
 import WidgetKit
 import SwiftUI
+import AppIntents
 
-struct ReadingSessionWidgetAttributes: ActivityAttributes {
-    public struct ContentState: Codable, Hashable {
+struct ReadingSessionWidgetAttributes: ActivityAttributes, Sendable {
+    public struct ContentState: Codable, Hashable, Sendable {
         // Dynamic stateful properties about your activity go here!
         var currentPage: Int
         var pagesRead: Int
@@ -133,6 +134,27 @@ struct ReadingSessionLockScreenView: View {
                 Label("+\(context.state.xpEarned)", systemImage: "star.fill")
                     .font(.caption)
                     .foregroundStyle(.yellow)
+            }
+
+            // Page controls
+            HStack(spacing: 8) {
+                Button(intent: DecrementPageIntent()) {
+                    Image(systemName: "minus.circle.fill")
+                        .font(.title2)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.white.opacity(0.2))
+
+                Button(intent: IncrementPageIntent()) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title2)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.cyan)
             }
         }
         .padding()
