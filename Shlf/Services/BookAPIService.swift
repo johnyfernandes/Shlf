@@ -41,9 +41,11 @@ enum BookAPIError: Error {
 @Observable
 final class BookAPIService {
     private let urlSession: URLSession
+    private let rateLimiter: RateLimiter
 
     init(urlSession: URLSession = .shared) {
         self.urlSession = urlSession
+        self.rateLimiter = RateLimiter(maxRequestsPerSecond: 5)
     }
 
     // MARK: - Public API
@@ -75,6 +77,7 @@ final class BookAPIService {
             throw BookAPIError.invalidISBN
         }
 
+        await rateLimiter.waitForToken()
         let (data, response) = try await urlSession.data(from: url)
 
         guard let httpResponse = response as? HTTPURLResponse,
@@ -98,6 +101,7 @@ final class BookAPIService {
             throw BookAPIError.invalidResponse
         }
 
+        await rateLimiter.waitForToken()
         let (data, response) = try await urlSession.data(from: url)
 
         guard let httpResponse = response as? HTTPURLResponse,
@@ -210,6 +214,7 @@ final class BookAPIService {
             throw BookAPIError.invalidResponse
         }
 
+        await rateLimiter.waitForToken()
         let (data, response) = try await urlSession.data(from: url)
 
         guard let httpResponse = response as? HTTPURLResponse,
@@ -332,6 +337,7 @@ final class BookAPIService {
             throw BookAPIError.invalidResponse
         }
 
+        await rateLimiter.waitForToken()
         let (data, response) = try await urlSession.data(from: url)
 
         guard let httpResponse = response as? HTTPURLResponse,
