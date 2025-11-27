@@ -67,6 +67,7 @@ struct BookPreviewView: View {
                     .padding(Theme.Spacing.md)
                     .cardStyle()
                     .padding(.horizontal, Theme.Spacing.md)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
                 }
 
                 // Details Section
@@ -127,6 +128,7 @@ struct BookPreviewView: View {
                         .padding(Theme.Spacing.md)
                         .cardStyle()
                         .padding(.horizontal, Theme.Spacing.md)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
                     }
 
                     // Book Type
@@ -220,18 +222,12 @@ struct BookPreviewView: View {
                 }
             }
             .padding(.bottom, Theme.Spacing.xxl)
+            .animation(.easeInOut(duration: 0.3), value: displayInfo.description)
+            .animation(.easeInOut(duration: 0.3), value: displayInfo.subjects)
         }
         .background(Theme.Colors.background)
         .navigationTitle("Book Details")
         .navigationBarTitleDisplayMode(.inline)
-        .overlay {
-            if isLoading {
-                ProgressView()
-                    .scaleEffect(1.5)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.black.opacity(0.1))
-            }
-        }
         .task {
             // Fetch full details if we have OLID
             if let olid = bookInfo.olid {
