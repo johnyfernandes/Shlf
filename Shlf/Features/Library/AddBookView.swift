@@ -16,6 +16,7 @@ struct AddBookView: View {
     @Binding var selectedTab: Int
 
     @State private var viewModel: AddBookViewModel
+    @State private var navigationPath = NavigationPath()
 
     init(selectedTab: Binding<Int>) {
         _selectedTab = selectedTab
@@ -30,10 +31,19 @@ struct AddBookView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             searchOptionsView
                 .navigationTitle("Add Book")
                 .navigationBarTitleDisplayMode(.inline)
+                .navigationDestination(for: BookInfo.self) { bookInfo in
+                    BookPreviewView(
+                        bookInfo: bookInfo,
+                        selectedTab: $selectedTab,
+                        onDismiss: {
+                            dismiss()
+                        }
+                    )
+                }
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Cancel") {
@@ -43,9 +53,12 @@ struct AddBookView: View {
                 }
             .sheet(isPresented: $viewModel.showScanner) {
                 BarcodeScannerView { isbn in
-                    viewModel.isbn = isbn
+                    viewModel.showScanner = false
                     Task {
-                        await viewModel.fetchBookInfo()
+                        if let bookInfo = await viewModel.fetchBookInfo(isbn: isbn) {
+                            // Navigate to BookPreviewView - the Apple way!
+                            navigationPath.append(bookInfo)
+                        }
                     }
                 }
             }
@@ -213,30 +226,18 @@ final class AddBookViewModel {
         showScanner = true
     }
 
-    func fetchBookInfo() async {
-        guard !isbn.isEmpty else { return }
+    func fetchBookInfo(isbn: String) async -> BookInfo? {
+        guard !isbn.isEmpty else { return nil }
 
         isLoading = true
         defer { isLoading = false }
 
         do {
             let bookInfo = try await bookAPI.fetchBook(isbn: isbn)
-            await MainActor.run {
-                title = bookInfo.title
-                author = bookInfo.author
-                if let isbn = bookInfo.isbn {
-                    self.isbn = isbn
-                }
-                coverImageURL = bookInfo.coverImageURL
-                totalPages = bookInfo.totalPages
-                bookDescription = bookInfo.description
-                subjects = bookInfo.subjects
-                publisher = bookInfo.publisher
-                publishedDate = bookInfo.publishedDate
-                language = bookInfo.language
-            }
+            return bookInfo
         } catch {
             print("Failed to fetch book info: \(error)")
+            return nil
         }
     }
 
