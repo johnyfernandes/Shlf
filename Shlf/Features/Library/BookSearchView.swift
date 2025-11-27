@@ -69,7 +69,7 @@ struct BookSearchView: View {
                 } else {
                     ScrollView {
                         LazyVStack(spacing: Theme.Spacing.md) {
-                            ForEach(Array(searchResults.enumerated()), id: \.offset) { index, bookInfo in
+                            ForEach(searchResults, id: \.olid) { bookInfo in
                                 NavigationLink {
                                     BookPreviewView(
                                         bookInfo: bookInfo,
