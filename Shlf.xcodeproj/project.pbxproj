@@ -6,8 +6,41 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		527605002ED8FDBA00F08D36 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 527604FF2ED8FDBA00F08D36 /* WidgetKit.framework */; };
+		527605022ED8FDBA00F08D36 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 527605012ED8FDBA00F08D36 /* SwiftUI.framework */; };
+		527605112ED8FDBD00F08D36 /* ReadingSessionWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 527604FD2ED8FDBA00F08D36 /* ReadingSessionWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		5276050F2ED8FDBD00F08D36 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 527603E52ED71E8400F08D36 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 527604FC2ED8FDBA00F08D36;
+			remoteInfo = ReadingSessionWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		527605122ED8FDBD00F08D36 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				527605112ED8FDBD00F08D36 /* ReadingSessionWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		527603ED2ED71E8400F08D36 /* Shlf.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Shlf.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		527604FD2ED8FDBA00F08D36 /* ReadingSessionWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ReadingSessionWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		527604FF2ED8FDBA00F08D36 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		527605012ED8FDBA00F08D36 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -17,6 +50,13 @@
 				Info.plist,
 			);
 			target = 527603EC2ED71E8400F08D36 /* Shlf */;
+		};
+		527605162ED8FDBD00F08D36 /* Exceptions for "ReadingSessionWidget" folder in "ReadingSessionWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 527604FC2ED8FDBA00F08D36 /* ReadingSessionWidgetExtension */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -29,6 +69,14 @@
 			path = Shlf;
 			sourceTree = "<group>";
 		};
+		527605032ED8FDBA00F08D36 /* ReadingSessionWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				527605162ED8FDBD00F08D36 /* Exceptions for "ReadingSessionWidget" folder in "ReadingSessionWidgetExtension" target */,
+			);
+			path = ReadingSessionWidget;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -39,6 +87,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		527604FA2ED8FDBA00F08D36 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				527605022ED8FDBA00F08D36 /* SwiftUI.framework in Frameworks */,
+				527605002ED8FDBA00F08D36 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -46,6 +103,8 @@
 			isa = PBXGroup;
 			children = (
 				527603EF2ED71E8400F08D36 /* Shlf */,
+				527605032ED8FDBA00F08D36 /* ReadingSessionWidget */,
+				527604FE2ED8FDBA00F08D36 /* Frameworks */,
 				527603EE2ED71E8400F08D36 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -54,8 +113,18 @@
 			isa = PBXGroup;
 			children = (
 				527603ED2ED71E8400F08D36 /* Shlf.app */,
+				527604FD2ED8FDBA00F08D36 /* ReadingSessionWidgetExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		527604FE2ED8FDBA00F08D36 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				527604FF2ED8FDBA00F08D36 /* WidgetKit.framework */,
+				527605012ED8FDBA00F08D36 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -68,10 +137,12 @@
 				527603E92ED71E8400F08D36 /* Sources */,
 				527603EA2ED71E8400F08D36 /* Frameworks */,
 				527603EB2ED71E8400F08D36 /* Resources */,
+				527605122ED8FDBD00F08D36 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				527605102ED8FDBD00F08D36 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				527603EF2ED71E8400F08D36 /* Shlf */,
@@ -82,6 +153,28 @@
 			productName = Shlf;
 			productReference = 527603ED2ED71E8400F08D36 /* Shlf.app */;
 			productType = "com.apple.product-type.application";
+		};
+		527604FC2ED8FDBA00F08D36 /* ReadingSessionWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 527605152ED8FDBD00F08D36 /* Build configuration list for PBXNativeTarget "ReadingSessionWidgetExtension" */;
+			buildPhases = (
+				527604F92ED8FDBA00F08D36 /* Sources */,
+				527604FA2ED8FDBA00F08D36 /* Frameworks */,
+				527604FB2ED8FDBA00F08D36 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				527605032ED8FDBA00F08D36 /* ReadingSessionWidget */,
+			);
+			name = ReadingSessionWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = ReadingSessionWidgetExtension;
+			productReference = 527604FD2ED8FDBA00F08D36 /* ReadingSessionWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -94,6 +187,9 @@
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					527603EC2ED71E8400F08D36 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					527604FC2ED8FDBA00F08D36 = {
 						CreatedOnToolsVersion = 26.2;
 					};
 				};
@@ -113,12 +209,20 @@
 			projectRoot = "";
 			targets = (
 				527603EC2ED71E8400F08D36 /* Shlf */,
+				527604FC2ED8FDBA00F08D36 /* ReadingSessionWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		527603EB2ED71E8400F08D36 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		527604FB2ED8FDBA00F08D36 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -135,7 +239,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		527604F92ED8FDBA00F08D36 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		527605102ED8FDBD00F08D36 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 527604FC2ED8FDBA00F08D36 /* ReadingSessionWidgetExtension */;
+			targetProxy = 5276050F2ED8FDBD00F08D36 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		527603FC2ED71E8600F08D36 /* Debug */ = {
@@ -150,6 +269,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Shlf/Info.plist;
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -185,6 +306,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Shlf/Info.plist;
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -329,6 +452,70 @@
 			};
 			name = Release;
 		};
+		527605132ED8FDBD00F08D36 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WDGFKCYAU3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ReadingSessionWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ReadingSessionWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = joaofernandes.Shlf.ReadingSessionWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		527605142ED8FDBD00F08D36 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = WDGFKCYAU3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ReadingSessionWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ReadingSessionWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = joaofernandes.Shlf.ReadingSessionWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -346,6 +533,15 @@
 			buildConfigurations = (
 				527603FC2ED71E8600F08D36 /* Debug */,
 				527603FD2ED71E8600F08D36 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		527605152ED8FDBD00F08D36 /* Build configuration list for PBXNativeTarget "ReadingSessionWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				527605132ED8FDBD00F08D36 /* Debug */,
+				527605142ED8FDBD00F08D36 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
