@@ -49,9 +49,9 @@ struct AddBookView: View {
             }
             .sheet(isPresented: $viewModel.showSearch) {
                 NavigationStack {
-                    BookSearchView { _ in
-                        // Book added directly in BookPreviewView
-                    }
+                    BookSearchView(onDismissAll: {
+                        dismiss()
+                    })
                 }
             }
             .alert("Upgrade Required", isPresented: $viewModel.showUpgradeAlert) {

@@ -9,7 +9,7 @@ import SwiftUI
 
 struct BookSearchView: View {
     @Environment(\.dismiss) private var dismiss
-    let onSelect: (BookInfo) -> Void
+    let onDismissAll: () -> Void
 
     @State private var searchText = ""
     @State private var searchResults: [BookInfo] = []
@@ -70,9 +70,7 @@ struct BookSearchView: View {
                         LazyVStack(spacing: Theme.Spacing.md) {
                             ForEach(Array(searchResults.enumerated()), id: \.offset) { index, bookInfo in
                                 NavigationLink {
-                                    BookPreviewView(bookInfo: bookInfo, onDismiss: {
-                                        dismiss()
-                                    })
+                                    BookPreviewView(bookInfo: bookInfo, onDismiss: onDismissAll)
                                 } label: {
                                     BookSearchResultRow(bookInfo: bookInfo)
                                 }
@@ -266,7 +264,7 @@ struct BookSearchResultRow: View {
 }
 
 #Preview {
-    BookSearchView { bookInfo in
-        print("Selected: \(bookInfo.title)")
-    }
+    BookSearchView(onDismissAll: {
+        print("Dismissed all")
+    })
 }
