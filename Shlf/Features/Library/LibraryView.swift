@@ -172,9 +172,14 @@ struct BookRow: View {
 
     private var yearPublished: String? {
         guard let publishedDate = book.publishedDate else { return nil }
-        // Extract first 4 digits (year) from the published date
-        let year = publishedDate.prefix(4)
-        return year.count == 4 ? String(year) : nil
+        // Extract 4-digit year from the published date using regex
+        let pattern = #"(19|20)\d{2}"#
+        if let regex = try? NSRegularExpression(pattern: pattern),
+           let match = regex.firstMatch(in: publishedDate, range: NSRange(publishedDate.startIndex..., in: publishedDate)),
+           let range = Range(match.range, in: publishedDate) {
+            return String(publishedDate[range])
+        }
+        return nil
     }
 
     var body: some View {
