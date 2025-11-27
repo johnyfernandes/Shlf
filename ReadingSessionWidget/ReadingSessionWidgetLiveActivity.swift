@@ -36,17 +36,10 @@ struct ReadingSessionWidgetLiveActivity: Widget {
                 // Expanded UI goes here.  Compose the expanded UI through
                 // various regions, like leading/trailing/center/bottom
                 DynamicIslandExpandedRegion(.leading) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(context.attributes.bookTitle)
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .lineLimit(1)
-
-                        Text(context.attributes.bookAuthor)
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
+                    Image(systemName: "book.fill")
+                        .font(.title2)
+                        .foregroundStyle(.cyan)
+                        .padding(.leading, 8)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
                     VStack(alignment: .trailing, spacing: 4) {
@@ -63,6 +56,20 @@ struct ReadingSessionWidgetLiveActivity: Widget {
                         Text("\(context.state.pagesRead) pages")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
+                    }
+                    .padding(.trailing, 8)
+                }
+                DynamicIslandExpandedRegion(.center) {
+                    VStack(spacing: 2) {
+                        Text(context.attributes.bookTitle)
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .lineLimit(1)
+
+                        Text(context.attributes.bookAuthor)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
                     }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
