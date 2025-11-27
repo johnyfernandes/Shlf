@@ -42,10 +42,12 @@ enum BookAPIError: Error {
 final class BookAPIService {
     private let urlSession: URLSession
     private let rateLimiter: RateLimiter
+    private let retryPolicy: RetryPolicy
 
     init(urlSession: URLSession = .shared) {
         self.urlSession = urlSession
         self.rateLimiter = RateLimiter(maxRequestsPerSecond: 5)
+        self.retryPolicy = RetryPolicy(maxRetries: 3, baseDelay: 1.0)
     }
 
     // MARK: - Public API
@@ -208,27 +210,29 @@ final class BookAPIService {
     }
 
     private func fetchByOLID(olid: String) async throws -> BookInfo {
-        let urlString = "https://openlibrary.org/api/volumes/brief/olid/\(olid).json"
+        return try await retryPolicy.execute {
+            let urlString = "https://openlibrary.org/api/volumes/brief/olid/\(olid).json"
 
-        guard let url = URL(string: urlString) else {
-            throw BookAPIError.invalidResponse
+            guard let url = URL(string: urlString) else {
+                throw BookAPIError.invalidResponse
+            }
+
+            await self.rateLimiter.waitForToken()
+            let (data, response) = try await self.urlSession.data(from: url)
+
+            guard let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200 else {
+                throw BookAPIError.networkError
+            }
+
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let records = json["records"] as? [String: Any],
+                  let firstRecord = records.values.first as? [String: Any] else {
+                throw BookAPIError.bookNotFound
+            }
+
+            return try self.parseVolumeAPIResponse(firstRecord)
         }
-
-        await rateLimiter.waitForToken()
-        let (data, response) = try await urlSession.data(from: url)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw BookAPIError.networkError
-        }
-
-        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let records = json["records"] as? [String: Any],
-              let firstRecord = records.values.first as? [String: Any] else {
-            throw BookAPIError.bookNotFound
-        }
-
-        return try parseVolumeAPIResponse(firstRecord)
     }
 
     private func parseOpenLibraryBook(_ json: [String: Any], isbn: String) throws -> BookInfo {
