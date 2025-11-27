@@ -132,9 +132,27 @@ struct LogReadingSessionView: View {
                     }
                 }
             }
+            .scrollDismissesKeyboard(.interactively)
+            .onChange(of: endPage) { oldValue, newValue in
+                // Update Live Activity when page changes during active timer
+                if timerStartTime != nil {
+                    Task {
+                        await ReadingSessionActivityManager.shared.updateActivity(
+                            currentPage: newValue,
+                            xpEarned: estimatedXP
+                        )
+                    }
+                }
+            }
             .navigationTitle("Log Session")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .keyboard) {
+                    Button("Done") {
+                        hideKeyboard()
+                    }
+                }
+
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
                         dismiss()
@@ -149,6 +167,10 @@ struct LogReadingSessionView: View {
                 }
             }
         }
+    }
+
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 
     private func startTimer() {
