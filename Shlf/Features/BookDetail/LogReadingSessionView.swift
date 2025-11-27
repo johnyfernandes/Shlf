@@ -22,6 +22,8 @@ struct LogReadingSessionView: View {
     @State private var sessionDate = Date()
     @State private var useTimer = true
     @State private var timerStartTime: Date?
+    @State private var isPaused = false
+    @State private var pausedElapsedTime: TimeInterval = 0
 
     init(book: Book) {
         self.book = book
@@ -83,15 +85,29 @@ struct LogReadingSessionView: View {
                     if useTimer {
                         if let startTime = timerStartTime {
                             VStack(spacing: Theme.Spacing.md) {
-                                Text("Reading...")
+                                Text(isPaused ? "Paused" : "Reading...")
                                     .font(Theme.Typography.headline)
+                                    .foregroundStyle(isPaused ? .orange : Theme.Colors.primary)
 
-                                TimerView(startTime: startTime)
+                                TimerView(startTime: startTime, isPaused: isPaused, pausedElapsedTime: pausedElapsedTime)
 
-                                Button("Stop Timer") {
-                                    stopTimer()
+                                HStack(spacing: Theme.Spacing.sm) {
+                                    Button(isPaused ? "Resume" : "Pause") {
+                                        if isPaused {
+                                            resumeTimer()
+                                        } else {
+                                            pauseTimer()
+                                        }
+                                    }
+                                    .buttonStyle(.bordered)
+                                    .frame(maxWidth: .infinity)
+
+                                    Button("Finish Session") {
+                                        finishSession()
+                                    }
+                                    .primaryButton()
+                                    .frame(maxWidth: .infinity)
                                 }
-                                .primaryButton()
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, Theme.Spacing.sm)
@@ -169,7 +185,7 @@ struct LogReadingSessionView: View {
                     Button("Save") {
                         saveSession()
                     }
-                    .disabled(pagesRead <= 0 || (useTimer && timerStartTime != nil))
+                    .disabled(pagesRead <= 0 || (useTimer && timerStartTime != nil && !isPaused))
                 }
             }
         }
@@ -196,16 +212,37 @@ struct LogReadingSessionView: View {
         }
     }
 
-    private func stopTimer() {
+    private func pauseTimer() {
         guard let startTime = timerStartTime else { return }
-        let elapsed = Date().timeIntervalSince(startTime)
-        durationMinutes = max(1, Int(elapsed / 60))
-        timerStartTime = nil
+        pausedElapsedTime += Date().timeIntervalSince(startTime)
+        isPaused = true
 
-        // End Live Activity
+        // Pause Live Activity
         Task {
-            await ReadingSessionActivityManager.shared.endActivity()
+            await ReadingSessionActivityManager.shared.pauseActivity()
         }
+    }
+
+    private func resumeTimer() {
+        timerStartTime = Date()
+        isPaused = false
+
+        // Resume Live Activity
+        Task {
+            await ReadingSessionActivityManager.shared.resumeActivity()
+        }
+    }
+
+    private func finishSession() {
+        guard let startTime = timerStartTime else { return }
+        let totalElapsed = isPaused ? pausedElapsedTime : pausedElapsedTime + Date().timeIntervalSince(startTime)
+        durationMinutes = max(1, Int(totalElapsed / 60))
+        timerStartTime = nil
+        isPaused = false
+        pausedElapsedTime = 0
+
+        // End Live Activity and save
+        saveSession()
     }
 
     private func saveSession() {
@@ -248,13 +285,19 @@ struct LogReadingSessionView: View {
 
 struct TimerView: View {
     let startTime: Date
+    let isPaused: Bool
+    let pausedElapsedTime: TimeInterval
 
     @State private var currentTime = Date()
 
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var elapsedTime: TimeInterval {
-        currentTime.timeIntervalSince(startTime)
+        if isPaused {
+            return pausedElapsedTime
+        } else {
+            return pausedElapsedTime + currentTime.timeIntervalSince(startTime)
+        }
     }
 
     private var formattedTime: String {
@@ -273,9 +316,11 @@ struct TimerView: View {
         Text(formattedTime)
             .font(.system(size: 48, weight: .bold, design: .rounded))
             .monospacedDigit()
-            .foregroundStyle(Theme.Colors.primary)
+            .foregroundStyle(isPaused ? .orange : Theme.Colors.primary)
             .onReceive(timer) { _ in
-                currentTime = Date()
+                if !isPaused {
+                    currentTime = Date()
+                }
             }
     }
 }

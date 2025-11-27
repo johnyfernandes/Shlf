@@ -39,7 +39,8 @@ class ReadingSessionActivityManager {
         let initialState = ReadingSessionWidgetAttributes.ContentState(
             currentPage: startingPage,
             pagesRead: startingPage - book.currentPage,
-            xpEarned: (startingPage - book.currentPage) * 3
+            xpEarned: (startingPage - book.currentPage) * 3,
+            isPaused: false
         )
 
         let activityContent = ActivityContent(state: initialState, staleDate: nil)
@@ -71,7 +72,8 @@ class ReadingSessionActivityManager {
         let newState = ReadingSessionWidgetAttributes.ContentState(
             currentPage: currentPage,
             pagesRead: pagesRead,
-            xpEarned: xpEarned
+            xpEarned: xpEarned,
+            isPaused: activity.content.state.isPaused
         )
 
         let updatedContent = ActivityContent(state: newState, staleDate: nil)
@@ -79,6 +81,32 @@ class ReadingSessionActivityManager {
         await activity.update(updatedContent)
 
         print("📊 Live Activity updated: Page \(currentPage), XP \(xpEarned)")
+    }
+
+    // MARK: - Pause/Resume Activity
+
+    func pauseActivity() async {
+        guard let activity = currentActivity else { return }
+
+        var newState = activity.content.state
+        newState.isPaused = true
+
+        let updatedContent = ActivityContent(state: newState, staleDate: nil)
+        await activity.update(updatedContent)
+
+        print("⏸️ Live Activity paused")
+    }
+
+    func resumeActivity() async {
+        guard let activity = currentActivity else { return }
+
+        var newState = activity.content.state
+        newState.isPaused = false
+
+        let updatedContent = ActivityContent(state: newState, staleDate: nil)
+        await activity.update(updatedContent)
+
+        print("▶️ Live Activity resumed")
     }
 
     // MARK: - End Activity

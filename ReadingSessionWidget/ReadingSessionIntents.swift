@@ -22,7 +22,8 @@ struct IncrementPageIntent: LiveActivityIntent {
             let newState = ReadingSessionWidgetAttributes.ContentState(
                 currentPage: currentPage,
                 pagesRead: pagesRead,
-                xpEarned: xpEarned
+                xpEarned: xpEarned,
+                isPaused: activity.content.state.isPaused
             )
 
             await activity.update(ActivityContent(state: newState, staleDate: nil))
@@ -48,7 +49,8 @@ struct DecrementPageIntent: LiveActivityIntent {
             let newState = ReadingSessionWidgetAttributes.ContentState(
                 currentPage: currentPage,
                 pagesRead: pagesRead,
-                xpEarned: xpEarned
+                xpEarned: xpEarned,
+                isPaused: activity.content.state.isPaused
             )
 
             await activity.update(ActivityContent(state: newState, staleDate: nil))

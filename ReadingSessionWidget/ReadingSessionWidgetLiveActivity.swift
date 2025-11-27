@@ -16,6 +16,7 @@ struct ReadingSessionWidgetAttributes: ActivityAttributes, Sendable {
         var currentPage: Int
         var pagesRead: Int
         var xpEarned: Int
+        var isPaused: Bool
     }
 
     // Fixed non-changing properties about your activity go here!
@@ -81,14 +82,26 @@ struct ReadingSessionWidgetLiveActivity: Widget {
 
                         // Stats row
                         HStack {
-                            HStack(spacing: 4) {
-                                Image(systemName: "clock.fill")
-                                    .font(.caption2)
-                                    .foregroundStyle(.cyan)
-                                Text(context.attributes.startTime, style: .timer)
-                                    .font(.callout)
-                                    .fontWeight(.medium)
-                                    .monospacedDigit()
+                            if context.state.isPaused {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "pause.circle.fill")
+                                        .font(.caption2)
+                                        .foregroundStyle(.orange)
+                                    Text("Paused")
+                                        .font(.callout)
+                                        .fontWeight(.medium)
+                                        .foregroundStyle(.orange)
+                                }
+                            } else {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "clock.fill")
+                                        .font(.caption2)
+                                        .foregroundStyle(.cyan)
+                                    Text(context.attributes.startTime, style: .timer)
+                                        .font(.callout)
+                                        .fontWeight(.medium)
+                                        .monospacedDigit()
+                                }
                             }
 
                             Spacer()
@@ -147,12 +160,23 @@ struct ReadingSessionLockScreenView: View {
 
             // Stats
             HStack {
-                HStack(spacing: 4) {
-                    Image(systemName: "clock")
-                        .font(.caption2)
-                    Text(context.attributes.startTime, style: .timer)
-                        .font(.caption)
-                        .monospacedDigit()
+                if context.state.isPaused {
+                    HStack(spacing: 4) {
+                        Image(systemName: "pause.circle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                        Text("Paused")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    }
+                } else {
+                    HStack(spacing: 4) {
+                        Image(systemName: "clock")
+                            .font(.caption2)
+                        Text(context.attributes.startTime, style: .timer)
+                            .font(.caption)
+                            .monospacedDigit()
+                    }
                 }
 
                 Spacer()
@@ -213,7 +237,8 @@ extension ReadingSessionWidgetAttributes.ContentState {
         ReadingSessionWidgetAttributes.ContentState(
             currentPage: 5,
             pagesRead: 5,
-            xpEarned: 15
+            xpEarned: 15,
+            isPaused: false
         )
     }
 
@@ -221,7 +246,8 @@ extension ReadingSessionWidgetAttributes.ContentState {
         ReadingSessionWidgetAttributes.ContentState(
             currentPage: 25,
             pagesRead: 25,
-            xpEarned: 75
+            xpEarned: 75,
+            isPaused: false
         )
     }
 }
