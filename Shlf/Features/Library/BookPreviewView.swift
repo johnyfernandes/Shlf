@@ -270,15 +270,26 @@ struct BookPreviewView: View {
             Text("You've reached the limit of 5 books. Upgrade to Pro for unlimited books.")
         }
         .task {
-            // Fetch full details if we have OLID
-            if let olid = bookInfo.olid {
-                isLoading = true
-                do {
-                    fullBookInfo = try await bookAPI.fetchBookByOLID(olid: olid)
-                } catch {
-                    print("Failed to fetch full details: \(error)")
+            isLoading = true
+            defer { isLoading = false }
+
+            do {
+                // Step 1: Find the best edition if we have a work ID
+                var bestOLID = bookInfo.olid
+
+                if let workID = bookInfo.workID {
+                    // Try to find a better edition than the default cover_edition_key
+                    if let foundBestOLID = try await bookAPI.findBestEdition(workID: workID, originalTitle: bookInfo.title) {
+                        bestOLID = foundBestOLID
+                    }
                 }
-                isLoading = false
+
+                // Step 2: Fetch full details using the best edition OLID
+                if let olid = bestOLID {
+                    fullBookInfo = try await bookAPI.fetchBookByOLID(olid: olid)
+                }
+            } catch {
+                print("Failed to fetch best edition: \(error)")
             }
         }
     }
@@ -333,7 +344,8 @@ struct BookPreviewView: View {
                 subjects: ["Business", "Power", "Strategy"],
                 publisher: "Penguin",
                 language: "English",
-                olid: "OL24274306M"
+                olid: "OL24274306M",
+                workID: "OL21459846W"
             ),
             selectedTab: .constant(1),
             onDismiss: {

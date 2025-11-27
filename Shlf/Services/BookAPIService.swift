@@ -19,6 +19,7 @@ struct BookInfo {
     let publisher: String?
     let language: String?
     let olid: String? // Open Library ID for fetching full details
+    let workID: String? // Work ID for finding best edition
 }
 
 enum BookAPIError: Error {
@@ -58,6 +59,10 @@ final class BookAPIService {
     func searchBooks(query: String) async throws -> [BookInfo] {
         // Use Open Library for search
         try await searchOpenLibrary(query: query)
+    }
+
+    func findBestEdition(workID: String, originalTitle: String) async throws -> String? {
+        try await fetchBestEditionOLID(workID: workID, originalTitle: originalTitle)
     }
 
     // MARK: - Open Library API
@@ -193,7 +198,8 @@ final class BookAPIService {
             subjects: subjects,
             publisher: publisher,
             language: language,
-            olid: olid
+            olid: olid,
+            workID: nil // Volume API response doesn't include work ID
         )
     }
 
@@ -265,7 +271,8 @@ final class BookAPIService {
             subjects: subjects,
             publisher: publisher,
             language: language,
-            olid: nil
+            olid: nil,
+            workID: nil
         )
     }
 
@@ -294,6 +301,12 @@ final class BookAPIService {
         // Get OLID from cover_edition_key
         let olid = json["cover_edition_key"] as? String
 
+        // Get Work ID from key field (e.g., "/works/OL1968368W" -> "OL1968368W")
+        var workID: String?
+        if let key = json["key"] as? String {
+            workID = key.replacingOccurrences(of: "/works/", with: "")
+        }
+
         return BookInfo(
             title: title,
             author: author,
@@ -305,8 +318,140 @@ final class BookAPIService {
             subjects: subjects,
             publisher: publisher,
             language: language,
-            olid: olid
+            olid: olid,
+            workID: workID
         )
+    }
+
+    // MARK: - Best Edition Selection
+
+    private func fetchBestEditionOLID(workID: String, originalTitle: String) async throws -> String? {
+        let urlString = "https://openlibrary.org/works/\(workID)/editions.json?limit=50"
+
+        guard let url = URL(string: urlString) else {
+            throw BookAPIError.invalidResponse
+        }
+
+        let (data, response) = try await urlSession.data(from: url)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw BookAPIError.networkError
+        }
+
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let entries = json["entries"] as? [[String: Any]] else {
+            throw BookAPIError.invalidResponse
+        }
+
+        // Find the best edition
+        return selectBestEdition(from: entries, matchingTitle: originalTitle)
+    }
+
+    private func selectBestEdition(from editions: [[String: Any]], matchingTitle: String) -> String? {
+        // Normalize the original title for comparison
+        let normalizedOriginalTitle = normalizeTitle(matchingTitle)
+
+        // First, filter editions that match the title exactly or very closely
+        let matchingEditions = editions.filter { edition in
+            guard let title = edition["title"] as? String else { return false }
+            let normalizedEditionTitle = normalizeTitle(title)
+
+            // Only keep editions with exact or near-exact title match
+            return normalizedEditionTitle == normalizedOriginalTitle ||
+                   levenshteinDistance(normalizedEditionTitle, normalizedOriginalTitle) <= 3
+        }
+
+        // If we filtered out everything, fall back to all editions
+        let editionsToScore = matchingEditions.isEmpty ? editions : matchingEditions
+
+        // Score each edition
+        let scoredEditions = editionsToScore.compactMap { edition -> (olid: String, score: Int)? in
+            guard let key = edition["key"] as? String else { return nil }
+            let olid = key.replacingOccurrences(of: "/books/", with: "")
+
+            var score = 0
+
+            // +100: Has page count
+            if edition["number_of_pages"] != nil {
+                score += 100
+            }
+
+            // +50: English language
+            if let languages = edition["languages"] as? [[String: Any]],
+               let firstLang = languages.first,
+               let langKey = firstLang["key"] as? String,
+               langKey == "/languages/eng" {
+                score += 50
+            }
+
+            // +30: NOT an ebook/audiobook
+            if let physicalFormat = edition["physical_format"] as? String {
+                let format = physicalFormat.lowercased()
+                if !format.contains("electronic") &&
+                   !format.contains("ebook") &&
+                   !format.contains("audio") &&
+                   !format.contains("mp3") {
+                    score += 30
+                }
+            } else {
+                // No physical_format specified = likely physical book
+                score += 20
+            }
+
+            // +20: Has cover
+            if let covers = edition["covers"] as? [Any], !covers.isEmpty {
+                score += 20
+            }
+
+            // +10: More recent publication (prefer newer editions)
+            if let publishDate = edition["publish_date"] as? String,
+               let year = extractYear(from: publishDate),
+               year >= 2000 {
+                score += 10
+            }
+
+            return (olid: olid, score: score)
+        }
+
+        // Return the highest scored edition
+        return scoredEditions.max(by: { $0.score < $1.score })?.olid
+    }
+
+    private func normalizeTitle(_ title: String) -> String {
+        // Remove common articles, punctuation, and normalize to lowercase
+        return title.lowercased()
+            .replacingOccurrences(of: "the ", with: "")
+            .replacingOccurrences(of: "a ", with: "")
+            .replacingOccurrences(of: "an ", with: "")
+            .replacingOccurrences(of: ":", with: "")
+            .replacingOccurrences(of: ",", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func levenshteinDistance(_ s1: String, _ s2: String) -> Int {
+        let empty = [Int](repeating: 0, count: s2.count)
+        var last = [Int](0...s2.count)
+
+        for (i, char1) in s1.enumerated() {
+            var cur = [i + 1] + empty
+            for (j, char2) in s2.enumerated() {
+                cur[j + 1] = char1 == char2 ? last[j] : min(last[j], last[j + 1], cur[j]) + 1
+            }
+            last = cur
+        }
+        return last.last!
+    }
+
+    private func extractYear(from dateString: String) -> Int? {
+        // Try to extract a 4-digit year from date string
+        let pattern = #"(19|20)\d{2}"#
+        if let regex = try? NSRegularExpression(pattern: pattern),
+           let match = regex.firstMatch(in: dateString, range: NSRange(dateString.startIndex..., in: dateString)),
+           let range = Range(match.range, in: dateString) {
+            return Int(dateString[range])
+        }
+        return nil
     }
 
     // MARK: - Helper Functions
