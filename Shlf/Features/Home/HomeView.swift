@@ -178,34 +178,38 @@ struct HomeView: View {
     private var statsSection: some View {
         HStack(spacing: Theme.Spacing.sm) {
             ForEach(Array(profile.homeCards.enumerated()), id: \.element) { index, cardType in
-                Button {
-                    if !isEditingCards {
-                        handleCardTap(cardType)
+                StatCard(
+                    title: cardType.title,
+                    value: getValue(for: cardType),
+                    icon: cardType.icon,
+                    gradient: cardType.gradient,
+                    isEditing: isEditingCards,
+                    onRemove: {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            profile.removeHomeCard(cardType)
+                        }
                     }
-                } label: {
-                    StatCard(
-                        title: cardType.title,
-                        value: getValue(for: cardType),
-                        icon: cardType.icon,
-                        gradient: cardType.gradient,
-                        isEditing: isEditingCards,
-                        onRemove: {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                profile.removeHomeCard(cardType)
+                )
+                .scaleEffect(draggingCard == cardType && isEditingCards ? 1.05 : 1.0)
+                .highPriorityGesture(
+                    LongPressGesture(minimumDuration: 0.3)
+                        .onEnded { _ in
+                            if !isEditingCards {
+                                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    isEditingCards = true
+                                }
                             }
                         }
-                    )
-                }
-                .buttonStyle(.plain)
-                .scaleEffect(draggingCard == cardType && isEditingCards ? 1.05 : 1.0)
-                .onLongPressGesture(minimumDuration: 0.3) {
-                    if !isEditingCards {
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            isEditingCards = true
+                )
+                .simultaneousGesture(
+                    TapGesture()
+                        .onEnded {
+                            if !isEditingCards {
+                                handleCardTap(cardType)
+                            }
                         }
-                    }
-                }
+                )
                 .if(isEditingCards) { view in
                     view
                         .onDrag {
