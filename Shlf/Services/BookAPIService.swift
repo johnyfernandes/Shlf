@@ -18,6 +18,7 @@ struct BookInfo {
     let subjects: [String]?
     let publisher: String?
     let language: String?
+    let olid: String? // Open Library ID for fetching full details
 }
 
 enum BookAPIError: Error {
@@ -48,6 +49,10 @@ final class BookAPIService {
 
     func fetchBook(isbn: String) async throws -> BookInfo {
         try await fetchFromOpenLibrary(isbn: isbn)
+    }
+
+    func fetchBookByOLID(olid: String) async throws -> BookInfo {
+        try await fetchByOLID(olid: olid)
     }
 
     func searchBooks(query: String) async throws -> [BookInfo] {
@@ -82,8 +87,7 @@ final class BookAPIService {
 
     private func searchOpenLibrary(query: String) async throws -> [BookInfo] {
         let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
-        let fields = "title,author_name,cover_i,number_of_pages_median,first_publish_year,isbn,subject,publisher,language"
-        let urlString = "https://openlibrary.org/search.json?q=\(encodedQuery)&fields=\(fields)&limit=20"
+        let urlString = "https://openlibrary.org/search.json?q=\(encodedQuery)&limit=20"
 
         guard let url = URL(string: urlString) else {
             throw BookAPIError.invalidResponse
@@ -105,6 +109,115 @@ final class BookAPIService {
         let allResults = docs.compactMap { parseOpenLibrarySearchResult($0) }
 
         return Array(allResults.prefix(20))
+    }
+
+    // Parse Volume API response from /api/volumes/brief/
+    private func parseVolumeAPIResponse(_ record: [String: Any]) throws -> BookInfo {
+        guard let data = record["data"] as? [String: Any],
+              let title = data["title"] as? String else {
+            throw BookAPIError.invalidResponse
+        }
+
+        // Authors
+        let authors = (data["authors"] as? [[String: Any]])?.compactMap { $0["name"] as? String } ?? []
+        let author = authors.first ?? "Unknown Author"
+
+        // ISBN from identifiers
+        var isbn: String?
+        if let identifiers = data["identifiers"] as? [String: Any] {
+            if let isbn13List = identifiers["isbn_13"] as? [String] {
+                isbn = isbn13List.first
+            } else if let isbn10List = identifiers["isbn_10"] as? [String] {
+                isbn = isbn10List.first
+            }
+        }
+
+        // Cover from data.cover
+        var coverURL: URL?
+        if let cover = data["cover"] as? [String: String],
+           let large = cover["large"] {
+            coverURL = URL(string: large)
+        }
+
+        // Pages from data.number_of_pages
+        let pages = data["number_of_pages"] as? Int
+
+        // Published date
+        let publishedDate = data["publish_date"] as? String
+
+        // Description from details.details.description
+        var description: String?
+        if let details = record["details"] as? [String: Any],
+           let detailsData = details["details"] as? [String: Any] {
+            if let desc = detailsData["description"] as? String {
+                description = desc
+            } else if let descDict = detailsData["description"] as? [String: Any],
+                      let value = descDict["value"] as? String {
+                description = value
+            }
+        }
+
+        // Subjects from data.subjects
+        let subjects = (data["subjects"] as? [[String: Any]])?.compactMap { $0["name"] as? String }
+
+        // Publisher from data.publishers
+        let publishers = (data["publishers"] as? [[String: Any]])?.compactMap { $0["name"] as? String }
+        let publisher = publishers?.first
+
+        // Language from details.details.languages
+        var language: String?
+        if let details = record["details"] as? [String: Any],
+           let detailsData = details["details"] as? [String: Any],
+           let languages = detailsData["languages"] as? [[String: Any]],
+           let firstLang = languages.first,
+           let key = firstLang["key"] as? String {
+            let code = key.replacingOccurrences(of: "/languages/", with: "")
+            language = formatLanguageCode(code)
+        }
+
+        // OLID from data.identifiers.openlibrary
+        var olid: String?
+        if let identifiers = data["identifiers"] as? [String: Any],
+           let olidList = identifiers["openlibrary"] as? [String] {
+            olid = olidList.first
+        }
+
+        return BookInfo(
+            title: title,
+            author: author,
+            isbn: isbn,
+            coverImageURL: coverURL,
+            totalPages: pages,
+            publishedDate: publishedDate,
+            description: description,
+            subjects: subjects,
+            publisher: publisher,
+            language: language,
+            olid: olid
+        )
+    }
+
+    private func fetchByOLID(olid: String) async throws -> BookInfo {
+        let urlString = "https://openlibrary.org/api/volumes/brief/olid/\(olid).json"
+
+        guard let url = URL(string: urlString) else {
+            throw BookAPIError.invalidResponse
+        }
+
+        let (data, response) = try await urlSession.data(from: url)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw BookAPIError.networkError
+        }
+
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let records = json["records"] as? [String: Any],
+              let firstRecord = records.values.first as? [String: Any] else {
+            throw BookAPIError.bookNotFound
+        }
+
+        return try parseVolumeAPIResponse(firstRecord)
     }
 
     private func parseOpenLibraryBook(_ json: [String: Any], isbn: String) throws -> BookInfo {
@@ -151,7 +264,8 @@ final class BookAPIService {
             description: description,
             subjects: subjects,
             publisher: publisher,
-            language: language
+            language: language,
+            olid: nil
         )
     }
 
@@ -177,6 +291,9 @@ final class BookAPIService {
         let languageCodes = json["language"] as? [String]
         let language = languageCodes?.first.map { formatLanguageCode($0) }
 
+        // Get OLID from cover_edition_key
+        let olid = json["cover_edition_key"] as? String
+
         return BookInfo(
             title: title,
             author: author,
@@ -184,10 +301,11 @@ final class BookAPIService {
             coverImageURL: coverURL,
             totalPages: pages,
             publishedDate: publishedDate,
-            description: nil,
+            description: nil, // Will be fetched from Volume API using OLID
             subjects: subjects,
             publisher: publisher,
-            language: language
+            language: language,
+            olid: olid
         )
     }
 

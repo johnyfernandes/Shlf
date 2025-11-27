@@ -65,6 +65,12 @@ struct AddBookView: View {
             .sheet(isPresented: $viewModel.showSearch) {
                 BookSearchView { bookInfo in
                     viewModel.populateFrom(bookInfo)
+                    // Fetch full details using OLID
+                    if let olid = bookInfo.olid {
+                        Task {
+                            await viewModel.fetchFullBookDetails(olid: olid)
+                        }
+                    }
                     viewModel.showBookPreview = true
                 }
             }
@@ -448,6 +454,35 @@ final class AddBookViewModel {
         }
     }
 
+    func fetchFullBookDetails(olid: String) async {
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            let fullBookInfo = try await bookAPI.fetchBookByOLID(olid: olid)
+            await MainActor.run {
+                // Update with full details from Volume API
+                if bookDescription == nil, let desc = fullBookInfo.description {
+                    bookDescription = desc
+                }
+                if subjects == nil || subjects?.isEmpty == true, let subj = fullBookInfo.subjects {
+                    subjects = subj
+                }
+                if publisher == nil, let pub = fullBookInfo.publisher {
+                    publisher = pub
+                }
+                if language == nil, let lang = fullBookInfo.language {
+                    language = lang
+                }
+                if totalPages == nil, let pages = fullBookInfo.totalPages {
+                    totalPages = pages
+                }
+            }
+        } catch {
+            print("Failed to fetch full book details: \(error)")
+        }
+    }
+
     func populateFrom(_ bookInfo: BookInfo) {
         title = bookInfo.title
         author = bookInfo.author
@@ -458,7 +493,9 @@ final class AddBookViewModel {
         totalPages = bookInfo.totalPages
         bookDescription = bookInfo.description
         subjects = bookInfo.subjects
+        publisher = bookInfo.publisher
         publishedDate = bookInfo.publishedDate
+        language = bookInfo.language
     }
 }
 
