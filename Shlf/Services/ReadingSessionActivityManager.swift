@@ -21,11 +21,12 @@ class ReadingSessionActivityManager {
 
     // MARK: - Start Activity
 
-    func startActivity(book: Book) async {
+    func startActivity(book: Book, currentPage: Int? = nil) async {
         // End any existing activity first
         await endActivity()
 
         let now = Date()
+        let startingPage = currentPage ?? book.currentPage
 
         let attributes = ReadingSessionWidgetAttributes(
             bookTitle: book.title,
@@ -36,9 +37,9 @@ class ReadingSessionActivityManager {
         )
 
         let initialState = ReadingSessionWidgetAttributes.ContentState(
-            currentPage: book.currentPage,
-            pagesRead: 0,
-            xpEarned: 0
+            currentPage: startingPage,
+            pagesRead: startingPage - book.currentPage,
+            xpEarned: (startingPage - book.currentPage) * 3
         )
 
         let activityContent = ActivityContent(state: initialState, staleDate: nil)

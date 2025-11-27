@@ -190,9 +190,9 @@ struct LogReadingSessionView: View {
     private func startTimer() {
         timerStartTime = Date()
 
-        // Start Live Activity
+        // Start Live Activity with current page
         Task {
-            await ReadingSessionActivityManager.shared.startActivity(book: book)
+            await ReadingSessionActivityManager.shared.startActivity(book: book, currentPage: endPage)
         }
     }
 
