@@ -36,40 +36,64 @@ struct ReadingSessionWidgetLiveActivity: Widget {
                 // Expanded UI goes here.  Compose the expanded UI through
                 // various regions, like leading/trailing/center/bottom
                 DynamicIslandExpandedRegion(.leading) {
-                    HStack {
-                        Image(systemName: "book.fill")
-                            .foregroundStyle(.cyan)
+                    VStack(alignment: .leading, spacing: 2) {
                         Text(context.attributes.bookTitle)
-                            .font(.caption)
-                            .lineLimit(2)
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .lineLimit(1)
+
+                        Text(context.attributes.bookAuthor)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
                     }
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    VStack(alignment: .trailing) {
-                        Text("+\(context.state.xpEarned)")
-                            .font(.caption)
-                            .foregroundStyle(.yellow)
+                    VStack(alignment: .trailing, spacing: 4) {
+                        HStack(spacing: 3) {
+                            Text("+\(context.state.xpEarned)")
+                                .font(.title3)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.yellow)
+                            Image(systemName: "star.fill")
+                                .font(.caption)
+                                .foregroundStyle(.yellow)
+                        }
+
                         Text("\(context.state.pagesRead) pages")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    HStack {
-                        HStack(spacing: 4) {
-                            Image(systemName: "clock")
-                                .font(.caption2)
-                            Text(context.attributes.startTime, style: .timer)
-                                .font(.caption)
-                                .monospacedDigit()
+                    VStack(spacing: 8) {
+                        // Progress bar
+                        let progress = Double(context.state.currentPage) / Double(max(context.attributes.totalPages, 1))
+                        ProgressView(value: progress)
+                            .tint(.cyan)
+
+                        // Stats row
+                        HStack {
+                            HStack(spacing: 4) {
+                                Image(systemName: "clock.fill")
+                                    .font(.caption2)
+                                    .foregroundStyle(.cyan)
+                                Text(context.attributes.startTime, style: .timer)
+                                    .font(.callout)
+                                    .fontWeight(.medium)
+                                    .monospacedDigit()
+                            }
+
+                            Spacer()
+
+                            Text("\(context.state.currentPage) / \(context.attributes.totalPages)")
+                                .font(.callout)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.secondary)
                         }
-
-                        Spacer()
-
-                        Text("\(context.state.currentPage)/\(context.attributes.totalPages)")
-                            .font(.caption)
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 4)
                 }
             } compactLeading: {
                 Image(systemName: "book.fill")
