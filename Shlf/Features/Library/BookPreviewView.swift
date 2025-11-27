@@ -243,11 +243,18 @@ struct BookPreviewView: View {
                         addBookToLibrary()
                     } label: {
                         HStack {
-                            Image(systemName: "plus.circle.fill")
+                            if isLoading {
+                                ProgressView()
+                                    .progressViewStyle(.circular)
+                                    .tint(.white)
+                            } else {
+                                Image(systemName: "plus.circle.fill")
+                            }
                             Text("Add to Library")
                         }
                         .primaryButton(fullWidth: true)
                     }
+                    .disabled(isLoading)
                     .padding(.horizontal, Theme.Spacing.md)
                     .padding(.top, Theme.Spacing.md)
                 }
@@ -261,6 +268,22 @@ struct BookPreviewView: View {
         .background(Theme.Colors.background)
         .navigationTitle("Book Details")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button {
+                    addBookToLibrary()
+                } label: {
+                    if isLoading {
+                        ProgressView()
+                            .progressViewStyle(.circular)
+                    } else {
+                        Image(systemName: "checkmark")
+                            .fontWeight(.semibold)
+                    }
+                }
+                .disabled(isLoading)
+            }
+        }
         .alert("Upgrade Required", isPresented: $showUpgradeAlert) {
             Button("Upgrade to Pro") {
                 // Navigate to upgrade screen
