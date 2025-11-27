@@ -13,6 +13,7 @@ actor ImageCacheManager {
 
     private var memoryCache = NSCache<NSString, UIImage>()
     private var diskCacheURL: URL
+    private let maxCacheAge: TimeInterval = 7 * 24 * 60 * 60 // 7 days in seconds
 
     private init() {
         // Configure memory cache
@@ -25,6 +26,11 @@ actor ImageCacheManager {
 
         // Create directory if needed
         try? FileManager.default.createDirectory(at: diskCacheURL, withIntermediateDirectories: true)
+
+        // Clean up old cache on init
+        Task {
+            await cleanupOldCache()
+        }
     }
 
     // MARK: - Public Methods
@@ -65,6 +71,19 @@ actor ImageCacheManager {
         let filename = cacheFilename(for: url)
         let fileURL = diskCacheURL.appendingPathComponent(filename)
 
+        // Check if file exists and is not too old
+        guard let attributes = try? FileManager.default.attributesOfItem(atPath: fileURL.path),
+              let modificationDate = attributes[.modificationDate] as? Date else {
+            return nil
+        }
+
+        let fileAge = Date().timeIntervalSince(modificationDate)
+        if fileAge > maxCacheAge {
+            // File is too old, delete it
+            try? FileManager.default.removeItem(at: fileURL)
+            return nil
+        }
+
         guard let data = try? Data(contentsOf: fileURL),
               let image = UIImage(data: data) else {
             return nil
@@ -95,6 +114,30 @@ actor ImageCacheManager {
     private func sha256(data: Data) -> String {
         let digest = SHA256.hash(data: data)
         return digest.compactMap { String(format: "%02hhx", $0) }.joined()
+    }
+
+    private func cleanupOldCache() async {
+        guard let files = try? FileManager.default.contentsOfDirectory(
+            at: diskCacheURL,
+            includingPropertiesForKeys: [.contentModificationDateKey],
+            options: .skipsHiddenFiles
+        ) else {
+            return
+        }
+
+        let now = Date()
+
+        for fileURL in files {
+            guard let attributes = try? FileManager.default.attributesOfItem(atPath: fileURL.path),
+                  let modificationDate = attributes[.modificationDate] as? Date else {
+                continue
+            }
+
+            let fileAge = now.timeIntervalSince(modificationDate)
+            if fileAge > maxCacheAge {
+                try? FileManager.default.removeItem(at: fileURL)
+            }
+        }
     }
 
     private func downloadImage(from url: URL) async -> UIImage? {
