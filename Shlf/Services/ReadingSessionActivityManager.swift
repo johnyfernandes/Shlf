@@ -25,17 +25,19 @@ class ReadingSessionActivityManager {
         // End any existing activity first
         await endActivity()
 
+        let now = Date()
+
         let attributes = ReadingSessionWidgetAttributes(
             bookTitle: book.title,
             bookAuthor: book.author,
             totalPages: book.totalPages ?? 0,
-            startPage: book.currentPage
+            startPage: book.currentPage,
+            startTime: now
         )
 
         let initialState = ReadingSessionWidgetAttributes.ContentState(
             currentPage: book.currentPage,
             pagesRead: 0,
-            elapsedMinutes: 0,
             xpEarned: 0
         )
 
@@ -49,7 +51,7 @@ class ReadingSessionActivityManager {
             )
 
             currentActivity = activity
-            startTime = Date()
+            startTime = now
             startPage = book.currentPage
 
             print("✅ Live Activity started: \(activity.id)")
@@ -62,16 +64,12 @@ class ReadingSessionActivityManager {
 
     func updateActivity(currentPage: Int, xpEarned: Int) async {
         guard let activity = currentActivity else { return }
-        guard let startTime = startTime else { return }
 
-        let elapsed = Date().timeIntervalSince(startTime)
-        let elapsedMinutes = Int(elapsed / 60)
         let pagesRead = currentPage - startPage
 
         let newState = ReadingSessionWidgetAttributes.ContentState(
             currentPage: currentPage,
             pagesRead: pagesRead,
-            elapsedMinutes: elapsedMinutes,
             xpEarned: xpEarned
         )
 

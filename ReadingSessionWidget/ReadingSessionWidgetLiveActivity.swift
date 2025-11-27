@@ -14,7 +14,6 @@ struct ReadingSessionWidgetAttributes: ActivityAttributes {
         // Dynamic stateful properties about your activity go here!
         var currentPage: Int
         var pagesRead: Int
-        var elapsedMinutes: Int
         var xpEarned: Int
     }
 
@@ -23,6 +22,7 @@ struct ReadingSessionWidgetAttributes: ActivityAttributes {
     var bookAuthor: String
     var totalPages: Int
     var startPage: Int
+    var startTime: Date
 }
 
 struct ReadingSessionWidgetLiveActivity: Widget {
@@ -55,8 +55,13 @@ struct ReadingSessionWidgetLiveActivity: Widget {
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     HStack {
-                        Label("\(context.state.elapsedMinutes)m", systemImage: "clock")
-                            .font(.caption)
+                        HStack(spacing: 4) {
+                            Image(systemName: "clock")
+                                .font(.caption2)
+                            Text(context.attributes.startTime, style: .timer)
+                                .font(.caption)
+                                .monospacedDigit()
+                        }
 
                         Spacer()
 
@@ -110,8 +115,13 @@ struct ReadingSessionLockScreenView: View {
 
             // Stats
             HStack {
-                Label("\(context.state.elapsedMinutes)m", systemImage: "clock")
-                    .font(.caption)
+                HStack(spacing: 4) {
+                    Image(systemName: "clock")
+                        .font(.caption2)
+                    Text(context.attributes.startTime, style: .timer)
+                        .font(.caption)
+                        .monospacedDigit()
+                }
 
                 Spacer()
 
@@ -139,7 +149,8 @@ extension ReadingSessionWidgetAttributes {
             bookTitle: "The 48 Laws of Power",
             bookAuthor: "Robert Greene",
             totalPages: 463,
-            startPage: 0
+            startPage: 0,
+            startTime: Date().addingTimeInterval(-600) // 10 minutes ago
         )
     }
 }
@@ -149,7 +160,6 @@ extension ReadingSessionWidgetAttributes.ContentState {
         ReadingSessionWidgetAttributes.ContentState(
             currentPage: 5,
             pagesRead: 5,
-            elapsedMinutes: 10,
             xpEarned: 15
         )
     }
@@ -158,7 +168,6 @@ extension ReadingSessionWidgetAttributes.ContentState {
         ReadingSessionWidgetAttributes.ContentState(
             currentPage: 25,
             pagesRead: 25,
-            elapsedMinutes: 45,
             xpEarned: 75
         )
     }
