@@ -24,6 +24,7 @@ struct LogReadingSessionView: View {
     @State private var timerStartTime: Date?
     @State private var isPaused = false
     @State private var pausedElapsedTime: TimeInterval = 0
+    @State private var showDiscardAlert = false
 
     init(book: Book) {
         self.book = book
@@ -33,6 +34,11 @@ struct LogReadingSessionView: View {
 
     private var pagesRead: Int {
         max(0, endPage - startPage)
+    }
+
+    private var hasUnsavedData: Bool {
+        // Has data if timer is running/paused, or pages have been logged
+        return timerStartTime != nil || pagesRead > 0
     }
 
     private var estimatedXP: Int {
@@ -177,7 +183,7 @@ struct LogReadingSessionView: View {
 
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
-                        dismiss()
+                        handleCancel()
                     }
                 }
 
@@ -188,11 +194,31 @@ struct LogReadingSessionView: View {
                     .disabled(pagesRead <= 0 || (useTimer && timerStartTime != nil && !isPaused))
                 }
             }
+            .interactiveDismissDisabled(hasUnsavedData)
+            .alert("Discard Session?", isPresented: $showDiscardAlert) {
+                Button("Keep Editing", role: .cancel) {}
+                Button("Discard", role: .destructive) {
+                    Task {
+                        await ReadingSessionActivityManager.shared.endActivity()
+                    }
+                    dismiss()
+                }
+            } message: {
+                Text("You have unsaved progress. Are you sure you want to discard this reading session?")
+            }
         }
     }
 
     private func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+
+    private func handleCancel() {
+        if hasUnsavedData {
+            showDiscardAlert = true
+        } else {
+            dismiss()
+        }
     }
 
     private func syncWithLiveActivity() {
