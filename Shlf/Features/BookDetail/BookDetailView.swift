@@ -324,20 +324,22 @@ struct BookDetailView: View {
             Text("Genres & Topics")
                 .font(Theme.Typography.title3)
                 .foregroundStyle(Theme.Colors.text)
+                .padding(.horizontal, Theme.Spacing.md)
 
-            FlowLayout(spacing: Theme.Spacing.xs) {
-                ForEach(subjects.prefix(10), id: \.self) { subject in
-                    Text(subject)
-                        .font(Theme.Typography.caption)
-                        .foregroundStyle(Theme.Colors.primary)
-                        .padding(.horizontal, Theme.Spacing.sm)
-                        .padding(.vertical, Theme.Spacing.xxs)
-                        .background(Theme.Colors.primary.opacity(0.1))
-                        .clipShape(Capsule())
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: Theme.Spacing.xs) {
+                    ForEach(subjects, id: \.self) { subject in
+                        Text(subject)
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(Theme.Colors.primary)
+                            .padding(.horizontal, Theme.Spacing.sm)
+                            .padding(.vertical, Theme.Spacing.xxs)
+                            .background(Theme.Colors.primary.opacity(0.1))
+                            .clipShape(Capsule())
+                    }
                 }
+                .padding(.horizontal, Theme.Spacing.md)
             }
-            .padding(Theme.Spacing.md)
-            .cardStyle()
         }
     }
 
