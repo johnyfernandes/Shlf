@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CryptoKit
 
 actor ImageCacheManager {
     static let shared = ImageCacheManager()
@@ -61,7 +62,7 @@ actor ImageCacheManager {
     // MARK: - Private Methods
 
     private func loadFromDisk(url: URL) async -> UIImage? {
-        let filename = url.lastPathComponent.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? url.lastPathComponent
+        let filename = cacheFilename(for: url)
         let fileURL = diskCacheURL.appendingPathComponent(filename)
 
         guard let data = try? Data(contentsOf: fileURL),
@@ -73,7 +74,7 @@ actor ImageCacheManager {
     }
 
     private func saveToDisk(image: UIImage, url: URL) async {
-        let filename = url.lastPathComponent.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? url.lastPathComponent
+        let filename = cacheFilename(for: url)
         let fileURL = diskCacheURL.appendingPathComponent(filename)
 
         guard let data = image.jpegData(compressionQuality: 0.8) else {
@@ -81,6 +82,19 @@ actor ImageCacheManager {
         }
 
         try? data.write(to: fileURL)
+    }
+
+    private func cacheFilename(for url: URL) -> String {
+        // Use SHA256 hash of full URL to avoid collisions
+        let urlString = url.absoluteString
+        let data = Data(urlString.utf8)
+        let hash = sha256(data: data)
+        return hash + ".jpg"
+    }
+
+    private func sha256(data: Data) -> String {
+        let digest = SHA256.hash(data: data)
+        return digest.compactMap { String(format: "%02hhx", $0) }.joined()
     }
 
     private func downloadImage(from url: URL) async -> UIImage? {
