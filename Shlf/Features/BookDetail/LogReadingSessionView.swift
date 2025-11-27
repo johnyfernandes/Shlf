@@ -20,7 +20,7 @@ struct LogReadingSessionView: View {
     @State private var endPage: Int
     @State private var durationMinutes = 30
     @State private var sessionDate = Date()
-    @State private var useTimer = false
+    @State private var useTimer = true
     @State private var timerStartTime: Date?
 
     init(book: Book) {
