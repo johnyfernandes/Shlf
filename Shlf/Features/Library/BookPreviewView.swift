@@ -73,38 +73,41 @@ struct BookPreviewView: View {
                 // Details Section
                 VStack(spacing: Theme.Spacing.md) {
                     // ISBN & Pages
-                    HStack(spacing: Theme.Spacing.md) {
-                        if let isbn = displayInfo.isbn {
-                            VStack(spacing: Theme.Spacing.xxs) {
-                                Image(systemName: "barcode")
-                                    .font(.title3)
-                                    .foregroundStyle(Theme.Colors.tertiaryText)
+                    if displayInfo.isbn != nil || displayInfo.totalPages != nil {
+                        HStack(spacing: Theme.Spacing.md) {
+                            if let isbn = displayInfo.isbn {
+                                VStack(spacing: Theme.Spacing.xxs) {
+                                    Image(systemName: "barcode")
+                                        .font(.title3)
+                                        .foregroundStyle(Theme.Colors.tertiaryText)
 
-                                Text(isbn)
-                                    .font(Theme.Typography.caption)
-                                    .foregroundStyle(Theme.Colors.secondaryText)
+                                    Text(isbn)
+                                        .font(Theme.Typography.caption)
+                                        .foregroundStyle(Theme.Colors.secondaryText)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(Theme.Spacing.md)
+                                .cardStyle()
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding(Theme.Spacing.md)
-                            .cardStyle()
-                        }
 
-                        if let totalPages = displayInfo.totalPages {
-                            VStack(spacing: Theme.Spacing.xxs) {
-                                Image(systemName: "book.pages")
-                                    .font(.title3)
-                                    .foregroundStyle(Theme.Colors.tertiaryText)
+                            if let totalPages = displayInfo.totalPages {
+                                VStack(spacing: Theme.Spacing.xxs) {
+                                    Image(systemName: "book.pages")
+                                        .font(.title3)
+                                        .foregroundStyle(Theme.Colors.tertiaryText)
 
-                                Text("\(totalPages) pages")
-                                    .font(Theme.Typography.caption)
-                                    .foregroundStyle(Theme.Colors.secondaryText)
+                                    Text("\(totalPages) pages")
+                                        .font(Theme.Typography.caption)
+                                        .foregroundStyle(Theme.Colors.secondaryText)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(Theme.Spacing.md)
+                                .cardStyle()
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding(Theme.Spacing.md)
-                            .cardStyle()
                         }
+                        .padding(.horizontal, Theme.Spacing.md)
+                        .transition(.opacity)
                     }
-                    .padding(.horizontal, Theme.Spacing.md)
 
                     // Subjects
                     if let subjects = displayInfo.subjects, !subjects.isEmpty {
@@ -224,6 +227,8 @@ struct BookPreviewView: View {
             .padding(.bottom, Theme.Spacing.xxl)
             .animation(.easeInOut(duration: 0.3), value: displayInfo.description)
             .animation(.easeInOut(duration: 0.3), value: displayInfo.subjects)
+            .animation(.easeInOut(duration: 0.3), value: displayInfo.isbn)
+            .animation(.easeInOut(duration: 0.3), value: displayInfo.totalPages)
         }
         .background(Theme.Colors.background)
         .navigationTitle("Book Details")
