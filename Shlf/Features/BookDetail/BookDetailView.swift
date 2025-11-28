@@ -439,6 +439,12 @@ struct BookDetailView: View {
 
     private func deleteBook() {
         modelContext.delete(book)
+
+        // Sync to Watch after deletion
+        Task {
+            await WatchConnectivityManager.shared.syncBooksToWatch()
+        }
+
         dismiss()
     }
 }

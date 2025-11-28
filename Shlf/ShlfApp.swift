@@ -19,10 +19,10 @@ struct ShlfApp: App {
             Achievement.self
         ])
 
-        // Configure CloudKit sync with offline-first approach
+        // Local storage only - sync via WatchConnectivity
         let modelConfiguration = ModelConfiguration(
             schema: schema,
-            cloudKitDatabase: .automatic
+            cloudKitDatabase: .none
         )
 
         do {

@@ -20,7 +20,7 @@ struct ShlfWatch_Watch_AppApp: App {
         ])
         let modelConfiguration = ModelConfiguration(
             schema: schema,
-            cloudKitDatabase: .automatic
+            cloudKitDatabase: .none
         )
 
         do {

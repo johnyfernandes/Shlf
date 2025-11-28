@@ -9,6 +9,10 @@ import Foundation
 import WatchConnectivity
 import SwiftData
 
+private enum ReadingConstants {
+    static let defaultMaxPages = 1000
+}
+
 struct PageDelta: Codable {
     let bookUUID: UUID
     let delta: Int
@@ -168,7 +172,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
             }
 
             // Update current page
-            book.currentPage = min((book.totalPages ?? 1000), book.currentPage + delta.delta)
+            book.currentPage = min((book.totalPages ?? ReadingConstants.defaultMaxPages), book.currentPage + delta.delta)
 
             // Save context
             try modelContext.save()

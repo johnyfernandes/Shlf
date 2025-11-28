@@ -54,6 +54,11 @@ class WatchConnectivityManager: NSObject {
             return
         }
 
+        guard WCSession.default.isReachable else {
+            print("⚠️ iPhone not reachable")
+            return
+        }
+
         do {
             let data = try JSONEncoder().encode(delta)
             WCSession.default.sendMessage(
@@ -118,30 +123,63 @@ extension WatchConnectivityManager: WCSessionDelegate {
             let bookTransfers = try JSONDecoder().decode([BookTransfer].self, from: booksData)
             print("📥 Received \(bookTransfers.count) books from iPhone")
 
-            // Clear existing books and insert new ones
+            // Fetch existing books
             let descriptor = FetchDescriptor<Book>()
             let existingBooks = try modelContext.fetch(descriptor)
 
-            for existingBook in existingBooks {
-                modelContext.delete(existingBook)
+            // Create a map of existing books by UUID for fast lookup
+            var existingBooksMap = [UUID: Book]()
+            for book in existingBooks {
+                existingBooksMap[book.id] = book
             }
 
-            // Insert new books
+            // Track which UUIDs are in the transfer
+            var transferredUUIDs = Set<UUID>()
+
+            // Update or insert books
             for transfer in bookTransfers {
-                let book = Book(
-                    id: transfer.id,
-                    title: transfer.title,
-                    author: transfer.author,
-                    isbn: transfer.isbn,
-                    coverImageURL: transfer.coverImageURL != nil ? URL(string: transfer.coverImageURL!) : nil,
-                    totalPages: transfer.totalPages,
-                    currentPage: transfer.currentPage,
-                    bookType: BookType(rawValue: transfer.bookTypeRawValue) ?? .physical,
-                    readingStatus: ReadingStatus(rawValue: transfer.readingStatusRawValue) ?? .wantToRead,
-                    dateAdded: transfer.dateAdded,
-                    notes: transfer.notes
-                )
-                modelContext.insert(book)
+                transferredUUIDs.insert(transfer.id)
+
+                if let existingBook = existingBooksMap[transfer.id] {
+                    // Update existing book
+                    existingBook.title = transfer.title
+                    existingBook.author = transfer.author
+                    existingBook.isbn = transfer.isbn
+                    if let urlString = transfer.coverImageURL {
+                        existingBook.coverImageURL = URL(string: urlString)
+                    } else {
+                        existingBook.coverImageURL = nil
+                    }
+                    existingBook.totalPages = transfer.totalPages
+                    existingBook.currentPage = transfer.currentPage
+                    existingBook.bookTypeRawValue = transfer.bookTypeRawValue
+                    existingBook.readingStatusRawValue = transfer.readingStatusRawValue
+                    existingBook.dateAdded = transfer.dateAdded
+                    existingBook.notes = transfer.notes
+                } else {
+                    // Insert new book
+                    let book = Book(
+                        id: transfer.id,
+                        title: transfer.title,
+                        author: transfer.author,
+                        isbn: transfer.isbn,
+                        coverImageURL: transfer.coverImageURL != nil ? URL(string: transfer.coverImageURL!) : nil,
+                        totalPages: transfer.totalPages,
+                        currentPage: transfer.currentPage,
+                        bookType: BookType(rawValue: transfer.bookTypeRawValue) ?? .physical,
+                        readingStatus: ReadingStatus(rawValue: transfer.readingStatusRawValue) ?? .wantToRead,
+                        dateAdded: transfer.dateAdded,
+                        notes: transfer.notes
+                    )
+                    modelContext.insert(book)
+                }
+            }
+
+            // Delete books that are no longer in the iPhone's currently reading list
+            for existingBook in existingBooks {
+                if !transferredUUIDs.contains(existingBook.id) {
+                    modelContext.delete(existingBook)
+                }
             }
 
             try modelContext.save()
