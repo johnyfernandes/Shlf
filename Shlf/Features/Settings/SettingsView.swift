@@ -52,6 +52,14 @@ struct SettingsView: View {
                     }
                 }
 
+                Section("Apple Watch") {
+                    NavigationLink {
+                        WatchSettingsView()
+                    } label: {
+                        Label("Watch Settings", systemImage: "applewatch")
+                    }
+                }
+
                 Section("Sync") {
                     Toggle("iCloud Sync", isOn: Binding(
                         get: { profile.cloudSyncEnabled },
