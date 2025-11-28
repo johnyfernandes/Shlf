@@ -184,11 +184,14 @@ final class GamificationEngine {
 
     private func unlockAchievement(_ type: AchievementType, for profile: UserProfile) {
         // Check if achievement already exists
-        let alreadyUnlocked = profile.achievements.contains { $0.type == type }
+        let alreadyUnlocked = (profile.achievements ?? []).contains { $0.type == type }
         guard !alreadyUnlocked else { return }
 
         let achievement = Achievement(type: type)
-        profile.achievements.append(achievement)
+        if profile.achievements == nil {
+            profile.achievements = []
+        }
+        profile.achievements?.append(achievement)
         modelContext.insert(achievement)
     }
 

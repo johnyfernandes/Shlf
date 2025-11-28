@@ -10,16 +10,34 @@ import SwiftData
 
 @main
 struct ShlfWatch_Watch_AppApp: App {
-    var body: some Scene {
-        WindowGroup {
-            ContentView()
-        }
-        .modelContainer(for: [
+    var sharedModelContainer: ModelContainer = {
+        let schema = Schema([
             Book.self,
             ReadingSession.self,
             UserProfile.self,
             ReadingGoal.self,
             Achievement.self
         ])
+        let modelConfiguration = ModelConfiguration(
+            schema: schema,
+            cloudKitDatabase: .automatic
+        )
+
+        do {
+            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+        } catch {
+            fatalError("Could not create ModelContainer: \(error)")
+        }
+    }()
+
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+                .onAppear {
+                    WatchConnectivityManager.shared.configure(modelContext: sharedModelContainer.mainContext)
+                    WatchConnectivityManager.shared.activate()
+                }
+        }
+        .modelContainer(sharedModelContainer)
     }
 }

@@ -116,8 +116,8 @@ struct EditGoalView: View {
     }
 
     private func deleteGoal() {
-        if let index = profile.readingGoals.firstIndex(where: { $0.id == goal.id }) {
-            profile.readingGoals.remove(at: index)
+        if let index = (profile.readingGoals ?? []).firstIndex(where: { $0.id == goal.id }) {
+            profile.readingGoals?.remove(at: index)
         }
         modelContext.delete(goal)
         dismiss()

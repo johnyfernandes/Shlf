@@ -372,7 +372,10 @@
 				DEVELOPMENT_TEAM = WDGFKCYAU3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "ShlfWatch-Watch-App-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = ShlfWatch;
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = joaofernandes.Shlf;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -406,7 +409,10 @@
 				DEVELOPMENT_TEAM = WDGFKCYAU3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "ShlfWatch-Watch-App-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = ShlfWatch;
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = joaofernandes.Shlf;
 				LD_RUNPATH_SEARCH_PATHS = (

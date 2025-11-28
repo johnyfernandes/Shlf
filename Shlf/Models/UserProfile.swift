@@ -11,42 +11,46 @@ import SwiftUI
 
 @Model
 final class UserProfile {
-    var id: UUID
-    var totalXP: Int
-    var currentStreak: Int
-    var longestStreak: Int
+    var id: UUID = UUID()
+    var totalXP: Int = 0
+    var currentStreak: Int = 0
+    var longestStreak: Int = 0
     var lastReadingDate: Date?
-    var hasCompletedOnboarding: Bool
-    var isProUser: Bool
-    var cloudSyncEnabled: Bool
+    var hasCompletedOnboarding: Bool = false
+    var isProUser: Bool = false
+    var cloudSyncEnabled: Bool = false
 
     // Book Detail Display Preferences
-    var showDescription: Bool
-    var showMetadata: Bool
-    var showSubjects: Bool
-    var showReadingHistory: Bool
-    var showNotes: Bool
+    var showDescription: Bool = true
+    var showMetadata: Bool = true
+    var showSubjects: Bool = true
+    var showReadingHistory: Bool = true
+    var showNotes: Bool = true
 
     // Metadata Field Preferences
-    var showPublisher: Bool
-    var showPublishedDate: Bool
-    var showLanguage: Bool
-    var showISBN: Bool
-    var showReadingTime: Bool
+    var showPublisher: Bool = true
+    var showPublishedDate: Bool = true
+    var showLanguage: Bool = true
+    var showISBN: Bool = true
+    var showReadingTime: Bool = true
 
     // Reading Progress Preferences
-    var pageIncrementAmount: Int
-    var useProgressSlider: Bool // false = stepper, true = slider
-    var showSliderButtons: Bool // show +/- buttons with slider
+    var pageIncrementAmount: Int = 1
+    var useProgressSlider: Bool = false // false = stepper, true = slider
+    var showSliderButtons: Bool = false // show +/- buttons with slider
 
     // Home Card Preferences
-    var homeCardOrder: [String] // Array of StatCardType rawValues in order
+    var homeCardOrder: [String] = [
+        StatCardType.currentStreak.rawValue,
+        StatCardType.level.rawValue,
+        StatCardType.booksRead.rawValue
+    ]
 
-    @Relationship(deleteRule: .cascade)
-    var readingGoals: [ReadingGoal]
+    @Relationship(deleteRule: .cascade, inverse: \ReadingGoal.profile)
+    var readingGoals: [ReadingGoal]?
 
-    @Relationship(deleteRule: .cascade)
-    var achievements: [Achievement]
+    @Relationship(deleteRule: .cascade, inverse: \Achievement.profile)
+    var achievements: [Achievement]?
 
     init(
         id: UUID = UUID(),
@@ -98,8 +102,8 @@ final class UserProfile {
         self.useProgressSlider = useProgressSlider
         self.showSliderButtons = showSliderButtons
         self.homeCardOrder = homeCardOrder
-        self.readingGoals = []
-        self.achievements = []
+        self.readingGoals = nil
+        self.achievements = nil
     }
 
     // Helper computed property to get StatCardType array from strings

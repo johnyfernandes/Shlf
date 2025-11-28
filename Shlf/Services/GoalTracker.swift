@@ -17,7 +17,7 @@ class GoalTracker {
     }
 
     func updateGoals(for profile: UserProfile) {
-        let activeGoals = profile.readingGoals.filter { $0.isActive }
+        let activeGoals = (profile.readingGoals ?? []).filter { $0.isActive }
 
         for goal in activeGoals {
             let newValue = calculateProgress(for: goal, profile: profile)

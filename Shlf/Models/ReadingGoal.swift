@@ -10,14 +10,20 @@ import SwiftData
 
 @Model
 final class ReadingGoal {
-    var id: UUID
-    var type: GoalType
-    var targetValue: Int
-    var currentValue: Int
-    var startDate: Date
-    var endDate: Date
-    var isCompleted: Bool
-    var createdAt: Date
+    var id: UUID = UUID()
+    var typeRawValue: String = GoalType.booksPerYear.rawValue
+    var targetValue: Int = 0
+    var currentValue: Int = 0
+    var startDate: Date = Date()
+    var endDate: Date = Date()
+    var isCompleted: Bool = false
+    var createdAt: Date = Date()
+    var profile: UserProfile?
+
+    var type: GoalType {
+        get { GoalType(rawValue: typeRawValue) ?? .booksPerYear }
+        set { typeRawValue = newValue.rawValue }
+    }
 
     init(
         id: UUID = UUID(),
@@ -30,7 +36,7 @@ final class ReadingGoal {
         createdAt: Date = Date()
     ) {
         self.id = id
-        self.type = type
+        self.typeRawValue = type.rawValue
         self.targetValue = targetValue
         self.currentValue = currentValue
         self.startDate = startDate

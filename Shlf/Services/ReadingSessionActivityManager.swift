@@ -83,6 +83,26 @@ class ReadingSessionActivityManager {
         print("📊 Live Activity updated: Page \(currentPage), XP \(xpEarned)")
     }
 
+    func updateCurrentPage(_ currentPage: Int) async {
+        guard let activity = currentActivity else { return }
+
+        let pagesRead = currentPage - startPage
+        let xpEarned = pagesRead * 3
+
+        let newState = ReadingSessionWidgetAttributes.ContentState(
+            currentPage: currentPage,
+            pagesRead: pagesRead,
+            xpEarned: xpEarned,
+            isPaused: activity.content.state.isPaused
+        )
+
+        let updatedContent = ActivityContent(state: newState, staleDate: nil)
+
+        await activity.update(updatedContent)
+
+        print("📊 Live Activity updated from Watch: Page \(currentPage)")
+    }
+
     // MARK: - Pause/Resume Activity
 
     func pauseActivity() async {

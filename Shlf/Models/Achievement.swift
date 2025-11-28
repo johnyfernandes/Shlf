@@ -10,10 +10,16 @@ import SwiftData
 
 @Model
 final class Achievement {
-    var id: UUID
-    var type: AchievementType
-    var unlockedAt: Date
-    var isNew: Bool
+    var id: UUID = UUID()
+    var typeRawValue: String = AchievementType.firstBook.rawValue
+    var unlockedAt: Date = Date()
+    var isNew: Bool = true
+    var profile: UserProfile?
+
+    var type: AchievementType {
+        get { AchievementType(rawValue: typeRawValue) ?? .firstBook }
+        set { typeRawValue = newValue.rawValue }
+    }
 
     init(
         id: UUID = UUID(),
@@ -22,7 +28,7 @@ final class Achievement {
         isNew: Bool = true
     ) {
         self.id = id
-        self.type = type
+        self.typeRawValue = type.rawValue
         self.unlockedAt = unlockedAt
         self.isNew = isNew
     }

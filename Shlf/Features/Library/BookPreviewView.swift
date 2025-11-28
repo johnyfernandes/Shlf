@@ -347,6 +347,13 @@ struct BookPreviewView: View {
             engine.checkAchievements(for: profile)
         }
 
+        // Sync to Watch if currently reading
+        if readingStatus == .currentlyReading {
+            Task {
+                await WatchConnectivityManager.shared.syncBooksToWatch()
+            }
+        }
+
         // Switch to Library tab and dismiss
         selectedTab = 1
         onDismiss()

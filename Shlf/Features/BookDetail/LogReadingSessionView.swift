@@ -286,7 +286,10 @@ struct LogReadingSessionView: View {
         session.xpEarned = xp
 
         modelContext.insert(session)
-        book.readingSessions.append(session)
+        if book.readingSessions == nil {
+            book.readingSessions = []
+        }
+        book.readingSessions?.append(session)
         book.currentPage = endPage
 
         if book.readingStatus == .wantToRead {

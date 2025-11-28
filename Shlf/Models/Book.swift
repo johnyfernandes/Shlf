@@ -10,19 +10,19 @@ import SwiftData
 
 @Model
 final class Book {
-    var id: UUID
-    var title: String
-    var author: String
+    var id: UUID = UUID()
+    var title: String = ""
+    var author: String = ""
     var isbn: String?
     var coverImageURL: URL?
     var totalPages: Int?
-    var currentPage: Int
-    var bookType: BookType
-    var readingStatus: ReadingStatus
-    var dateAdded: Date
+    var currentPage: Int = 0
+    var bookTypeRawValue: String = BookType.physical.rawValue
+    var readingStatusRawValue: String = ReadingStatus.wantToRead.rawValue
+    var dateAdded: Date = Date()
     var dateStarted: Date?
     var dateFinished: Date?
-    var notes: String
+    var notes: String = ""
     var rating: Int?
 
     // Additional metadata
@@ -33,7 +33,17 @@ final class Book {
     var language: String?
 
     @Relationship(deleteRule: .cascade, inverse: \ReadingSession.book)
-    var readingSessions: [ReadingSession]
+    var readingSessions: [ReadingSession]?
+
+    var bookType: BookType {
+        get { BookType(rawValue: bookTypeRawValue) ?? .physical }
+        set { bookTypeRawValue = newValue.rawValue }
+    }
+
+    var readingStatus: ReadingStatus {
+        get { ReadingStatus(rawValue: readingStatusRawValue) ?? .wantToRead }
+        set { readingStatusRawValue = newValue.rawValue }
+    }
 
     init(
         id: UUID = UUID(),
@@ -63,8 +73,8 @@ final class Book {
         self.coverImageURL = coverImageURL
         self.totalPages = totalPages
         self.currentPage = currentPage
-        self.bookType = bookType
-        self.readingStatus = readingStatus
+        self.bookTypeRawValue = bookType.rawValue
+        self.readingStatusRawValue = readingStatus.rawValue
         self.dateAdded = dateAdded
         self.dateStarted = dateStarted
         self.dateFinished = dateFinished
@@ -75,7 +85,7 @@ final class Book {
         self.publisher = publisher
         self.publishedDate = publishedDate
         self.language = language
-        self.readingSessions = []
+        self.readingSessions = nil
     }
 
     var progressPercentage: Double {

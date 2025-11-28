@@ -113,7 +113,10 @@ struct AddGoalView: View {
             endDate: endDate
         )
 
-        profile.readingGoals.append(newGoal)
+        if profile.readingGoals == nil {
+            profile.readingGoals = []
+        }
+        profile.readingGoals?.append(newGoal)
         modelContext.insert(newGoal)
 
         dismiss()

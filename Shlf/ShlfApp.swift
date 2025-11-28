@@ -22,7 +22,6 @@ struct ShlfApp: App {
         // Configure CloudKit sync with offline-first approach
         let modelConfiguration = ModelConfiguration(
             schema: schema,
-            isStoredInMemoryOnly: false,
             cloudKitDatabase: .automatic
         )
 
@@ -36,6 +35,10 @@ struct ShlfApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onAppear {
+                    WatchConnectivityManager.shared.configure(modelContext: sharedModelContainer.mainContext)
+                    WatchConnectivityManager.shared.activate()
+                }
         }
         .modelContainer(sharedModelContainer)
     }

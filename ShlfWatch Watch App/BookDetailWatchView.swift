@@ -92,6 +92,10 @@ struct BookDetailWatchView: View {
         let oldPage = book.currentPage
         book.currentPage = min((book.totalPages ?? 1000), book.currentPage + pages)
 
+        // Send delta to iPhone via WatchConnectivity
+        let delta = PageDelta(bookID: book.persistentModelID, delta: pages)
+        WatchConnectivityManager.shared.sendPageDelta(delta)
+
         // Create auto-generated session
         let pagesRead = book.currentPage - oldPage
         if pagesRead > 0, let profile = profile {
@@ -158,6 +162,10 @@ struct AddPagesWatchView: View {
     private func addPages() {
         let oldPage = book.currentPage
         book.currentPage = min((book.totalPages ?? 1000), book.currentPage + pagesToAdd)
+
+        // Send delta to iPhone via WatchConnectivity
+        let delta = PageDelta(bookID: book.persistentModelID, delta: pagesToAdd)
+        WatchConnectivityManager.shared.sendPageDelta(delta)
 
         // Create auto-generated session
         let pagesRead = book.currentPage - oldPage

@@ -157,12 +157,12 @@ struct StatsView: View {
 
                 Spacer()
 
-                Text("\(profile.achievements.count) / \(AchievementType.allCases.count)")
+                Text("\((profile.achievements ?? []).count) / \(AchievementType.allCases.count)")
                     .font(Theme.Typography.callout)
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
 
-            if profile.achievements.isEmpty {
+            if (profile.achievements ?? []).isEmpty {
                 HStack {
                     Spacer()
                     EmptyStateView(
@@ -174,7 +174,7 @@ struct StatsView: View {
                 }
             } else {
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Spacing.sm) {
-                    ForEach(profile.achievements.sorted { $0.unlockedAt > $1.unlockedAt }) { achievement in
+                    ForEach((profile.achievements ?? []).sorted { $0.unlockedAt > $1.unlockedAt }) { achievement in
                         AchievementCard(achievement: achievement)
                     }
                 }
@@ -200,7 +200,7 @@ struct StatsView: View {
                 }
             }
 
-            if profile.readingGoals.isEmpty {
+            if (profile.readingGoals ?? []).isEmpty {
                 HStack {
                     Spacer()
                     EmptyStateView(
@@ -215,7 +215,7 @@ struct StatsView: View {
                     Spacer()
                 }
             } else {
-                ForEach(profile.readingGoals.filter { $0.isActive }) { goal in
+                ForEach((profile.readingGoals ?? []).filter { $0.isActive }) { goal in
                     GoalCard(goal: goal)
                 }
             }
@@ -370,14 +370,14 @@ struct ManageGoalsView: View {
     var body: some View {
         List {
             if let profile = profile {
-                if !profile.readingGoals.isEmpty {
+                if !(profile.readingGoals ?? []).isEmpty {
                     Section("Active Goals") {
-                        ForEach(profile.readingGoals.filter { $0.isActive }) { goal in
+                        ForEach((profile.readingGoals ?? []).filter { $0.isActive }) { goal in
                             GoalRow(goal: goal, profile: profile)
                         }
                     }
 
-                    let completedGoals = profile.readingGoals.filter { $0.isCompleted }
+                    let completedGoals = (profile.readingGoals ?? []).filter { $0.isCompleted }
                     if !completedGoals.isEmpty {
                         Section("Completed") {
                             ForEach(completedGoals) { goal in
@@ -386,7 +386,7 @@ struct ManageGoalsView: View {
                         }
                     }
 
-                    let expiredGoals = profile.readingGoals.filter { !$0.isActive && !$0.isCompleted && $0.endDate < Date() }
+                    let expiredGoals = (profile.readingGoals ?? []).filter { !$0.isActive && !$0.isCompleted && $0.endDate < Date() }
                     if !expiredGoals.isEmpty {
                         Section("Expired") {
                             ForEach(expiredGoals) { goal in
