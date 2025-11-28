@@ -10,7 +10,7 @@ import WatchConnectivity
 import SwiftData
 
 struct PageDelta: Codable {
-    let bookID: PersistentIdentifier
+    let bookUUID: UUID
     let delta: Int
 }
 
@@ -154,11 +154,16 @@ extension WatchConnectivityManager: WCSessionDelegate {
         }
 
         do {
-            // Fetch the book by persistent identifier
-            let book = modelContext.model(for: delta.bookID) as? Book
+            // Fetch the book by UUID
+            let descriptor = FetchDescriptor<Book>(
+                predicate: #Predicate<Book> { book in
+                    book.id == delta.bookUUID
+                }
+            )
+            let books = try modelContext.fetch(descriptor)
 
-            guard let book = book else {
-                print("⚠️ Book not found")
+            guard let book = books.first else {
+                print("⚠️ Book not found with UUID: \(delta.bookUUID)")
                 return
             }
 

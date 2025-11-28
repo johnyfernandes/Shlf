@@ -10,7 +10,7 @@ import WatchConnectivity
 import SwiftData
 
 struct PageDelta: Codable {
-    let bookID: PersistentIdentifier
+    let bookUUID: UUID
     let delta: Int
 }
 
