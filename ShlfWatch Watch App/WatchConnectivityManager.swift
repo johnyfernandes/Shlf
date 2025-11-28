@@ -9,7 +9,7 @@ import Foundation
 import WatchConnectivity
 import SwiftData
 
-struct PageDelta: Codable {
+struct PageDelta: Codable, Sendable {
     let bookUUID: UUID
     let delta: Int
 }

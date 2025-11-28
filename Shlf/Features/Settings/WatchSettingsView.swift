@@ -7,12 +7,22 @@
 
 import SwiftUI
 import WatchConnectivity
+import Combine
 
 struct WatchSettingsView: View {
-    @State private var isWatchPaired = false
-    @State private var isWatchAppInstalled = false
-    @State private var isWatchReachable = false
-    @State private var activationState: WCSessionActivationState = .notActivated
+    @StateObject private var connectionObserver = WatchConnectionObserver()
+
+    private var isWatchPaired: Bool {
+        connectionObserver.isPaired
+    }
+
+    private var isWatchAppInstalled: Bool {
+        connectionObserver.isWatchAppInstalled
+    }
+
+    private var isWatchReachable: Bool {
+        connectionObserver.isReachable
+    }
 
     var body: some View {
         Form {
@@ -62,9 +72,12 @@ struct WatchSettingsView: View {
                     }
 
                     HStack {
-                        Circle()
-                            .fill(isWatchReachable ? Theme.Colors.success : Theme.Colors.tertiaryText)
-                            .frame(width: 8, height: 8)
+                        ZStack {
+                            Circle()
+                                .fill(isWatchReachable ? Theme.Colors.success : Theme.Colors.tertiaryText)
+                                .frame(width: 8, height: 8)
+                        }
+                        .frame(width: 28, height: 28)
 
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Real-Time Sync")
@@ -114,19 +127,61 @@ struct WatchSettingsView: View {
         }
         .navigationTitle("Apple Watch")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            updateWatchStatus()
-        }
     }
+}
 
-    private func updateWatchStatus() {
+@MainActor
+class WatchConnectionObserver: NSObject, ObservableObject {
+    @Published var isPaired = false
+    @Published var isWatchAppInstalled = false
+    @Published var isReachable = false
+
+    override init() {
+        super.init()
+
         guard WCSession.isSupported() else { return }
 
         let session = WCSession.default
-        isWatchPaired = session.isPaired
+        session.delegate = self
+
+        updateStatus()
+    }
+
+    private func updateStatus() {
+        let session = WCSession.default
+        isPaired = session.isPaired
         isWatchAppInstalled = session.isWatchAppInstalled
-        isWatchReachable = session.isReachable
-        activationState = session.activationState
+        isReachable = session.isReachable
+    }
+}
+
+extension WatchConnectionObserver: WCSessionDelegate {
+    nonisolated func session(
+        _ session: WCSession,
+        activationDidCompleteWith activationState: WCSessionActivationState,
+        error: Error?
+    ) {
+        Task { @MainActor in
+            updateStatus()
+        }
+    }
+
+    nonisolated func sessionDidBecomeInactive(_ session: WCSession) {
+        Task { @MainActor in
+            updateStatus()
+        }
+    }
+
+    nonisolated func sessionDidDeactivate(_ session: WCSession) {
+        Task { @MainActor in
+            updateStatus()
+        }
+    }
+
+    nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
+        Task { @MainActor in
+            updateStatus()
+        }
     }
 }
 

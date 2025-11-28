@@ -13,7 +13,7 @@ private enum ReadingConstants {
     static let defaultMaxPages = 1000
 }
 
-struct PageDelta: Codable {
+struct PageDelta: Codable, Sendable {
     let bookUUID: UUID
     let delta: Int
 }
