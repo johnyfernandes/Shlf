@@ -53,6 +53,7 @@ struct WatchSettingsView: View {
                     HStack {
                         Image(systemName: isWatchAppInstalled ? "square.and.arrow.down.fill" : "square.and.arrow.down")
                             .foregroundStyle(isWatchAppInstalled ? Theme.Colors.accent : Theme.Colors.tertiaryText)
+                            .font(.title2)
 
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Watch App")
@@ -72,12 +73,9 @@ struct WatchSettingsView: View {
                     }
 
                     HStack {
-                        ZStack {
-                            Circle()
-                                .fill(isWatchReachable ? Theme.Colors.success : Theme.Colors.tertiaryText)
-                                .frame(width: 8, height: 8)
-                        }
-                        .frame(width: 28, height: 28)
+                        Image(systemName: isWatchReachable ? "antenna.radiowaves.left.and.right" : "antenna.radiowaves.left.and.right.slash")
+                            .foregroundStyle(isWatchReachable ? Theme.Colors.accent : Theme.Colors.tertiaryText)
+                            .font(.title2)
 
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Real-Time Sync")
@@ -89,6 +87,11 @@ struct WatchSettingsView: View {
                         }
 
                         Spacer()
+
+                        if isWatchReachable {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(Theme.Colors.success)
+                        }
                     }
                 }
             }
@@ -131,57 +134,35 @@ struct WatchSettingsView: View {
 }
 
 @MainActor
-class WatchConnectionObserver: NSObject, ObservableObject {
+class WatchConnectionObserver: ObservableObject {
     @Published var isPaired = false
     @Published var isWatchAppInstalled = false
     @Published var isReachable = false
 
-    override init() {
-        super.init()
+    private var timer: Timer?
 
-        guard WCSession.isSupported() else { return }
-
-        let session = WCSession.default
-        session.delegate = self
-
+    init() {
         updateStatus()
+
+        // Poll for status changes every 2 seconds
+        timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.updateStatus()
+            }
+        }
+    }
+
+    deinit {
+        timer?.invalidate()
     }
 
     private func updateStatus() {
+        guard WCSession.isSupported() else { return }
+
         let session = WCSession.default
         isPaired = session.isPaired
         isWatchAppInstalled = session.isWatchAppInstalled
         isReachable = session.isReachable
-    }
-}
-
-extension WatchConnectionObserver: WCSessionDelegate {
-    nonisolated func session(
-        _ session: WCSession,
-        activationDidCompleteWith activationState: WCSessionActivationState,
-        error: Error?
-    ) {
-        Task { @MainActor in
-            updateStatus()
-        }
-    }
-
-    nonisolated func sessionDidBecomeInactive(_ session: WCSession) {
-        Task { @MainActor in
-            updateStatus()
-        }
-    }
-
-    nonisolated func sessionDidDeactivate(_ session: WCSession) {
-        Task { @MainActor in
-            updateStatus()
-        }
-    }
-
-    nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
-        Task { @MainActor in
-            updateStatus()
-        }
     }
 }
 
