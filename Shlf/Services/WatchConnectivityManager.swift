@@ -9,6 +9,10 @@ import Foundation
 import WatchConnectivity
 import SwiftData
 
+extension Notification.Name {
+    static let watchReachabilityDidChange = Notification.Name("watchReachabilityDidChange")
+}
+
 private enum ReadingConstants {
     static let defaultMaxPages = 1000
 }
@@ -124,6 +128,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
         print("⚠️ WC session deactivated")
         // Reactivate session for new watch
         session.activate()
+    }
+
+    nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
+        NotificationCenter.default.post(name: .watchReachabilityDidChange, object: nil)
     }
 
     nonisolated func session(

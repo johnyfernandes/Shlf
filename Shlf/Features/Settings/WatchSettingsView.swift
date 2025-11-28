@@ -139,21 +139,18 @@ class WatchConnectionObserver: ObservableObject {
     @Published var isWatchAppInstalled = false
     @Published var isReachable = false
 
-    private var timer: Timer?
+    private var cancellable: AnyCancellable?
 
     init() {
         updateStatus()
 
-        // Poll for status changes every 2 seconds
-        timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.updateStatus()
+        // Listen for real-time reachability changes
+        cancellable = NotificationCenter.default.publisher(for: .watchReachabilityDidChange)
+            .sink { [weak self] _ in
+                Task { @MainActor in
+                    self?.updateStatus()
+                }
             }
-        }
-    }
-
-    deinit {
-        timer?.invalidate()
     }
 
     private func updateStatus() {
