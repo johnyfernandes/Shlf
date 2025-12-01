@@ -11,7 +11,7 @@ import SwiftData
 import OSLog
 
 extension Logger {
-    static let watchSync = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.shlf.app", category: "WatchSync")
+    nonisolated(unsafe) static let watchSync = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.shlf.app", category: "WatchSync")
 }
 
 extension Notification.Name {
