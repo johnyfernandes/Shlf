@@ -294,6 +294,10 @@ struct LogSessionWatchView: View {
         do {
             try modelContext.save()
             WatchConnectivityManager.logger.info("Saved session: \(pagesRead) pages, \(durationMinutes) min, \(xpEarned) XP")
+
+            // Send session to iPhone immediately
+            WatchConnectivityManager.shared.sendSessionToPhone(session)
+
             dismiss()
         } catch {
             WatchConnectivityManager.logger.error("Failed to save session: \(error)")

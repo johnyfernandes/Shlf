@@ -290,7 +290,11 @@ struct LogReadingSessionView: View {
             book.readingSessions = []
         }
         book.readingSessions?.append(session)
+
+        // Update page and send to Watch
+        let pageDelta = endPage - book.currentPage
         book.currentPage = endPage
+        WatchConnectivityManager.shared.sendPageDeltaToWatch(bookUUID: book.id, delta: pageDelta)
 
         if book.readingStatus == .wantToRead {
             book.readingStatus = .currentlyReading
@@ -306,6 +310,8 @@ struct LogReadingSessionView: View {
         // End Live Activity if still active
         Task {
             await ReadingSessionActivityManager.shared.endActivity()
+            // Sync new session to Watch
+            await WatchConnectivityManager.shared.syncBooksToWatch()
         }
 
         dismiss()

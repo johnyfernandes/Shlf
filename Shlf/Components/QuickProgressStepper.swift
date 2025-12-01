@@ -244,6 +244,9 @@ struct QuickProgressStepper: View {
             showSaveButton = false
         }
 
+        // Send to Watch
+        WatchConnectivityManager.shared.sendPageDeltaToWatch(bookUUID: book.id, delta: pagesRead)
+
         onSave(pagesRead)
     }
 }
