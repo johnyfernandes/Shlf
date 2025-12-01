@@ -10,12 +10,8 @@ import WatchConnectivity
 import SwiftData
 import OSLog
 
-extension Logger {
-    nonisolated(unsafe) static let watchSync = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.shlf.app", category: "WatchSync")
-}
-
 extension Notification.Name {
-    static let watchReachabilityDidChange = Notification.Name("watchReachabilityDidChange")
+    nonisolated(unsafe) static let watchReachabilityDidChange = Notification.Name("watchReachabilityDidChange")
 }
 
 private enum ReadingConstants {
@@ -43,6 +39,7 @@ struct BookTransfer: Codable, Sendable {
 
 class WatchConnectivityManager: NSObject {
     static let shared = WatchConnectivityManager()
+    nonisolated(unsafe) static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.shlf.app", category: "WatchSync")
 
     private var modelContext: ModelContext?
 
@@ -59,14 +56,14 @@ class WatchConnectivityManager: NSObject {
         let session = WCSession.default
         session.delegate = self
         session.activate()
-        Logger.watchSync.info("WatchConnectivity activated on iPhone")
+        Self.logger.info("WatchConnectivity activated on iPhone")
     }
 
     @MainActor
     func syncBooksToWatch() async {
         guard WCSession.default.activationState == .activated,
               let modelContext = modelContext else {
-            Logger.watchSync.warning("Cannot sync - WC not activated or context not configured")
+            Self.logger.warning("Cannot sync - WC not activated or context not configured")
             return
         }
 
@@ -78,7 +75,7 @@ class WatchConnectivityManager: NSObject {
             let allBooks = try modelContext.fetch(descriptor)
             let currentlyReading = allBooks.filter { $0.readingStatus == .currentlyReading }
 
-            Logger.watchSync.info("Syncing \(currentlyReading.count) books to Watch...")
+            Self.logger.info("Syncing \(currentlyReading.count) books to Watch...")
 
             // Convert books to transferable format
             let bookTransfers = currentlyReading.map { book in
@@ -101,9 +98,9 @@ class WatchConnectivityManager: NSObject {
 
             // Use updateApplicationContext for guaranteed delivery
             try WCSession.default.updateApplicationContext(["books": data])
-            Logger.watchSync.info("Sent \(bookTransfers.count) books to Watch")
+            Self.logger.info("Sent \(bookTransfers.count) books to Watch")
         } catch {
-            Logger.watchSync.error("Failed to sync books: \(error)")
+            Self.logger.error("Failed to sync books: \(error)")
         }
     }
 }
@@ -115,9 +112,9 @@ extension WatchConnectivityManager: WCSessionDelegate {
         error: Error?
     ) {
         if let error = error {
-            Logger.watchSync.error("WC activation error: \(error)")
+            Self.logger.error("WC activation error: \(error)")
         } else {
-            Logger.watchSync.info("WC activated: \(activationState.rawValue)")
+            Self.logger.info("WC activated: \(activationState.rawValue)")
             // Sync books to watch when activated
             Task { @MainActor in
                 await WatchConnectivityManager.shared.syncBooksToWatch()
@@ -126,11 +123,11 @@ extension WatchConnectivityManager: WCSessionDelegate {
     }
 
     nonisolated func sessionDidBecomeInactive(_ session: WCSession) {
-        Logger.watchSync.warning("WC session became inactive")
+        Self.logger.warning("WC session became inactive")
     }
 
     nonisolated func sessionDidDeactivate(_ session: WCSession) {
-        Logger.watchSync.warning("WC session deactivated")
+        Self.logger.warning("WC session deactivated")
         // Reactivate session for new watch
         session.activate()
     }
@@ -143,30 +140,28 @@ extension WatchConnectivityManager: WCSessionDelegate {
         _ session: WCSession,
         didReceiveMessage message: [String: Any]
     ) {
-        Logger.watchSync.info("iPhone received message")
+        Self.logger.info("iPhone received message")
 
         guard let pageDeltaData = message["pageDelta"] as? Data else {
-            Logger.watchSync.warning("Invalid message format")
+            Self.logger.warning("Invalid message format")
             return
         }
 
-        do {
-            let delta = try JSONDecoder().decode(PageDelta.self, from: pageDeltaData)
-            Logger.watchSync.info("Received page delta: \(delta.delta) for book")
-
-            // Update book on main actor
-            Task { @MainActor in
+        Task { @MainActor in
+            do {
+                let delta = try JSONDecoder().decode(PageDelta.self, from: pageDeltaData)
+                Self.logger.info("Received page delta: \(delta.delta) for book")
                 await self.handlePageDelta(delta)
+            } catch {
+                Self.logger.error("Decoding error: \(error)")
             }
-        } catch {
-            Logger.watchSync.error("Decoding error: \(error)")
         }
     }
 
     @MainActor
     private func handlePageDelta(_ delta: PageDelta) async {
         guard let modelContext = modelContext else {
-            Logger.watchSync.warning("ModelContext not configured")
+            Self.logger.warning("ModelContext not configured")
             return
         }
 
@@ -180,7 +175,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
             let books = try modelContext.fetch(descriptor)
 
             guard let book = books.first else {
-                Logger.watchSync.warning("Book not found with UUID: \(delta.bookUUID)")
+                Self.logger.warning("Book not found with UUID: \(delta.bookUUID)")
                 return
             }
 
@@ -190,12 +185,12 @@ extension WatchConnectivityManager: WCSessionDelegate {
             // Save context
             try modelContext.save()
 
-            Logger.watchSync.info("Updated book: \(book.title) to page \(book.currentPage)")
+            Self.logger.info("Updated book: \(book.title) to page \(book.currentPage)")
 
             // Update Live Activity if running
             await ReadingSessionActivityManager.shared.updateCurrentPage(book.currentPage)
         } catch {
-            Logger.watchSync.error("Failed to update book: \(error)")
+            Self.logger.error("Failed to update book: \(error)")
         }
     }
 }

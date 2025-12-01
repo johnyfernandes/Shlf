@@ -10,10 +10,6 @@ import WatchConnectivity
 import SwiftData
 import OSLog
 
-extension Logger {
-    nonisolated(unsafe) static let watchSync = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.shlf.watch", category: "WatchSync")
-}
-
 struct PageDelta: Codable, Sendable {
     let bookUUID: UUID
     let delta: Int
@@ -35,6 +31,7 @@ struct BookTransfer: Codable, Sendable {
 
 class WatchConnectivityManager: NSObject {
     static let shared = WatchConnectivityManager()
+    nonisolated(unsafe) static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.shlf.watch", category: "WatchSync")
     private var modelContext: ModelContext?
 
     private override init() {
@@ -50,17 +47,17 @@ class WatchConnectivityManager: NSObject {
         let session = WCSession.default
         session.delegate = self
         session.activate()
-        Logger.watchSync.info("WatchConnectivity activated on Watch")
+        Self.logger.info("WatchConnectivity activated on Watch")
     }
 
     func sendPageDelta(_ delta: PageDelta) {
         guard WCSession.default.activationState == .activated else {
-            Logger.watchSync.warning("WC not activated")
+            Self.logger.warning("WC not activated")
             return
         }
 
         guard WCSession.default.isReachable else {
-            Logger.watchSync.warning("iPhone not reachable")
+            Self.logger.warning("iPhone not reachable")
             return
         }
 
@@ -70,12 +67,12 @@ class WatchConnectivityManager: NSObject {
                 ["pageDelta": data],
                 replyHandler: nil,
                 errorHandler: { error in
-                    Logger.watchSync.error("Failed to send: \(error)")
+                    Self.logger.error("Failed to send: \(error)")
                 }
             )
-            Logger.watchSync.info("Sent page delta: \(delta.delta)")
+            Self.logger.info("Sent page delta: \(delta.delta)")
         } catch {
-            Logger.watchSync.error("Encoding error: \(error)")
+            Self.logger.error("Encoding error: \(error)")
         }
     }
 }
@@ -87,9 +84,9 @@ extension WatchConnectivityManager: WCSessionDelegate {
         error: Error?
     ) {
         if let error = error {
-            Logger.watchSync.error("WC activation error: \(error)")
+            Self.logger.error("WC activation error: \(error)")
         } else {
-            Logger.watchSync.info("WC activated: \(activationState.rawValue)")
+            Self.logger.info("WC activated: \(activationState.rawValue)")
         }
     }
 
@@ -97,7 +94,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
         _ session: WCSession,
         didReceiveMessage message: [String: Any]
     ) {
-        Logger.watchSync.info("Watch received message")
+        Self.logger.info("Watch received message")
         // Handle incoming deltas from iPhone if needed
     }
 
@@ -105,10 +102,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
         _ session: WCSession,
         didReceiveApplicationContext applicationContext: [String: Any]
     ) {
-        Logger.watchSync.info("Watch received application context")
+        Self.logger.info("Watch received application context")
 
         guard let booksData = applicationContext["books"] as? Data else {
-            Logger.watchSync.warning("No books data in context")
+            Self.logger.warning("No books data in context")
             return
         }
 
@@ -120,13 +117,13 @@ extension WatchConnectivityManager: WCSessionDelegate {
     @MainActor
     private func handleBooksSync(_ booksData: Data) async {
         guard let modelContext = modelContext else {
-            Logger.watchSync.warning("ModelContext not configured")
+            Self.logger.warning("ModelContext not configured")
             return
         }
 
         do {
             let bookTransfers = try JSONDecoder().decode([BookTransfer].self, from: booksData)
-            Logger.watchSync.info("Received \(bookTransfers.count) books from iPhone")
+            Self.logger.info("Received \(bookTransfers.count) books from iPhone")
 
             // Fetch existing books
             let descriptor = FetchDescriptor<Book>()
@@ -188,9 +185,9 @@ extension WatchConnectivityManager: WCSessionDelegate {
             }
 
             try modelContext.save()
-            Logger.watchSync.info("Synced \(bookTransfers.count) books to Watch")
+            Self.logger.info("Synced \(bookTransfers.count) books to Watch")
         } catch {
-            Logger.watchSync.error("Failed to handle books sync: \(error)")
+            Self.logger.error("Failed to handle books sync: \(error)")
         }
     }
 }

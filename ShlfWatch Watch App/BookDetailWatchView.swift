@@ -124,7 +124,7 @@ struct BookDetailWatchView: View {
             do {
                 try modelContext.save()
             } catch {
-                Logger.watchSync.error("Failed to save reading session: \(error)")
+                WatchConnectivityManager.logger.error("Failed to save reading session: \(error)")
             }
         }
     }
@@ -202,7 +202,7 @@ struct AddPagesWatchView: View {
             do {
                 try modelContext.save()
             } catch {
-                Logger.watchSync.error("Failed to save reading session: \(error)")
+                WatchConnectivityManager.logger.error("Failed to save reading session: \(error)")
             }
         }
 
