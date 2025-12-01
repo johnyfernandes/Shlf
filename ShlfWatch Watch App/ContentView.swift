@@ -32,6 +32,14 @@ struct ContentView: View {
                         .multilineTextAlignment(.center)
                 }
                 .padding()
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        NavigationLink(destination: SettingsWatchView()) {
+                            Image(systemName: "gearshape.fill")
+                                .foregroundStyle(.cyan)
+                        }
+                    }
+                }
             } else {
                 List {
                     ForEach(currentBooks) { book in
@@ -41,6 +49,14 @@ struct ContentView: View {
                     }
                 }
                 .navigationTitle("Reading")
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        NavigationLink(destination: SettingsWatchView()) {
+                            Image(systemName: "gearshape.fill")
+                                .foregroundStyle(.cyan)
+                        }
+                    }
+                }
             }
         }
     }

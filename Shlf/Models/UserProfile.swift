@@ -39,6 +39,10 @@ final class UserProfile {
     var useProgressSlider: Bool = false // false = stepper, true = slider
     var showSliderButtons: Bool = false // show +/- buttons with slider
 
+    // Session Display Preferences
+    var hideAutoSessionsIPhone: Bool = false // hide quick +1/-1 sessions on iPhone
+    var hideAutoSessionsWatch: Bool = false // hide quick +1/-1 sessions on Watch
+
     // Home Card Preferences
     var homeCardOrder: [String] = [
         StatCardType.currentStreak.rawValue,
@@ -74,6 +78,8 @@ final class UserProfile {
         pageIncrementAmount: Int = 1,
         useProgressSlider: Bool = false,
         showSliderButtons: Bool = false,
+        hideAutoSessionsIPhone: Bool = false,
+        hideAutoSessionsWatch: Bool = false,
         homeCardOrder: [String] = [
             StatCardType.currentStreak.rawValue,
             StatCardType.level.rawValue,
@@ -101,6 +107,8 @@ final class UserProfile {
         self.pageIncrementAmount = pageIncrementAmount
         self.useProgressSlider = useProgressSlider
         self.showSliderButtons = showSliderButtons
+        self.hideAutoSessionsIPhone = hideAutoSessionsIPhone
+        self.hideAutoSessionsWatch = hideAutoSessionsWatch
         self.homeCardOrder = homeCardOrder
         self.readingGoals = nil
         self.achievements = nil

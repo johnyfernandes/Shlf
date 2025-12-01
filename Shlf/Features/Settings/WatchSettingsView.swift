@@ -8,9 +8,15 @@
 import SwiftUI
 import WatchConnectivity
 import Combine
+import SwiftData
 
 struct WatchSettingsView: View {
+    @Query private var profiles: [UserProfile]
     @StateObject private var connectionObserver = WatchConnectionObserver()
+
+    private var profile: UserProfile? {
+        profiles.first
+    }
 
     private var isWatchPaired: Bool {
         connectionObserver.isPaired
@@ -110,6 +116,43 @@ struct WatchSettingsView: View {
                         }
                     }
                 }
+            }
+
+            Section {
+                if let profile = profile {
+                    Toggle(isOn: Binding(
+                        get: { profile.hideAutoSessionsIPhone },
+                        set: { profile.hideAutoSessionsIPhone = $0 }
+                    )) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Hide Quick Sessions on iPhone")
+                                .font(Theme.Typography.body)
+                            Text("Only show timer sessions in iPhone reading history")
+                                .font(Theme.Typography.caption)
+                                .foregroundStyle(Theme.Colors.secondaryText)
+                        }
+                    }
+                    .tint(Theme.Colors.primary)
+
+                    Toggle(isOn: Binding(
+                        get: { profile.hideAutoSessionsWatch },
+                        set: { profile.hideAutoSessionsWatch = $0 }
+                    )) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Hide Quick Sessions on Watch")
+                                .font(Theme.Typography.body)
+                            Text("Only show timer sessions in Watch session list")
+                                .font(Theme.Typography.caption)
+                                .foregroundStyle(Theme.Colors.secondaryText)
+                        }
+                    }
+                    .tint(Theme.Colors.primary)
+                }
+            } header: {
+                Text("Session Display")
+            } footer: {
+                Text("Control which sessions appear in reading history. Quick sessions are created when you tap +1, +5, etc. Timer sessions are created using the reading timer.")
+                    .font(Theme.Typography.caption)
             }
 
             Section("About Watch App") {
