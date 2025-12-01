@@ -75,6 +75,13 @@ class WatchConnectivityManager: NSObject {
             Self.logger.error("Encoding error: \(error)")
         }
     }
+
+    @MainActor
+    func syncSessionToPhone(_ session: ReadingSession) async {
+        // Session sync will happen automatically via CloudKit
+        // This is just a placeholder for future instant sync if needed
+        Self.logger.info("Session created, will sync via CloudKit")
+    }
 }
 
 extension WatchConnectivityManager: WCSessionDelegate {

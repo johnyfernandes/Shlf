@@ -85,6 +85,28 @@ struct BookDetailWatchView: View {
                     }
                     .buttonStyle(.bordered)
                 }
+
+                // Session actions
+                Divider()
+                    .padding(.vertical, 4)
+
+                VStack(spacing: 8) {
+                    NavigationLink {
+                        LogSessionWatchView(book: book)
+                    } label: {
+                        Label("Log Session", systemImage: "clock.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+
+                    NavigationLink {
+                        SessionsListWatchView(book: book)
+                    } label: {
+                        Label("View Sessions", systemImage: "list.bullet")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                }
             }
             .padding()
         }
