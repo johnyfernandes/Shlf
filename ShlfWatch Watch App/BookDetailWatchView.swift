@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import OSLog
 
 private enum ReadingConstants {
     static let estimatedMinutesPerPage = 2
@@ -123,7 +124,7 @@ struct BookDetailWatchView: View {
             do {
                 try modelContext.save()
             } catch {
-                print("❌ Failed to save reading session: \(error)")
+                Logger.watchSync.error("Failed to save reading session: \(error)")
             }
         }
     }
@@ -201,7 +202,7 @@ struct AddPagesWatchView: View {
             do {
                 try modelContext.save()
             } catch {
-                print("❌ Failed to save reading session: \(error)")
+                Logger.watchSync.error("Failed to save reading session: \(error)")
             }
         }
 

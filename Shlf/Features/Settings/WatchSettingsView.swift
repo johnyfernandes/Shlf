@@ -153,6 +153,10 @@ class WatchConnectionObserver: ObservableObject {
             }
     }
 
+    deinit {
+        cancellable?.cancel()
+    }
+
     private func updateStatus() {
         guard WCSession.isSupported() else { return }
 
