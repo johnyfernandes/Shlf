@@ -16,15 +16,12 @@ struct SessionsListWatchView: View {
     @Query(sort: \ReadingSession.startDate, order: .reverse) private var allSessions: [ReadingSession]
 
     private var bookSessions: [ReadingSession] {
-        let sessions = allSessions.filter { session in
+        allSessions.filter { session in
             guard let sessionBook = session.book else {
-                WatchConnectivityManager.logger.warning("Session has no book relationship")
                 return false
             }
             return sessionBook.id == book.id
         }
-        WatchConnectivityManager.logger.info("Found \(sessions.count) sessions for book \(self.book.title)")
-        return sessions
     }
 
     private var todaysSessions: [ReadingSession] {
