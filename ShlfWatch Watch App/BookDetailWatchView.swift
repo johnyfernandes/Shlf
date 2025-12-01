@@ -22,8 +22,15 @@ struct BookDetailWatchView: View {
 
     @State private var showingAddPages = false
 
-    private var profile: UserProfile? {
-        profiles.first
+    private var profile: UserProfile {
+        if let existing = profiles.first {
+            return existing
+        }
+        // Auto-create profile if it doesn't exist
+        let new = UserProfile()
+        modelContext.insert(new)
+        WatchConnectivityManager.logger.info("Created new UserProfile on Watch")
+        return new
     }
 
     var body: some View {
@@ -127,7 +134,8 @@ struct BookDetailWatchView: View {
 
         // Create auto-generated session
         let pagesRead = book.currentPage - oldPage
-        if pagesRead > 0, let profile = profile {
+        if pagesRead > 0 {
+            let currentProfile = profile
             let session = ReadingSession(
                 startPage: oldPage,
                 endPage: book.currentPage,
@@ -138,9 +146,10 @@ struct BookDetailWatchView: View {
             )
             modelContext.insert(session)
 
-            // Update goals
+            // Award XP and update goals
+            currentProfile.totalXP += session.xpEarned
             let tracker = GoalTracker(modelContext: modelContext)
-            tracker.updateGoals(for: profile)
+            tracker.updateGoals(for: currentProfile)
 
             // Save changes
             do {
@@ -160,8 +169,14 @@ struct AddPagesWatchView: View {
 
     @State private var pagesToAdd = 10
 
-    private var profile: UserProfile? {
-        profiles.first
+    private var profile: UserProfile {
+        if let existing = profiles.first {
+            return existing
+        }
+        // Auto-create profile if it doesn't exist
+        let new = UserProfile()
+        modelContext.insert(new)
+        return new
     }
 
     var body: some View {
@@ -205,7 +220,8 @@ struct AddPagesWatchView: View {
 
         // Create auto-generated session
         let pagesRead = book.currentPage - oldPage
-        if pagesRead > 0, let profile = profile {
+        if pagesRead > 0 {
+            let currentProfile = profile
             let session = ReadingSession(
                 startPage: oldPage,
                 endPage: book.currentPage,
@@ -216,9 +232,10 @@ struct AddPagesWatchView: View {
             )
             modelContext.insert(session)
 
-            // Update goals
+            // Award XP and update goals
+            currentProfile.totalXP += session.xpEarned
             let tracker = GoalTracker(modelContext: modelContext)
-            tracker.updateGoals(for: profile)
+            tracker.updateGoals(for: currentProfile)
 
             // Save changes
             do {

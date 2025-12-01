@@ -21,8 +21,15 @@ struct LogSessionWatchView: View {
     @Bindable var book: Book
     @Query private var profiles: [UserProfile]
 
-    private var profile: UserProfile? {
-        profiles.first
+    private var profile: UserProfile {
+        if let existing = profiles.first {
+            return existing
+        }
+        // Auto-create profile if it doesn't exist
+        let new = UserProfile()
+        modelContext.insert(new)
+        WatchConnectivityManager.logger.info("Created new UserProfile on Watch")
+        return new
     }
 
     // Session state
@@ -232,7 +239,15 @@ struct LogSessionWatchView: View {
     }
 
     private func stopSession() {
-        guard let profile = profile, let startDate = startDate, pagesRead > 0 else {
+        guard let startDate = startDate else {
+            WatchConnectivityManager.logger.error("No start date - session not started")
+            timer?.invalidate()
+            dismiss()
+            return
+        }
+
+        guard pagesRead > 0 else {
+            WatchConnectivityManager.logger.warning("No pages read - session not saved")
             timer?.invalidate()
             dismiss()
             return
@@ -267,11 +282,13 @@ struct LogSessionWatchView: View {
         WatchConnectivityManager.shared.sendPageDelta(delta)
 
         // Award XP
-        profile.totalXP += xpEarned
+        let currentProfile = profile
+        currentProfile.totalXP += xpEarned
+        WatchConnectivityManager.logger.info("Awarded \(xpEarned) XP to profile, new total: \(currentProfile.totalXP)")
 
         // Update goals
         let tracker = GoalTracker(modelContext: modelContext)
-        tracker.updateGoals(for: profile)
+        tracker.updateGoals(for: currentProfile)
 
         // Save
         do {
