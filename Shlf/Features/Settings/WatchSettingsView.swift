@@ -121,20 +121,6 @@ struct WatchSettingsView: View {
             Section {
                 if let profile = profile {
                     Toggle(isOn: Binding(
-                        get: { profile.hideAutoSessionsIPhone },
-                        set: { profile.hideAutoSessionsIPhone = $0 }
-                    )) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Hide Quick Sessions on iPhone")
-                                .font(Theme.Typography.body)
-                            Text("Only show timer sessions in iPhone reading history")
-                                .font(Theme.Typography.caption)
-                                .foregroundStyle(Theme.Colors.secondaryText)
-                        }
-                    }
-                    .tint(Theme.Colors.primary)
-
-                    Toggle(isOn: Binding(
                         get: { profile.hideAutoSessionsWatch },
                         set: { profile.hideAutoSessionsWatch = $0 }
                     )) {
@@ -149,9 +135,9 @@ struct WatchSettingsView: View {
                     .tint(Theme.Colors.primary)
                 }
             } header: {
-                Text("Session Display")
+                Text("Watch Session Display")
             } footer: {
-                Text("Control which sessions appear in reading history. Quick sessions are created when you tap +1, +5, etc. Timer sessions are created using the reading timer.")
+                Text("Control which sessions appear on your Apple Watch. This setting syncs with the Watch app. To control iPhone sessions, go to Reading Preferences.")
                     .font(Theme.Typography.caption)
             }
 
