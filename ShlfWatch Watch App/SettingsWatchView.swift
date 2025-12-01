@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 
 struct SettingsWatchView: View {
+    @Environment(\.modelContext) private var modelContext
     @Query private var profiles: [UserProfile]
 
     private var profile: UserProfile? {
@@ -21,7 +22,12 @@ struct SettingsWatchView: View {
                 if let profile = profile {
                     Toggle(isOn: Binding(
                         get: { profile.hideAutoSessionsWatch },
-                        set: { profile.hideAutoSessionsWatch = $0 }
+                        set: { newValue in
+                            profile.hideAutoSessionsWatch = newValue
+                            try? modelContext.save()
+                            // Send to iPhone immediately
+                            WatchConnectivityManager.shared.sendProfileSettingsToPhone(profile)
+                        }
                     )) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Hide Quick Sessions")

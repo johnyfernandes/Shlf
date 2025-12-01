@@ -11,6 +11,7 @@ import Combine
 import SwiftData
 
 struct WatchSettingsView: View {
+    @Environment(\.modelContext) private var modelContext
     @Query private var profiles: [UserProfile]
     @StateObject private var connectionObserver = WatchConnectionObserver()
 
@@ -122,7 +123,12 @@ struct WatchSettingsView: View {
                 if let profile = profile {
                     Toggle(isOn: Binding(
                         get: { profile.hideAutoSessionsWatch },
-                        set: { profile.hideAutoSessionsWatch = $0 }
+                        set: { newValue in
+                            profile.hideAutoSessionsWatch = newValue
+                            try? modelContext.save()
+                            // Send to Watch immediately
+                            WatchConnectivityManager.shared.sendProfileSettingsToWatch(profile)
+                        }
                     )) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Hide Quick Sessions on Watch")
