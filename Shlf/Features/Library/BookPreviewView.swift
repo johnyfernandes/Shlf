@@ -347,6 +347,9 @@ struct BookPreviewView: View {
             engine.checkAchievements(for: profile)
         }
 
+        // Refresh widget with new book data
+        WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+
         // Sync to Watch if currently reading
         if readingStatus == .currentlyReading {
             Task {
