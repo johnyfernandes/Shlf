@@ -156,6 +156,7 @@ struct LogReadingSessionView: View {
                                     session.lastUpdated = Date()
                                     try? modelContext.save()
                                     WatchConnectivityManager.shared.sendActiveSessionToWatch(session)
+                                    WidgetDataExporter.exportSnapshot(modelContext: modelContext)
                                 }
                                 .buttonStyle(.bordered)
                                 .tint(Theme.Colors.primary)
@@ -376,6 +377,7 @@ struct LogReadingSessionView: View {
 
         // Sync to Watch
         WatchConnectivityManager.shared.sendActiveSessionToWatch(activeSession)
+        WidgetDataExporter.exportSnapshot(modelContext: modelContext)
 
         // Start Live Activity with current page
         Task {

@@ -551,6 +551,13 @@ extension WatchConnectivityManager: WCSessionDelegate {
             }
         }
 
+        // Handle queued Live Activity end from Watch
+        if userInfo["liveActivityEnd"] != nil {
+            Task { @MainActor in
+                await self.handleLiveActivityEnd()
+            }
+        }
+
         // Handle queued active session from Watch
         if let activeSessionData = userInfo["activeSession"] as? Data {
             Task { @MainActor in
@@ -713,6 +720,17 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
             // Force UI refresh
             NotificationCenter.default.post(name: .watchSessionReceived, object: nil)
+
+            // If this session has an end date, end Live Activity to avoid stale state
+            if transfer.endDate != nil {
+                await ReadingSessionActivityManager.shared.endActivity()
+                WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+            } else {
+                await ReadingSessionActivityManager.shared.updateActivity(
+                    currentPage: transfer.endPage,
+                    xpEarned: xpForActivity
+                )
+            }
         } catch {
             Self.logger.error("Failed to handle Watch session: \(error)")
         }
@@ -863,6 +881,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 existingSession.pausedAt = transfer.pausedAt
                 existingSession.totalPausedDuration = transfer.totalPausedDuration
                 existingSession.lastUpdated = transfer.lastUpdated
+                existingSession.book?.currentPage = transfer.currentPage
                 Self.logger.info("✅ Updated session from Watch: \(transfer.pagesRead) pages")
             } else {
                 // Find the book
@@ -892,6 +911,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                     sourceDevice: transfer.sourceDevice
                 )
                 modelContext.insert(activeSession)
+                book.currentPage = transfer.currentPage
                 Self.logger.info("✅ Created session from Watch: \(transfer.pagesRead) pages")
             }
 
@@ -936,6 +956,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
             if let endedId {
                 endedActiveSessionIDs.insert(endedId)
             }
+
+            // End Live Activity and refresh widgets
+            await ReadingSessionActivityManager.shared.endActivity()
+            WidgetDataExporter.exportSnapshot(modelContext: modelContext)
 
             // Post notification to update UI
             NotificationCenter.default.post(name: .watchSessionReceived, object: nil)

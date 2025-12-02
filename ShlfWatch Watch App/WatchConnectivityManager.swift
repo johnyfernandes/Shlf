@@ -311,16 +311,23 @@ class WatchConnectivityManager: NSObject {
 
     func sendLiveActivityEnd() {
         guard WCSession.default.activationState == .activated else { return }
-        guard WCSession.default.isReachable else { return }
 
-        WCSession.default.sendMessage(
-            ["liveActivityEnd": true],
-            replyHandler: nil,
-            errorHandler: { error in
-                Self.logger.error("Failed to send Live Activity end: \(error)")
-            }
-        )
-        Self.logger.info("Sent Live Activity end to iPhone")
+        let payload: [String: Any] = ["liveActivityEnd": true]
+        if WCSession.default.isReachable {
+            WCSession.default.sendMessage(
+                payload,
+                replyHandler: nil,
+                errorHandler: { error in
+                    Self.logger.error("Failed to send Live Activity end: \(error)")
+                    WCSession.default.transferUserInfo(payload)
+                    Self.logger.info("↩️ Queued Live Activity end")
+                }
+            )
+            Self.logger.info("Sent Live Activity end to iPhone")
+        } else {
+            WCSession.default.transferUserInfo(payload)
+            Self.logger.info("📦 Queued Live Activity end")
+        }
     }
 }
 
