@@ -58,13 +58,16 @@ class WatchConnectivityManager: NSObject {
                     ["pageDelta": data],
                     replyHandler: nil,
                     errorHandler: { error in
-                        Self.logger.error("Failed to send: \(error)")
+                        Self.logger.error("Failed to send page delta: \(error)")
+                        // Fallback to guaranteed delivery
+                        WCSession.default.transferUserInfo(["pageDelta": data])
+                        Self.logger.info("↩️ Queued page delta (fallback): \(delta.delta)")
                     }
                 )
-                Self.logger.info("Sent page delta: \(delta.delta)")
+                Self.logger.info("📤 Sent page delta (instant): \(delta.delta)")
             } else {
                 WCSession.default.transferUserInfo(["pageDelta": data])
-                Self.logger.info("Queued page delta: \(delta.delta)")
+                Self.logger.info("📦 Queued page delta (guaranteed): \(delta.delta)")
             }
         } catch {
             Self.logger.error("Encoding error: \(error)")
@@ -102,12 +105,15 @@ class WatchConnectivityManager: NSObject {
                     replyHandler: nil,
                     errorHandler: { error in
                         Self.logger.error("Failed to send session: \(error)")
+                        // CRITICAL: Fallback to guaranteed delivery to ensure Live Activity ends
+                        WCSession.default.transferUserInfo(["session": data])
+                        Self.logger.info("↩️ Queued session (fallback): \(session.endPage - session.startPage) pages, \(session.xpEarned) XP")
                     }
                 )
-                Self.logger.info("Sent session to iPhone: \(session.endPage - session.startPage) pages, \(session.xpEarned) XP")
+                Self.logger.info("📤 Sent session to iPhone (instant): \(session.endPage - session.startPage) pages, \(session.xpEarned) XP")
             } else {
                 WCSession.default.transferUserInfo(["session": data])
-                Self.logger.info("Queued session to iPhone: \(session.endPage - session.startPage) pages, \(session.xpEarned) XP")
+                Self.logger.info("📦 Queued session to iPhone (guaranteed): \(session.endPage - session.startPage) pages, \(session.xpEarned) XP")
             }
         } catch {
             Self.logger.error("Encoding error: \(error)")
@@ -130,12 +136,15 @@ class WatchConnectivityManager: NSObject {
                     replyHandler: nil,
                     errorHandler: { error in
                         Self.logger.error("Failed to send profile settings: \(error)")
+                        // Fallback to guaranteed delivery
+                        WCSession.default.transferUserInfo(["profileSettings": data])
+                        Self.logger.info("↩️ Queued profile settings (fallback)")
                     }
                 )
-                Self.logger.info("Sent profile settings to iPhone")
+                Self.logger.info("📤 Sent profile settings to iPhone (instant)")
             } else {
                 WCSession.default.transferUserInfo(["profileSettings": data])
-                Self.logger.info("Queued profile settings to iPhone")
+                Self.logger.info("📦 Queued profile settings to iPhone (guaranteed)")
             }
         } catch {
             Self.logger.error("Encoding error: \(error)")
@@ -159,12 +168,15 @@ class WatchConnectivityManager: NSObject {
                     replyHandler: nil,
                     errorHandler: { error in
                         Self.logger.error("Failed to send profile stats: \(error)")
+                        // Fallback to guaranteed delivery
+                        WCSession.default.transferUserInfo(["profileStats": data])
+                        Self.logger.info("↩️ Queued profile stats (fallback): XP=\(profile.totalXP), Streak=\(profile.currentStreak)")
                     }
                 )
-                Self.logger.info("Sent profile stats to iPhone: XP=\(profile.totalXP), Streak=\(profile.currentStreak)")
+                Self.logger.info("📤 Sent profile stats to iPhone (instant): XP=\(profile.totalXP), Streak=\(profile.currentStreak)")
             } else {
                 WCSession.default.transferUserInfo(["profileStats": data])
-                Self.logger.info("Queued profile stats to iPhone: XP=\(profile.totalXP), Streak=\(profile.currentStreak)")
+                Self.logger.info("📦 Queued profile stats to iPhone (guaranteed): XP=\(profile.totalXP), Streak=\(profile.currentStreak)")
             }
         } catch {
             Self.logger.error("Encoding error: \(error)")
