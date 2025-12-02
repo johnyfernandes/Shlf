@@ -26,14 +26,34 @@ class WatchConnectivityManager: NSObject {
 
     private var modelContext: ModelContext?
     private var lastActiveSessionEndDate: Date?
-    private var endedActiveSessionIDs: Set<UUID> = []
+    private var endedActiveSessionIDs: [UUID: Date] = [:] // Track UUID -> timestamp when ended
 
     private override init() {
         super.init()
+
+        // Schedule periodic cleanup of old endedActiveSessionIDs (every hour)
+        Timer.scheduledTimer(withTimeInterval: 3600, repeats: true) { [weak self] _ in
+            self?.cleanupOldEndedSessionIDs()
+        }
     }
 
     func configure(modelContext: ModelContext) {
         self.modelContext = modelContext
+    }
+
+    /// Cleanup old ended session IDs (older than 24 hours) to prevent unbounded memory growth
+    private func cleanupOldEndedSessionIDs() {
+        let threshold = Date().addingTimeInterval(-24 * 3600) // 24 hours ago
+        let oldCount = endedActiveSessionIDs.count
+
+        endedActiveSessionIDs = endedActiveSessionIDs.filter { _, timestamp in
+            timestamp > threshold
+        }
+
+        let removedCount = oldCount - endedActiveSessionIDs.count
+        if removedCount > 0 {
+            Self.logger.info("🧹 Cleaned up \(removedCount) old ended session IDs (kept \(self.endedActiveSessionIDs.count))")
+        }
     }
 
     // Fallback for background WC events when the app hasn't configured the context yet
@@ -247,7 +267,7 @@ class WatchConnectivityManager: NSObject {
         var payload: [String: Any] = ["activeSessionEnd": true]
         if let id = activeSessionId {
             payload["activeSessionEndId"] = id.uuidString
-            endedActiveSessionIDs.insert(id)
+            endedActiveSessionIDs[id] = Date()
         }
 
         // Use transferUserInfo so the end signal always lands and doesn't block UI
@@ -907,7 +927,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
             return
         }
 
-        if endedActiveSessionIDs.contains(transfer.id) {
+        if endedActiveSessionIDs[transfer.id] != nil {
             Self.logger.info("Ignoring active session update for ended id \(transfer.id)")
             return
         }
@@ -987,7 +1007,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
             let activeSessions = try modelContext.fetch(descriptor)
 
             for session in activeSessions {
-                endedActiveSessionIDs.insert(session.id)
+                endedActiveSessionIDs[session.id] = Date()
                 modelContext.delete(session)
             }
 
@@ -997,7 +1017,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
             // Remember explicitly-ended id even if none existed locally
             if let endedId {
-                endedActiveSessionIDs.insert(endedId)
+                endedActiveSessionIDs[endedId] = Date()
             }
 
             // End Live Activity and refresh widgets
@@ -1022,7 +1042,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
         Self.logger.info("🎯 Processing atomic session completion from Watch")
 
         // 1. End active session
-        endedActiveSessionIDs.insert(completion.activeSessionId)
+        endedActiveSessionIDs[completion.activeSessionId] = Date()
         do {
             let descriptor = FetchDescriptor<ActiveReadingSession>(
                 predicate: #Predicate<ActiveReadingSession> { session in

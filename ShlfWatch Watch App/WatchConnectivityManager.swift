@@ -20,7 +20,7 @@ class WatchConnectivityManager: NSObject {
     nonisolated(unsafe) static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.shlf.watch", category: "WatchSync")
     private var modelContext: ModelContext?
     private var lastActiveSessionEndDate: Date?
-    private var endedActiveSessionIDs: Set<UUID> = []
+    private var endedActiveSessionIDs: [UUID: Date] = [:] // Track UUID -> timestamp when ended
 
     // MARK: - Live Activity Handlers
     @MainActor
@@ -31,6 +31,26 @@ class WatchConnectivityManager: NSObject {
 
     private override init() {
         super.init()
+
+        // Schedule periodic cleanup of old endedActiveSessionIDs (every hour)
+        Timer.scheduledTimer(withTimeInterval: 3600, repeats: true) { [weak self] _ in
+            self?.cleanupOldEndedSessionIDs()
+        }
+    }
+
+    /// Cleanup old ended session IDs (older than 24 hours) to prevent unbounded memory growth
+    private func cleanupOldEndedSessionIDs() {
+        let threshold = Date().addingTimeInterval(-24 * 3600) // 24 hours ago
+        let oldCount = endedActiveSessionIDs.count
+
+        endedActiveSessionIDs = endedActiveSessionIDs.filter { _, timestamp in
+            timestamp > threshold
+        }
+
+        let removedCount = oldCount - endedActiveSessionIDs.count
+        if removedCount > 0 {
+            Self.logger.info("🧹 Cleaned up \(removedCount) old ended session IDs (kept \(self.endedActiveSessionIDs.count))")
+        }
     }
 
     func configure(modelContext: ModelContext) {
@@ -225,7 +245,7 @@ class WatchConnectivityManager: NSObject {
         var payload: [String: Any] = ["activeSessionEnd": true]
         if let id = activeSessionId {
             payload["activeSessionEndId"] = id.uuidString
-            endedActiveSessionIDs.insert(id)
+            endedActiveSessionIDs[id] = Date()
         }
 
         // Use transferUserInfo to avoid blocking and guarantee delivery
@@ -269,7 +289,7 @@ class WatchConnectivityManager: NSObject {
 
             // ALWAYS use transferUserInfo for session completion to guarantee atomic delivery
             WCSession.default.transferUserInfo(["sessionCompletion": data])
-            endedActiveSessionIDs.insert(activeSessionId)
+            endedActiveSessionIDs[activeSessionId] = Date()
 
             Self.logger.info("📦 Queued session completion (atomic): \(completedSession.endPage - completedSession.startPage) pages, \(completedSession.xpEarned) XP")
         } catch {
