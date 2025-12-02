@@ -17,7 +17,7 @@ struct IncrementPageIntent: LiveActivityIntent {
         for activity in Activity<ReadingSessionWidgetAttributes>.activities {
             let currentPage = activity.content.state.currentPage + 1
             let pagesRead = currentPage - activity.attributes.startPage
-            let xpEarned = pagesRead * 3 // 3 XP per page
+            let xpEarned = max(0, pagesRead * 10) // Mirror app: 10 XP per page (no duration bonus here)
 
             let newState = ReadingSessionWidgetAttributes.ContentState(
                 currentPage: currentPage,
@@ -44,7 +44,7 @@ struct DecrementPageIntent: LiveActivityIntent {
             let startPage = activity.attributes.startPage
             let currentPage = max(startPage, activity.content.state.currentPage - 1)
             let pagesRead = max(0, currentPage - startPage)
-            let xpEarned = max(0, pagesRead * 3)
+            let xpEarned = max(0, pagesRead * 10)
 
             let newState = ReadingSessionWidgetAttributes.ContentState(
                 currentPage: currentPage,
