@@ -15,12 +15,14 @@ struct ShlfWatch_Watch_AppApp: App {
 
     init() {
         do {
+            // Include ActiveReadingSession so the Watch can persist and sync live sessions
             let schema = Schema([
                 Book.self,
                 ReadingSession.self,
                 UserProfile.self,
                 ReadingGoal.self,
-                Achievement.self
+                Achievement.self,
+                ActiveReadingSession.self
             ])
             let modelConfiguration = ModelConfiguration(
                 schema: schema,

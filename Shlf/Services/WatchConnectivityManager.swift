@@ -824,26 +824,18 @@ extension WatchConnectivityManager: WCSessionDelegate {
         }
 
         do {
-            // Check if session already exists
-            let descriptor = FetchDescriptor<ActiveReadingSession>(
-                predicate: #Predicate<ActiveReadingSession> { session in
-                    session.id == transfer.id
-                }
-            )
+            // Fetch existing session
+            let descriptor = FetchDescriptor<ActiveReadingSession>()
             let existingSessions = try modelContext.fetch(descriptor)
 
             if let existingSession = existingSessions.first {
-                // Update existing session (merge strategy - newer timestamp wins)
-                if transfer.lastUpdated > existingSession.lastUpdated {
-                    existingSession.currentPage = transfer.currentPage
-                    existingSession.isPaused = transfer.isPaused
-                    existingSession.pausedAt = transfer.pausedAt
-                    existingSession.totalPausedDuration = transfer.totalPausedDuration
-                    existingSession.lastUpdated = transfer.lastUpdated
-                    Self.logger.info("Updated active session from Watch (merge)")
-                } else {
-                    Self.logger.info("Ignored older active session update from Watch")
-                }
+                // UPDATE in place - don't delete!
+                existingSession.currentPage = transfer.currentPage
+                existingSession.isPaused = transfer.isPaused
+                existingSession.pausedAt = transfer.pausedAt
+                existingSession.totalPausedDuration = transfer.totalPausedDuration
+                existingSession.lastUpdated = transfer.lastUpdated
+                Self.logger.info("✅ Updated session from Watch: \(transfer.pagesRead) pages")
             } else {
                 // Find the book
                 let bookDescriptor = FetchDescriptor<Book>(
@@ -854,11 +846,11 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 let books = try modelContext.fetch(bookDescriptor)
 
                 guard let book = books.first else {
-                    Self.logger.warning("Book not found for active session: \(transfer.bookId)")
+                    Self.logger.warning("Book not found: \(transfer.bookId)")
                     return
                 }
 
-                // Create new active session
+                // Create NEW session only if none exists
                 let activeSession = ActiveReadingSession(
                     id: transfer.id,
                     book: book,
@@ -872,7 +864,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                     sourceDevice: transfer.sourceDevice
                 )
                 modelContext.insert(activeSession)
-                Self.logger.info("Created active session from Watch: \(transfer.pagesRead) pages")
+                Self.logger.info("✅ Created session from Watch: \(transfer.pagesRead) pages")
             }
 
             try modelContext.save()

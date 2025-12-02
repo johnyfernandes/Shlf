@@ -35,20 +35,36 @@ struct LogReadingSessionView: View {
         _endPage = State(initialValue: book.currentPage)
     }
 
+    // SINGLE SOURCE OF TRUTH - use active session if exists
+    private var activeSession: ActiveReadingSession? {
+        activeSessions.first
+    }
+
+    private var actualStartPage: Int {
+        activeSession?.startPage ?? startPage
+    }
+
+    private var actualEndPage: Int {
+        activeSession?.currentPage ?? endPage
+    }
+
+    private var isTimerActive: Bool {
+        activeSession != nil || timerStartTime != nil
+    }
+
     private var pagesRead: Int {
-        max(0, endPage - startPage)
+        max(0, actualEndPage - actualStartPage)
     }
 
     private var hasUnsavedData: Bool {
-        // Has data if timer is running/paused, or pages have been logged
-        return timerStartTime != nil || pagesRead > 0
+        isTimerActive || pagesRead > 0
     }
 
     private var estimatedXP: Int {
         let engine = GamificationEngine(modelContext: modelContext)
         let mockSession = ReadingSession(
-            startPage: startPage,
-            endPage: endPage,
+            startPage: actualStartPage,
+            endPage: actualEndPage,
             durationMinutes: durationMinutes
         )
         return engine.calculateXP(for: mockSession)
@@ -61,19 +77,33 @@ struct LogReadingSessionView: View {
                     HStack {
                         Text("From Page")
                         Spacer()
-                        TextField("Start", value: $startPage, format: .number)
-                            .keyboardType(.numberPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 80)
+                        Text("\(actualStartPage)")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 80, alignment: .trailing)
                     }
 
                     HStack {
                         Text("To Page")
                         Spacer()
-                        TextField("End", value: $endPage, format: .number)
+                        if let session = activeSession {
+                            TextField("End", value: Binding(
+                                get: { session.currentPage },
+                                set: { newValue in
+                                    session.currentPage = newValue
+                                    session.lastUpdated = Date()
+                                    try? modelContext.save()
+                                    WatchConnectivityManager.shared.sendActiveSessionToWatch(session)
+                                }
+                            ), format: .number)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
                             .frame(width: 80)
+                        } else {
+                            TextField("End", value: $endPage, format: .number)
+                                .keyboardType(.numberPad)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 80)
+                        }
                     }
 
                     HStack {
@@ -89,9 +119,50 @@ struct LogReadingSessionView: View {
                 }
 
                 Section("Duration") {
-                    Toggle("Use Timer", isOn: $useTimer)
+                    if activeSession == nil {
+                        Toggle("Use Timer", isOn: $useTimer)
+                    }
 
-                    if useTimer {
+                    if let session = activeSession {
+                        VStack(spacing: Theme.Spacing.md) {
+                            Text(session.isPaused ? "Paused" : "Reading...")
+                                .font(Theme.Typography.headline)
+                                .foregroundStyle(session.isPaused ? .orange : Theme.Colors.primary)
+
+                            Text("Started on \(session.sourceDevice)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+
+                            ActiveSessionTimerView(activeSession: session)
+
+                            HStack(spacing: Theme.Spacing.sm) {
+                                Button(session.isPaused ? "Resume" : "Pause") {
+                                    session.isPaused.toggle()
+                                    if session.isPaused {
+                                        session.pausedAt = Date()
+                                    } else {
+                                        if let pausedAt = session.pausedAt {
+                                            session.totalPausedDuration += Date().timeIntervalSince(pausedAt)
+                                        }
+                                        session.pausedAt = nil
+                                    }
+                                    session.lastUpdated = Date()
+                                    try? modelContext.save()
+                                    WatchConnectivityManager.shared.sendActiveSessionToWatch(session)
+                                }
+                                .buttonStyle(.bordered)
+                                .tint(Theme.Colors.primary)
+
+                                Button("Finish Session") {
+                                    finishActiveSession(session)
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .tint(Theme.Colors.primary)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Theme.Spacing.sm)
+                    } else if useTimer {
                         if let startTime = timerStartTime {
                             VStack(spacing: Theme.Spacing.md) {
                                 Text(isPaused ? "Paused" : "Reading...")
@@ -159,7 +230,6 @@ struct LogReadingSessionView: View {
             }
             .scrollDismissesKeyboard(.interactively)
             .onAppear {
-                loadExistingActiveSession()
                 syncWithLiveActivity()
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
@@ -262,31 +332,6 @@ struct LogReadingSessionView: View {
         actuallyStartTimer()
     }
 
-    private func loadExistingActiveSession() {
-        // Check if there's an existing active session and auto-load it
-        guard let activeSession = activeSessions.first else { return }
-
-        // Load the session state
-        startPage = activeSession.startPage
-        endPage = activeSession.currentPage
-        sessionDate = activeSession.startDate
-        isPaused = activeSession.isPaused
-        pausedElapsedTime = activeSession.totalPausedDuration
-
-        // Calculate elapsed time and start timer
-        let elapsed = activeSession.elapsedTime
-        if !isPaused {
-            timerStartTime = Date().addingTimeInterval(-elapsed)
-        } else {
-            timerStartTime = activeSession.startDate
-            pausedElapsedTime = elapsed
-        }
-
-        useTimer = true
-
-        print("📱 Loaded active session from \(activeSession.sourceDevice): \(activeSession.pagesRead) pages")
-    }
-
     private func syncWithLiveActivity() {
         // Sync the endPage from Live Activity if timer is active
         if timerStartTime != nil, let currentPage = ReadingSessionActivityManager.shared.getCurrentPage() {
@@ -363,6 +408,55 @@ struct LogReadingSessionView: View {
         saveSession()
     }
 
+    private func finishActiveSession(_ activeSession: ActiveReadingSession) {
+        let session = ReadingSession(
+            startDate: activeSession.startDate,
+            endDate: Date(),
+            startPage: activeSession.startPage,
+            endPage: activeSession.currentPage,
+            durationMinutes: activeSession.durationMinutes,
+            book: book
+        )
+
+        let engine = GamificationEngine(modelContext: modelContext)
+        let xp = engine.calculateXP(for: session)
+        session.xpEarned = xp
+
+        modelContext.insert(session)
+        if book.readingSessions == nil {
+            book.readingSessions = []
+        }
+        book.readingSessions?.append(session)
+
+        book.currentPage = activeSession.currentPage
+
+        if book.readingStatus == .wantToRead {
+            book.readingStatus = .currentlyReading
+            book.dateStarted = activeSession.startDate
+        }
+
+        if let profile = profiles.first {
+            engine.awardXP(xp, to: profile)
+            engine.updateStreak(for: profile, sessionDate: activeSession.startDate)
+            engine.checkAchievements(for: profile)
+
+            Task {
+                await ReadingSessionActivityManager.shared.endActivity()
+                WatchConnectivityManager.shared.sendSessionToWatch(session)
+                await WatchConnectivityManager.shared.syncBooksToWatch()
+                WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
+            }
+        }
+
+        // Delete active session and notify Watch
+        modelContext.delete(activeSession)
+        WatchConnectivityManager.shared.sendActiveSessionEndToWatch()
+
+        WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+
+        dismiss()
+    }
+
     private func saveSession() {
         // Delete any active session for this book
         if let activeSession = activeSessions.first {
@@ -419,6 +513,38 @@ struct LogReadingSessionView: View {
         WidgetDataExporter.exportSnapshot(modelContext: modelContext)
 
         dismiss()
+    }
+}
+
+struct ActiveSessionTimerView: View {
+    @Bindable var activeSession: ActiveReadingSession
+    @State private var currentTime = Date()
+
+    private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+
+    private var formattedTime: String {
+        let elapsed = activeSession.elapsedTime
+        let hours = Int(elapsed) / 3600
+        let minutes = (Int(elapsed) % 3600) / 60
+        let seconds = Int(elapsed) % 60
+
+        if hours > 0 {
+            return String(format: "%d:%02d:%02d", hours, minutes, seconds)
+        } else {
+            return String(format: "%02d:%02d", minutes, seconds)
+        }
+    }
+
+    var body: some View {
+        Text(formattedTime)
+            .font(.system(size: 48, weight: .bold, design: .rounded))
+            .monospacedDigit()
+            .foregroundStyle(activeSession.isPaused ? .orange : Theme.Colors.primary)
+            .onReceive(timer) { _ in
+                if !activeSession.isPaused {
+                    currentTime = Date()
+                }
+            }
     }
 }
 
