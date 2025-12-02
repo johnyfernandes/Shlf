@@ -190,21 +190,9 @@ class WatchConnectivityManager: NSObject {
             )
 
             let data = try JSONEncoder().encode(transfer)
-            if WCSession.default.isReachable {
-                WCSession.default.sendMessage(
-                    ["activeSession": data],
-                    replyHandler: nil,
-                    errorHandler: { error in
-                        Self.logger.error("❌ sendMessage failed: \(error.localizedDescription)")
-                        WCSession.default.transferUserInfo(["activeSession": data])
-                        Self.logger.info("↩️ Auto-fallback: Queued active session")
-                    }
-                )
-                Self.logger.info("📤 Sent active session (instant): \(activeSession.pagesRead) pages")
-            } else {
-                WCSession.default.transferUserInfo(["activeSession": data])
-                Self.logger.info("📦 Queued active session (guaranteed): \(activeSession.pagesRead) pages")
-            }
+            // Use transferUserInfo to avoid blocking the main thread on sendMessage handshakes.
+            WCSession.default.transferUserInfo(["activeSession": data])
+            Self.logger.info("📦 Queued active session (guaranteed): \(activeSession.pagesRead) pages")
         } catch {
             Self.logger.error("Encoding error: \(error)")
         }
@@ -273,18 +261,13 @@ class WatchConnectivityManager: NSObject {
 
     func sendLiveActivityUpdate(currentPage: Int, xpEarned: Int) {
         guard WCSession.default.activationState == .activated else { return }
-        guard WCSession.default.isReachable else { return }
 
         do {
             let transfer = LiveActivityUpdateTransfer(currentPage: currentPage, xpEarned: xpEarned)
             let data = try JSONEncoder().encode(transfer)
-            WCSession.default.sendMessage(
-                ["liveActivityUpdate": data],
-                replyHandler: nil,
-                errorHandler: { error in
-                    Self.logger.error("Failed to send Live Activity update: \(error)")
-                }
-            )
+            // Use transferUserInfo so frequent updates don't hitch the UI and still arrive if unreachable.
+            WCSession.default.transferUserInfo(["liveActivityUpdate": data])
+            Self.logger.info("📦 Queued Live Activity update: page \(currentPage), XP \(xpEarned)")
         } catch {
             Self.logger.error("Encoding error: \(error)")
         }

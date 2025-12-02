@@ -538,6 +538,18 @@ extension WatchConnectivityManager: WCSessionDelegate {
             }
         }
 
+        // Handle queued Live Activity update from Watch
+        if let liveActivityData = userInfo["liveActivityUpdate"] as? Data {
+            Task { @MainActor in
+                do {
+                    let transfer = try JSONDecoder().decode(LiveActivityUpdateTransfer.self, from: liveActivityData)
+                    await self.handleLiveActivityUpdate(transfer)
+                } catch {
+                    Self.logger.error("Live Activity update userInfo decoding error: \(error)")
+                }
+            }
+        }
+
         // Handle queued active session from Watch
         if let activeSessionData = userInfo["activeSession"] as? Data {
             Task { @MainActor in
