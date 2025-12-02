@@ -17,6 +17,15 @@ struct ReadingWidgetEntry: TimelineEntry {
     let totalPages: Int
     let xpToday: Int
     let streak: Int
+
+    var pagesToday: Int {
+        max(0, xpToday / 10)
+    }
+
+    var progress: Double {
+        guard totalPages > 0 else { return 0 }
+        return Double(currentPage) / Double(totalPages)
+    }
 }
 
 struct ReadingWidgetProvider: AppIntentTimelineProvider {
@@ -85,64 +94,109 @@ struct ReadingWidgetProvider: AppIntentTimelineProvider {
 
 struct ReadingSessionWidgetEntryView: View {
     var entry: ReadingWidgetEntry
-
-    var progress: Double {
-        guard entry.totalPages > 0 else { return 0 }
-        return Double(entry.currentPage) / Double(entry.totalPages)
-    }
+    @Environment(\.widgetFamily) private var family
 
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            LinearGradient(
-                colors: [
-                    Color(.systemCyan).opacity(0.92),
-                    Color(.systemBlue).opacity(0.9)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+        ZStack {
+            AngularGradient(
+                gradient: Gradient(colors: [
+                    Color(.systemIndigo).opacity(0.8),
+                    Color(.systemCyan).opacity(0.9),
+                    Color(.systemBlue).opacity(0.8)
+                ]),
+                center: .center
             )
-            .ignoresSafeArea()
+            .blur(radius: 30)
 
-            VStack(alignment: .leading, spacing: 10) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(entry.title)
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                        .lineLimit(1)
-                    Text(entry.author)
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.8))
-                        .lineLimit(1)
-                }
-
-                VStack(alignment: .leading, spacing: 6) {
-                    ProgressView(value: progress)
-                        .tint(.white)
-                        .scaleEffect(x: 1, y: 1.2, anchor: .center)
-
-                    HStack {
-                        Label("\(entry.currentPage)/\(entry.totalPages)", systemImage: "book.pages")
-                            .font(.caption2)
-                            .foregroundStyle(.white.opacity(0.9))
-                        Spacer()
-                        Label("+\(entry.xpToday) XP", systemImage: "bolt.fill")
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(.yellow)
-                    }
-                }
-
-                HStack(spacing: 8) {
-                    Label("\(entry.streak) day streak", systemImage: "flame.fill")
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(.white)
-                    Spacer()
-                    Text("Keep going →")
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(.white.opacity(0.9))
-                }
+            if family == .systemSmall {
+                smallLayout
+            } else {
+                mediumLayout
             }
-            .padding()
         }
+    }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(entry.title)
+                .font(.headline)
+                .foregroundStyle(.white)
+                .lineLimit(1)
+            Text(entry.author)
+                .font(.caption2)
+                .foregroundStyle(.white.opacity(0.85))
+                .lineLimit(1)
+        }
+    }
+
+    private var progressBar: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            ProgressView(value: entry.progress)
+                .tint(.white)
+                .shadow(color: .white.opacity(0.2), radius: 4)
+
+            HStack {
+                Label("\(entry.currentPage)/\(entry.totalPages)", systemImage: "book.pages")
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.9))
+                Spacer()
+                Text("\(Int(entry.progress * 100))%")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.white)
+            }
+        }
+    }
+
+    private var statPills: some View {
+        HStack(spacing: 8) {
+            pill(icon: "bolt.fill", text: "Today \(entry.xpToday) XP", tint: .yellow)
+            pill(icon: "flame.fill", text: "\(entry.streak)d streak", tint: .orange)
+        }
+    }
+
+    private func pill(icon: String, text: String, tint: Color) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon)
+            Text(text)
+        }
+        .font(.caption2.weight(.semibold))
+        .foregroundStyle(tint)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(.ultraThinMaterial.opacity(0.2), in: Capsule())
+    }
+
+    private var smallLayout: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            header
+            progressBar
+            statPills
+        }
+        .padding()
+    }
+
+    private var mediumLayout: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            header
+            progressBar
+
+            HStack {
+                pill(icon: "bolt.fill", text: "Today \(entry.xpToday) XP", tint: .yellow)
+                Spacer()
+                pill(icon: "flame.fill", text: "\(entry.streak)d streak", tint: .orange)
+            }
+
+            HStack {
+                Label("\(entry.pagesToday) pages today", systemImage: "clock")
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.9))
+                Spacer()
+                Text("Keep it up →")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.85))
+            }
+        }
+        .padding()
     }
 }
 
