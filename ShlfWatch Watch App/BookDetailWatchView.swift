@@ -154,6 +154,8 @@ struct BookDetailWatchView: View {
             // Save changes
             do {
                 try modelContext.save()
+                // Sync quick session to iPhone so stats update immediately
+                WatchConnectivityManager.shared.sendSessionToPhone(session)
                 // Send stats to iPhone
                 WatchConnectivityManager.shared.sendProfileStatsToPhone(currentProfile)
             } catch {
@@ -242,6 +244,8 @@ struct AddPagesWatchView: View {
             // Save changes
             do {
                 try modelContext.save()
+                // Sync quick session to iPhone so stats update immediately
+                WatchConnectivityManager.shared.sendSessionToPhone(session)
                 // Send stats to iPhone
                 WatchConnectivityManager.shared.sendProfileStatsToPhone(currentProfile)
             } catch {
