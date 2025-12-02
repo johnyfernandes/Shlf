@@ -161,6 +161,120 @@ class WatchConnectivityManager: NSObject {
             Self.logger.error("Encoding error: \(error)")
         }
     }
+
+    // MARK: - Live Activity Sync
+
+    func sendLiveActivityStart(bookTitle: String, bookAuthor: String, totalPages: Int, startPage: Int, currentPage: Int, startTime: Date) {
+        guard WCSession.default.activationState == .activated else {
+            Self.logger.warning("WC not activated")
+            return
+        }
+
+        do {
+            let transfer = LiveActivityStartTransfer(
+                bookTitle: bookTitle,
+                bookAuthor: bookAuthor,
+                totalPages: totalPages,
+                startPage: startPage,
+                currentPage: currentPage,
+                startTime: startTime
+            )
+            let data = try JSONEncoder().encode(transfer)
+
+            // Use sendMessage for instant delivery if reachable
+            if WCSession.default.isReachable {
+                WCSession.default.sendMessage(
+                    ["liveActivityStart": data],
+                    replyHandler: nil,
+                    errorHandler: { error in
+                        Self.logger.error("Failed to send Live Activity start: \(error)")
+                        // Fallback to transferUserInfo if sendMessage fails
+                        WCSession.default.transferUserInfo(["liveActivityStart": data])
+                    }
+                )
+                Self.logger.info("📤 Sent Live Activity start (instant): \(bookTitle)")
+            } else {
+                // Use transferUserInfo for guaranteed delivery even when iPhone is backgrounded
+                WCSession.default.transferUserInfo(["liveActivityStart": data])
+                Self.logger.info("📦 Queued Live Activity start (guaranteed): \(bookTitle)")
+            }
+        } catch {
+            Self.logger.error("Encoding error: \(error)")
+        }
+    }
+
+    func sendLiveActivityUpdate(currentPage: Int, xpEarned: Int) {
+        guard WCSession.default.activationState == .activated else { return }
+        guard WCSession.default.isReachable else { return }
+
+        do {
+            let transfer = LiveActivityUpdateTransfer(currentPage: currentPage, xpEarned: xpEarned)
+            let data = try JSONEncoder().encode(transfer)
+            WCSession.default.sendMessage(
+                ["liveActivityUpdate": data],
+                replyHandler: nil,
+                errorHandler: { error in
+                    Self.logger.error("Failed to send Live Activity update: \(error)")
+                }
+            )
+        } catch {
+            Self.logger.error("Encoding error: \(error)")
+        }
+    }
+
+    func sendLiveActivityPause() {
+        guard WCSession.default.activationState == .activated else { return }
+        guard WCSession.default.isReachable else { return }
+
+        do {
+            let transfer = LiveActivityStateTransfer(isPaused: true)
+            let data = try JSONEncoder().encode(transfer)
+            WCSession.default.sendMessage(
+                ["liveActivityState": data],
+                replyHandler: nil,
+                errorHandler: { error in
+                    Self.logger.error("Failed to send Live Activity pause: \(error)")
+                }
+            )
+            Self.logger.info("Sent Live Activity pause to iPhone")
+        } catch {
+            Self.logger.error("Encoding error: \(error)")
+        }
+    }
+
+    func sendLiveActivityResume() {
+        guard WCSession.default.activationState == .activated else { return }
+        guard WCSession.default.isReachable else { return }
+
+        do {
+            let transfer = LiveActivityStateTransfer(isPaused: false)
+            let data = try JSONEncoder().encode(transfer)
+            WCSession.default.sendMessage(
+                ["liveActivityState": data],
+                replyHandler: nil,
+                errorHandler: { error in
+                    Self.logger.error("Failed to send Live Activity resume: \(error)")
+                }
+            )
+            Self.logger.info("Sent Live Activity resume to iPhone")
+        } catch {
+            Self.logger.error("Encoding error: \(error)")
+        }
+    }
+
+    func sendLiveActivityEnd() {
+        guard WCSession.default.activationState == .activated else { return }
+        guard WCSession.default.isReachable else { return }
+
+        WCSession.default.sendMessage(
+            ["liveActivityEnd": true],
+            replyHandler: nil,
+            errorHandler: { error in
+                Self.logger.error("Failed to send Live Activity end: \(error)")
+            }
+        )
+        Self.logger.info("Sent Live Activity end to iPhone")
+    }
 }
 
 extension WatchConnectivityManager: WCSessionDelegate {

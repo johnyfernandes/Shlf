@@ -73,3 +73,21 @@ struct ProfileStatsTransfer: Codable, Sendable {
     let lastReadingDate: Date?
 }
 
+struct LiveActivityStartTransfer: Codable, Sendable {
+    let bookTitle: String
+    let bookAuthor: String
+    let totalPages: Int
+    let startPage: Int
+    let currentPage: Int
+    let startTime: Date
+}
+
+struct LiveActivityUpdateTransfer: Codable, Sendable {
+    let currentPage: Int
+    let xpEarned: Int
+}
+
+struct LiveActivityStateTransfer: Codable, Sendable {
+    let isPaused: Bool
+}
+

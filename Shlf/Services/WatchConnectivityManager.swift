@@ -336,6 +336,50 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 }
             }
         }
+
+        // Handle Live Activity start from Watch
+        if let liveActivityData = message["liveActivityStart"] as? Data {
+            Task { @MainActor in
+                do {
+                    let transfer = try JSONDecoder().decode(LiveActivityStartTransfer.self, from: liveActivityData)
+                    Self.logger.info("Received Live Activity start from Watch: \(transfer.bookTitle)")
+                    await self.handleLiveActivityStart(transfer)
+                } catch {
+                    Self.logger.error("Live Activity start decoding error: \(error)")
+                }
+            }
+        }
+
+        // Handle Live Activity update from Watch
+        if let liveActivityData = message["liveActivityUpdate"] as? Data {
+            Task { @MainActor in
+                do {
+                    let transfer = try JSONDecoder().decode(LiveActivityUpdateTransfer.self, from: liveActivityData)
+                    await self.handleLiveActivityUpdate(transfer)
+                } catch {
+                    Self.logger.error("Live Activity update decoding error: \(error)")
+                }
+            }
+        }
+
+        // Handle Live Activity state change from Watch
+        if let liveActivityData = message["liveActivityState"] as? Data {
+            Task { @MainActor in
+                do {
+                    let transfer = try JSONDecoder().decode(LiveActivityStateTransfer.self, from: liveActivityData)
+                    await self.handleLiveActivityState(transfer)
+                } catch {
+                    Self.logger.error("Live Activity state decoding error: \(error)")
+                }
+            }
+        }
+
+        // Handle Live Activity end from Watch
+        if message["liveActivityEnd"] != nil {
+            Task { @MainActor in
+                await self.handleLiveActivityEnd()
+            }
+        }
     }
 
     nonisolated func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any]) {
@@ -385,6 +429,19 @@ extension WatchConnectivityManager: WCSessionDelegate {
                     await self.handleProfileStats(stats)
                 } catch {
                     Self.logger.error("Profile stats userInfo decoding error: \(error)")
+                }
+            }
+        }
+
+        // Handle queued Live Activity start from Watch
+        if let liveActivityData = userInfo["liveActivityStart"] as? Data {
+            Task { @MainActor in
+                do {
+                    let transfer = try JSONDecoder().decode(LiveActivityStartTransfer.self, from: liveActivityData)
+                    Self.logger.info("📦 Received queued Live Activity start from Watch: \(transfer.bookTitle)")
+                    await self.handleLiveActivityStart(transfer)
+                } catch {
+                    Self.logger.error("Live Activity start userInfo decoding error: \(error)")
                 }
             }
         }
@@ -586,5 +643,62 @@ extension WatchConnectivityManager: WCSessionDelegate {
         } catch {
             Self.logger.error("Failed to update profile stats: \(error)")
         }
+    }
+
+    // MARK: - Live Activity Handlers
+
+    @MainActor
+    private func handleLiveActivityStart(_ transfer: LiveActivityStartTransfer) async {
+        guard let modelContext = modelContext else {
+            Self.logger.warning("ModelContext not configured")
+            return
+        }
+
+        do {
+            // Find the book by title
+            let bookDescriptor = FetchDescriptor<Book>(
+                predicate: #Predicate<Book> { book in
+                    book.title == transfer.bookTitle
+                }
+            )
+            let books = try modelContext.fetch(bookDescriptor)
+
+            guard let book = books.first else {
+                Self.logger.warning("Book not found for Live Activity: \(transfer.bookTitle)")
+                return
+            }
+
+            // Start Live Activity
+            await ReadingSessionActivityManager.shared.startActivity(book: book, currentPage: transfer.currentPage)
+            Self.logger.info("✅ Started Live Activity from Watch: \(transfer.bookTitle)")
+        } catch {
+            Self.logger.error("Failed to start Live Activity from Watch: \(error)")
+        }
+    }
+
+    @MainActor
+    private func handleLiveActivityUpdate(_ transfer: LiveActivityUpdateTransfer) async {
+        await ReadingSessionActivityManager.shared.updateActivity(
+            currentPage: transfer.currentPage,
+            xpEarned: transfer.xpEarned
+        )
+        Self.logger.info("Updated Live Activity from Watch: Page \(transfer.currentPage)")
+    }
+
+    @MainActor
+    private func handleLiveActivityState(_ transfer: LiveActivityStateTransfer) async {
+        if transfer.isPaused {
+            await ReadingSessionActivityManager.shared.pauseActivity()
+            Self.logger.info("⏸️ Paused Live Activity from Watch")
+        } else {
+            await ReadingSessionActivityManager.shared.resumeActivity()
+            Self.logger.info("▶️ Resumed Live Activity from Watch")
+        }
+    }
+
+    @MainActor
+    private func handleLiveActivityEnd() async {
+        await ReadingSessionActivityManager.shared.endActivity()
+        Self.logger.info("🛑 Ended Live Activity from Watch")
     }
 }
