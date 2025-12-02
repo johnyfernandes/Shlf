@@ -289,11 +289,12 @@ struct LogSessionWatchView: View {
 
     private func endExistingSessionAndStartNew(_ existingSession: ActiveReadingSession) {
         // Delete the existing active session
+        let endedId = existingSession.id
         modelContext.delete(existingSession)
         try? modelContext.save()
 
         // Notify iPhone
-        WatchConnectivityManager.shared.sendActiveSessionEndToPhone()
+        WatchConnectivityManager.shared.sendActiveSessionEndToPhone(activeSessionId: endedId)
 
         // Clear pending
         pendingActiveSession = nil
