@@ -45,6 +45,7 @@ struct LogSessionWatchView: View {
     @State private var showActiveSessionAlert = false
     @State private var pendingActiveSession: ActiveReadingSession?
     @State private var debounceTask: Task<Void, Never>?
+    @State private var showBackButtonAlert = false
 
     init(book: Book) {
         self.book = book
@@ -192,6 +193,27 @@ struct LogSessionWatchView: View {
         }
         .navigationTitle("Reading Session")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(isActive)
+        .toolbar {
+            if isActive {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button {
+                        showBackButtonAlert = true
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.body.weight(.semibold))
+                    }
+                }
+            }
+        }
+        .alert("Leave Active Session?", isPresented: $showBackButtonAlert) {
+            Button("Cancel", role: .cancel) {}
+            Button("Leave Session", role: .destructive) {
+                dismiss()
+            }
+        } message: {
+            Text("Your session is still active. Leaving won't end it, but you won't be able to track pages until you return.")
+        }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PageDeltaFromPhone"))) { notification in
             // Sync currentPage with iPhone updates during active session
             if isActive,

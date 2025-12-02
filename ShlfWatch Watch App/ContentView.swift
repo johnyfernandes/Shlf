@@ -12,9 +12,14 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Book.title) private var allBooks: [Book]
     @Query private var profiles: [UserProfile]
+    @Query private var activeSessions: [ActiveReadingSession]
 
     private var currentBooks: [Book] {
         allBooks.filter { $0.readingStatus == .currentlyReading }
+    }
+
+    private var activeSession: ActiveReadingSession? {
+        activeSessions.first
     }
 
     private var profile: UserProfile {
@@ -28,6 +33,50 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack {
+            // Active session indicator at the top
+            if let session = activeSession, let book = session.book {
+                VStack(spacing: 0) {
+                    NavigationLink(destination: LogSessionWatchView(book: book)) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "circle.fill")
+                                .font(.system(size: 6))
+                                .foregroundStyle(.green)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Reading Now")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                Text(book.title)
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .lineLimit(1)
+                            }
+
+                            Spacer()
+
+                            Text("\(session.pagesRead)p")
+                                .font(.caption2)
+                                .foregroundStyle(.cyan)
+
+                            Image(systemName: "chevron.right")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(.green.opacity(0.15))
+                        .cornerRadius(8)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+                    .padding(.bottom, 4)
+
+                    Divider()
+                        .padding(.horizontal)
+                }
+            }
+
             if currentBooks.isEmpty {
                 VStack(spacing: 12) {
                     Image(systemName: "book.closed")

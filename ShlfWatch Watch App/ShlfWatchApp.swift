@@ -7,11 +7,13 @@
 
 import SwiftUI
 import SwiftData
+import OSLog
 
 @main
 struct ShlfWatch_Watch_AppApp: App {
     @State private var modelContainer: ModelContainer?
     @State private var modelError: Error?
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
         do {
@@ -48,6 +50,35 @@ struct ShlfWatch_Watch_AppApp: App {
                     }
             } else {
                 ProgressView()
+            }
+        }
+        .onChange(of: scenePhase) { oldPhase, newPhase in
+            guard let container = modelContainer else { return }
+
+            switch newPhase {
+            case .background:
+                // Watch going to background - persist active session state immediately
+                Task { @MainActor in
+                    do {
+                        try container.mainContext.save()
+                        WatchConnectivityManager.logger.info("💾 Saved on background")
+                    } catch {
+                        WatchConnectivityManager.logger.error("Failed to save on background: \(error)")
+                    }
+                }
+
+            case .active:
+                // Watch returning to foreground - just log, data is already synced
+                WatchConnectivityManager.logger.info("⏰ Watch app returned to foreground")
+
+            case .inactive:
+                // Transitioning - save just in case
+                Task { @MainActor in
+                    try? container.mainContext.save()
+                }
+
+            @unknown default:
+                break
             }
         }
     }

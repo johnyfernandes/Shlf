@@ -12,6 +12,7 @@ import SwiftData
 struct ShlfApp: App {
     @State private var modelContainer: ModelContainer?
     @State private var modelError: Error?
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
         do {
@@ -46,6 +47,39 @@ struct ShlfApp: App {
                     }
             } else {
                 ProgressView()
+            }
+        }
+        .onChange(of: scenePhase) { oldPhase, newPhase in
+            guard let container = modelContainer else { return }
+
+            switch newPhase {
+            case .background:
+                // App going to background - persist everything immediately
+                Task { @MainActor in
+                    do {
+                        try container.mainContext.save()
+                        WidgetDataExporter.exportSnapshot(modelContext: container.mainContext)
+                    } catch {
+                        print("Failed to save on background: \(error)")
+                    }
+                }
+
+            case .active:
+                // App returning to foreground - rehydrate and cleanup
+                Task { @MainActor in
+                    await ReadingSessionActivityManager.shared.rehydrateExistingActivity()
+                    await ActiveSessionCleanup.cleanupStaleSessionsIfNeeded(modelContext: container.mainContext)
+                    WidgetDataExporter.exportSnapshot(modelContext: container.mainContext)
+                }
+
+            case .inactive:
+                // Transitioning - save just in case
+                Task { @MainActor in
+                    try? container.mainContext.save()
+                }
+
+            @unknown default:
+                break
             }
         }
     }
