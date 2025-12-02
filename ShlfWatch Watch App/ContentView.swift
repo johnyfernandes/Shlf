@@ -9,10 +9,21 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
+    @Environment(\.modelContext) private var modelContext
     @Query(sort: \Book.title) private var allBooks: [Book]
+    @Query private var profiles: [UserProfile]
 
     private var currentBooks: [Book] {
         allBooks.filter { $0.readingStatus == .currentlyReading }
+    }
+
+    private var profile: UserProfile {
+        if let existing = profiles.first {
+            return existing
+        }
+        let new = UserProfile()
+        modelContext.insert(new)
+        return new
     }
 
     var body: some View {
@@ -32,14 +43,7 @@ struct ContentView: View {
                         .multilineTextAlignment(.center)
                 }
                 .padding()
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        NavigationLink(destination: SettingsWatchView()) {
-                            Image(systemName: "gearshape.fill")
-                                .foregroundStyle(.cyan)
-                        }
-                    }
-                }
+                .toolbar { settingsToolbar }
             } else {
                 List {
                     ForEach(currentBooks) { book in
@@ -49,13 +53,18 @@ struct ContentView: View {
                     }
                 }
                 .navigationTitle("Reading")
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        NavigationLink(destination: SettingsWatchView()) {
-                            Image(systemName: "gearshape.fill")
-                                .foregroundStyle(.cyan)
-                        }
-                    }
+                .toolbar { settingsToolbar }
+            }
+        }
+    }
+
+    @ToolbarContentBuilder
+    private var settingsToolbar: some ToolbarContent {
+        if profile.showSettingsOnWatch {
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink(destination: SettingsWatchView()) {
+                    Image(systemName: "gearshape.fill")
+                        .foregroundStyle(.cyan)
                 }
             }
         }

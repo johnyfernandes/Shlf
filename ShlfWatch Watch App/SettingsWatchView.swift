@@ -18,35 +18,43 @@ struct SettingsWatchView: View {
 
     var body: some View {
         List {
-            Section {
-                if let profile = profile {
-                    Toggle(isOn: Binding(
-                        get: { profile.hideAutoSessionsWatch },
-                        set: { newValue in
-                            profile.hideAutoSessionsWatch = newValue
-                            try? modelContext.save()
-                            // Send to iPhone immediately
-                            WatchConnectivityManager.shared.sendProfileSettingsToPhone(profile)
+            if let profile = profile {
+                if profile.showSettingsOnWatch {
+                    Section {
+                        Toggle(isOn: Binding(
+                            get: { profile.hideAutoSessionsWatch },
+                            set: { newValue in
+                                profile.hideAutoSessionsWatch = newValue
+                                try? modelContext.save()
+                                // Send to iPhone immediately
+                                WatchConnectivityManager.shared.sendProfileSettingsToPhone(profile)
+                            }
+                        )) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Hide Quick Sessions")
+                                    .font(.caption)
+                                Text("Only show timer sessions")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
-                    )) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Hide Quick Sessions")
-                                .font(.caption)
-                            Text("Only show timer sessions")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
+                        .tint(.cyan)
+                    } header: {
+                        Text("Session Display")
                     }
-                    .tint(.cyan)
-                }
-            } header: {
-                Text("Session Display")
-            }
 
-            Section {
-                Text("Quick sessions are created when you tap +1, +5, etc. Timer sessions are created using the reading timer.")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    Section {
+                        Text("Quick sessions are created when you tap +1, +5, etc. Timer sessions are created using the reading timer.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    Section {
+                        Text("Settings are managed from your iPhone.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
         }
         .navigationTitle("Settings")

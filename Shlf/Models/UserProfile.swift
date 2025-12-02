@@ -42,6 +42,7 @@ final class UserProfile {
     // Session Display Preferences
     var hideAutoSessionsIPhone: Bool = false // hide quick +1/-1 sessions on iPhone
     var hideAutoSessionsWatch: Bool = false // hide quick +1/-1 sessions on Watch
+    var showSettingsOnWatch: Bool = true
 
     // Home Card Preferences
     var homeCardOrder: [String] = [
@@ -80,6 +81,7 @@ final class UserProfile {
         showSliderButtons: Bool = false,
         hideAutoSessionsIPhone: Bool = false,
         hideAutoSessionsWatch: Bool = false,
+        showSettingsOnWatch: Bool = true,
         homeCardOrder: [String] = [
             StatCardType.currentStreak.rawValue,
             StatCardType.level.rawValue,
@@ -109,6 +111,7 @@ final class UserProfile {
         self.showSliderButtons = showSliderButtons
         self.hideAutoSessionsIPhone = hideAutoSessionsIPhone
         self.hideAutoSessionsWatch = hideAutoSessionsWatch
+        self.showSettingsOnWatch = showSettingsOnWatch
         self.homeCardOrder = homeCardOrder
         self.readingGoals = nil
         self.achievements = nil

@@ -54,6 +54,29 @@ struct SessionTransfer: Codable, Sendable {
 struct ProfileSettingsTransfer: Codable, Sendable {
     let hideAutoSessionsIPhone: Bool
     let hideAutoSessionsWatch: Bool
+    let showSettingsOnWatch: Bool
+
+    init(
+        hideAutoSessionsIPhone: Bool,
+        hideAutoSessionsWatch: Bool,
+        showSettingsOnWatch: Bool = true
+    ) {
+        self.hideAutoSessionsIPhone = hideAutoSessionsIPhone
+        self.hideAutoSessionsWatch = hideAutoSessionsWatch
+        self.showSettingsOnWatch = showSettingsOnWatch
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let hideIPhone = try container.decode(Bool.self, forKey: .hideAutoSessionsIPhone)
+        let hideWatch = try container.decode(Bool.self, forKey: .hideAutoSessionsWatch)
+        let showSettings = try container.decodeIfPresent(Bool.self, forKey: .showSettingsOnWatch) ?? true
+        self.init(
+            hideAutoSessionsIPhone: hideIPhone,
+            hideAutoSessionsWatch: hideWatch,
+            showSettingsOnWatch: showSettings
+        )
+    }
 }
 
 struct ProfileStatsTransfer: Codable, Sendable {
@@ -161,7 +184,8 @@ class WatchConnectivityManager: NSObject {
         do {
             let transfer = ProfileSettingsTransfer(
                 hideAutoSessionsIPhone: profile.hideAutoSessionsIPhone,
-                hideAutoSessionsWatch: profile.hideAutoSessionsWatch
+                hideAutoSessionsWatch: profile.hideAutoSessionsWatch,
+                showSettingsOnWatch: profile.showSettingsOnWatch
             )
             let data = try JSONEncoder().encode(transfer)
             if WCSession.default.isReachable {
@@ -580,6 +604,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
             if let profile = profiles.first {
                 profile.hideAutoSessionsIPhone = settings.hideAutoSessionsIPhone
                 profile.hideAutoSessionsWatch = settings.hideAutoSessionsWatch
+                profile.showSettingsOnWatch = settings.showSettingsOnWatch
                 try modelContext.save()
                 Self.logger.info("Updated profile settings from Watch")
             }

@@ -147,6 +147,28 @@ struct WatchSettingsView: View {
                     .font(Theme.Typography.caption)
             }
 
+            if let profile = profile {
+                Section("Watch App UI") {
+                    Toggle(isOn: Binding(
+                        get: { profile.showSettingsOnWatch },
+                        set: { newValue in
+                            profile.showSettingsOnWatch = newValue
+                            try? modelContext.save()
+                            WatchConnectivityManager.shared.sendProfileSettingsToWatch(profile)
+                        }
+                    )) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Show Settings on Watch")
+                                .font(Theme.Typography.body)
+                            Text("Hide the settings screen on the Watch if you prefer a simpler experience.")
+                                .font(Theme.Typography.caption)
+                                .foregroundStyle(Theme.Colors.secondaryText)
+                        }
+                    }
+                    .tint(Theme.Colors.primary)
+                }
+            }
+
             Section("About Watch App") {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("The Shlf Watch app lets you:")
