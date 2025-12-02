@@ -471,6 +471,9 @@ struct BookDetailView: View {
             await WatchConnectivityManager.shared.syncBooksToWatch()
         }
 
+        // Update widget snapshot so deleted books disappear
+        WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+
         dismiss()
     }
 }
