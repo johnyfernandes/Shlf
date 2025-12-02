@@ -942,7 +942,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
         }
 
         // Ignore updates for sessions we've explicitly ended
-        if endedActiveSessionIDs.contains(transfer.id) {
+        if endedActiveSessionIDs[transfer.id] != nil {
             Self.logger.info("Ignoring active session update for ended id \(transfer.id)")
             return
         }
@@ -1010,7 +1010,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
             let activeSessions = try modelContext.fetch(descriptor)
 
             for session in activeSessions {
-                endedActiveSessionIDs.insert(session.id)
+                endedActiveSessionIDs[session.id] = Date()
                 modelContext.delete(session)
             }
 
@@ -1019,7 +1019,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
             lastActiveSessionEndDate = Date()
 
             if let endedId {
-                endedActiveSessionIDs.insert(endedId)
+                endedActiveSessionIDs[endedId] = Date()
             }
         } catch {
             Self.logger.error("Failed to end active sessions: \(error)")

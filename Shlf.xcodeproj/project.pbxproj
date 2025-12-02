@@ -100,6 +100,7 @@
 				Shared/ConnectivityTransfers.swift,
 				Shared/DesignSystem/Theme.swift,
 				Shared/SwiftDataConfig.swift,
+				Shared/XPCalculator.swift,
 			);
 			target = 527604FC2ED8FDBA00F08D36 /* ReadingSessionWidgetExtension */;
 		};
