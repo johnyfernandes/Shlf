@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import OSLog
 
 #if canImport(ActivityKit)
 import ActivityKit
@@ -13,6 +14,7 @@ import ActivityKit
 @MainActor
 class ReadingSessionActivityManager {
     static let shared = ReadingSessionActivityManager()
+    private static let logger = Logger(subsystem: "com.shlf.app", category: "LiveActivity")
 
     private(set) var currentActivity: Activity<ReadingSessionWidgetAttributes>?
 
@@ -63,9 +65,9 @@ class ReadingSessionActivityManager {
             startTime = now
             startPage = book.currentPage
 
-            print("✅ Live Activity started: \(activity.id)")
+            Self.logger.info("✅ Live Activity started: \(activity.id)")
         } catch {
-            print("❌ Failed to start Live Activity: \(error)")
+            Self.logger.error("❌ Failed to start Live Activity: \(error)")
         }
     }
 
@@ -89,7 +91,7 @@ class ReadingSessionActivityManager {
 
         await activity.update(updatedContent)
 
-        print("📊 Live Activity updated: Page \(currentPage), XP \(xpEarned)")
+        Self.logger.info("📊 Live Activity updated: Page \(currentPage), XP \(xpEarned)")
     }
 
     func updateCurrentPage(_ currentPage: Int) async {
@@ -112,7 +114,7 @@ class ReadingSessionActivityManager {
 
         await activity.update(updatedContent)
 
-        print("📊 Live Activity updated from Watch: Page \(currentPage)")
+        Self.logger.info("📊 Live Activity updated from Watch: Page \(currentPage)")
     }
 
     // MARK: - Pause/Resume Activity
@@ -126,7 +128,7 @@ class ReadingSessionActivityManager {
         let updatedContent = ActivityContent(state: newState, staleDate: nil)
         await activity.update(updatedContent)
 
-        print("⏸️ Live Activity paused")
+        Self.logger.info("⏸️ Live Activity paused")
     }
 
     func resumeActivity() async {
@@ -138,7 +140,7 @@ class ReadingSessionActivityManager {
         let updatedContent = ActivityContent(state: newState, staleDate: nil)
         await activity.update(updatedContent)
 
-        print("▶️ Live Activity resumed")
+        Self.logger.info("▶️ Live Activity resumed")
     }
 
     // MARK: - End Activity
@@ -155,7 +157,7 @@ class ReadingSessionActivityManager {
         startTime = nil
         startPage = 0
 
-        print("🛑 Live Activity ended")
+        Self.logger.info("🛑 Live Activity ended")
     }
 
     var isActive: Bool {
