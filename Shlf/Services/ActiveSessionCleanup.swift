@@ -13,10 +13,13 @@ import OSLog
 struct ActiveSessionCleanup {
     private static let logger = Logger(subsystem: "com.shlf.app", category: "ActiveSessionCleanup")
 
-    /// Cleanup stale active sessions based on user preferences
+    /// Cleanup stale active sessions and orphaned Live Activities
     /// Should be called on app launch
     static func cleanupStaleSessionsIfNeeded(modelContext: ModelContext) async {
-        logger.info("🧹 Checking for stale active sessions...")
+        logger.info("🧹 Checking for stale active sessions and orphaned Live Activities...")
+
+        // First, check for orphaned Live Activity (Live Activity running but no ActiveReadingSession)
+        await checkForOrphanedLiveActivity(modelContext: modelContext)
 
         do {
             // Fetch user profile to check auto-end settings
@@ -68,6 +71,34 @@ struct ActiveSessionCleanup {
             }
         } catch {
             logger.error("Failed to cleanup stale sessions: \(error)")
+        }
+    }
+
+    /// Check for orphaned Live Activity (Live Activity running without corresponding ActiveReadingSession)
+    private static func checkForOrphanedLiveActivity(modelContext: ModelContext) async {
+        // Check if Live Activity is currently active
+        guard ReadingSessionActivityManager.shared.isActive else {
+            logger.info("No Live Activity running")
+            return
+        }
+
+        logger.info("🔍 Live Activity detected, checking for corresponding ActiveReadingSession...")
+
+        do {
+            // Fetch all active sessions
+            let sessionDescriptor = FetchDescriptor<ActiveReadingSession>()
+            let activeSessions = try modelContext.fetch(sessionDescriptor)
+
+            if activeSessions.isEmpty {
+                // Orphaned Live Activity detected!
+                logger.warning("⚠️ Orphaned Live Activity detected (no ActiveReadingSession found) - ending it")
+                await ReadingSessionActivityManager.shared.endActivity()
+                WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+            } else {
+                logger.info("✅ Live Activity has corresponding ActiveReadingSession")
+            }
+        } catch {
+            logger.error("Failed to check for orphaned Live Activity: \(error)")
         }
     }
 
