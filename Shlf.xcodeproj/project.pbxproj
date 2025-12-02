@@ -73,6 +73,7 @@
 				Models/ReadingSession.swift,
 				Models/StatCardType.swift,
 				Models/UserProfile.swift,
+				Shared/ConnectivityTransfers.swift,
 				Services/GamificationEngine.swift,
 				Services/GoalTracker.swift,
 			);

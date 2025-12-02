@@ -8,51 +8,110 @@
 import WidgetKit
 import SwiftUI
 
-struct Provider: TimelineProvider {
-    func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), emoji: "😀")
-    }
-
-    func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
-        let entry = SimpleEntry(date: Date(), emoji: "😀")
-        completion(entry)
-    }
-
-    func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
-        var entries: [SimpleEntry] = []
-
-        // Generate a timeline consisting of five entries an hour apart, starting from the current date.
-        let currentDate = Date()
-        for hourOffset in 0 ..< 5 {
-            let entryDate = Calendar.current.date(byAdding: .hour, value: hourOffset, to: currentDate)!
-            let entry = SimpleEntry(date: entryDate, emoji: "😀")
-            entries.append(entry)
-        }
-
-        let timeline = Timeline(entries: entries, policy: .atEnd)
-        completion(timeline)
-    }
-
-//    func relevances() async -> WidgetRelevances<Void> {
-//        // Generate a list containing the contexts this widget is relevant in.
-//    }
-}
-
-struct SimpleEntry: TimelineEntry {
+struct ReadingWidgetEntry: TimelineEntry {
     let date: Date
-    let emoji: String
+    let title: String
+    let author: String
+    let currentPage: Int
+    let totalPages: Int
+    let xpToday: Int
+    let streak: Int
 }
 
-struct ReadingSessionWidgetEntryView : View {
-    var entry: Provider.Entry
+struct ReadingWidgetProvider: TimelineProvider {
+    func placeholder(in context: Context) -> ReadingWidgetEntry {
+        ReadingWidgetEntry(
+            date: Date(),
+            title: "The Midnight Library",
+            author: "Matt Haig",
+            currentPage: 120,
+            totalPages: 304,
+            xpToday: 80,
+            streak: 5
+        )
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (ReadingWidgetEntry) -> Void) {
+        completion(placeholder(in: context))
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<ReadingWidgetEntry>) -> Void) {
+        let now = Date()
+        let entries = [
+            placeholder(in: context),
+            ReadingWidgetEntry(
+                date: now.addingTimeInterval(60 * 30),
+                title: "Project Hail Mary",
+                author: "Andy Weir",
+                currentPage: 210,
+                totalPages: 475,
+                xpToday: 140,
+                streak: 6
+            )
+        ]
+        completion(Timeline(entries: entries, policy: .atEnd))
+    }
+}
+
+struct ReadingSessionWidgetEntryView: View {
+    var entry: ReadingWidgetEntry
+
+    var progress: Double {
+        guard entry.totalPages > 0 else { return 0 }
+        return Double(entry.currentPage) / Double(entry.totalPages)
+    }
 
     var body: some View {
-        VStack {
-            Text("Time:")
-            Text(entry.date, style: .time)
+        ZStack(alignment: .bottomLeading) {
+            LinearGradient(
+                colors: [
+                    Color.cyan.opacity(0.85),
+                    Color.blue.opacity(0.9)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
 
-            Text("Emoji:")
-            Text(entry.emoji)
+            VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(entry.title)
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                    Text(entry.author)
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.8))
+                        .lineLimit(1)
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    ProgressView(value: progress)
+                        .tint(.white)
+                        .scaleEffect(x: 1, y: 1.2, anchor: .center)
+
+                    HStack {
+                        Label("\(entry.currentPage)/\(entry.totalPages)", systemImage: "book.pages")
+                            .font(.caption2)
+                            .foregroundStyle(.white.opacity(0.9))
+                        Spacer()
+                        Label("+\(entry.xpToday) XP", systemImage: "bolt.fill")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.yellow)
+                    }
+                }
+
+                HStack(spacing: 8) {
+                    Label("\(entry.streak) day streak", systemImage: "flame.fill")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.white)
+                    Spacer()
+                    Text("Keep going →")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.9))
+                }
+            }
+            .padding()
         }
     }
 }
@@ -61,24 +120,18 @@ struct ReadingSessionWidget: Widget {
     let kind: String = "ReadingSessionWidget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: Provider()) { entry in
+        StaticConfiguration(kind: kind, provider: ReadingWidgetProvider()) { entry in
             if #available(iOS 17.0, *) {
                 ReadingSessionWidgetEntryView(entry: entry)
-                    .containerBackground(.fill.tertiary, for: .widget)
+                    .containerBackground(.clear, for: .widget)
             } else {
                 ReadingSessionWidgetEntryView(entry: entry)
                     .padding()
                     .background()
             }
         }
-        .configurationDisplayName("My Widget")
-        .description("This is an example widget.")
+        .configurationDisplayName("Reading Pulse")
+        .description("Glance your progress, XP, and streak.")
+        .supportedFamilies([.systemSmall, .systemMedium])
     }
-}
-
-#Preview(as: .systemSmall) {
-    ReadingSessionWidget()
-} timeline: {
-    SimpleEntry(date: .now, emoji: "😀")
-    SimpleEntry(date: .now, emoji: "🤩")
 }
