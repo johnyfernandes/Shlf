@@ -47,15 +47,18 @@ final class ActiveReadingSession {
 
     // Computed properties
     var elapsedTime: TimeInterval {
-        let now = Date()
-        let totalElapsed = now.timeIntervalSince(startDate)
+        elapsedTime(at: Date())
+    }
+
+    func elapsedTime(at date: Date = Date()) -> TimeInterval {
+        let totalElapsed = date.timeIntervalSince(startDate)
 
         // Subtract total paused duration
         var pausedTime = totalPausedDuration
 
         // Add current pause if paused now
         if isPaused, let pausedAt = pausedAt {
-            pausedTime += now.timeIntervalSince(pausedAt)
+            pausedTime += date.timeIntervalSince(pausedAt)
         }
 
         return max(0, totalElapsed - pausedTime)

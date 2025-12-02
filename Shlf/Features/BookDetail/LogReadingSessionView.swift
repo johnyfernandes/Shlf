@@ -522,12 +522,9 @@ struct LogReadingSessionView: View {
 
 struct ActiveSessionTimerView: View {
     @Bindable var activeSession: ActiveReadingSession
-    @State private var currentTime = Date()
 
-    private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-
-    private var formattedTime: String {
-        let elapsed = activeSession.elapsedTime
+    private func formattedTime(at date: Date) -> String {
+        let elapsed = activeSession.elapsedTime(at: date)
         let hours = Int(elapsed) / 3600
         let minutes = (Int(elapsed) % 3600) / 60
         let seconds = Int(elapsed) % 60
@@ -540,15 +537,12 @@ struct ActiveSessionTimerView: View {
     }
 
     var body: some View {
-        Text(formattedTime)
-            .font(.system(size: 48, weight: .bold, design: .rounded))
-            .monospacedDigit()
-            .foregroundStyle(activeSession.isPaused ? .orange : Theme.Colors.primary)
-            .onReceive(timer) { _ in
-                if !activeSession.isPaused {
-                    currentTime = Date()
-                }
-            }
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            Text(formattedTime(at: context.date))
+                .font(.system(size: 48, weight: .bold, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(activeSession.isPaused ? .orange : Theme.Colors.primary)
+        }
     }
 }
 
