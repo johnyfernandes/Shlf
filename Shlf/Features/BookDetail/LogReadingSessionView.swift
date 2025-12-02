@@ -314,11 +314,12 @@ struct LogReadingSessionView: View {
 
     private func endExistingSessionAndStartNew(_ existingSession: ActiveReadingSession) {
         // Delete the existing active session
+        let endedId = existingSession.id
         modelContext.delete(existingSession)
         try? modelContext.save()
 
         // Notify Watch
-        WatchConnectivityManager.shared.sendActiveSessionEndToWatch()
+        WatchConnectivityManager.shared.sendActiveSessionEndToWatch(activeSessionId: endedId)
 
         // End any Live Activity
         Task {
@@ -450,18 +451,20 @@ struct LogReadingSessionView: View {
 
         // Delete active session and notify Watch
         modelContext.delete(activeSession)
-        WatchConnectivityManager.shared.sendActiveSessionEndToWatch()
+        WatchConnectivityManager.shared.sendActiveSessionEndToWatch(activeSessionId: activeSession.id)
 
         WidgetDataExporter.exportSnapshot(modelContext: modelContext)
 
+        try? modelContext.save()
         dismiss()
     }
 
     private func saveSession() {
         // Delete any active session for this book
         if let activeSession = activeSessions.first {
+            let endedId = activeSession.id
             modelContext.delete(activeSession)
-            WatchConnectivityManager.shared.sendActiveSessionEndToWatch()
+            WatchConnectivityManager.shared.sendActiveSessionEndToWatch(activeSessionId: endedId)
         }
 
         let session = ReadingSession(
@@ -489,31 +492,32 @@ struct LogReadingSessionView: View {
         WatchConnectivityManager.shared.sendPageDeltaToWatch(bookUUID: book.id, delta: pageDelta)
 
         if book.readingStatus == .wantToRead {
-            book.readingStatus = .currentlyReading
-            book.dateStarted = sessionDate
-        }
-
-        if let profile = profiles.first {
-            engine.awardXP(xp, to: profile)
-            engine.updateStreak(for: profile, sessionDate: sessionDate)
-            engine.checkAchievements(for: profile)
-
-            // End Live Activity if still active
-            Task {
-                await ReadingSessionActivityManager.shared.endActivity()
-                // Push the new session to Watch immediately for responsiveness
-                WatchConnectivityManager.shared.sendSessionToWatch(session)
-                // Sync new session to Watch
-                await WatchConnectivityManager.shared.syncBooksToWatch()
-                // Sync profile stats to Watch
-                WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
-            }
-        }
-
-        WidgetDataExporter.exportSnapshot(modelContext: modelContext)
-
-        dismiss()
+        book.readingStatus = .currentlyReading
+        book.dateStarted = sessionDate
     }
+
+    if let profile = profiles.first {
+        engine.awardXP(xp, to: profile)
+        engine.updateStreak(for: profile, sessionDate: sessionDate)
+        engine.checkAchievements(for: profile)
+
+        // End Live Activity if still active
+        Task {
+            await ReadingSessionActivityManager.shared.endActivity()
+            // Push the new session to Watch immediately for responsiveness
+            WatchConnectivityManager.shared.sendSessionToWatch(session)
+            // Sync new session to Watch
+            await WatchConnectivityManager.shared.syncBooksToWatch()
+            // Sync profile stats to Watch
+            WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
+        }
+    }
+
+    WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+
+    try? modelContext.save()
+    dismiss()
+}
 }
 
 struct ActiveSessionTimerView: View {

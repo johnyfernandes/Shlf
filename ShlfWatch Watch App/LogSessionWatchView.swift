@@ -208,6 +208,11 @@ struct LogSessionWatchView: View {
                 currentPage = newPage
                 WatchConnectivityManager.logger.info("✅ Synced page from active session: \(newPage)")
             }
+            // If the active session disappears (ended on iPhone), clear local state
+            if newValue == nil {
+                resetActiveSessionState()
+                WatchConnectivityManager.logger.info("🛑 Cleared active session state after end signal")
+            }
         }
         .onAppear {
             loadExistingActiveSession()
@@ -390,8 +395,9 @@ struct LogSessionWatchView: View {
 
         // Delete any active session
         if let activeSession = activeSessions.first {
+            let endedId = activeSession.id
             modelContext.delete(activeSession)
-            WatchConnectivityManager.shared.sendActiveSessionEndToPhone()
+            WatchConnectivityManager.shared.sendActiveSessionEndToPhone(activeSessionId: endedId)
         }
 
         // Stop timer
@@ -520,6 +526,16 @@ struct LogSessionWatchView: View {
             bonus = 0
         }
         return baseXP + bonus
+    }
+
+    private func resetActiveSessionState() {
+        timer?.invalidate()
+        isActive = false
+        isPaused = false
+        startDate = nil
+        elapsedTime = 0
+        startPage = book.currentPage
+        currentPage = book.currentPage
     }
 }
 

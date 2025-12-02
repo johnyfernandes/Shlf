@@ -19,6 +19,8 @@ class WatchConnectivityManager: NSObject {
     static let shared = WatchConnectivityManager()
     nonisolated(unsafe) static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.shlf.watch", category: "WatchSync")
     private var modelContext: ModelContext?
+    private var lastActiveSessionEndDate: Date?
+    private var endedActiveSessionIDs: Set<UUID> = []
 
     private override init() {
         super.init()
@@ -198,24 +200,18 @@ class WatchConnectivityManager: NSObject {
         }
     }
 
-    func sendActiveSessionEndToPhone() {
+    func sendActiveSessionEndToPhone(activeSessionId: UUID? = nil) {
         guard WCSession.default.activationState == .activated else { return }
 
-        if WCSession.default.isReachable {
-            WCSession.default.sendMessage(
-                ["activeSessionEnd": true],
-                replyHandler: nil,
-                errorHandler: { error in
-                    Self.logger.error("❌ Failed to send active session end: \(error)")
-                    WCSession.default.transferUserInfo(["activeSessionEnd": true])
-                    Self.logger.info("↩️ Auto-fallback: Queued active session end")
-                }
-            )
-            Self.logger.info("📤 Sent active session end (instant)")
-        } else {
-            WCSession.default.transferUserInfo(["activeSessionEnd": true])
-            Self.logger.info("📦 Queued active session end (guaranteed)")
+        var payload: [String: Any] = ["activeSessionEnd": true]
+        if let id = activeSessionId {
+            payload["activeSessionEndId"] = id.uuidString
+            endedActiveSessionIDs.insert(id)
         }
+
+        // Use transferUserInfo to avoid blocking and guarantee delivery
+        WCSession.default.transferUserInfo(payload)
+        Self.logger.info("📦 Queued active session end (guaranteed)")
     }
 
     // MARK: - Live Activity Sync
@@ -415,7 +411,8 @@ extension WatchConnectivityManager: WCSessionDelegate {
         // Handle active session end from iPhone
         if message["activeSessionEnd"] != nil {
             Task { @MainActor in
-                await self.handleActiveSessionEnd()
+                let idString = message["activeSessionEndId"] as? String
+                await self.handleActiveSessionEnd(endedId: idString.flatMap(UUID.init))
             }
         }
     }
@@ -487,7 +484,8 @@ extension WatchConnectivityManager: WCSessionDelegate {
         // Handle queued active session end from iPhone
         if userInfo["activeSessionEnd"] != nil {
             Task { @MainActor in
-                await self.handleActiveSessionEnd()
+                let idString = userInfo["activeSessionEndId"] as? String
+                await self.handleActiveSessionEnd(endedId: idString.flatMap(UUID.init))
             }
         }
     }
@@ -822,6 +820,18 @@ extension WatchConnectivityManager: WCSessionDelegate {
             return
         }
 
+        // Ignore stale updates that arrive after an end message
+        if let lastEnd = lastActiveSessionEndDate, transfer.lastUpdated <= lastEnd {
+            Self.logger.info("Ignoring stale active session update (ended at \(lastEnd))")
+            return
+        }
+
+        // Ignore updates for sessions we've explicitly ended
+        if endedActiveSessionIDs.contains(transfer.id) {
+            Self.logger.info("Ignoring active session update for ended id \(transfer.id)")
+            return
+        }
+
         do {
             // Fetch existing session
             let descriptor = FetchDescriptor<ActiveReadingSession>()
@@ -873,7 +883,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
     }
 
     @MainActor
-    private func handleActiveSessionEnd() async {
+    private func handleActiveSessionEnd(endedId: UUID? = nil) async {
         guard let modelContext = modelContext else {
             Self.logger.warning("ModelContext not configured")
             return
@@ -885,11 +895,17 @@ extension WatchConnectivityManager: WCSessionDelegate {
             let activeSessions = try modelContext.fetch(descriptor)
 
             for session in activeSessions {
+                endedActiveSessionIDs.insert(session.id)
                 modelContext.delete(session)
             }
 
             try modelContext.save()
             Self.logger.info("Ended all active sessions from iPhone")
+            lastActiveSessionEndDate = Date()
+
+            if let endedId {
+                endedActiveSessionIDs.insert(endedId)
+            }
         } catch {
             Self.logger.error("Failed to end active sessions: \(error)")
         }
