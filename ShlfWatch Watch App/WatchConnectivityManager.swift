@@ -10,6 +10,10 @@ import WatchConnectivity
 import SwiftData
 import OSLog
 
+private enum ReadingConstants {
+    static let defaultMaxPages = 1000
+}
+
 struct PageDelta: Codable, Sendable {
     let bookUUID: UUID
     let delta: Int
@@ -55,7 +59,7 @@ struct ProfileStatsTransfer: Codable, Sendable {
 
 class WatchConnectivityManager: NSObject {
     static let shared = WatchConnectivityManager()
-    nonisolated(unsafe) static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.shlf.watch", category: "WatchSync")
+    static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.shlf.watch", category: "WatchSync")
     private var modelContext: ModelContext?
 
     private override init() {
@@ -80,21 +84,21 @@ class WatchConnectivityManager: NSObject {
             return
         }
 
-        guard WCSession.default.isReachable else {
-            Self.logger.warning("iPhone not reachable")
-            return
-        }
-
         do {
             let data = try JSONEncoder().encode(delta)
-            WCSession.default.sendMessage(
-                ["pageDelta": data],
-                replyHandler: nil,
-                errorHandler: { error in
-                    Self.logger.error("Failed to send: \(error)")
-                }
-            )
-            Self.logger.info("Sent page delta: \(delta.delta)")
+            if WCSession.default.isReachable {
+                WCSession.default.sendMessage(
+                    ["pageDelta": data],
+                    replyHandler: nil,
+                    errorHandler: { error in
+                        Self.logger.error("Failed to send: \(error)")
+                    }
+                )
+                Self.logger.info("Sent page delta: \(delta.delta)")
+            } else {
+                WCSession.default.transferUserInfo(["pageDelta": data])
+                Self.logger.info("Queued page delta: \(delta.delta)")
+            }
         } catch {
             Self.logger.error("Encoding error: \(error)")
         }
@@ -103,11 +107,6 @@ class WatchConnectivityManager: NSObject {
     func sendSessionToPhone(_ session: ReadingSession) {
         guard WCSession.default.activationState == .activated else {
             Self.logger.warning("WC not activated")
-            return
-        }
-
-        guard WCSession.default.isReachable else {
-            Self.logger.warning("iPhone not reachable - session will sync later")
             return
         }
 
@@ -130,14 +129,19 @@ class WatchConnectivityManager: NSObject {
             )
 
             let data = try JSONEncoder().encode(transfer)
-            WCSession.default.sendMessage(
-                ["session": data],
-                replyHandler: nil,
-                errorHandler: { error in
-                    Self.logger.error("Failed to send session: \(error)")
-                }
-            )
-            Self.logger.info("Sent session to iPhone: \(session.endPage - session.startPage) pages, \(session.xpEarned) XP")
+            if WCSession.default.isReachable {
+                WCSession.default.sendMessage(
+                    ["session": data],
+                    replyHandler: nil,
+                    errorHandler: { error in
+                        Self.logger.error("Failed to send session: \(error)")
+                    }
+                )
+                Self.logger.info("Sent session to iPhone: \(session.endPage - session.startPage) pages, \(session.xpEarned) XP")
+            } else {
+                WCSession.default.transferUserInfo(["session": data])
+                Self.logger.info("Queued session to iPhone: \(session.endPage - session.startPage) pages, \(session.xpEarned) XP")
+            }
         } catch {
             Self.logger.error("Encoding error: \(error)")
         }
@@ -145,7 +149,6 @@ class WatchConnectivityManager: NSObject {
 
     func sendProfileSettingsToPhone(_ profile: UserProfile) {
         guard WCSession.default.activationState == .activated else { return }
-        guard WCSession.default.isReachable else { return }
 
         do {
             let transfer = ProfileSettingsTransfer(
@@ -153,14 +156,19 @@ class WatchConnectivityManager: NSObject {
                 hideAutoSessionsWatch: profile.hideAutoSessionsWatch
             )
             let data = try JSONEncoder().encode(transfer)
-            WCSession.default.sendMessage(
-                ["profileSettings": data],
-                replyHandler: nil,
-                errorHandler: { error in
-                    Self.logger.error("Failed to send profile settings: \(error)")
-                }
-            )
-            Self.logger.info("Sent profile settings to iPhone")
+            if WCSession.default.isReachable {
+                WCSession.default.sendMessage(
+                    ["profileSettings": data],
+                    replyHandler: nil,
+                    errorHandler: { error in
+                        Self.logger.error("Failed to send profile settings: \(error)")
+                    }
+                )
+                Self.logger.info("Sent profile settings to iPhone")
+            } else {
+                WCSession.default.transferUserInfo(["profileSettings": data])
+                Self.logger.info("Queued profile settings to iPhone")
+            }
         } catch {
             Self.logger.error("Encoding error: \(error)")
         }
@@ -168,7 +176,6 @@ class WatchConnectivityManager: NSObject {
 
     func sendProfileStatsToPhone(_ profile: UserProfile) {
         guard WCSession.default.activationState == .activated else { return }
-        guard WCSession.default.isReachable else { return }
 
         do {
             let transfer = ProfileStatsTransfer(
@@ -178,14 +185,19 @@ class WatchConnectivityManager: NSObject {
                 lastReadingDate: profile.lastReadingDate
             )
             let data = try JSONEncoder().encode(transfer)
-            WCSession.default.sendMessage(
-                ["profileStats": data],
-                replyHandler: nil,
-                errorHandler: { error in
-                    Self.logger.error("Failed to send profile stats: \(error)")
-                }
-            )
-            Self.logger.info("Sent profile stats to iPhone: XP=\(profile.totalXP), Streak=\(profile.currentStreak)")
+            if WCSession.default.isReachable {
+                WCSession.default.sendMessage(
+                    ["profileStats": data],
+                    replyHandler: nil,
+                    errorHandler: { error in
+                        Self.logger.error("Failed to send profile stats: \(error)")
+                    }
+                )
+                Self.logger.info("Sent profile stats to iPhone: XP=\(profile.totalXP), Streak=\(profile.currentStreak)")
+            } else {
+                WCSession.default.transferUserInfo(["profileStats": data])
+                Self.logger.info("Queued profile stats to iPhone: XP=\(profile.totalXP), Streak=\(profile.currentStreak)")
+            }
         } catch {
             Self.logger.error("Encoding error: \(error)")
         }
@@ -249,6 +261,71 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 }
             }
         }
+
+        // Handle single session from iPhone (for immediate sync)
+        if let sessionData = message["session"] as? Data {
+            Task { @MainActor in
+                do {
+                    let sessionTransfer = try JSONDecoder().decode(SessionTransfer.self, from: sessionData)
+                    Self.logger.info("Received session from iPhone: \(sessionTransfer.endPage - sessionTransfer.startPage) pages")
+                    await self.handleSessionFromPhone(sessionTransfer)
+                } catch {
+                    Self.logger.error("Session decoding error: \(error)")
+                }
+            }
+        }
+    }
+
+    nonisolated func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any]) {
+        Self.logger.info("Watch received userInfo payload")
+
+        if let pageDeltaData = userInfo["pageDelta"] as? Data {
+            Task { @MainActor in
+                do {
+                    let delta = try JSONDecoder().decode(PageDelta.self, from: pageDeltaData)
+                    Self.logger.info("Received queued page delta from iPhone: \(delta.delta)")
+                    await self.handlePageDeltaFromPhone(delta)
+                } catch {
+                    Self.logger.error("Page delta userInfo decoding error: \(error)")
+                }
+            }
+        }
+
+        if let profileData = userInfo["profileSettings"] as? Data {
+            Task { @MainActor in
+                do {
+                    let settings = try JSONDecoder().decode(ProfileSettingsTransfer.self, from: profileData)
+                    Self.logger.info("Received queued profile settings from iPhone")
+                    await self.handleProfileSettings(settings)
+                } catch {
+                    Self.logger.error("Profile settings userInfo decoding error: \(error)")
+                }
+            }
+        }
+
+        if let statsData = userInfo["profileStats"] as? Data {
+            Task { @MainActor in
+                do {
+                    let stats = try JSONDecoder().decode(ProfileStatsTransfer.self, from: statsData)
+                    Self.logger.info("Received queued profile stats from iPhone: XP=\(stats.totalXP), Streak=\(stats.currentStreak)")
+                    await self.handleProfileStats(stats)
+                } catch {
+                    Self.logger.error("Profile stats userInfo decoding error: \(error)")
+                }
+            }
+        }
+
+        if let sessionData = userInfo["session"] as? Data {
+            Task { @MainActor in
+                do {
+                    let sessionTransfer = try JSONDecoder().decode(SessionTransfer.self, from: sessionData)
+                    Self.logger.info("Received queued session from iPhone: \(sessionTransfer.endPage - sessionTransfer.startPage) pages")
+                    await self.handleSessionFromPhone(sessionTransfer)
+                } catch {
+                    Self.logger.error("Session userInfo decoding error: \(error)")
+                }
+            }
+        }
     }
 
     @MainActor
@@ -270,6 +347,69 @@ extension WatchConnectivityManager: WCSessionDelegate {
             }
         } catch {
             Self.logger.error("Failed to update profile settings: \(error)")
+        }
+    }
+
+    @MainActor
+    private func handleSessionFromPhone(_ transfer: SessionTransfer) async {
+        guard let modelContext = modelContext else {
+            Self.logger.warning("ModelContext not configured")
+            return
+        }
+
+        do {
+            // Ensure book exists
+            let bookDescriptor = FetchDescriptor<Book>(
+                predicate: #Predicate<Book> { book in
+                    book.id == transfer.bookId
+                }
+            )
+            let books = try modelContext.fetch(bookDescriptor)
+
+            guard let book = books.first else {
+                Self.logger.warning("Book not found for session: \(transfer.bookId)")
+                return
+            }
+
+            // Check for existing session
+            let sessionDescriptor = FetchDescriptor<ReadingSession>(
+                predicate: #Predicate<ReadingSession> { session in
+                    session.id == transfer.id
+                }
+            )
+            let existing = try modelContext.fetch(sessionDescriptor)
+
+            if let existingSession = existing.first {
+                existingSession.startDate = transfer.startDate
+                existingSession.endDate = transfer.endDate
+                existingSession.startPage = transfer.startPage
+                existingSession.endPage = transfer.endPage
+                existingSession.durationMinutes = transfer.durationMinutes
+                existingSession.xpEarned = transfer.xpEarned
+                existingSession.isAutoGenerated = transfer.isAutoGenerated
+            } else {
+                let session = ReadingSession(
+                    id: transfer.id,
+                    startDate: transfer.startDate,
+                    endDate: transfer.endDate,
+                    startPage: transfer.startPage,
+                    endPage: transfer.endPage,
+                    durationMinutes: transfer.durationMinutes,
+                    xpEarned: transfer.xpEarned,
+                    isAutoGenerated: transfer.isAutoGenerated,
+                    book: book
+                )
+                modelContext.insert(session)
+            }
+
+            // Align book progress
+            let maxPages = book.totalPages ?? ReadingConstants.defaultMaxPages
+            book.currentPage = min(maxPages, max(0, transfer.endPage))
+
+            try modelContext.save()
+            Self.logger.info("Applied session from iPhone to Watch: \(transfer.endPage - transfer.startPage) pages")
+        } catch {
+            Self.logger.error("Failed to handle session from iPhone: \(error)")
         }
     }
 

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import OSLog
 import SwiftData
 
 struct BookDetailView: View {
@@ -439,9 +440,19 @@ struct BookDetailView: View {
 
         modelContext.insert(session)
 
-        // Update goals
-        let tracker = GoalTracker(modelContext: modelContext)
-        tracker.updateGoals(for: profile)
+        // Award XP/streak and achievements using authoritative engine
+        engine.awardXP(session.xpEarned, to: profile)
+        engine.updateStreak(for: profile, sessionDate: Date())
+        engine.checkAchievements(for: profile)
+
+        do {
+            try modelContext.save()
+            // Keep Watch in sync with new session and stats
+            WatchConnectivityManager.shared.sendSessionToWatch(session)
+            WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
+        } catch {
+            WatchConnectivityManager.logger.error("Failed to save quick session: \(error.localizedDescription)")
+        }
     }
 
     private func deleteBook() {

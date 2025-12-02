@@ -73,6 +73,7 @@
 				Models/ReadingSession.swift,
 				Models/StatCardType.swift,
 				Models/UserProfile.swift,
+				Services/GamificationEngine.swift,
 				Services/GoalTracker.swift,
 			);
 			target = 5223B0172ED918DB00BE0C75 /* ShlfWatch Watch App */;

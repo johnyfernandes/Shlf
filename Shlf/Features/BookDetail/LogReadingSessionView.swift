@@ -309,6 +309,8 @@ struct LogReadingSessionView: View {
             // End Live Activity if still active
             Task {
                 await ReadingSessionActivityManager.shared.endActivity()
+                // Push the new session to Watch immediately for responsiveness
+                WatchConnectivityManager.shared.sendSessionToWatch(session)
                 // Sync new session to Watch
                 await WatchConnectivityManager.shared.syncBooksToWatch()
                 // Sync profile stats to Watch
