@@ -352,7 +352,7 @@ struct LogReadingSessionView: View {
         // Sync the endPage from Live Activity if timer is active
         if timerStartTime != nil, let currentPage = ReadingSessionActivityManager.shared.getCurrentPage() {
             endPage = currentPage
-            print("🔄 Synced page from Live Activity: \(currentPage)")
+            // Synced with Live Activity - this is expected behavior during active sessions
         }
     }
 
@@ -457,17 +457,32 @@ struct LogReadingSessionView: View {
             engine.updateStreak(for: profile, sessionDate: activeSession.startDate)
             engine.checkAchievements(for: profile)
 
+            // ✅ ATOMIC: Send consolidated session completion (replaces 3 separate messages)
+            // This guarantees the Watch receives: activeSessionEnd + session + liveActivityEnd
+            // in a single atomic transfer with guaranteed delivery and correct ordering
+            WatchConnectivityManager.shared.sendSessionCompletionToWatch(
+                activeSessionId: activeSession.id,
+                completedSession: session
+            )
+
             Task {
                 await ReadingSessionActivityManager.shared.endActivity()
-                WatchConnectivityManager.shared.sendSessionToWatch(session)
                 await WatchConnectivityManager.shared.syncBooksToWatch()
                 WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
             }
+        } else {
+            // No profile - still need to end session on Watch
+            WatchConnectivityManager.shared.sendSessionCompletionToWatch(
+                activeSessionId: activeSession.id,
+                completedSession: session
+            )
+            Task {
+                await ReadingSessionActivityManager.shared.endActivity()
+            }
         }
 
-        // Delete active session and notify Watch
+        // Delete active session locally
         modelContext.delete(activeSession)
-        WatchConnectivityManager.shared.sendActiveSessionEndToWatch(activeSessionId: activeSession.id)
 
         WidgetDataExporter.exportSnapshot(modelContext: modelContext)
 

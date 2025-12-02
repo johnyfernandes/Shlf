@@ -557,6 +557,19 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 }
             }
         }
+
+        // ✅ Handle consolidated session completion from iPhone (PREFERRED)
+        if let completionData = message["sessionCompletion"] as? Data {
+            Task { @MainActor in
+                do {
+                    let completion = try JSONDecoder().decode(SessionCompletionTransfer.self, from: completionData)
+                    Self.logger.info("✅ Received atomic session completion from iPhone: \(completion.completedSession.endPage - completion.completedSession.startPage) pages")
+                    await self.handleSessionCompletion(completion)
+                } catch {
+                    Self.logger.error("Session completion decoding error: \(error)")
+                }
+            }
+        }
     }
 
     nonisolated func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any]) {
@@ -659,6 +672,19 @@ extension WatchConnectivityManager: WCSessionDelegate {
             Task { @MainActor in
                 let idString = userInfo["activeSessionEndId"] as? String
                 await self.handleActiveSessionEnd(endedId: idString.flatMap(UUID.init))
+            }
+        }
+
+        // ✅ Handle queued consolidated session completion from iPhone (PREFERRED)
+        if let completionData = userInfo["sessionCompletion"] as? Data {
+            Task { @MainActor in
+                do {
+                    let completion = try JSONDecoder().decode(SessionCompletionTransfer.self, from: completionData)
+                    Self.logger.info("✅📦 Received queued atomic session completion from iPhone: \(completion.completedSession.endPage - completion.completedSession.startPage) pages")
+                    await self.handleSessionCompletion(completion)
+                } catch {
+                    Self.logger.error("Session completion userInfo decoding error: \(error)")
+                }
             }
         }
     }
@@ -1099,5 +1125,38 @@ extension WatchConnectivityManager: WCSessionDelegate {
         } catch {
             Self.logger.error("Failed to end active sessions: \(error)")
         }
+    }
+
+    /// Handles consolidated session completion from iPhone (ATOMIC - replaces separate handling)
+    @MainActor
+    private func handleSessionCompletion(_ completion: SessionCompletionTransfer) async {
+        guard let modelContext = modelContext else {
+            Self.logger.warning("ModelContext not configured")
+            return
+        }
+
+        Self.logger.info("🎯 Processing atomic session completion from iPhone")
+
+        // 1. End active session
+        endedActiveSessionIDs[completion.activeSessionId] = Date()
+        do {
+            let descriptor = FetchDescriptor<ActiveReadingSession>(
+                predicate: #Predicate<ActiveReadingSession> { session in
+                    session.id == completion.activeSessionId
+                }
+            )
+            let activeSessions = try modelContext.fetch(descriptor)
+            for session in activeSessions {
+                modelContext.delete(session)
+                Self.logger.info("✅ Deleted active session: \(completion.activeSessionId)")
+            }
+        } catch {
+            Self.logger.error("Failed to delete active session: \(error)")
+        }
+
+        // 2. Process completed session (same as handleSessionFromPhone)
+        await handleSessionFromPhone(completion.completedSession)
+
+        Self.logger.info("✅ Atomic session completion from iPhone handled successfully")
     }
 }
