@@ -2,53 +2,95 @@
 //  ReadingSessionWidgetControl.swift
 //  ReadingSessionWidget
 //
-//  Created by João Fernandes on 27/11/2025.
+//  Created by Codex on 03/02/2026.
 //
 
 import AppIntents
-import SwiftUI
+import Foundation
 import WidgetKit
 
-struct ReadingSessionWidgetControl: ControlWidget {
-    var body: some ControlWidgetConfiguration {
-        StaticControlConfiguration(
-            kind: "joaofernandes.Shlf.ReadingSessionWidget",
-            provider: Provider()
-        ) { value in
-            ControlWidgetToggle(
-                "Start Timer",
-                isOn: value,
-                action: StartTimerIntent()
-            ) { isRunning in
-                Label(isRunning ? "On" : "Off", systemImage: "timer")
-            }
-        }
-        .displayName("Timer")
-        .description("A an example control that runs a timer.")
+struct ReadingWidgetAppEntity: AppEntity, Identifiable, Codable, Hashable {
+    let id: UUID
+    let title: String
+    let author: String
+    let currentPage: Int
+    let totalPages: Int
+    let xpToday: Int
+    let streak: Int
+
+    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Book"
+
+    static var defaultQuery = ReadingWidgetQuery()
+
+    static var sample: ReadingWidgetAppEntity {
+        ReadingWidgetAppEntity(
+            id: UUID(),
+            title: "Project Hail Mary",
+            author: "Andy Weir",
+            currentPage: 210,
+            totalPages: 475,
+            xpToday: 140,
+            streak: 6
+        )
+    }
+
+    var displayRepresentation: DisplayRepresentation {
+        DisplayRepresentation(
+            title: "\(title)",
+            subtitle: "\(author)"
+        )
     }
 }
 
-extension ReadingSessionWidgetControl {
-    struct Provider: ControlValueProvider {
-        var previewValue: Bool {
-            false
+struct ReadingWidgetQuery: EntityQuery {
+    func entities(for identifiers: [UUID]) async throws -> [ReadingWidgetAppEntity] {
+        let data = try? ReadingWidgetPersistence.shared.load()
+        let books = data?.books ?? []
+        if !books.isEmpty {
+            return books.filter { identifiers.contains($0.id) }
         }
+        let sample = ReadingWidgetAppEntity.sample
+        return identifiers.isEmpty ? [sample] : identifiers.contains(sample.id) ? [sample] : []
+    }
 
-        func currentValue() async throws -> Bool {
-            let isRunning = true // Check if the timer is running
-            return isRunning
+    func suggestedEntities() async throws -> [ReadingWidgetAppEntity] {
+        let data = try? ReadingWidgetPersistence.shared.load()
+        if let books = data?.books, !books.isEmpty {
+            return books
         }
+        return [ReadingWidgetAppEntity.sample]
     }
 }
 
-struct StartTimerIntent: SetValueIntent {
-    static let title: LocalizedStringResource = "Start a timer"
+struct ReadingWidgetConfigurationAppIntent: WidgetConfigurationIntent, AppIntent {
+    static var title: LocalizedStringResource = "Reading Widget"
+    static var description = IntentDescription("Track your reading progress.")
 
-    @Parameter(title: "Timer is running")
-    var value: Bool
+    @Parameter(title: "Book", default: nil)
+    var book: ReadingWidgetAppEntity?
+}
 
-    func perform() async throws -> some IntentResult {
-        // Start / stop the timer based on `value`.
-        return .result()
+struct ReadingWidgetPersistenceData: Codable, Sendable {
+    let books: [ReadingWidgetAppEntity]
+}
+
+class ReadingWidgetPersistence {
+    static let shared = ReadingWidgetPersistence()
+    private init() {}
+
+    private var url: URL? {
+        FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.joaofernandes.Shlf")?.appendingPathComponent("reading_widget.json")
+    }
+
+    func save(_ data: ReadingWidgetPersistenceData) throws {
+        guard let url else { return }
+        let encoded = try JSONEncoder().encode(data)
+        try encoded.write(to: url, options: .atomic)
+    }
+
+    func load() throws -> ReadingWidgetPersistenceData {
+        guard let url else { throw CocoaError(.fileNoSuchFile) }
+        let raw = try Data(contentsOf: url)
+        return try JSONDecoder().decode(ReadingWidgetPersistenceData.self, from: raw)
     }
 }

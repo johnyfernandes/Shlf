@@ -7,6 +7,7 @@
 
 import WidgetKit
 import SwiftUI
+import AppIntents
 
 struct ReadingWidgetEntry: TimelineEntry {
     let date: Date
@@ -18,38 +19,67 @@ struct ReadingWidgetEntry: TimelineEntry {
     let streak: Int
 }
 
-struct ReadingWidgetProvider: TimelineProvider {
+struct ReadingWidgetProvider: AppIntentTimelineProvider {
+    typealias Entry = ReadingWidgetEntry
+    typealias Intent = ReadingWidgetConfigurationAppIntent
+
     func placeholder(in context: Context) -> ReadingWidgetEntry {
         ReadingWidgetEntry(
             date: Date(),
-            title: "The Midnight Library",
-            author: "Matt Haig",
-            currentPage: 120,
-            totalPages: 304,
-            xpToday: 80,
-            streak: 5
+            title: ReadingWidgetAppEntity.sample.title,
+            author: ReadingWidgetAppEntity.sample.author,
+            currentPage: ReadingWidgetAppEntity.sample.currentPage,
+            totalPages: ReadingWidgetAppEntity.sample.totalPages,
+            xpToday: ReadingWidgetAppEntity.sample.xpToday,
+            streak: ReadingWidgetAppEntity.sample.streak
         )
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (ReadingWidgetEntry) -> Void) {
-        completion(placeholder(in: context))
+    func snapshot(for configuration: ReadingWidgetConfigurationAppIntent, in context: Context) async -> ReadingWidgetEntry {
+        makeEntry(for: configuration) ?? placeholder(in: context)
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<ReadingWidgetEntry>) -> Void) {
-        let now = Date()
-        let entries = [
-            placeholder(in: context),
-            ReadingWidgetEntry(
-                date: now.addingTimeInterval(60 * 30),
-                title: "Project Hail Mary",
-                author: "Andy Weir",
-                currentPage: 210,
-                totalPages: 475,
-                xpToday: 140,
-                streak: 6
+    func timeline(for configuration: ReadingWidgetConfigurationAppIntent, in context: Context) async -> Timeline<ReadingWidgetEntry> {
+        let entry = makeEntry(for: configuration) ?? placeholder(in: context)
+        return Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(60 * 30)))
+    }
+
+    private func makeEntry(for config: ReadingWidgetConfigurationAppIntent) -> ReadingWidgetEntry? {
+        if let book = config.book {
+            return ReadingWidgetEntry(
+                date: Date(),
+                title: book.title,
+                author: book.author,
+                currentPage: book.currentPage,
+                totalPages: max(book.totalPages, 1),
+                xpToday: book.xpToday,
+                streak: book.streak
             )
-        ]
-        completion(Timeline(entries: entries, policy: .atEnd))
+        }
+
+        if let data = try? ReadingWidgetPersistence.shared.load(),
+           let first = data.books.first {
+            return ReadingWidgetEntry(
+                date: Date(),
+                title: first.title,
+                author: first.author,
+                currentPage: first.currentPage,
+                totalPages: max(first.totalPages, 1),
+                xpToday: first.xpToday,
+                streak: first.streak
+            )
+        }
+
+        let sample = ReadingWidgetAppEntity.sample
+        return ReadingWidgetEntry(
+            date: Date(),
+            title: sample.title,
+            author: sample.author,
+            currentPage: sample.currentPage,
+            totalPages: max(sample.totalPages, 1),
+            xpToday: sample.xpToday,
+            streak: sample.streak
+        )
     }
 }
 
@@ -65,8 +95,8 @@ struct ReadingSessionWidgetEntryView: View {
         ZStack(alignment: .bottomLeading) {
             LinearGradient(
                 colors: [
-                    Color.cyan.opacity(0.85),
-                    Color.blue.opacity(0.9)
+                    Color(.systemCyan).opacity(0.92),
+                    Color(.systemBlue).opacity(0.9)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -120,7 +150,7 @@ struct ReadingSessionWidget: Widget {
     let kind: String = "ReadingSessionWidget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: ReadingWidgetProvider()) { entry in
+        AppIntentConfiguration(kind: kind, intent: ReadingWidgetConfigurationAppIntent.self, provider: ReadingWidgetProvider()) { entry in
             if #available(iOS 17.0, *) {
                 ReadingSessionWidgetEntryView(entry: entry)
                     .containerBackground(.clear, for: .widget)

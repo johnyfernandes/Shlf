@@ -12,7 +12,6 @@ import SwiftUI
 struct ReadingSessionWidgetBundle: WidgetBundle {
     var body: some Widget {
         ReadingSessionWidget()
-        ReadingSessionWidgetControl()
         ReadingSessionWidgetLiveActivity()
     }
 }
