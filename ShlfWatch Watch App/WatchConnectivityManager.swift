@@ -231,9 +231,23 @@ class WatchConnectivityManager: NSObject {
             )
 
             let data = try JSONEncoder().encode(transfer)
-            // Use transferUserInfo to avoid blocking the main thread on sendMessage handshakes.
-            WCSession.default.transferUserInfo(["activeSession": data])
-            Self.logger.info("📦 Queued active session (guaranteed): \(activeSession.pagesRead) pages")
+
+            if WCSession.default.isReachable {
+                WCSession.default.sendMessage(
+                    ["activeSession": data],
+                    replyHandler: nil,
+                    errorHandler: { error in
+                        Self.logger.error("Failed to send active session: \(error)")
+                        WCSession.default.transferUserInfo(["activeSession": data])
+                        Self.logger.info("↩️ Queued active session (fallback): \(activeSession.pagesRead) pages")
+                    }
+                )
+                Self.logger.info("📤 Sent active session (instant): \(activeSession.pagesRead) pages")
+            } else {
+                // Guaranteed delivery when phone is backgrounded/unreachable
+                WCSession.default.transferUserInfo(["activeSession": data])
+                Self.logger.info("📦 Queued active session (guaranteed): \(activeSession.pagesRead) pages")
+            }
         } catch {
             Self.logger.error("Encoding error: \(error)")
         }
