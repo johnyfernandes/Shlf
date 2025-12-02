@@ -447,6 +447,13 @@ struct BookDetailView: View {
 
         do {
             try modelContext.save()
+            // Refresh Live Activity if it's running
+            Task {
+                await ReadingSessionActivityManager.shared.updateActivity(
+                    currentPage: book.currentPage,
+                    xpEarned: session.xpEarned
+                )
+            }
             // Keep Watch in sync with new session and stats
             WatchConnectivityManager.shared.sendSessionToWatch(session)
             WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)

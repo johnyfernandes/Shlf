@@ -27,6 +27,11 @@ class ReadingSessionActivityManager {
 
         let now = Date()
         let startingPage = currentPage ?? book.currentPage
+        let pagesRead = startingPage - book.currentPage
+        let xpEarned = estimatedXP(
+            pagesRead: pagesRead,
+            durationMinutes: max(1, abs(pagesRead * 2))
+        )
 
         let attributes = ReadingSessionWidgetAttributes(
             bookTitle: book.title,
@@ -39,7 +44,7 @@ class ReadingSessionActivityManager {
         let initialState = ReadingSessionWidgetAttributes.ContentState(
             currentPage: startingPage,
             pagesRead: startingPage - book.currentPage,
-            xpEarned: (startingPage - book.currentPage) * 3,
+            xpEarned: xpEarned,
             isPaused: false
         )
 
@@ -68,11 +73,13 @@ class ReadingSessionActivityManager {
         guard let activity = currentActivity else { return }
 
         let pagesRead = currentPage - startPage
+        let durationMinutes = elapsedMinutes()
+        let xpValue = xpEarned == 0 ? estimatedXP(pagesRead: pagesRead, durationMinutes: durationMinutes) : xpEarned
 
         let newState = ReadingSessionWidgetAttributes.ContentState(
             currentPage: currentPage,
             pagesRead: pagesRead,
-            xpEarned: xpEarned,
+            xpEarned: xpValue,
             isPaused: activity.content.state.isPaused
         )
 
@@ -87,7 +94,10 @@ class ReadingSessionActivityManager {
         guard let activity = currentActivity else { return }
 
         let pagesRead = currentPage - startPage
-        let xpEarned = pagesRead * 3
+        let xpEarned = estimatedXP(
+            pagesRead: pagesRead,
+            durationMinutes: elapsedMinutes()
+        )
 
         let newState = ReadingSessionWidgetAttributes.ContentState(
             currentPage: currentPage,
@@ -158,5 +168,28 @@ class ReadingSessionActivityManager {
 
     func getCurrentXP() -> Int? {
         return currentActivity?.content.state.xpEarned
+    }
+
+    // MARK: - Helpers
+
+    private func elapsedMinutes() -> Int {
+        guard let startTime else { return 0 }
+        return max(0, Int(Date().timeIntervalSince(startTime) / 60))
+    }
+
+    private func estimatedXP(pagesRead: Int, durationMinutes: Int) -> Int {
+        // Mirror GamificationEngine.calculateXP logic: 10 XP/page plus duration bonuses
+        let baseXP = pagesRead * 10
+        let bonus: Int
+        if durationMinutes >= 180 {
+            bonus = 200
+        } else if durationMinutes >= 120 {
+            bonus = 100
+        } else if durationMinutes >= 60 {
+            bonus = 50
+        } else {
+            bonus = 0
+        }
+        return baseXP + bonus
     }
 }
