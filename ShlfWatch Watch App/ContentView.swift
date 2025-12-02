@@ -35,46 +35,59 @@ struct ContentView: View {
         NavigationStack {
             // Active session indicator at the top
             if let session = activeSession, let book = session.book {
-                VStack(spacing: 0) {
+                VStack(spacing: 8) {
                     NavigationLink(destination: LogSessionWatchView(book: book)) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "circle.fill")
-                                .font(.system(size: 6))
-                                .foregroundStyle(.green)
+                        HStack(spacing: 8) {
+                            // Live indicator
+                            Circle()
+                                .fill(.green)
+                                .frame(width: 8, height: 8)
+                                .shadow(color: .green.opacity(0.6), radius: 4, x: 0, y: 0)
 
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Reading Now")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
+                            VStack(alignment: .leading, spacing: 1) {
                                 Text(book.title)
-                                    .font(.caption)
-                                    .fontWeight(.semibold)
+                                    .font(.system(.footnote, design: .rounded, weight: .semibold))
                                     .lineLimit(1)
+
+                                HStack(spacing: 4) {
+                                    Text("\(session.pagesRead) pages")
+                                        .font(.system(.caption2, design: .rounded))
+                                        .foregroundStyle(.secondary)
+
+                                    if session.isPaused {
+                                        Text("•")
+                                            .font(.caption2)
+                                            .foregroundStyle(.secondary)
+                                        Text("Paused")
+                                            .font(.system(.caption2, design: .rounded))
+                                            .foregroundStyle(.orange)
+                                    }
+                                }
                             }
 
-                            Spacer()
+                            Spacer(minLength: 0)
 
-                            Text("\(session.pagesRead)p")
-                                .font(.caption2)
-                                .foregroundStyle(.cyan)
-
-                            Image(systemName: "chevron.right")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
+                            Image(systemName: "chevron.forward")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.tertiary)
                         }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(.green.opacity(0.15))
-                        .cornerRadius(8)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .background {
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(.ultraThinMaterial)
+                                .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+                        }
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .strokeBorder(.white.opacity(0.1), lineWidth: 0.5)
+                        }
                     }
                     .buttonStyle(.plain)
-                    .padding(.horizontal)
-                    .padding(.top, 8)
-                    .padding(.bottom, 4)
-
-                    Divider()
-                        .padding(.horizontal)
                 }
+                .padding(.horizontal, 6)
+                .padding(.top, 4)
+                .padding(.bottom, 8)
             }
 
             if currentBooks.isEmpty {
