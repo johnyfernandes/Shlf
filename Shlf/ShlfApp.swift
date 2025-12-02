@@ -35,6 +35,11 @@ struct ShlfApp: App {
                         WatchConnectivityManager.shared.configure(modelContext: container.mainContext)
                         WatchConnectivityManager.shared.activate()
                         WidgetDataExporter.exportSnapshot(modelContext: container.mainContext)
+
+                        // Cleanup stale active sessions based on user preferences
+                        Task { @MainActor in
+                            await ActiveSessionCleanup.cleanupStaleSessionsIfNeeded(modelContext: container.mainContext)
+                        }
                     }
             } else {
                 ProgressView()
