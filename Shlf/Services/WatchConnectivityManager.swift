@@ -804,6 +804,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
             currentPage: transfer.currentPage,
             xpEarned: transfer.xpEarned
         )
+        // Export widget snapshot so widgets/Dynamic Island reflect the latest page/XP
+        if let modelContext = modelContext {
+            WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+        }
         Self.logger.info("Updated Live Activity from Watch: Page \(transfer.currentPage)")
     }
 
@@ -888,6 +892,13 @@ extension WatchConnectivityManager: WCSessionDelegate {
             }
 
             try modelContext.save()
+
+            // Update Live Activity and widgets with latest page
+            await ReadingSessionActivityManager.shared.updateActivity(
+                currentPage: transfer.currentPage,
+                xpEarned: 0
+            )
+            WidgetDataExporter.exportSnapshot(modelContext: modelContext)
 
             // Post notification to update UI
             NotificationCenter.default.post(name: .watchSessionReceived, object: nil)

@@ -456,6 +456,18 @@ extension WatchConnectivityManager: WCSessionDelegate {
             }
         }
 
+        // Handle queued Live Activity update from iPhone
+        if let liveActivityData = userInfo["liveActivityUpdate"] as? Data {
+            Task { @MainActor in
+                do {
+                    let transfer = try JSONDecoder().decode(LiveActivityUpdateTransfer.self, from: liveActivityData)
+                    await self.handleLiveActivityUpdate(transfer)
+                } catch {
+                    Self.logger.error("Live Activity update userInfo decoding error: \(error)")
+                }
+            }
+        }
+
         if let sessionData = userInfo["session"] as? Data {
             Task { @MainActor in
                 do {
@@ -598,6 +610,12 @@ extension WatchConnectivityManager: WCSessionDelegate {
         } catch {
             Self.logger.error("Failed to update profile stats: \(error)")
         }
+    }
+
+    @MainActor
+    private func handleLiveActivityUpdate(_ transfer: LiveActivityUpdateTransfer) async {
+        // Live Activity runs on iPhone; Watch doesn't render it. Ignore but log for tracing.
+        Self.logger.info("Received Live Activity update on Watch (ignored): page \(transfer.currentPage)")
     }
 
     @MainActor

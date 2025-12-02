@@ -93,6 +93,13 @@ struct LogReadingSessionView: View {
                                     session.lastUpdated = Date()
                                     try? modelContext.save()
                                     WatchConnectivityManager.shared.sendActiveSessionToWatch(session)
+                                    Task {
+                                        await ReadingSessionActivityManager.shared.updateActivity(
+                                            currentPage: newValue,
+                                            xpEarned: estimatedXP
+                                        )
+                                    }
+                                    WidgetDataExporter.exportSnapshot(modelContext: modelContext)
                                 }
                             ), format: .number)
                             .keyboardType(.numberPad)
