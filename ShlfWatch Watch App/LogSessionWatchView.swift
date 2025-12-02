@@ -273,15 +273,9 @@ struct LogSessionWatchView: View {
         elapsedTime = activeSession.elapsedTime
 
         // Start timer if not paused
+        isActive = true
         if !isPaused {
-            isActive = true
-            timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-                if !self.isPaused {
-                    self.elapsedTime += 1
-                }
-            }
-        } else {
-            isActive = true
+            timer = makeTickingTimer()
         }
 
         WatchConnectivityManager.logger.info("⌚️ Loaded active session from \(activeSession.sourceDevice): \(activeSession.pagesRead) pages")
@@ -324,11 +318,7 @@ struct LogSessionWatchView: View {
         elapsedTime = 0
 
         // Start timer
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            if !isPaused {
-                elapsedTime += 1
-            }
-        }
+        timer = makeTickingTimer()
 
         // Create active session
         let activeSession = ActiveReadingSession(
@@ -537,6 +527,16 @@ struct LogSessionWatchView: View {
         elapsedTime = 0
         startPage = book.currentPage
         currentPage = book.currentPage
+    }
+
+    private func makeTickingTimer() -> Timer {
+        let newTimer = Timer(timeInterval: 1.0, repeats: true) { _ in
+            if !isPaused {
+                elapsedTime += 1
+            }
+        }
+        RunLoop.main.add(newTimer, forMode: .common)
+        return newTimer
     }
 }
 
