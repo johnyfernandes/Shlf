@@ -56,13 +56,16 @@ class WatchConnectivityManager: NSObject {
                     ["pageDelta": data],
                     replyHandler: nil,
                     errorHandler: { error in
-                        Self.logger.error("Failed to send page delta to Watch: \(error)")
+                        Self.logger.error("❌ sendMessage failed: \(error.localizedDescription)")
+                        // Automatic fallback to guaranteed delivery
+                        WCSession.default.transferUserInfo(["pageDelta": data])
+                        Self.logger.info("↩️ Auto-fallback: Queued page delta for guaranteed delivery")
                     }
                 )
-                Self.logger.info("Sent page delta to Watch: \(delta)")
+                Self.logger.info("📤 Sent page delta (instant): \(delta)")
             } else {
                 WCSession.default.transferUserInfo(["pageDelta": data])
-                Self.logger.info("Queued page delta to Watch: \(delta)")
+                Self.logger.info("📦 Queued page delta (guaranteed): \(delta)")
             }
         } catch {
             Self.logger.error("Encoding error: \(error)")
@@ -156,13 +159,16 @@ class WatchConnectivityManager: NSObject {
                     ["profileStats": data],
                     replyHandler: nil,
                     errorHandler: { error in
-                        Self.logger.error("Failed to send profile stats: \(error)")
+                        Self.logger.error("❌ sendMessage failed: \(error.localizedDescription)")
+                        // Automatic fallback to guaranteed delivery
+                        WCSession.default.transferUserInfo(["profileStats": data])
+                        Self.logger.info("↩️ Auto-fallback: Queued profile stats")
                     }
                 )
-                Self.logger.info("Sent profile stats to Watch: XP=\(profile.totalXP), Streak=\(profile.currentStreak)")
+                Self.logger.info("📤 Sent profile stats (instant): XP=\(profile.totalXP)")
             } else {
                 WCSession.default.transferUserInfo(["profileStats": data])
-                Self.logger.info("Queued profile stats to Watch: XP=\(profile.totalXP), Streak=\(profile.currentStreak)")
+                Self.logger.info("📦 Queued profile stats (guaranteed): XP=\(profile.totalXP)")
             }
         } catch {
             Self.logger.error("Encoding error: \(error)")
