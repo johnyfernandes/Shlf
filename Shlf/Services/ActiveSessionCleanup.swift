@@ -35,7 +35,7 @@ struct ActiveSessionCleanup {
                 return
             }
 
-            let autoEndMinutes = profile.autoEndSessionHours * 60
+            let autoEndHours = profile.autoEndSessionHours
 
             // Fetch all active sessions
             let sessionDescriptor = FetchDescriptor<ActiveReadingSession>()
@@ -49,7 +49,7 @@ struct ActiveSessionCleanup {
             // Check each session for staleness
             var cleanedCount = 0
             for session in activeSessions {
-                if session.shouldAutoEnd(autoEndMinutes: autoEndMinutes) {
+                if session.shouldAutoEnd(inactivityHours: autoEndHours) {
                     logger.info("🗑️ Auto-ending stale session: \(session.id) (paused at: \(session.pausedAt?.formatted() ?? "unknown"))")
 
                     // Delete the stale session
@@ -104,8 +104,8 @@ struct ActiveSessionCleanup {
 
     /// Manually trigger cleanup for a specific active session
     /// Useful for periodic background checks
-    static func cleanupSessionIfStale(_ session: ActiveReadingSession, autoEndMinutes: Int, modelContext: ModelContext) async -> Bool {
-        guard session.shouldAutoEnd(autoEndMinutes: autoEndMinutes) else {
+    static func cleanupSessionIfStale(_ session: ActiveReadingSession, autoEndHours: Int, modelContext: ModelContext) async -> Bool {
+        guard session.shouldAutoEnd(inactivityHours: autoEndHours) else {
             return false
         }
 

@@ -74,6 +74,7 @@ struct ProfileStatsTransfer: Codable, Sendable {
 }
 
 struct LiveActivityStartTransfer: Codable, Sendable {
+    let bookId: UUID?
     let bookTitle: String
     let bookAuthor: String
     let totalPages: Int
@@ -89,6 +90,31 @@ struct LiveActivityUpdateTransfer: Codable, Sendable {
 
 struct LiveActivityStateTransfer: Codable, Sendable {
     let isPaused: Bool
+
+    // Used to drop stale pause/resume that arrive out of order
+    let timestamp: Date
+
+    private enum CodingKeys: String, CodingKey {
+        case isPaused
+        case timestamp
+    }
+
+    init(isPaused: Bool, timestamp: Date = Date()) {
+        self.isPaused = isPaused
+        self.timestamp = timestamp
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        isPaused = try container.decode(Bool.self, forKey: .isPaused)
+        timestamp = try container.decodeIfPresent(Date.self, forKey: .timestamp) ?? Date()
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(isPaused, forKey: .isPaused)
+        try container.encode(timestamp, forKey: .timestamp)
+    }
 }
 
 struct ActiveSessionTransfer: Codable, Sendable {
@@ -120,4 +146,3 @@ struct SessionCompletionTransfer: Codable, Sendable {
         self.endLiveActivity = endLiveActivity
     }
 }
-

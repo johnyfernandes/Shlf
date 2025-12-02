@@ -299,7 +299,7 @@ class WatchConnectivityManager: NSObject {
 
     // MARK: - Live Activity Sync
 
-    func sendLiveActivityStart(bookTitle: String, bookAuthor: String, totalPages: Int, startPage: Int, currentPage: Int, startTime: Date) {
+    func sendLiveActivityStart(bookId: UUID?, bookTitle: String, bookAuthor: String, totalPages: Int, startPage: Int, currentPage: Int, startTime: Date) {
         guard WCSession.default.activationState == .activated else {
             Self.logger.warning("WC not activated")
             return
@@ -307,6 +307,7 @@ class WatchConnectivityManager: NSObject {
 
         do {
             let transfer = LiveActivityStartTransfer(
+                bookId: bookId,
                 bookTitle: bookTitle,
                 bookAuthor: bookAuthor,
                 totalPages: totalPages,
@@ -344,9 +345,22 @@ class WatchConnectivityManager: NSObject {
         do {
             let transfer = LiveActivityUpdateTransfer(currentPage: currentPage, xpEarned: xpEarned)
             let data = try JSONEncoder().encode(transfer)
-            // Use transferUserInfo so frequent updates don't hitch the UI and still arrive if unreachable.
-            WCSession.default.transferUserInfo(["liveActivityUpdate": data])
-            Self.logger.info("📦 Queued Live Activity update: page \(currentPage), XP \(xpEarned)")
+            if WCSession.default.isReachable {
+                WCSession.default.sendMessage(
+                    ["liveActivityUpdate": data],
+                    replyHandler: nil,
+                    errorHandler: { error in
+                        Self.logger.error("Failed to send Live Activity update: \(error)")
+                        WCSession.default.transferUserInfo(["liveActivityUpdate": data])
+                        Self.logger.info("↩️ Queued Live Activity update after failure")
+                    }
+                )
+                Self.logger.info("📤 Sent Live Activity update: page \(currentPage), XP \(xpEarned)")
+            } else {
+                // Use transferUserInfo so frequent updates don't hitch the UI and still arrive if unreachable.
+                WCSession.default.transferUserInfo(["liveActivityUpdate": data])
+                Self.logger.info("📦 Queued Live Activity update: page \(currentPage), XP \(xpEarned)")
+            }
         } catch {
             Self.logger.error("Encoding error: \(error)")
         }
@@ -354,19 +368,25 @@ class WatchConnectivityManager: NSObject {
 
     func sendLiveActivityPause() {
         guard WCSession.default.activationState == .activated else { return }
-        guard WCSession.default.isReachable else { return }
 
         do {
             let transfer = LiveActivityStateTransfer(isPaused: true)
             let data = try JSONEncoder().encode(transfer)
-            WCSession.default.sendMessage(
-                ["liveActivityState": data],
-                replyHandler: nil,
-                errorHandler: { error in
-                    Self.logger.error("Failed to send Live Activity pause: \(error)")
-                }
-            )
-            Self.logger.info("Sent Live Activity pause to iPhone")
+            if WCSession.default.isReachable {
+                WCSession.default.sendMessage(
+                    ["liveActivityState": data],
+                    replyHandler: nil,
+                    errorHandler: { error in
+                        Self.logger.error("Failed to send Live Activity pause: \(error)")
+                        WCSession.default.transferUserInfo(["liveActivityState": data])
+                        Self.logger.info("↩️ Queued Live Activity pause")
+                    }
+                )
+                Self.logger.info("Sent Live Activity pause to iPhone")
+            } else {
+                WCSession.default.transferUserInfo(["liveActivityState": data])
+                Self.logger.info("📦 Queued Live Activity pause (unreachable)")
+            }
         } catch {
             Self.logger.error("Encoding error: \(error)")
         }
@@ -374,19 +394,25 @@ class WatchConnectivityManager: NSObject {
 
     func sendLiveActivityResume() {
         guard WCSession.default.activationState == .activated else { return }
-        guard WCSession.default.isReachable else { return }
 
         do {
             let transfer = LiveActivityStateTransfer(isPaused: false)
             let data = try JSONEncoder().encode(transfer)
-            WCSession.default.sendMessage(
-                ["liveActivityState": data],
-                replyHandler: nil,
-                errorHandler: { error in
-                    Self.logger.error("Failed to send Live Activity resume: \(error)")
-                }
-            )
-            Self.logger.info("Sent Live Activity resume to iPhone")
+            if WCSession.default.isReachable {
+                WCSession.default.sendMessage(
+                    ["liveActivityState": data],
+                    replyHandler: nil,
+                    errorHandler: { error in
+                        Self.logger.error("Failed to send Live Activity resume: \(error)")
+                        WCSession.default.transferUserInfo(["liveActivityState": data])
+                        Self.logger.info("↩️ Queued Live Activity resume")
+                    }
+                )
+                Self.logger.info("Sent Live Activity resume to iPhone")
+            } else {
+                WCSession.default.transferUserInfo(["liveActivityState": data])
+                Self.logger.info("📦 Queued Live Activity resume (unreachable)")
+            }
         } catch {
             Self.logger.error("Encoding error: \(error)")
         }
@@ -505,6 +531,18 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 await self.handleActiveSessionEnd(endedId: idString.flatMap(UUID.init))
             }
         }
+
+        // Handle Live Activity pause/resume from iPhone
+        if let liveActivityData = message["liveActivityState"] as? Data {
+            Task { @MainActor in
+                do {
+                    let transfer = try JSONDecoder().decode(LiveActivityStateTransfer.self, from: liveActivityData)
+                    await self.handleLiveActivityState(transfer)
+                } catch {
+                    Self.logger.error("Live Activity state decoding error: \(error)")
+                }
+            }
+        }
     }
 
     nonisolated func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any]) {
@@ -554,6 +592,18 @@ extension WatchConnectivityManager: WCSessionDelegate {
                     await self.handleLiveActivityUpdate(transfer)
                 } catch {
                     Self.logger.error("Live Activity update userInfo decoding error: \(error)")
+                }
+            }
+        }
+
+        // Handle queued Live Activity pause/resume from iPhone
+        if let liveActivityData = userInfo["liveActivityState"] as? Data {
+            Task { @MainActor in
+                do {
+                    let transfer = try JSONDecoder().decode(LiveActivityStateTransfer.self, from: liveActivityData)
+                    await self.handleLiveActivityState(transfer)
+                } catch {
+                    Self.logger.error("Live Activity state userInfo decoding error: \(error)")
                 }
             }
         }
@@ -713,6 +763,12 @@ extension WatchConnectivityManager: WCSessionDelegate {
     private func handleLiveActivityUpdate(_ transfer: LiveActivityUpdateTransfer) async {
         // Live Activity runs on iPhone; Watch doesn't render it. Ignore but log for tracing.
         Self.logger.info("Received Live Activity update on Watch (ignored): page \(transfer.currentPage)")
+    }
+
+    @MainActor
+    private func handleLiveActivityState(_ transfer: LiveActivityStateTransfer) async {
+        // Live Activity UI stays on iPhone; Watch just logs for timeline tracing.
+        Self.logger.info("Received Live Activity state on Watch (ignored): paused=\(transfer.isPaused)")
     }
 
     @MainActor
@@ -954,6 +1010,11 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
             if let existingSession = existingSessions.first {
                 // UPDATE in place - don't delete!
+                if transfer.lastUpdated <= existingSession.lastUpdated {
+                    Self.logger.info("Ignoring stale active session update from iPhone (existing newer)")
+                    return
+                }
+
                 existingSession.currentPage = transfer.currentPage
                 existingSession.isPaused = transfer.isPaused
                 existingSession.pausedAt = transfer.pausedAt

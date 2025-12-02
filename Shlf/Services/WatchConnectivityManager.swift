@@ -27,6 +27,7 @@ class WatchConnectivityManager: NSObject {
     private var modelContext: ModelContext?
     private var lastActiveSessionEndDate: Date?
     private var endedActiveSessionIDs: [UUID: Date] = [:] // Track UUID -> timestamp when ended
+    private var lastLiveActivityStateTimestamp: Date?
 
     private override init() {
         super.init()
@@ -598,6 +599,18 @@ extension WatchConnectivityManager: WCSessionDelegate {
             }
         }
 
+        // Handle queued Live Activity state change from Watch
+        if let liveActivityData = userInfo["liveActivityState"] as? Data {
+            Task { @MainActor in
+                do {
+                    let transfer = try JSONDecoder().decode(LiveActivityStateTransfer.self, from: liveActivityData)
+                    await self.handleLiveActivityState(transfer)
+                } catch {
+                    Self.logger.error("Live Activity state userInfo decoding error: \(error)")
+                }
+            }
+        }
+
         // Handle queued Live Activity end from Watch
         if userInfo["liveActivityEnd"] != nil {
             Task { @MainActor in
@@ -859,21 +872,34 @@ extension WatchConnectivityManager: WCSessionDelegate {
         }
 
         do {
-            // Find the book by title
-            let bookDescriptor = FetchDescriptor<Book>(
-                predicate: #Predicate<Book> { book in
-                    book.title == transfer.bookTitle
-                }
-            )
-            let books = try modelContext.fetch(bookDescriptor)
+            // Prefer stable book ID; fall back to title if missing
+            var book: Book?
+            if let bookId = transfer.bookId {
+                let descriptor = FetchDescriptor<Book>(
+                    predicate: #Predicate<Book> { $0.id == bookId }
+                )
+                book = try modelContext.fetch(descriptor).first
+            }
 
-            guard let book = books.first else {
+            if book == nil {
+                let descriptor = FetchDescriptor<Book>(
+                    predicate: #Predicate<Book> { $0.title == transfer.bookTitle }
+                )
+                book = try modelContext.fetch(descriptor).first
+            }
+
+            guard let book else {
                 Self.logger.warning("Book not found for Live Activity: \(transfer.bookTitle)")
                 return
             }
 
-            // Start Live Activity
-            await ReadingSessionActivityManager.shared.startActivity(book: book, currentPage: transfer.currentPage)
+            // Start Live Activity with the authoritative baseline from Watch
+            await ReadingSessionActivityManager.shared.startActivity(
+                book: book,
+                currentPage: transfer.currentPage,
+                startPage: transfer.startPage,
+                startTime: transfer.startTime
+            )
             Self.logger.info("✅ Started Live Activity from Watch: \(transfer.bookTitle)")
         } catch {
             Self.logger.error("Failed to start Live Activity from Watch: \(error)")
@@ -895,6 +921,13 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
     @MainActor
     private func handleLiveActivityState(_ transfer: LiveActivityStateTransfer) async {
+        if let last = lastLiveActivityStateTimestamp, transfer.timestamp <= last {
+            Self.logger.info("Ignoring stale Live Activity state update")
+            return
+        }
+
+        lastLiveActivityStateTimestamp = transfer.timestamp
+
         if transfer.isPaused {
             await ReadingSessionActivityManager.shared.pauseActivity()
             Self.logger.info("⏸️ Paused Live Activity from Watch")
@@ -938,6 +971,12 @@ extension WatchConnectivityManager: WCSessionDelegate {
             let existingSessions = try modelContext.fetch(descriptor)
 
             if let existingSession = existingSessions.first {
+                // Drop stale updates that arrive out of order
+                if transfer.lastUpdated <= existingSession.lastUpdated {
+                    Self.logger.info("Ignoring stale active session update from Watch (existing newer)")
+                    return
+                }
+
                 // UPDATE in place - don't delete!
                 existingSession.currentPage = transfer.currentPage
                 existingSession.isPaused = transfer.isPaused

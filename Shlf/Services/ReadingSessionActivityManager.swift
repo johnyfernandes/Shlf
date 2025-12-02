@@ -25,13 +25,14 @@ class ReadingSessionActivityManager {
 
     // MARK: - Start Activity
 
-    func startActivity(book: Book, currentPage: Int? = nil) async {
+    func startActivity(book: Book, currentPage: Int? = nil, startPage: Int? = nil, startTime: Date? = nil) async {
         // End any existing activity first
         await endActivity()
 
-        let now = Date()
-        let startingPage = currentPage ?? book.currentPage
-        let pagesRead = startingPage - book.currentPage
+        let activityStartTime = startTime ?? Date()
+        let startPageValue = startPage ?? book.currentPage
+        let currentPageValue = currentPage ?? startPageValue
+        let pagesRead = currentPageValue - startPageValue
         let xpEarned = estimatedXP(
             pagesRead: pagesRead,
             durationMinutes: max(1, abs(pagesRead * 2))
@@ -41,13 +42,13 @@ class ReadingSessionActivityManager {
             bookTitle: book.title,
             bookAuthor: book.author,
             totalPages: book.totalPages ?? 0,
-            startPage: book.currentPage,
-            startTime: now
+            startPage: startPageValue,
+            startTime: activityStartTime
         )
 
         let initialState = ReadingSessionWidgetAttributes.ContentState(
-            currentPage: startingPage,
-            pagesRead: startingPage - book.currentPage,
+            currentPage: currentPageValue,
+            pagesRead: pagesRead,
             xpEarned: xpEarned,
             isPaused: false
         )
@@ -62,8 +63,8 @@ class ReadingSessionActivityManager {
             )
 
             currentActivity = activity
-            startTime = now
-            startPage = book.currentPage
+            self.startTime = activityStartTime
+            self.startPage = startPageValue
 
             Self.logger.info("✅ Live Activity started: \(activity.id)")
         } catch {
@@ -164,6 +165,23 @@ class ReadingSessionActivityManager {
         currentActivity != nil
     }
 
+    /// Rehydrates the in-memory activity handle and cached metadata after app relaunch.
+    /// Picks the most recent ReadingSessionWidget activity if multiple exist.
+    func rehydrateExistingActivity() async {
+        let active = Activity<ReadingSessionWidgetAttributes>.activities
+            .sorted { $0.attributes.startTime > $1.attributes.startTime }
+            .first
+
+        guard let active else {
+            return
+        }
+
+        currentActivity = active
+        startPage = active.attributes.startPage
+        startTime = active.attributes.startTime
+        Self.logger.info("🔄 Rehydrated existing Live Activity: \(active.id)")
+    }
+
     // MARK: - Get Current State
 
     func getCurrentPage() -> Int? {
@@ -192,7 +210,7 @@ class ReadingSessionActivityManager {
 @MainActor
 class ReadingSessionActivityManager {
     static let shared = ReadingSessionActivityManager()
-    func startActivity(book: Book, currentPage: Int? = nil) async {}
+    func startActivity(book: Book, currentPage: Int? = nil, startPage: Int? = nil, startTime: Date? = nil) async {}
     func updateActivity(currentPage: Int, xpEarned: Int) async {}
     func updateCurrentPage(_ currentPage: Int) async {}
     func pauseActivity() async {}
@@ -201,5 +219,6 @@ class ReadingSessionActivityManager {
     var isActive: Bool { false }
     func getCurrentPage() -> Int? { nil }
     func getCurrentXP() -> Int? { nil }
+    func rehydrateExistingActivity() async {}
 }
 #endif

@@ -364,6 +364,7 @@ struct LogSessionWatchView: View {
 
         // Start NEW Live Activity on iPhone
         WatchConnectivityManager.shared.sendLiveActivityStart(
+            bookId: book.id,
             bookTitle: book.title,
             bookAuthor: book.author,
             totalPages: book.totalPages ?? 0,
