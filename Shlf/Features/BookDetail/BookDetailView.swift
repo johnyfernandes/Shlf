@@ -14,6 +14,7 @@ struct BookDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Bindable var book: Book
     @Query private var profiles: [UserProfile]
+    @Query private var activeSessions: [ActiveReadingSession]
 
     @State private var showLogSession = false
     @State private var showEditBook = false
@@ -24,10 +25,18 @@ struct BookDetailView: View {
         profiles.first
     }
 
+    private var hasActiveSession: Bool {
+        activeSessions.first != nil
+    }
+
     var body: some View {
         ScrollView {
             VStack(spacing: Theme.Spacing.lg) {
                 bookHeader
+
+                if hasActiveSession {
+                    activeSessionBanner
+                }
 
                 if book.readingStatus == .currentlyReading {
                     if profile?.useProgressSlider == true {
@@ -149,6 +158,46 @@ struct BookDetailView: View {
         } message: {
             Text("This will permanently delete \(book.title) and all reading sessions.")
         }
+    }
+
+    private var activeSessionBanner: some View {
+        Button {
+            showLogSession = true
+        } label: {
+            HStack(spacing: 12) {
+                // Pulsing green dot
+                Circle()
+                    .fill(Color.green)
+                    .frame(width: 10, height: 10)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.green.opacity(0.3), lineWidth: 3)
+                            .scaleEffect(1.5)
+                    )
+                    .modifier(PulseAnimation())
+
+                if let activeSession = activeSessions.first {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Active Session")
+                            .font(.headline)
+                            .foregroundStyle(.primary)
+                        Text("Started on \(activeSession.sourceDevice) • \(activeSession.pagesRead) pages")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding()
+            .background(Color.green.opacity(0.1))
+            .cornerRadius(12)
+        }
+        .buttonStyle(.plain)
     }
 
     private var bookHeader: some View {
@@ -572,4 +621,23 @@ struct MetadataRow: View {
         ))
     }
     .modelContainer(for: [Book.self, ReadingSession.self], inMemory: true)
+}
+
+// Pulsing animation for active session indicator
+struct PulseAnimation: ViewModifier {
+    @State private var isAnimating = false
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(isAnimating ? 0.6 : 1.0)
+            .scaleEffect(isAnimating ? 0.8 : 1.0)
+            .animation(
+                Animation.easeInOut(duration: 1.0)
+                    .repeatForever(autoreverses: true),
+                value: isAnimating
+            )
+            .onAppear {
+                isAnimating = true
+            }
+    }
 }

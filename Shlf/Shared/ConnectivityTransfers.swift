@@ -91,3 +91,20 @@ struct LiveActivityStateTransfer: Codable, Sendable {
     let isPaused: Bool
 }
 
+struct ActiveSessionTransfer: Codable, Sendable {
+    let id: UUID
+    let bookId: UUID
+    let startDate: Date
+    let currentPage: Int
+    let startPage: Int
+    let isPaused: Bool
+    let pausedAt: Date?
+    let totalPausedDuration: TimeInterval
+    let lastUpdated: Date
+    let sourceDevice: String
+
+    var pagesRead: Int {
+        max(0, currentPage - startPage)
+    }
+}
+

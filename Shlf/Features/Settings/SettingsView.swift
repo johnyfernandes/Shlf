@@ -46,6 +46,12 @@ struct SettingsView: View {
                     }
 
                     NavigationLink {
+                        SessionSettingsView(profile: profile)
+                    } label: {
+                        Label("Session Settings", systemImage: "timer")
+                    }
+
+                    NavigationLink {
                         BookDetailCustomizationView(profile: profile)
                     } label: {
                         Label("Customize Book Details", systemImage: "slider.horizontal.3")

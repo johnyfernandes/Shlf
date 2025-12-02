@@ -13,6 +13,7 @@ struct LogReadingSessionView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Query private var profiles: [UserProfile]
+    @Query private var activeSessions: [ActiveReadingSession]
 
     let book: Book
 
@@ -25,6 +26,8 @@ struct LogReadingSessionView: View {
     @State private var isPaused = false
     @State private var pausedElapsedTime: TimeInterval = 0
     @State private var showDiscardAlert = false
+    @State private var showActiveSessionAlert = false
+    @State private var pendingActiveSession: ActiveReadingSession?
 
     init(book: Book) {
         self.book = book
@@ -156,6 +159,7 @@ struct LogReadingSessionView: View {
             }
             .scrollDismissesKeyboard(.interactively)
             .onAppear {
+                loadExistingActiveSession()
                 syncWithLiveActivity()
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
@@ -206,6 +210,23 @@ struct LogReadingSessionView: View {
             } message: {
                 Text("You have unsaved progress. Are you sure you want to discard this reading session?")
             }
+            .alert("Active Session Found", isPresented: $showActiveSessionAlert) {
+                Button("Cancel", role: .cancel) {
+                    pendingActiveSession = nil
+                }
+                Button("End & Start New", role: .destructive) {
+                    if let existing = pendingActiveSession {
+                        endExistingSessionAndStartNew(existing)
+                    }
+                }
+            } message: {
+                if let existing = pendingActiveSession,
+                   let bookTitle = existing.book?.title {
+                    Text("There's an active session for \"\(bookTitle)\" started on \(existing.sourceDevice). End it and start a new one?")
+                } else {
+                    Text("There's already an active reading session. End it and start a new one?")
+                }
+            }
         }
     }
 
@@ -221,6 +242,51 @@ struct LogReadingSessionView: View {
         }
     }
 
+    private func endExistingSessionAndStartNew(_ existingSession: ActiveReadingSession) {
+        // Delete the existing active session
+        modelContext.delete(existingSession)
+        try? modelContext.save()
+
+        // Notify Watch
+        WatchConnectivityManager.shared.sendActiveSessionEndToWatch()
+
+        // End any Live Activity
+        Task {
+            await ReadingSessionActivityManager.shared.endActivity()
+        }
+
+        // Clear pending
+        pendingActiveSession = nil
+
+        // Start the new session
+        actuallyStartTimer()
+    }
+
+    private func loadExistingActiveSession() {
+        // Check if there's an existing active session and auto-load it
+        guard let activeSession = activeSessions.first else { return }
+
+        // Load the session state
+        startPage = activeSession.startPage
+        endPage = activeSession.currentPage
+        sessionDate = activeSession.startDate
+        isPaused = activeSession.isPaused
+        pausedElapsedTime = activeSession.totalPausedDuration
+
+        // Calculate elapsed time and start timer
+        let elapsed = activeSession.elapsedTime
+        if !isPaused {
+            timerStartTime = Date().addingTimeInterval(-elapsed)
+        } else {
+            timerStartTime = activeSession.startDate
+            pausedElapsedTime = elapsed
+        }
+
+        useTimer = true
+
+        print("📱 Loaded active session from \(activeSession.sourceDevice): \(activeSession.pagesRead) pages")
+    }
+
     private func syncWithLiveActivity() {
         // Sync the endPage from Live Activity if timer is active
         if timerStartTime != nil, let currentPage = ReadingSessionActivityManager.shared.getCurrentPage() {
@@ -230,7 +296,33 @@ struct LogReadingSessionView: View {
     }
 
     private func startTimer() {
+        // Check for existing active session
+        if let activeSession = activeSessions.first {
+            pendingActiveSession = activeSession
+            showActiveSessionAlert = true
+            return
+        }
+
+        // No active session - proceed with starting
+        actuallyStartTimer()
+    }
+
+    private func actuallyStartTimer() {
         timerStartTime = Date()
+
+        // Create active session
+        let activeSession = ActiveReadingSession(
+            book: book,
+            startDate: Date(),
+            currentPage: endPage,
+            startPage: startPage,
+            sourceDevice: "iPhone"
+        )
+        modelContext.insert(activeSession)
+        try? modelContext.save()
+
+        // Sync to Watch
+        WatchConnectivityManager.shared.sendActiveSessionToWatch(activeSession)
 
         // Start Live Activity with current page
         Task {
@@ -272,6 +364,12 @@ struct LogReadingSessionView: View {
     }
 
     private func saveSession() {
+        // Delete any active session for this book
+        if let activeSession = activeSessions.first {
+            modelContext.delete(activeSession)
+            WatchConnectivityManager.shared.sendActiveSessionEndToWatch()
+        }
+
         let session = ReadingSession(
             startDate: sessionDate,
             endDate: sessionDate.addingTimeInterval(TimeInterval(durationMinutes * 60)),

@@ -75,6 +75,7 @@
 				Models/UserProfile.swift,
 				Services/GamificationEngine.swift,
 				Services/GoalTracker.swift,
+				Shared/ActiveReadingSession.swift,
 				Shared/ConnectivityTransfers.swift,
 			);
 			target = 5223B0172ED918DB00BE0C75 /* ShlfWatch Watch App */;
@@ -93,6 +94,7 @@
 				Services/ReadingSessionActivityManager.swift,
 				Services/WatchConnectivityManager.swift,
 				Services/WidgetDataExporter.swift,
+				Shared/ActiveReadingSession.swift,
 				Shared/ConnectivityTransfers.swift,
 				Shared/DesignSystem/Theme.swift,
 				Shared/SwiftDataConfig.swift,

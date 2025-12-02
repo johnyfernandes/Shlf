@@ -16,6 +16,7 @@ struct ShlfApp: App {
     init() {
         do {
             // Use shared configuration for app group access (widget/Live Activity)
+            // Note: Schema is defined in SwiftDataConfig
             let container = try SwiftDataConfig.createModelContainer()
             _modelContainer = State(initialValue: container)
         } catch {

@@ -18,7 +18,8 @@ enum SwiftDataConfig {
             ReadingSession.self,
             UserProfile.self,
             ReadingGoal.self,
-            Achievement.self
+            Achievement.self,
+            ActiveReadingSession.self
         ])
 
         // Use app group container for sharing between app and extensions

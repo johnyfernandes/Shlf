@@ -44,6 +44,10 @@ final class UserProfile {
     var hideAutoSessionsWatch: Bool = false // hide quick +1/-1 sessions on Watch
     var showSettingsOnWatch: Bool = true
 
+    // Active Session Management
+    var autoEndSessionEnabled: Bool = true // Auto-end sessions after inactivity
+    var autoEndSessionHours: Int = 24 // Hours of inactivity before auto-end (default 24h)
+
     // Home Card Preferences
     var homeCardOrder: [String] = [
         StatCardType.currentStreak.rawValue,

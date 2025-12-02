@@ -162,6 +162,74 @@ class WatchConnectivityManager: NSObject {
         }
     }
 
+    // MARK: - Active Session Sync
+
+    func sendActiveSessionToPhone(_ activeSession: ActiveReadingSession) {
+        guard WCSession.default.activationState == .activated else {
+            Self.logger.warning("WC not activated")
+            return
+        }
+
+        guard let bookId = activeSession.book?.id else {
+            Self.logger.warning("Cannot send active session without book")
+            return
+        }
+
+        do {
+            let transfer = ActiveSessionTransfer(
+                id: activeSession.id,
+                bookId: bookId,
+                startDate: activeSession.startDate,
+                currentPage: activeSession.currentPage,
+                startPage: activeSession.startPage,
+                isPaused: activeSession.isPaused,
+                pausedAt: activeSession.pausedAt,
+                totalPausedDuration: activeSession.totalPausedDuration,
+                lastUpdated: activeSession.lastUpdated,
+                sourceDevice: activeSession.sourceDevice
+            )
+
+            let data = try JSONEncoder().encode(transfer)
+            if WCSession.default.isReachable {
+                WCSession.default.sendMessage(
+                    ["activeSession": data],
+                    replyHandler: nil,
+                    errorHandler: { error in
+                        Self.logger.error("❌ sendMessage failed: \(error.localizedDescription)")
+                        WCSession.default.transferUserInfo(["activeSession": data])
+                        Self.logger.info("↩️ Auto-fallback: Queued active session")
+                    }
+                )
+                Self.logger.info("📤 Sent active session (instant): \(activeSession.pagesRead) pages")
+            } else {
+                WCSession.default.transferUserInfo(["activeSession": data])
+                Self.logger.info("📦 Queued active session (guaranteed): \(activeSession.pagesRead) pages")
+            }
+        } catch {
+            Self.logger.error("Encoding error: \(error)")
+        }
+    }
+
+    func sendActiveSessionEndToPhone() {
+        guard WCSession.default.activationState == .activated else { return }
+
+        if WCSession.default.isReachable {
+            WCSession.default.sendMessage(
+                ["activeSessionEnd": true],
+                replyHandler: nil,
+                errorHandler: { error in
+                    Self.logger.error("❌ Failed to send active session end: \(error)")
+                    WCSession.default.transferUserInfo(["activeSessionEnd": true])
+                    Self.logger.info("↩️ Auto-fallback: Queued active session end")
+                }
+            )
+            Self.logger.info("📤 Sent active session end (instant)")
+        } else {
+            WCSession.default.transferUserInfo(["activeSessionEnd": true])
+            Self.logger.info("📦 Queued active session end (guaranteed)")
+        }
+    }
+
     // MARK: - Live Activity Sync
 
     func sendLiveActivityStart(bookTitle: String, bookAuthor: String, totalPages: Int, startPage: Int, currentPage: Int, startTime: Date) {
@@ -347,6 +415,26 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 }
             }
         }
+
+        // Handle active session from iPhone
+        if let activeSessionData = message["activeSession"] as? Data {
+            Task { @MainActor in
+                do {
+                    let transfer = try JSONDecoder().decode(ActiveSessionTransfer.self, from: activeSessionData)
+                    Self.logger.info("Received active session from iPhone: \(transfer.pagesRead) pages")
+                    await self.handleActiveSession(transfer)
+                } catch {
+                    Self.logger.error("Active session decoding error: \(error)")
+                }
+            }
+        }
+
+        // Handle active session end from iPhone
+        if message["activeSessionEnd"] != nil {
+            Task { @MainActor in
+                await self.handleActiveSessionEnd()
+            }
+        }
     }
 
     nonisolated func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any]) {
@@ -397,6 +485,26 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 } catch {
                     Self.logger.error("Session userInfo decoding error: \(error)")
                 }
+            }
+        }
+
+        // Handle queued active session from iPhone
+        if let activeSessionData = userInfo["activeSession"] as? Data {
+            Task { @MainActor in
+                do {
+                    let transfer = try JSONDecoder().decode(ActiveSessionTransfer.self, from: activeSessionData)
+                    Self.logger.info("📦 Received queued active session from iPhone: \(transfer.pagesRead) pages")
+                    await self.handleActiveSession(transfer)
+                } catch {
+                    Self.logger.error("Active session userInfo decoding error: \(error)")
+                }
+            }
+        }
+
+        // Handle queued active session end from iPhone
+        if userInfo["activeSessionEnd"] != nil {
+            Task { @MainActor in
+                await self.handleActiveSessionEnd()
             }
         }
     }
@@ -719,6 +827,96 @@ extension WatchConnectivityManager: WCSessionDelegate {
             Self.logger.info("Synced \(sessionTransfers.count) sessions to Watch")
         } catch {
             Self.logger.error("Failed to handle sessions sync: \(error)")
+        }
+    }
+
+    // MARK: - Active Session Handlers
+
+    @MainActor
+    private func handleActiveSession(_ transfer: ActiveSessionTransfer) async {
+        guard let modelContext = modelContext else {
+            Self.logger.warning("ModelContext not configured")
+            return
+        }
+
+        do {
+            // Check if session already exists
+            let descriptor = FetchDescriptor<ActiveReadingSession>(
+                predicate: #Predicate<ActiveReadingSession> { session in
+                    session.id == transfer.id
+                }
+            )
+            let existingSessions = try modelContext.fetch(descriptor)
+
+            if let existingSession = existingSessions.first {
+                // Update existing session (merge strategy - newer timestamp wins)
+                if transfer.lastUpdated > existingSession.lastUpdated {
+                    existingSession.currentPage = transfer.currentPage
+                    existingSession.isPaused = transfer.isPaused
+                    existingSession.pausedAt = transfer.pausedAt
+                    existingSession.totalPausedDuration = transfer.totalPausedDuration
+                    existingSession.lastUpdated = transfer.lastUpdated
+                    Self.logger.info("Updated active session from iPhone (merge)")
+                } else {
+                    Self.logger.info("Ignored older active session update from iPhone")
+                }
+            } else {
+                // Find the book
+                let bookDescriptor = FetchDescriptor<Book>(
+                    predicate: #Predicate<Book> { book in
+                        book.id == transfer.bookId
+                    }
+                )
+                let books = try modelContext.fetch(bookDescriptor)
+
+                guard let book = books.first else {
+                    Self.logger.warning("Book not found for active session: \(transfer.bookId)")
+                    return
+                }
+
+                // Create new active session
+                let activeSession = ActiveReadingSession(
+                    id: transfer.id,
+                    book: book,
+                    startDate: transfer.startDate,
+                    currentPage: transfer.currentPage,
+                    startPage: transfer.startPage,
+                    isPaused: transfer.isPaused,
+                    pausedAt: transfer.pausedAt,
+                    totalPausedDuration: transfer.totalPausedDuration,
+                    lastUpdated: transfer.lastUpdated,
+                    sourceDevice: transfer.sourceDevice
+                )
+                modelContext.insert(activeSession)
+                Self.logger.info("Created active session from iPhone: \(transfer.pagesRead) pages")
+            }
+
+            try modelContext.save()
+        } catch {
+            Self.logger.error("Failed to handle active session: \(error)")
+        }
+    }
+
+    @MainActor
+    private func handleActiveSessionEnd() async {
+        guard let modelContext = modelContext else {
+            Self.logger.warning("ModelContext not configured")
+            return
+        }
+
+        do {
+            // Delete all active sessions
+            let descriptor = FetchDescriptor<ActiveReadingSession>()
+            let activeSessions = try modelContext.fetch(descriptor)
+
+            for session in activeSessions {
+                modelContext.delete(session)
+            }
+
+            try modelContext.save()
+            Self.logger.info("Ended all active sessions from iPhone")
+        } catch {
+            Self.logger.error("Failed to end active sessions: \(error)")
         }
     }
 }

@@ -20,6 +20,7 @@ struct LogSessionWatchView: View {
     @Environment(\.modelContext) private var modelContext
     @Bindable var book: Book
     @Query private var profiles: [UserProfile]
+    @Query private var activeSessions: [ActiveReadingSession]
 
     private var profile: UserProfile {
         if let existing = profiles.first {
@@ -40,6 +41,8 @@ struct LogSessionWatchView: View {
     @State private var currentPage: Int
     @State private var elapsedTime: TimeInterval = 0
     @State private var timer: Timer?
+    @State private var showActiveSessionAlert = false
+    @State private var pendingActiveSession: ActiveReadingSession?
 
     init(book: Book) {
         self.book = book
@@ -198,8 +201,28 @@ struct LogSessionWatchView: View {
                 WatchConnectivityManager.logger.info("🔄 Synced page from iPhone: \(newPage)")
             }
         }
+        .onAppear {
+            loadExistingActiveSession()
+        }
         .onDisappear {
             timer?.invalidate()
+        }
+        .alert("Active Session Found", isPresented: $showActiveSessionAlert) {
+            Button("Cancel", role: .cancel) {
+                pendingActiveSession = nil
+            }
+            Button("End & Start New", role: .destructive) {
+                if let existing = pendingActiveSession {
+                    endExistingSessionAndStartNew(existing)
+                }
+            }
+        } message: {
+            if let existing = pendingActiveSession,
+               let bookTitle = existing.book?.title {
+                Text("There's an active session for \"\(bookTitle)\" started on \(existing.sourceDevice). End it and start a new one?")
+            } else {
+                Text("There's already an active reading session. End it and start a new one?")
+            }
         }
     }
 
@@ -228,7 +251,60 @@ struct LogSessionWatchView: View {
 
     // MARK: - Session Control
 
+    private func loadExistingActiveSession() {
+        // Check if there's an existing active session and auto-load it
+        guard let activeSession = activeSessions.first else { return }
+
+        // Load the session state
+        startPage = activeSession.startPage
+        currentPage = activeSession.currentPage
+        startDate = activeSession.startDate
+        isPaused = activeSession.isPaused
+        elapsedTime = activeSession.elapsedTime
+
+        // Start timer if not paused
+        if !isPaused {
+            isActive = true
+            timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+                if !self.isPaused {
+                    self.elapsedTime += 1
+                }
+            }
+        } else {
+            isActive = true
+        }
+
+        WatchConnectivityManager.logger.info("⌚️ Loaded active session from \(activeSession.sourceDevice): \(activeSession.pagesRead) pages")
+    }
+
+    private func endExistingSessionAndStartNew(_ existingSession: ActiveReadingSession) {
+        // Delete the existing active session
+        modelContext.delete(existingSession)
+        try? modelContext.save()
+
+        // Notify iPhone
+        WatchConnectivityManager.shared.sendActiveSessionEndToPhone()
+
+        // Clear pending
+        pendingActiveSession = nil
+
+        // Start the new session
+        actuallyStartSession()
+    }
+
     private func startSession() {
+        // Check for existing active session
+        if let activeSession = activeSessions.first {
+            pendingActiveSession = activeSession
+            showActiveSessionAlert = true
+            return
+        }
+
+        // No active session - proceed with starting
+        actuallyStartSession()
+    }
+
+    private func actuallyStartSession() {
         isActive = true
         isPaused = false
         startDate = Date()
@@ -242,6 +318,20 @@ struct LogSessionWatchView: View {
                 elapsedTime += 1
             }
         }
+
+        // Create active session
+        let activeSession = ActiveReadingSession(
+            book: book,
+            startDate: Date(),
+            currentPage: currentPage,
+            startPage: startPage,
+            sourceDevice: "Watch"
+        )
+        modelContext.insert(activeSession)
+        try? modelContext.save()
+
+        // Sync to iPhone
+        WatchConnectivityManager.shared.sendActiveSessionToPhone(activeSession)
 
         // ✅ CRITICAL: End any orphaned iPhone Live Activity first
         // This prevents dual active sessions and cleans up stale state
@@ -291,6 +381,12 @@ struct LogSessionWatchView: View {
             timer?.invalidate()
             dismiss()
             return
+        }
+
+        // Delete any active session
+        if let activeSession = activeSessions.first {
+            modelContext.delete(activeSession)
+            WatchConnectivityManager.shared.sendActiveSessionEndToPhone()
         }
 
         // Stop timer
