@@ -79,6 +79,26 @@
 			);
 			target = 5223B0172ED918DB00BE0C75 /* ShlfWatch Watch App */;
 		};
+		526E94392EDF1AC500CE96DF /* Exceptions for "Shlf" folder in "ReadingSessionWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Models/Achievement.swift,
+				Models/Book.swift,
+				Models/ReadingGoal.swift,
+				Models/ReadingSession.swift,
+				Models/StatCardType.swift,
+				Models/UserProfile.swift,
+				Services/GamificationEngine.swift,
+				Services/GoalTracker.swift,
+				Services/ReadingSessionActivityManager.swift,
+				Services/WatchConnectivityManager.swift,
+				Services/WidgetDataExporter.swift,
+				Shared/ConnectivityTransfers.swift,
+				Shared/DesignSystem/Theme.swift,
+				Shared/SwiftDataConfig.swift,
+			);
+			target = 527604FC2ED8FDBA00F08D36 /* ReadingSessionWidgetExtension */;
+		};
 		527603FA2ED71E8600F08D36 /* Exceptions for "Shlf" folder in "Shlf" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -113,6 +133,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				527603FA2ED71E8600F08D36 /* Exceptions for "Shlf" folder in "Shlf" target */,
+				526E94392EDF1AC500CE96DF /* Exceptions for "Shlf" folder in "ReadingSessionWidgetExtension" target */,
 				5223B0282ED9191D00BE0C75 /* Exceptions for "Shlf" folder in "ShlfWatch Watch App" target */,
 			);
 			path = Shlf;

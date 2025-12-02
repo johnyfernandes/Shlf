@@ -11,9 +11,9 @@ import SwiftData
 import OSLog
 
 extension Notification.Name {
-    static let watchReachabilityDidChange = Notification.Name("watchReachabilityDidChange")
-    static let watchSessionReceived = Notification.Name("watchSessionReceived")
-    static let watchStatsUpdated = Notification.Name("watchStatsUpdated")
+    nonisolated(unsafe) static let watchReachabilityDidChange = Notification.Name("watchReachabilityDidChange")
+    nonisolated(unsafe) static let watchSessionReceived = Notification.Name("watchSessionReceived")
+    nonisolated(unsafe) static let watchStatsUpdated = Notification.Name("watchStatsUpdated")
 }
 
 private enum ReadingConstants {
@@ -22,7 +22,7 @@ private enum ReadingConstants {
 
 class WatchConnectivityManager: NSObject {
     static let shared = WatchConnectivityManager()
-    static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.shlf.app", category: "WatchSync")
+    nonisolated(unsafe) static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.shlf.app", category: "WatchSync")
 
     private var modelContext: ModelContext?
 
@@ -421,6 +421,9 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
             // Update Live Activity if running
             await ReadingSessionActivityManager.shared.updateCurrentPage(book.currentPage)
+
+            // Refresh widget with updated progress
+            WidgetDataExporter.exportSnapshot(modelContext: modelContext)
         } catch {
             Self.logger.error("Failed to update book: \(error)")
         }
@@ -573,6 +576,9 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 profile.lastReadingDate = stats.lastReadingDate
                 try modelContext.save()
                 Self.logger.info("Updated profile stats from Watch: XP=\(stats.totalXP), Streak=\(stats.currentStreak)")
+
+                // Refresh widget with updated stats
+                WidgetDataExporter.exportSnapshot(modelContext: modelContext)
 
                 // Force UI refresh
                 NotificationCenter.default.post(name: .watchStatsUpdated, object: nil)

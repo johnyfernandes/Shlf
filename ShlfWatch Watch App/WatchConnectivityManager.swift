@@ -17,7 +17,7 @@ private enum ReadingConstants {
 
 class WatchConnectivityManager: NSObject {
     static let shared = WatchConnectivityManager()
-    static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.shlf.watch", category: "WatchSync")
+    nonisolated(unsafe) static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.shlf.watch", category: "WatchSync")
     private var modelContext: ModelContext?
 
     private override init() {

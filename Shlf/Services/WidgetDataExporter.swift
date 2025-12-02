@@ -38,11 +38,11 @@ enum WidgetDataExporter {
             let allBooks = try modelContext.fetch(FetchDescriptor<Book>())
             let prioritized = allBooks
                 .filter { $0.readingStatus == .currentlyReading }
-                .sorted { ($0.dateAdded ?? .distantPast) > ($1.dateAdded ?? .distantPast) }
+                .sorted { $0.dateAdded > $1.dateAdded }
             let fallbackWithProgress = allBooks
                 .filter { $0.currentPage > 0 }
-                .sorted { ($0.dateAdded ?? .distantPast) > ($1.dateAdded ?? .distantPast) }
-            let fallbackAny = allBooks.sorted { ($0.dateAdded ?? .distantPast) > ($1.dateAdded ?? .distantPast) }
+                .sorted { $0.dateAdded > $1.dateAdded }
+            let fallbackAny = allBooks.sorted { $0.dateAdded > $1.dateAdded }
 
             let selectedBooks: [Book]
             if !prioritized.isEmpty {

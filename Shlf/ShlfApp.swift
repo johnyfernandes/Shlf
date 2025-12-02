@@ -15,21 +15,8 @@ struct ShlfApp: App {
 
     init() {
         do {
-            let schema = Schema([
-                Book.self,
-                ReadingSession.self,
-                UserProfile.self,
-                ReadingGoal.self,
-                Achievement.self
-            ])
-
-            // Local storage only - sync via WatchConnectivity
-            let modelConfiguration = ModelConfiguration(
-                schema: schema,
-                cloudKitDatabase: .none
-            )
-
-            let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
+            // Use shared configuration for app group access (widget/Live Activity)
+            let container = try SwiftDataConfig.createModelContainer()
             _modelContainer = State(initialValue: container)
         } catch {
             _modelError = State(initialValue: error)
