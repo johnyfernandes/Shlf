@@ -17,6 +17,7 @@ struct ReadingWidgetEntry: TimelineEntry {
     let totalPages: Int
     let xpToday: Int
     let streak: Int
+    let isEmpty: Bool
 
     var pagesToday: Int {
         max(0, xpToday / 10)
@@ -35,12 +36,13 @@ struct ReadingWidgetProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> ReadingWidgetEntry {
         ReadingWidgetEntry(
             date: Date(),
-            title: ReadingWidgetAppEntity.sample.title,
-            author: ReadingWidgetAppEntity.sample.author,
-            currentPage: ReadingWidgetAppEntity.sample.currentPage,
-            totalPages: ReadingWidgetAppEntity.sample.totalPages,
-            xpToday: ReadingWidgetAppEntity.sample.xpToday,
-            streak: ReadingWidgetAppEntity.sample.streak
+            title: "No book selected",
+            author: "",
+            currentPage: 0,
+            totalPages: 0,
+            xpToday: 0,
+            streak: 0,
+            isEmpty: true
         )
     }
 
@@ -62,7 +64,8 @@ struct ReadingWidgetProvider: AppIntentTimelineProvider {
                 currentPage: book.currentPage,
                 totalPages: max(book.totalPages, 1),
                 xpToday: book.xpToday,
-                streak: book.streak
+                streak: book.streak,
+                isEmpty: false
             )
         }
 
@@ -75,19 +78,20 @@ struct ReadingWidgetProvider: AppIntentTimelineProvider {
                 currentPage: first.currentPage,
                 totalPages: max(first.totalPages, 1),
                 xpToday: first.xpToday,
-                streak: first.streak
+                streak: first.streak,
+                isEmpty: false
             )
         }
 
-        let sample = ReadingWidgetAppEntity.sample
         return ReadingWidgetEntry(
             date: Date(),
-            title: sample.title,
-            author: sample.author,
-            currentPage: sample.currentPage,
-            totalPages: max(sample.totalPages, 1),
-            xpToday: sample.xpToday,
-            streak: sample.streak
+            title: "No book selected",
+            author: "",
+            currentPage: 0,
+            totalPages: 0,
+            xpToday: 0,
+            streak: 0,
+            isEmpty: true
         )
     }
 }
@@ -98,16 +102,6 @@ struct ReadingSessionWidgetEntryView: View {
 
     var body: some View {
         ZStack {
-            AngularGradient(
-                gradient: Gradient(colors: [
-                    Color(.systemIndigo).opacity(0.8),
-                    Color(.systemCyan).opacity(0.9),
-                    Color(.systemBlue).opacity(0.8)
-                ]),
-                center: .center
-            )
-            .blur(radius: 30)
-
             if family == .systemSmall {
                 smallLayout
             } else {
@@ -167,36 +161,61 @@ struct ReadingSessionWidgetEntryView: View {
     }
 
     private var smallLayout: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            header
-            progressBar
-            statPills
+        Group {
+            if entry.isEmpty {
+                emptyState
+            } else {
+                VStack(alignment: .leading, spacing: 10) {
+                    header
+                    progressBar
+                    statPills
+                }
+            }
         }
         .padding()
     }
 
     private var mediumLayout: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            header
-            progressBar
+        Group {
+            if entry.isEmpty {
+                emptyState
+            } else {
+                VStack(alignment: .leading, spacing: 12) {
+                    header
+                    progressBar
 
-            HStack {
-                pill(icon: "bolt.fill", text: "Today \(entry.xpToday) XP", tint: .yellow)
-                Spacer()
-                pill(icon: "flame.fill", text: "\(entry.streak)d streak", tint: .orange)
-            }
+                    HStack {
+                        pill(icon: "bolt.fill", text: "Today \(entry.xpToday) XP", tint: .yellow)
+                        Spacer()
+                        pill(icon: "flame.fill", text: "\(entry.streak)d streak", tint: .orange)
+                    }
 
-            HStack {
-                Label("\(entry.pagesToday) pages today", systemImage: "clock")
-                    .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.9))
-                Spacer()
-                Text("Keep it up →")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(.white.opacity(0.85))
+                    HStack {
+                        Label("\(entry.pagesToday) pages today", systemImage: "clock")
+                            .font(.caption2)
+                            .foregroundStyle(.white.opacity(0.9))
+                        Spacer()
+                        Text("Keep it up →")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.white.opacity(0.85))
+                    }
+                }
             }
         }
         .padding()
+    }
+
+    private var emptyState: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("No book selected", systemImage: "book.fill")
+                .font(.headline)
+                .foregroundStyle(.primary)
+            Text("Pick a book in the widget settings to see your progress here.")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

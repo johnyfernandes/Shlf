@@ -22,18 +22,6 @@ struct ReadingWidgetAppEntity: AppEntity, Identifiable, Codable, Hashable {
 
     static var defaultQuery = ReadingWidgetQuery()
 
-    static var sample: ReadingWidgetAppEntity {
-        ReadingWidgetAppEntity(
-            id: UUID(),
-            title: "Project Hail Mary",
-            author: "Andy Weir",
-            currentPage: 210,
-            totalPages: 475,
-            xpToday: 140,
-            streak: 6
-        )
-    }
-
     var displayRepresentation: DisplayRepresentation {
         DisplayRepresentation(
             title: "\(title)",
@@ -46,19 +34,13 @@ struct ReadingWidgetQuery: EntityQuery {
     func entities(for identifiers: [UUID]) async throws -> [ReadingWidgetAppEntity] {
         let data = try? ReadingWidgetPersistence.shared.load()
         let books = data?.books ?? []
-        if !books.isEmpty {
-            return books.filter { identifiers.contains($0.id) }
-        }
-        let sample = ReadingWidgetAppEntity.sample
-        return identifiers.isEmpty ? [sample] : identifiers.contains(sample.id) ? [sample] : []
+        if books.isEmpty { return [] }
+        return books.filter { identifiers.contains($0.id) }
     }
 
     func suggestedEntities() async throws -> [ReadingWidgetAppEntity] {
         let data = try? ReadingWidgetPersistence.shared.load()
-        if let books = data?.books, !books.isEmpty {
-            return books
-        }
-        return [ReadingWidgetAppEntity.sample]
+        return data?.books ?? []
     }
 }
 
