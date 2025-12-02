@@ -639,15 +639,12 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 }
             }
 
-            // Delete books that are no longer in the iPhone's currently reading list
-            for existingBook in existingBooks {
-                if !transferredUUIDs.contains(existingBook.id) {
-                    modelContext.delete(existingBook)
-                }
-            }
+            // ✅ NEVER DELETE BOOKS ON WATCH
+            // Keep all books for offline access and to prevent crashes during active sessions
+            // Books are only updated or added, never removed
 
             try modelContext.save()
-            Self.logger.info("Synced \(bookTransfers.count) books to Watch")
+            Self.logger.info("✅ Synced \(bookTransfers.count) books to Watch (additive-only, no deletions)")
         } catch {
             Self.logger.error("Failed to handle books sync: \(error)")
         }

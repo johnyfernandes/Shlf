@@ -243,7 +243,11 @@ struct LogSessionWatchView: View {
             }
         }
 
-        // Start Live Activity on iPhone
+        // ✅ CRITICAL: End any orphaned iPhone Live Activity first
+        // This prevents dual active sessions and cleans up stale state
+        WatchConnectivityManager.shared.sendLiveActivityEnd()
+
+        // Start NEW Live Activity on iPhone
         WatchConnectivityManager.shared.sendLiveActivityStart(
             bookTitle: book.title,
             bookAuthor: book.author,
@@ -253,7 +257,7 @@ struct LogSessionWatchView: View {
             startTime: Date()
         )
 
-        WatchConnectivityManager.logger.info("Started reading session for \(book.title)")
+        WatchConnectivityManager.logger.info("✅ Started session for \(book.title) (cleaned up any orphaned iPhone Live Activity)")
     }
 
     private func pauseSession() {
