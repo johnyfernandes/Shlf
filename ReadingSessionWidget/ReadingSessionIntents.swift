@@ -126,6 +126,8 @@ private func updateAppData(
         // Access shared SwiftData container
         let container = try SwiftDataConfig.createModelContainer()
         let context = container.mainContext
+        WatchConnectivityManager.shared.configure(modelContext: context)
+        WatchConnectivityManager.shared.activate()
 
         // Find the book by title (active reading session book)
         let bookDescriptor = FetchDescriptor<Book>(

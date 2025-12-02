@@ -117,6 +117,10 @@ class WatchConnectivityManager: NSObject {
         }
     }
 
+    func sendActiveSessionUpdateToWatch(_ activeSession: ActiveReadingSession) {
+        sendActiveSessionToWatch(activeSession)
+    }
+
     func sendProfileSettingsToWatch(_ profile: UserProfile) {
         guard WCSession.default.activationState == .activated else { return }
 
