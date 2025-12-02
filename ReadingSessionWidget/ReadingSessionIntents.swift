@@ -23,20 +23,9 @@ struct IncrementPageIntent: LiveActivityIntent {
             let newPage = activity.content.state.currentPage + 1
             let pagesRead = newPage - activity.attributes.startPage
 
-            // Calculate XP matching GamificationEngine (10 XP/page + duration bonus)
+            // Calculate XP using centralized XPCalculator for consistency
             let elapsedMinutes = max(1, Int(Date().timeIntervalSince(activity.attributes.startTime) / 60))
-            let baseXP = pagesRead * 10
-            let bonusXP: Int
-            if elapsedMinutes >= 180 {
-                bonusXP = 200
-            } else if elapsedMinutes >= 120 {
-                bonusXP = 100
-            } else if elapsedMinutes >= 60 {
-                bonusXP = 50
-            } else {
-                bonusXP = 0
-            }
-            let totalXP = baseXP + bonusXP
+            let totalXP = XPCalculator.calculate(pagesRead: pagesRead, durationMinutes: elapsedMinutes)
 
             // Update Live Activity state
             let newState = ReadingSessionWidgetAttributes.ContentState(
@@ -73,20 +62,9 @@ struct DecrementPageIntent: LiveActivityIntent {
             let newPage = max(startPage, activity.content.state.currentPage - 1)
             let pagesRead = max(0, newPage - startPage)
 
-            // Calculate XP
+            // Calculate XP using centralized XPCalculator for consistency
             let elapsedMinutes = max(1, Int(Date().timeIntervalSince(activity.attributes.startTime) / 60))
-            let baseXP = pagesRead * 10
-            let bonusXP: Int
-            if elapsedMinutes >= 180 {
-                bonusXP = 200
-            } else if elapsedMinutes >= 120 {
-                bonusXP = 100
-            } else if elapsedMinutes >= 60 {
-                bonusXP = 50
-            } else {
-                bonusXP = 0
-            }
-            let totalXP = baseXP + bonusXP
+            let totalXP = XPCalculator.calculate(pagesRead: pagesRead, durationMinutes: elapsedMinutes)
 
             // Update Live Activity state
             let newState = ReadingSessionWidgetAttributes.ContentState(

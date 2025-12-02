@@ -179,20 +179,10 @@ class ReadingSessionActivityManager {
         return max(0, Int(Date().timeIntervalSince(startTime) / 60))
     }
 
+    /// Estimate XP for a reading session in progress
+    /// Delegates to centralized XPCalculator for consistency
     private func estimatedXP(pagesRead: Int, durationMinutes: Int) -> Int {
-        // Mirror GamificationEngine.calculateXP logic: 10 XP/page plus duration bonuses
-        let baseXP = pagesRead * 10
-        let bonus: Int
-        if durationMinutes >= 180 {
-            bonus = 200
-        } else if durationMinutes >= 120 {
-            bonus = 100
-        } else if durationMinutes >= 60 {
-            bonus = 50
-        } else {
-            bonus = 0
-        }
-        return baseXP + bonus
+        return XPCalculator.calculate(pagesRead: pagesRead, durationMinutes: durationMinutes)
     }
 }
 #else

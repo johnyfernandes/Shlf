@@ -108,3 +108,16 @@ struct ActiveSessionTransfer: Codable, Sendable {
     }
 }
 
+/// Consolidated transfer for session completion - replaces separate activeSessionEnd, session, and liveActivityEnd messages
+struct SessionCompletionTransfer: Codable, Sendable {
+    let activeSessionId: UUID
+    let completedSession: SessionTransfer
+    let endLiveActivity: Bool
+
+    init(activeSessionId: UUID, completedSession: SessionTransfer, endLiveActivity: Bool = true) {
+        self.activeSessionId = activeSessionId
+        self.completedSession = completedSession
+        self.endLiveActivity = endLiveActivity
+    }
+}
+

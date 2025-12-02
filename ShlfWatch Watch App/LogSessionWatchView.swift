@@ -408,11 +408,12 @@ struct LogSessionWatchView: View {
             return
         }
 
+        // Capture active session ID before deleting
+        let activeSessionId = activeSessions.first?.id
+
         // Delete any active session
         if let activeSession = activeSessions.first {
-            let endedId = activeSession.id
             modelContext.delete(activeSession)
-            WatchConnectivityManager.shared.sendActiveSessionEndToPhone(activeSessionId: endedId)
         }
 
         // Stop timer
@@ -456,11 +457,19 @@ struct LogSessionWatchView: View {
             try modelContext.save()
             WatchConnectivityManager.logger.info("Saved session: \(pagesRead) pages, \(durationMinutes) min, \(session.xpEarned) XP")
 
-            // Send session and stats to iPhone immediately
-            WatchConnectivityManager.shared.sendSessionToPhone(session)
-
-            // End Live Activity on iPhone
-            WatchConnectivityManager.shared.sendLiveActivityEnd()
+            // ✅ ATOMIC: Send consolidated session completion (replaces 3 separate messages)
+            // This guarantees the iPhone receives: activeSessionEnd + session + liveActivityEnd
+            // in a single atomic transfer with guaranteed delivery and correct ordering
+            if let activeId = activeSessionId {
+                WatchConnectivityManager.shared.sendSessionCompletionToPhone(
+                    activeSessionId: activeId,
+                    completedSession: session
+                )
+            } else {
+                // Fallback: if no active session existed, just send the completed session
+                WatchConnectivityManager.shared.sendSessionToPhone(session)
+                WatchConnectivityManager.shared.sendLiveActivityEnd()
+            }
 
             dismiss()
         } catch {
@@ -528,19 +537,10 @@ struct LogSessionWatchView: View {
         }
     }
 
+    /// Estimate XP for a reading session in progress
+    /// Delegates to centralized XPCalculator for consistency
     private func estimatedXP(pagesRead: Int, durationMinutes: Int) -> Int {
-        let baseXP = max(0, pagesRead) * 10
-        let bonus: Int
-        if durationMinutes >= 180 {
-            bonus = 200
-        } else if durationMinutes >= 120 {
-            bonus = 100
-        } else if durationMinutes >= 60 {
-            bonus = 50
-        } else {
-            bonus = 0
-        }
-        return baseXP + bonus
+        return XPCalculator.calculate(pagesRead: pagesRead, durationMinutes: durationMinutes)
     }
 
     private func resetActiveSessionState() {

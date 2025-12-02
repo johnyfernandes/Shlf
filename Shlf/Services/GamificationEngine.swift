@@ -19,23 +19,10 @@ final class GamificationEngine {
 
     // MARK: - XP Calculation
 
+    /// Calculate XP for a reading session
+    /// Delegates to centralized XPCalculator for consistency
     func calculateXP(for session: ReadingSession) -> Int {
-        let pagesRead = session.pagesRead
-        let baseXP = pagesRead * 10 // 10 XP per page
-
-        // Bonus XP for longer sessions
-        let bonusXP: Int
-        if session.durationMinutes >= 180 { // 3+ hours
-            bonusXP = 200
-        } else if session.durationMinutes >= 120 { // 2+ hours
-            bonusXP = 100
-        } else if session.durationMinutes >= 60 { // 1+ hour
-            bonusXP = 50
-        } else {
-            bonusXP = 0
-        }
-
-        return baseXP + bonusXP
+        return XPCalculator.calculate(for: session)
     }
 
     func awardXP(_ amount: Int, to profile: UserProfile) {
