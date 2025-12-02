@@ -36,6 +36,20 @@ class WatchConnectivityManager: NSObject {
         self.modelContext = modelContext
     }
 
+    // Fallback for background WC events when the app hasn't configured the context yet
+    @MainActor
+    private func resolvedModelContext() -> ModelContext? {
+        if let modelContext {
+            return modelContext
+        }
+        if let container = try? SwiftDataConfig.createModelContainer() {
+            let ctx = container.mainContext
+            self.modelContext = ctx
+            return ctx
+        }
+        return nil
+    }
+
     func activate() {
         guard WCSession.isSupported() else { return }
         let session = WCSession.default
@@ -582,7 +596,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
     @MainActor
     private func handlePageDelta(_ delta: PageDelta) async {
-        guard let modelContext = modelContext else {
+        guard let modelContext = await resolvedModelContext() else {
             Self.logger.warning("ModelContext not configured")
             return
         }
@@ -621,7 +635,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
     @MainActor
     private func handleWatchSession(_ transfer: SessionTransfer) async {
-        guard let modelContext = modelContext else {
+        guard let modelContext = await resolvedModelContext() else {
             Self.logger.warning("ModelContext not configured")
             return
         }
@@ -793,7 +807,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
     @MainActor
     private func handleLiveActivityStart(_ transfer: LiveActivityStartTransfer) async {
-        guard let modelContext = modelContext else {
+        guard let modelContext = await resolvedModelContext() else {
             Self.logger.warning("ModelContext not configured")
             return
         }
@@ -847,6 +861,9 @@ extension WatchConnectivityManager: WCSessionDelegate {
     @MainActor
     private func handleLiveActivityEnd() async {
         await ReadingSessionActivityManager.shared.endActivity()
+        if let modelContext = await resolvedModelContext() {
+            WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+        }
         Self.logger.info("🛑 Ended Live Activity from Watch")
     }
 
@@ -854,7 +871,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
     @MainActor
     private func handleActiveSession(_ transfer: ActiveSessionTransfer) async {
-        guard let modelContext = modelContext else {
+        guard let modelContext = await resolvedModelContext() else {
             Self.logger.warning("ModelContext not configured")
             return
         }
@@ -933,7 +950,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
     @MainActor
     private func handleActiveSessionEnd(endedId: UUID? = nil) async {
-        guard let modelContext = modelContext else {
+        guard let modelContext = await resolvedModelContext() else {
             Self.logger.warning("ModelContext not configured")
             return
         }

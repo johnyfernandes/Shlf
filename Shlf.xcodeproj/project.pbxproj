@@ -75,6 +75,7 @@
 				Models/UserProfile.swift,
 				Services/GamificationEngine.swift,
 				Services/GoalTracker.swift,
+				Services/ReadingSessionActivityManager.swift,
 				Shared/ActiveReadingSession.swift,
 				Shared/ConnectivityTransfers.swift,
 			);

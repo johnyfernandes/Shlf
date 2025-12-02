@@ -142,26 +142,26 @@ private func updateAppData(
             return
         }
 
-        // If there is an active session for this book, update it instead of creating a new session
+        // If there is an active session for this book, update it; otherwise, do nothing (no session to sync)
         let activeDescriptor = FetchDescriptor<ActiveReadingSession>()
         let activeSessions = try context.fetch(activeDescriptor)
 
-        let pageDelta = newPage - book.currentPage
-
-        if let activeSession = activeSessions.first(where: { $0.book?.id == book.id }) {
-            activeSession.currentPage = newPage
-            activeSession.lastUpdated = Date()
-            activeSession.isPaused = false
-            activeSession.pausedAt = nil
-            book.currentPage = newPage
-            try context.save()
-
-            // Keep Watch in sync with the authoritative active session
-            WatchConnectivityManager.shared.sendActiveSessionToWatch(activeSession)
+        guard let activeSession = activeSessions.first(where: { $0.book?.id == book.id }) else {
+            logger.warning("No active session for Live Activity update: \(bookTitle)")
+            return
         }
-        // Update book progress regardless
+
+        // Apply the delta once
+        activeSession.currentPage = newPage
+        activeSession.lastUpdated = Date()
+        activeSession.isPaused = false
+        activeSession.pausedAt = nil
         book.currentPage = newPage
+
         try context.save()
+
+        // Keep Watch in sync with the authoritative active session
+        WatchConnectivityManager.shared.sendActiveSessionToWatch(activeSession)
 
         logger.info("💾 Live Activity changes saved to SwiftData")
 
@@ -169,9 +169,6 @@ private func updateAppData(
         WidgetDataExporter.exportSnapshot(modelContext: context)
         WidgetCenter.shared.reloadAllTimelines()
         logger.info("🔄 Widget reloaded after Live Activity update")
-
-        // Sync to Watch
-        syncToWatch(bookUUID: book.id, pageDelta: pageDelta, profile: nil)
 
         // Post notification to refresh UI
         NotificationCenter.default.post(name: .watchStatsUpdated, object: nil)

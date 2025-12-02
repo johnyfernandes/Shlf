@@ -5,8 +5,10 @@
 //  Created by João Fernandes on 27/11/2025.
 //
 
-import ActivityKit
 import Foundation
+
+#if canImport(ActivityKit)
+import ActivityKit
 
 @MainActor
 class ReadingSessionActivityManager {
@@ -193,3 +195,19 @@ class ReadingSessionActivityManager {
         return baseXP + bonus
     }
 }
+#else
+
+@MainActor
+class ReadingSessionActivityManager {
+    static let shared = ReadingSessionActivityManager()
+    func startActivity(book: Book, currentPage: Int? = nil) async {}
+    func updateActivity(currentPage: Int, xpEarned: Int) async {}
+    func updateCurrentPage(_ currentPage: Int) async {}
+    func pauseActivity() async {}
+    func resumeActivity() async {}
+    func endActivity() async {}
+    var isActive: Bool { false }
+    func getCurrentPage() -> Int? { nil }
+    func getCurrentXP() -> Int? { nil }
+}
+#endif

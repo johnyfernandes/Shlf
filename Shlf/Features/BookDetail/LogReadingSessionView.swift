@@ -93,6 +93,7 @@ struct LogReadingSessionView: View {
                                     session.lastUpdated = Date()
                                     try? modelContext.save()
                                     WatchConnectivityManager.shared.sendActiveSessionToWatch(session)
+                                    WidgetDataExporter.exportSnapshot(modelContext: modelContext)
                                     Task {
                                         await ReadingSessionActivityManager.shared.updateActivity(
                                             currentPage: newValue,
@@ -157,6 +158,12 @@ struct LogReadingSessionView: View {
                                     try? modelContext.save()
                                     WatchConnectivityManager.shared.sendActiveSessionToWatch(session)
                                     WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+                                    Task {
+                                        await ReadingSessionActivityManager.shared.updateActivity(
+                                            currentPage: session.currentPage,
+                                            xpEarned: estimatedXP
+                                        )
+                                    }
                                 }
                                 .buttonStyle(.bordered)
                                 .tint(Theme.Colors.primary)

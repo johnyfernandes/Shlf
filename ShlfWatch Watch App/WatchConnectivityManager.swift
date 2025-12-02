@@ -22,6 +22,13 @@ class WatchConnectivityManager: NSObject {
     private var lastActiveSessionEndDate: Date?
     private var endedActiveSessionIDs: Set<UUID> = []
 
+    // MARK: - Live Activity Handlers
+    @MainActor
+    private func handleLiveActivityEnd() async {
+        await ReadingSessionActivityManager.shared.endActivity()
+        Self.logger.info("🛑 Ended Live Activity from iPhone")
+    }
+
     private override init() {
         super.init()
     }
@@ -472,6 +479,13 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 } catch {
                     Self.logger.error("Live Activity update userInfo decoding error: \(error)")
                 }
+            }
+        }
+
+        // Handle queued Live Activity end from iPhone
+        if userInfo["liveActivityEnd"] != nil {
+            Task { @MainActor in
+                await self.handleLiveActivityEnd()
             }
         }
 
