@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import OSLog
+import Combine
 
 private enum ReadingConstants {
     static let estimatedMinutesPerPage = 2
@@ -212,7 +213,14 @@ struct LogSessionWatchView: View {
             if newValue == nil {
                 resetActiveSessionState()
                 WatchConnectivityManager.logger.info("🛑 Cleared active session state after end signal")
+                dismiss()
             }
+        }
+        .onChange(of: book.currentPage) { _, newValue in
+            // Keep ready-state pages aligned to the book when no active session
+            guard !isActive else { return }
+            startPage = newValue
+            currentPage = newValue
         }
         .onAppear {
             loadExistingActiveSession()
@@ -220,6 +228,15 @@ struct LogSessionWatchView: View {
         .onDisappear {
             timer?.invalidate()
             debounceTask?.cancel()
+        }
+        .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { date in
+            // Keep elapsed time synced from the model to avoid drift
+            guard isActive else { return }
+            if let activeSession = activeSessions.first {
+                elapsedTime = activeSession.elapsedTime(at: date)
+            } else if !isPaused {
+                elapsedTime += 1
+            }
         }
         .alert("Active Session Found", isPresented: $showActiveSessionAlert) {
             Button("Cancel", role: .cancel) {
@@ -249,14 +266,21 @@ struct LogSessionWatchView: View {
     private var xpEarned: Int {
         estimatedXP(
             pagesRead: pagesRead,
-            durationMinutes: max(1, Int(elapsedTime / 60))
+            durationMinutes: max(1, Int(currentElapsedSeconds / 60))
         )
     }
 
     private var timeString: String {
-        let minutes = Int(elapsedTime) / 60
-        let seconds = Int(elapsedTime) % 60
+        let minutes = Int(currentElapsedSeconds) / 60
+        let seconds = Int(currentElapsedSeconds) % 60
         return String(format: "%02d:%02d", minutes, seconds)
+    }
+
+    private var currentElapsedSeconds: TimeInterval {
+        if let activeSession = activeSessions.first {
+            return activeSession.elapsedTime(at: Date())
+        }
+        return elapsedTime
     }
 
     // MARK: - Session Control
@@ -270,7 +294,7 @@ struct LogSessionWatchView: View {
         currentPage = activeSession.currentPage
         startDate = activeSession.startDate
         isPaused = activeSession.isPaused
-        elapsedTime = activeSession.elapsedTime
+        elapsedTime = activeSession.elapsedTime(at: Date())
 
         // Start timer if not paused
         isActive = true
@@ -395,7 +419,7 @@ struct LogSessionWatchView: View {
         timer?.invalidate()
 
         let endDate = Date()
-        let durationMinutes = max(1, Int(elapsedTime / 60))
+        let durationMinutes = max(1, Int(currentElapsedSeconds / 60))
 
         // Create session
         let session = ReadingSession(
