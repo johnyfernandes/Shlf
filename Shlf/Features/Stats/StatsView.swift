@@ -15,6 +15,7 @@ struct StatsView: View {
     @Query private var allSessions: [ReadingSession]
     @Query private var allBooks: [Book]
     @State private var showAddGoal = false
+    @State private var refreshTrigger = UUID() // Force refresh when Watch updates
 
     private var profile: UserProfile {
         if let existing = profiles.first {
@@ -27,6 +28,39 @@ struct StatsView: View {
 
     private var engine: GamificationEngine {
         GamificationEngine(modelContext: modelContext)
+    }
+
+    // Computed properties that SwiftUI watches
+    private var totalPagesRead: Int {
+        allSessions.reduce(0) { $0 + $1.pagesRead }
+    }
+
+    private var totalMinutesRead: Int {
+        allSessions.reduce(0) { $0 + $1.durationMinutes }
+    }
+
+    private var totalBooksRead: Int {
+        allBooks.filter { $0.readingStatus == .finished }.count
+    }
+
+    private var booksThisYear: Int {
+        let calendar = Calendar.current
+        let year = calendar.component(.year, from: Date())
+        return allBooks.filter { book in
+            guard book.readingStatus == .finished,
+                  let finishDate = book.dateFinished else { return false }
+            return calendar.component(.year, from: finishDate) == year
+        }.count
+    }
+
+    private var booksThisMonth: Int {
+        let calendar = Calendar.current
+        let now = Date()
+        return allBooks.filter { book in
+            guard book.readingStatus == .finished,
+                  let finishDate = book.dateFinished else { return false }
+            return calendar.isDate(finishDate, equalTo: now, toGranularity: .month)
+        }.count
     }
 
     var body: some View {
@@ -42,6 +76,13 @@ struct StatsView: View {
             }
             .background(Theme.Colors.background)
             .navigationTitle("Stats")
+            .id(refreshTrigger) // Force view refresh
+            .onReceive(NotificationCenter.default.publisher(for: .watchSessionReceived)) { _ in
+                refreshTrigger = UUID()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .watchStatsUpdated)) { _ in
+                refreshTrigger = UUID()
+            }
         }
     }
 
@@ -83,25 +124,25 @@ struct StatsView: View {
 
                 StatCard(
                     title: "Books Read",
-                    value: "\(engine.totalBooksRead())",
+                    value: "\(totalBooksRead)",
                     icon: "books.vertical.fill"
                 )
 
                 StatCard(
                     title: "Pages Read",
-                    value: "\(engine.totalPagesRead())",
+                    value: "\(totalPagesRead)",
                     icon: "doc.text.fill"
                 )
 
                 StatCard(
                     title: "This Year",
-                    value: "\(engine.booksReadThisYear()) books",
+                    value: "\(booksThisYear) books",
                     icon: "calendar"
                 )
 
                 StatCard(
                     title: "This Month",
-                    value: "\(engine.booksReadThisMonth()) books",
+                    value: "\(booksThisMonth) books",
                     icon: "calendar.circle"
                 )
             }

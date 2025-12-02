@@ -295,8 +295,9 @@ struct LogSessionWatchView: View {
             try modelContext.save()
             WatchConnectivityManager.logger.info("Saved session: \(pagesRead) pages, \(durationMinutes) min, \(xpEarned) XP")
 
-            // Send session to iPhone immediately
+            // Send session and stats to iPhone immediately
             WatchConnectivityManager.shared.sendSessionToPhone(session)
+            WatchConnectivityManager.shared.sendProfileStatsToPhone(currentProfile)
 
             dismiss()
         } catch {

@@ -14,6 +14,7 @@ struct HomeView: View {
     @Query private var profiles: [UserProfile]
     @Query(sort: \Book.dateAdded, order: .reverse)
     private var allBooks: [Book]
+    @Query private var allSessions: [ReadingSession] // Trigger refresh when sessions change
     @Binding var selectedTab: Int
 
     private var currentlyReading: [Book] {

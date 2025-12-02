@@ -12,6 +12,8 @@ import OSLog
 
 extension Notification.Name {
     nonisolated(unsafe) static let watchReachabilityDidChange = Notification.Name("watchReachabilityDidChange")
+    nonisolated(unsafe) static let watchSessionReceived = Notification.Name("watchSessionReceived")
+    nonisolated(unsafe) static let watchStatsUpdated = Notification.Name("watchStatsUpdated")
 }
 
 private enum ReadingConstants {
@@ -52,6 +54,13 @@ struct SessionTransfer: Codable, Sendable {
 struct ProfileSettingsTransfer: Codable, Sendable {
     let hideAutoSessionsIPhone: Bool
     let hideAutoSessionsWatch: Bool
+}
+
+struct ProfileStatsTransfer: Codable, Sendable {
+    let totalXP: Int
+    let currentStreak: Int
+    let longestStreak: Int
+    let lastReadingDate: Date?
 }
 
 class WatchConnectivityManager: NSObject {
@@ -121,6 +130,31 @@ class WatchConnectivityManager: NSObject {
                 }
             )
             Self.logger.info("Sent profile settings to Watch")
+        } catch {
+            Self.logger.error("Encoding error: \(error)")
+        }
+    }
+
+    func sendProfileStatsToWatch(_ profile: UserProfile) {
+        guard WCSession.default.activationState == .activated else { return }
+        guard WCSession.default.isReachable else { return }
+
+        do {
+            let transfer = ProfileStatsTransfer(
+                totalXP: profile.totalXP,
+                currentStreak: profile.currentStreak,
+                longestStreak: profile.longestStreak,
+                lastReadingDate: profile.lastReadingDate
+            )
+            let data = try JSONEncoder().encode(transfer)
+            WCSession.default.sendMessage(
+                ["profileStats": data],
+                replyHandler: nil,
+                errorHandler: { error in
+                    Self.logger.error("Failed to send profile stats: \(error)")
+                }
+            )
+            Self.logger.info("Sent profile stats to Watch: XP=\(profile.totalXP), Streak=\(profile.currentStreak)")
         } catch {
             Self.logger.error("Encoding error: \(error)")
         }
@@ -280,6 +314,19 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 }
             }
         }
+
+        // Handle profile stats from Watch
+        if let statsData = message["profileStats"] as? Data {
+            Task { @MainActor in
+                do {
+                    let stats = try JSONDecoder().decode(ProfileStatsTransfer.self, from: statsData)
+                    Self.logger.info("Received profile stats from Watch: XP=\(stats.totalXP), Streak=\(stats.currentStreak)")
+                    await self.handleProfileStats(stats)
+                } catch {
+                    Self.logger.error("Profile stats decoding error: \(error)")
+                }
+            }
+        }
     }
 
     @MainActor
@@ -375,6 +422,9 @@ extension WatchConnectivityManager: WCSessionDelegate {
             }
 
             try modelContext.save()
+
+            // Force UI refresh
+            NotificationCenter.default.post(name: .watchSessionReceived, object: nil)
         } catch {
             Self.logger.error("Failed to handle Watch session: \(error)")
         }
@@ -399,6 +449,33 @@ extension WatchConnectivityManager: WCSessionDelegate {
             }
         } catch {
             Self.logger.error("Failed to update profile settings: \(error)")
+        }
+    }
+
+    @MainActor
+    private func handleProfileStats(_ stats: ProfileStatsTransfer) async {
+        guard let modelContext = modelContext else {
+            Self.logger.warning("ModelContext not configured")
+            return
+        }
+
+        do {
+            let descriptor = FetchDescriptor<UserProfile>()
+            let profiles = try modelContext.fetch(descriptor)
+
+            if let profile = profiles.first {
+                profile.totalXP = stats.totalXP
+                profile.currentStreak = stats.currentStreak
+                profile.longestStreak = stats.longestStreak
+                profile.lastReadingDate = stats.lastReadingDate
+                try modelContext.save()
+                Self.logger.info("Updated profile stats from Watch: XP=\(stats.totalXP), Streak=\(stats.currentStreak)")
+
+                // Force UI refresh
+                NotificationCenter.default.post(name: .watchStatsUpdated, object: nil)
+            }
+        } catch {
+            Self.logger.error("Failed to update profile stats: \(error)")
         }
     }
 }

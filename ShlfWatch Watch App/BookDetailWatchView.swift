@@ -154,6 +154,8 @@ struct BookDetailWatchView: View {
             // Save changes
             do {
                 try modelContext.save()
+                // Send stats to iPhone
+                WatchConnectivityManager.shared.sendProfileStatsToPhone(currentProfile)
             } catch {
                 WatchConnectivityManager.logger.error("Failed to save reading session: \(error)")
             }
@@ -240,6 +242,8 @@ struct AddPagesWatchView: View {
             // Save changes
             do {
                 try modelContext.save()
+                // Send stats to iPhone
+                WatchConnectivityManager.shared.sendProfileStatsToPhone(currentProfile)
             } catch {
                 WatchConnectivityManager.logger.error("Failed to save reading session: \(error)")
             }

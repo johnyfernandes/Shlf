@@ -305,13 +305,15 @@ struct LogReadingSessionView: View {
             engine.awardXP(xp, to: profile)
             engine.updateStreak(for: profile, sessionDate: sessionDate)
             engine.checkAchievements(for: profile)
-        }
 
-        // End Live Activity if still active
-        Task {
-            await ReadingSessionActivityManager.shared.endActivity()
-            // Sync new session to Watch
-            await WatchConnectivityManager.shared.syncBooksToWatch()
+            // End Live Activity if still active
+            Task {
+                await ReadingSessionActivityManager.shared.endActivity()
+                // Sync new session to Watch
+                await WatchConnectivityManager.shared.syncBooksToWatch()
+                // Sync profile stats to Watch
+                WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
+            }
         }
 
         dismiss()
