@@ -457,6 +457,7 @@ struct BookDetailView: View {
             // Keep Watch in sync with new session and stats
             WatchConnectivityManager.shared.sendSessionToWatch(session)
             WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
+            WidgetDataExporter.exportSnapshot(modelContext: modelContext)
         } catch {
             WatchConnectivityManager.logger.error("Failed to save quick session: \(error.localizedDescription)")
         }

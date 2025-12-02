@@ -46,6 +46,7 @@ struct ShlfApp: App {
                     .onAppear {
                         WatchConnectivityManager.shared.configure(modelContext: container.mainContext)
                         WatchConnectivityManager.shared.activate()
+                        WidgetDataExporter.exportSnapshot(modelContext: container.mainContext)
                     }
             } else {
                 ProgressView()

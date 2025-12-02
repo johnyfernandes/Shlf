@@ -73,9 +73,9 @@
 				Models/ReadingSession.swift,
 				Models/StatCardType.swift,
 				Models/UserProfile.swift,
-				Shared/ConnectivityTransfers.swift,
 				Services/GamificationEngine.swift,
 				Services/GoalTracker.swift,
+				Shared/ConnectivityTransfers.swift,
 			);
 			target = 5223B0172ED918DB00BE0C75 /* ShlfWatch Watch App */;
 		};
@@ -641,6 +641,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = ReadingSessionWidget/ReadingSessionWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = WDGFKCYAU3;
@@ -673,6 +674,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = ReadingSessionWidget/ReadingSessionWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = WDGFKCYAU3;

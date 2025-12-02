@@ -318,6 +318,8 @@ struct LogReadingSessionView: View {
             }
         }
 
+        WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+
         dismiss()
     }
 }

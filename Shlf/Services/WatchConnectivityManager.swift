@@ -520,6 +520,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 engine.updateStreak(for: profile, sessionDate: sessionDate)
                 engine.checkAchievements(for: profile)
                 try modelContext.save()
+                WidgetDataExporter.exportSnapshot(modelContext: modelContext)
                 // Keep Watch in sync with latest stats
                 sendProfileStatsToWatch(profile)
             }
