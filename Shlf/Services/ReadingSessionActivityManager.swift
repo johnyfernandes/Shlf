@@ -75,7 +75,15 @@ class ReadingSessionActivityManager {
     // MARK: - Update Activity
 
     func updateActivity(currentPage: Int, xpEarned: Int) async {
-        guard let activity = currentActivity else { return }
+        // Rehydrate first to ensure we have a handle to any existing Live Activity
+        if currentActivity == nil {
+            await rehydrateExistingActivity()
+        }
+
+        guard let activity = currentActivity else {
+            Self.logger.debug("⚠️ No Live Activity to update (currentActivity is nil)")
+            return
+        }
 
         let pagesRead = currentPage - startPage
         let durationMinutes = elapsedMinutes()
@@ -96,7 +104,15 @@ class ReadingSessionActivityManager {
     }
 
     func updateCurrentPage(_ currentPage: Int) async {
-        guard let activity = currentActivity else { return }
+        // Rehydrate first to ensure we have a handle to any existing Live Activity
+        if currentActivity == nil {
+            await rehydrateExistingActivity()
+        }
+
+        guard let activity = currentActivity else {
+            Self.logger.debug("⚠️ No Live Activity to update (currentActivity is nil)")
+            return
+        }
 
         let pagesRead = currentPage - startPage
         let xpEarned = estimatedXP(
@@ -121,7 +137,15 @@ class ReadingSessionActivityManager {
     // MARK: - Pause/Resume Activity
 
     func pauseActivity() async {
-        guard let activity = currentActivity else { return }
+        // Rehydrate first to ensure we have a handle to any existing Live Activity
+        if currentActivity == nil {
+            await rehydrateExistingActivity()
+        }
+
+        guard let activity = currentActivity else {
+            Self.logger.warning("⚠️ No Live Activity to pause (currentActivity is nil)")
+            return
+        }
 
         var newState = activity.content.state
         newState.isPaused = true
@@ -133,7 +157,15 @@ class ReadingSessionActivityManager {
     }
 
     func resumeActivity() async {
-        guard let activity = currentActivity else { return }
+        // Rehydrate first to ensure we have a handle to any existing Live Activity
+        if currentActivity == nil {
+            await rehydrateExistingActivity()
+        }
+
+        guard let activity = currentActivity else {
+            Self.logger.warning("⚠️ No Live Activity to resume (currentActivity is nil)")
+            return
+        }
 
         var newState = activity.content.state
         newState.isPaused = false
@@ -147,7 +179,16 @@ class ReadingSessionActivityManager {
     // MARK: - End Activity
 
     func endActivity() async {
-        guard let activity = currentActivity else { return }
+        // Rehydrate first to ensure we have a handle to any existing Live Activity
+        if currentActivity == nil {
+            await rehydrateExistingActivity()
+            Self.logger.info("🔄 Rehydrated Live Activity before ending")
+        }
+
+        guard let activity = currentActivity else {
+            Self.logger.warning("⚠️ No Live Activity to end (currentActivity is nil)")
+            return
+        }
 
         let finalState = activity.content.state
         let finalContent = ActivityContent(state: finalState, staleDate: nil)

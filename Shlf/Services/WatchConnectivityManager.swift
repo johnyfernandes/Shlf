@@ -1097,16 +1097,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
             Self.logger.error("Failed to delete active session: \(error)")
         }
 
-        // 2. Process completed session (same as handleWatchSession)
+        // 2. Process completed session (includes ending Live Activity if session has endDate)
         await handleWatchSession(completion.completedSession)
 
-        // 3. End Live Activity if requested
-        if completion.endLiveActivity {
-            await ReadingSessionActivityManager.shared.endActivity()
-            Self.logger.info("🛑 Ended Live Activity from atomic completion")
-        }
-
-        // 4. Export snapshot and notify UI
+        // 3. Export snapshot and notify UI
         WidgetDataExporter.exportSnapshot(modelContext: modelContext)
         NotificationCenter.default.post(name: .watchSessionReceived, object: nil)
 
