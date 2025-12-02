@@ -536,6 +536,13 @@ extension WatchConnectivityManager: WCSessionDelegate {
             let oldPage = book.currentPage
             book.currentPage = min((book.totalPages ?? 1000), book.currentPage + delta.delta)
 
+            // Post notification so active timer sessions can update their state
+            NotificationCenter.default.post(
+                name: NSNotification.Name("PageDeltaFromPhone"),
+                object: nil,
+                userInfo: ["bookUUID": delta.bookUUID, "newPage": book.currentPage]
+            )
+
             // Save context
             try modelContext.save()
 

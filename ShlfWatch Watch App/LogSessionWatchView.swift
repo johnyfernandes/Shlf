@@ -187,6 +187,17 @@ struct LogSessionWatchView: View {
         }
         .navigationTitle("Reading Session")
         .navigationBarTitleDisplayMode(.inline)
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PageDeltaFromPhone"))) { notification in
+            // Sync currentPage with iPhone updates during active session
+            if isActive,
+               let userInfo = notification.userInfo,
+               let bookUUID = userInfo["bookUUID"] as? UUID,
+               let newPage = userInfo["newPage"] as? Int,
+               bookUUID == book.id {
+                currentPage = newPage
+                WatchConnectivityManager.logger.info("🔄 Synced page from iPhone: \(newPage)")
+            }
+        }
         .onDisappear {
             timer?.invalidate()
         }
