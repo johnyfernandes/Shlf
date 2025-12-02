@@ -1029,6 +1029,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 existingSession.lastUpdated = transfer.lastUpdated
                 existingSession.book?.currentPage = transfer.currentPage
                 Self.logger.info("✅ Updated session from Watch: \(transfer.pagesRead) pages")
+
+                // Force immediate widget update
+                try? modelContext.save()
+                WidgetDataExporter.exportSnapshot(modelContext: modelContext)
             } else {
                 // Find the book
                 let bookDescriptor = FetchDescriptor<Book>(
@@ -1061,13 +1065,14 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 Self.logger.info("✅ Created session from Watch: \(transfer.pagesRead) pages")
             }
 
-            try modelContext.save()
-
-            // Update Live Activity and widgets with latest page
+            // Update Live Activity FIRST (real-time)
             await ReadingSessionActivityManager.shared.updateActivity(
                 currentPage: transfer.currentPage,
                 xpEarned: 0
             )
+
+            // Then save and update widgets (best-effort)
+            try modelContext.save()
             WidgetDataExporter.exportSnapshot(modelContext: modelContext)
 
             // Post notification to update UI

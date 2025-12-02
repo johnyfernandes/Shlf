@@ -17,6 +17,11 @@ private struct WidgetBookPayload: Codable, Hashable {
     let totalPages: Int
     let xpToday: Int
     let streak: Int
+    // Active session state
+    let hasActiveSession: Bool
+    let isSessionPaused: Bool
+    let sessionStartPage: Int?
+    let sessionStartTime: Date?
 }
 
 private struct WidgetPersistencePayload: Codable {
@@ -64,10 +69,17 @@ enum WidgetDataExporter {
             let profileDescriptor = FetchDescriptor<UserProfile>()
             let profile = try modelContext.fetch(profileDescriptor).first
 
+            // Fetch active sessions for real-time state
+            let activeSessionsDescriptor = FetchDescriptor<ActiveReadingSession>()
+            let activeSessions = try modelContext.fetch(activeSessionsDescriptor)
+
             let payloadBooks = selectedBooks.map { book in
                 let xpToday = sessions
                     .filter { $0.book?.id == book.id && Calendar.current.isDate($0.startDate, inSameDayAs: Date()) }
                     .reduce(0) { $0 + $1.xpEarned }
+
+                // Check if this book has an active session
+                let activeSession = activeSessions.first { $0.book?.id == book.id }
 
                 return WidgetBookPayload(
                     id: book.id,
@@ -76,7 +88,11 @@ enum WidgetDataExporter {
                     currentPage: book.currentPage,
                     totalPages: book.totalPages ?? 0,
                     xpToday: xpToday,
-                    streak: profile?.currentStreak ?? 0
+                    streak: profile?.currentStreak ?? 0,
+                    hasActiveSession: activeSession != nil,
+                    isSessionPaused: activeSession?.isPaused ?? false,
+                    sessionStartPage: activeSession?.startPage,
+                    sessionStartTime: activeSession?.startDate
                 )
             }
 

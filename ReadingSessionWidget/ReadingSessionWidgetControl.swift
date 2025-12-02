@@ -17,6 +17,11 @@ struct ReadingWidgetAppEntity: AppEntity, Identifiable, Codable, Hashable {
     let totalPages: Int
     let xpToday: Int
     let streak: Int
+    // Active session state
+    let hasActiveSession: Bool
+    let isSessionPaused: Bool
+    let sessionStartPage: Int?
+    let sessionStartTime: Date?
 
     static var typeDisplayRepresentation: TypeDisplayRepresentation = "Book"
 

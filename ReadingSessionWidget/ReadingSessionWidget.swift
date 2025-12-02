@@ -18,6 +18,11 @@ struct ReadingWidgetEntry: TimelineEntry {
     let xpToday: Int
     let streak: Int
     let isEmpty: Bool
+    // Active session state
+    let hasActiveSession: Bool
+    let isSessionPaused: Bool
+    let sessionPagesRead: Int
+    let sessionElapsedMinutes: Int
 
     var pagesToday: Int {
         max(0, xpToday / 10)
@@ -42,7 +47,11 @@ struct ReadingWidgetProvider: AppIntentTimelineProvider {
             totalPages: 0,
             xpToday: 0,
             streak: 0,
-            isEmpty: true
+            isEmpty: true,
+            hasActiveSession: false,
+            isSessionPaused: false,
+            sessionPagesRead: 0,
+            sessionElapsedMinutes: 0
         )
     }
 
@@ -52,11 +61,22 @@ struct ReadingWidgetProvider: AppIntentTimelineProvider {
 
     func timeline(for configuration: ReadingWidgetConfigurationAppIntent, in context: Context) async -> Timeline<ReadingWidgetEntry> {
         let entry = makeEntry(for: configuration) ?? placeholder(in: context)
-        return Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(60 * 30)))
+
+        // Use aggressive refresh policy during active sessions for real-time updates
+        let refreshInterval: TimeInterval = entry.hasActiveSession ? 60 : (60 * 30) // 1 min during session, 30 min otherwise
+        return Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(refreshInterval)))
     }
 
     private func makeEntry(for config: ReadingWidgetConfigurationAppIntent) -> ReadingWidgetEntry? {
         if let book = config.book {
+            let sessionPagesRead = book.hasActiveSession ? max(0, book.currentPage - (book.sessionStartPage ?? book.currentPage)) : 0
+            let sessionElapsedMinutes: Int
+            if book.hasActiveSession, let startTime = book.sessionStartTime {
+                sessionElapsedMinutes = max(0, Int(Date().timeIntervalSince(startTime) / 60))
+            } else {
+                sessionElapsedMinutes = 0
+            }
+
             return ReadingWidgetEntry(
                 date: Date(),
                 title: book.title,
@@ -65,12 +85,24 @@ struct ReadingWidgetProvider: AppIntentTimelineProvider {
                 totalPages: max(book.totalPages, 1),
                 xpToday: book.xpToday,
                 streak: book.streak,
-                isEmpty: false
+                isEmpty: false,
+                hasActiveSession: book.hasActiveSession,
+                isSessionPaused: book.isSessionPaused,
+                sessionPagesRead: sessionPagesRead,
+                sessionElapsedMinutes: sessionElapsedMinutes
             )
         }
 
         if let data = try? ReadingWidgetPersistence.shared.load(),
            let first = data.books.first {
+            let sessionPagesRead = first.hasActiveSession ? max(0, first.currentPage - (first.sessionStartPage ?? first.currentPage)) : 0
+            let sessionElapsedMinutes: Int
+            if first.hasActiveSession, let startTime = first.sessionStartTime {
+                sessionElapsedMinutes = max(0, Int(Date().timeIntervalSince(startTime) / 60))
+            } else {
+                sessionElapsedMinutes = 0
+            }
+
             return ReadingWidgetEntry(
                 date: Date(),
                 title: first.title,
@@ -79,7 +111,11 @@ struct ReadingWidgetProvider: AppIntentTimelineProvider {
                 totalPages: max(first.totalPages, 1),
                 xpToday: first.xpToday,
                 streak: first.streak,
-                isEmpty: false
+                isEmpty: false,
+                hasActiveSession: first.hasActiveSession,
+                isSessionPaused: first.isSessionPaused,
+                sessionPagesRead: sessionPagesRead,
+                sessionElapsedMinutes: sessionElapsedMinutes
             )
         }
 
@@ -91,7 +127,11 @@ struct ReadingWidgetProvider: AppIntentTimelineProvider {
             totalPages: 0,
             xpToday: 0,
             streak: 0,
-            isEmpty: true
+            isEmpty: true,
+            hasActiveSession: false,
+            isSessionPaused: false,
+            sessionPagesRead: 0,
+            sessionElapsedMinutes: 0
         )
     }
 }
@@ -112,10 +152,19 @@ struct ReadingSessionWidgetEntryView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(entry.title)
-                .font(.headline)
-                .foregroundStyle(.white)
-                .lineLimit(1)
+            HStack(spacing: 4) {
+                Text(entry.title)
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+
+                if entry.hasActiveSession {
+                    Image(systemName: entry.isSessionPaused ? "pause.circle.fill" : "circle.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(entry.isSessionPaused ? .yellow : .green)
+                        .symbolEffect(.pulse, isActive: !entry.isSessionPaused)
+                }
+            }
             Text(entry.author)
                 .font(.caption2)
                 .foregroundStyle(.white.opacity(0.85))
@@ -168,11 +217,38 @@ struct ReadingSessionWidgetEntryView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     header
                     progressBar
-                    statPills
+
+                    if entry.hasActiveSession {
+                        // Show active session info
+                        activeSessionBanner
+                    } else {
+                        statPills
+                    }
                 }
             }
         }
         .padding()
+    }
+
+    private var activeSessionBanner: some View {
+        HStack(spacing: 6) {
+            Image(systemName: entry.isSessionPaused ? "pause.circle.fill" : "book.pages.fill")
+                .font(.caption)
+                .foregroundStyle(entry.isSessionPaused ? .yellow : .green)
+
+            Text(entry.isSessionPaused ? "Paused" : "Reading")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.white)
+
+            Spacer()
+
+            Text("\(entry.sessionPagesRead)p · \(entry.sessionElapsedMinutes)m")
+                .font(.caption2.weight(.medium))
+                .foregroundStyle(.white.opacity(0.9))
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(.ultraThinMaterial.opacity(0.3), in: RoundedRectangle(cornerRadius: 8))
     }
 
     private var mediumLayout: some View {
@@ -184,20 +260,30 @@ struct ReadingSessionWidgetEntryView: View {
                     header
                     progressBar
 
+                    if entry.hasActiveSession {
+                        // Show active session info in medium widget
+                        HStack {
+                            activeSessionBanner
+                            Spacer()
+                        }
+                    }
+
                     HStack {
                         pill(icon: "bolt.fill", text: "Today \(entry.xpToday) XP", tint: .yellow)
                         Spacer()
                         pill(icon: "flame.fill", text: "\(entry.streak)d streak", tint: .orange)
                     }
 
-                    HStack {
-                        Label("\(entry.pagesToday) pages today", systemImage: "clock")
-                            .font(.caption2)
-                            .foregroundStyle(.white.opacity(0.9))
-                        Spacer()
-                        Text("Keep it up →")
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(.white.opacity(0.85))
+                    if !entry.hasActiveSession {
+                        HStack {
+                            Label("\(entry.pagesToday) pages today", systemImage: "clock")
+                                .font(.caption2)
+                                .foregroundStyle(.white.opacity(0.9))
+                            Spacer()
+                            Text("Keep it up →")
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(.white.opacity(0.85))
+                        }
                     }
                 }
             }
