@@ -45,6 +45,7 @@ struct AddGoalView: View {
                         }
                     }
                     .pickerStyle(.navigationLink)
+                    .tint(themeColor.color)
                 }
 
                 Section("Target") {
