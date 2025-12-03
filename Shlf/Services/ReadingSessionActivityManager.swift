@@ -33,9 +33,12 @@ class ReadingSessionActivityManager {
         let startPageValue = startPage ?? book.currentPage
         let currentPageValue = currentPage ?? startPageValue
         let pagesRead = currentPageValue - startPageValue
+
+        // Calculate LIVE XP based on actual elapsed time
+        let actualDuration = startTime != nil ? max(1, Int(Date().timeIntervalSince(startTime!) / 60)) : 0
         let xpEarned = estimatedXP(
             pagesRead: pagesRead,
-            durationMinutes: max(1, abs(pagesRead * 2))
+            durationMinutes: actualDuration
         )
 
         let attributes = ReadingSessionWidgetAttributes(
@@ -241,8 +244,10 @@ class ReadingSessionActivityManager {
         return max(0, Int(Date().timeIntervalSince(startTime) / 60))
     }
 
-    /// Estimate XP for a reading session in progress
+    /// Calculate LIVE XP for active reading session
+    /// Uses actual elapsed time for accuracy
     /// Delegates to centralized XPCalculator for consistency
+    /// NOTE: This is the actual XP that will be awarded when session ends
     private func estimatedXP(pagesRead: Int, durationMinutes: Int) -> Int {
         return XPCalculator.calculate(pagesRead: pagesRead, durationMinutes: durationMinutes)
     }
