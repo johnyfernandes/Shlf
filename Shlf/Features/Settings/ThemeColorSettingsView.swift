@@ -16,6 +16,49 @@ struct ThemeColorSettingsView: View {
         GridItem(.adaptive(minimum: 80), spacing: 16)
     ]
 
+    /// Update Live Activity with new theme color by restarting it
+    /// Seamlessly restarts the Live Activity preserving all state except color
+    private func updateLiveActivityThemeColor(newThemeColor: ThemeColor) async {
+        // Check if Live Activity is currently active
+        guard ReadingSessionActivityManager.shared.isActive else {
+            return // No Live Activity running, nothing to update
+        }
+
+        // Get current Live Activity state (including XP)
+        guard let currentPage = ReadingSessionActivityManager.shared.getCurrentPage(),
+              let currentXP = ReadingSessionActivityManager.shared.getCurrentXP() else {
+            return
+        }
+
+        // Find the active session to get book and timing info
+        let descriptor = FetchDescriptor<ActiveReadingSession>()
+        guard let activeSessions = try? modelContext.fetch(descriptor),
+              let activeSession = activeSessions.first,
+              let book = activeSession.book else {
+            return
+        }
+
+        // Get pause state from Live Activity
+        let isPaused = activeSession.isPaused
+
+        // Restart Live Activity with new theme color
+        // This preserves: pages, XP, time, pause state
+        // Only updates: theme color
+        let newThemeHex = newThemeColor.color.toHex() ?? "#00CED1"
+        await ReadingSessionActivityManager.shared.startActivity(
+            book: book,
+            currentPage: currentPage,
+            startPage: activeSession.startPage,
+            startTime: activeSession.startDate,
+            themeColorHex: newThemeHex
+        )
+
+        // Restore pause state if needed
+        if isPaused {
+            await ReadingSessionActivityManager.shared.pauseActivity()
+        }
+    }
+
     var body: some View {
         Form {
             Section {
@@ -37,6 +80,13 @@ struct ThemeColorSettingsView: View {
 
                                     // Sync to Watch immediately
                                     WatchConnectivityManager.shared.sendProfileSettingsToWatch(profile)
+
+                                    // CRITICAL: Update Live Activity with new theme color
+                                    // Since themeColor is in ActivityAttributes (immutable),
+                                    // we must restart the Live Activity
+                                    Task {
+                                        await updateLiveActivityThemeColor(newThemeColor: themeColor)
+                                    }
 
                                     // Give haptic feedback
                                     UIImpactFeedbackGenerator(style: .medium).impactOccurred()
