@@ -408,6 +408,9 @@ struct LogSessionWatchView: View {
             activeSession.lastUpdated = Date()
             try? modelContext.save()
 
+            // Immediately update local elapsedTime to freeze the display
+            elapsedTime = activeSession.elapsedTime(at: Date())
+
             // Send updated session to iPhone
             WatchConnectivityManager.shared.sendActiveSessionToPhone(activeSession)
         }
@@ -432,6 +435,9 @@ struct LogSessionWatchView: View {
             activeSession.pausedAt = nil
             activeSession.lastUpdated = Date()
             try? modelContext.save()
+
+            // Force immediate update of local elapsedTime to resume counting
+            elapsedTime = activeSession.elapsedTime(at: Date())
 
             // Send updated session to iPhone
             WatchConnectivityManager.shared.sendActiveSessionToPhone(activeSession)
