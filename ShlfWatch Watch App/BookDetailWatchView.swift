@@ -128,7 +128,7 @@ struct BookDetailWatchView: View {
             }
             .padding()
         }
-        .navigationTitle("Progress")
+        .navigationTitle(book.title)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingAddPages) {
             AddPagesWatchView(book: book)
