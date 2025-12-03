@@ -255,7 +255,7 @@ struct BookPreviewView: View {
                             }
                             Text("Add to Library")
                         }
-                        .primaryButton(fullWidth: true)
+                        .primaryButton(fullWidth: true, color: themeColor.color)
                     }
                     .disabled(isLoading)
                     .padding(.horizontal, Theme.Spacing.md)
