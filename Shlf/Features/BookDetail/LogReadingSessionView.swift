@@ -243,8 +243,13 @@ struct LogReadingSessionView: View {
                     }
                 }
 
-                Section("Mark Stopping Position (Optional)") {
+                Section("Reading Position (optional)") {
                     Toggle("Save reading position", isOn: $shouldSavePosition)
+                        .onChange(of: shouldSavePosition) { oldValue, newValue in
+                            if newValue {
+                                positionPage = endPage
+                            }
+                        }
 
                     if shouldSavePosition {
                         HStack {
@@ -257,9 +262,9 @@ struct LogReadingSessionView: View {
                         }
 
                         HStack {
-                            Text("Line (optional)")
+                            Text("Line")
                             Spacer()
-                            TextField("Line", text: $positionLineText)
+                            TextField("Line (optional)", text: $positionLineText)
                                 .keyboardType(.numberPad)
                                 .multilineTextAlignment(.trailing)
                                 .frame(width: 80)
@@ -269,7 +274,6 @@ struct LogReadingSessionView: View {
                             .lineLimit(2...4)
                     }
                 }
-                .headerProminence(.increased)
 
                 Section("Save Quote") {
                     Button {
