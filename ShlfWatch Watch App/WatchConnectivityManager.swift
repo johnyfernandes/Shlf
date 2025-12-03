@@ -313,6 +313,48 @@ class WatchConnectivityManager: NSObject {
         }
     }
 
+    func sendBookPositionToPhone(_ position: BookPosition) {
+        guard WCSession.default.activationState == .activated else {
+            Self.logger.warning("WC not activated")
+            return
+        }
+
+        guard let bookId = position.book?.id else {
+            Self.logger.warning("Cannot send position without book")
+            return
+        }
+
+        do {
+            let transfer = BookPositionTransfer(
+                id: position.id,
+                bookId: bookId,
+                pageNumber: position.pageNumber,
+                lineNumber: position.lineNumber,
+                timestamp: position.timestamp,
+                note: position.note
+            )
+
+            let data = try JSONEncoder().encode(transfer)
+            if WCSession.default.isReachable {
+                WCSession.default.sendMessage(
+                    ["bookPosition": data],
+                    replyHandler: nil,
+                    errorHandler: { error in
+                        Self.logger.error("Failed to send position to iPhone: \(error)")
+                        WCSession.default.transferUserInfo(["bookPosition": data])
+                        Self.logger.info("↩️ Queued position (fallback): Page \(position.pageNumber)")
+                    }
+                )
+                Self.logger.info("📤 Sent position to iPhone (instant): Page \(position.pageNumber)")
+            } else {
+                WCSession.default.transferUserInfo(["bookPosition": data])
+                Self.logger.info("📦 Queued position to iPhone (guaranteed): Page \(position.pageNumber)")
+            }
+        } catch {
+            Self.logger.error("Encoding error: \(error)")
+        }
+    }
+
     // MARK: - Live Activity Sync
 
     func sendLiveActivityStart(bookId: UUID?, bookTitle: String, bookAuthor: String, totalPages: Int, startPage: Int, currentPage: Int, startTime: Date) {

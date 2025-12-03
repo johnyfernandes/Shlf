@@ -69,6 +69,8 @@
 			membershipExceptions = (
 				Models/Achievement.swift,
 				Models/Book.swift,
+				Models/BookPosition.swift,
+				Models/Quote.swift,
 				Models/ReadingGoal.swift,
 				Models/ReadingSession.swift,
 				Models/StatCardType.swift,
@@ -89,6 +91,8 @@
 			membershipExceptions = (
 				Models/Achievement.swift,
 				Models/Book.swift,
+				Models/BookPosition.swift,
+				Models/Quote.swift,
 				Models/ReadingGoal.swift,
 				Models/ReadingSession.swift,
 				Models/StatCardType.swift,

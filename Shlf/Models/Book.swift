@@ -35,6 +35,12 @@ final class Book {
     @Relationship(deleteRule: .cascade, inverse: \ReadingSession.book)
     var readingSessions: [ReadingSession]?
 
+    @Relationship(deleteRule: .cascade, inverse: \BookPosition.book)
+    var bookPositions: [BookPosition]?
+
+    @Relationship(deleteRule: .cascade, inverse: \Quote.book)
+    var quotes: [Quote]?
+
     var bookType: BookType {
         get { BookType(rawValue: bookTypeRawValue) ?? .physical }
         set { bookTypeRawValue = newValue.rawValue }
@@ -95,6 +101,10 @@ final class Book {
 
     var isFinished: Bool {
         readingStatus == .finished
+    }
+
+    var lastPosition: BookPosition? {
+        bookPositions?.sorted { $0.timestamp > $1.timestamp }.first
     }
 }
 

@@ -156,3 +156,22 @@ struct SessionCompletionTransfer: Codable, Sendable {
         self.endLiveActivity = endLiveActivity
     }
 }
+
+struct BookPositionTransfer: Codable, Sendable {
+    let id: UUID
+    let bookId: UUID
+    let pageNumber: Int
+    let lineNumber: Int?
+    let timestamp: Date
+    let note: String?
+}
+
+struct QuoteTransfer: Codable, Sendable {
+    let id: UUID
+    let bookId: UUID
+    let text: String
+    let pageNumber: Int?
+    let dateAdded: Date
+    let note: String?
+    let isFavorite: Bool
+}

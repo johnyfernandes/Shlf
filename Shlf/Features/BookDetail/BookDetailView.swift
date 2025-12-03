@@ -21,6 +21,7 @@ struct BookDetailView: View {
     @State private var showEditBook = false
     @State private var showDeleteAlert = false
     @State private var showConfetti = false
+    @State private var showAddQuote = false
 
     private var profile: UserProfile? {
         profiles.first
@@ -82,8 +83,18 @@ struct BookDetailView: View {
                     progressSection
                 }
 
+                // Last Reading Position
+                if let lastPos = book.lastPosition {
+                    lastPositionSection(lastPos)
+                }
+
                 if let subjects = book.subjects, !subjects.isEmpty, profile?.showSubjects ?? true {
                     subjectsSection(subjects)
+                }
+
+                // Quotes Section
+                if let quotes = book.quotes, !quotes.isEmpty {
+                    quotesSection(quotes)
                 }
 
                 let hideAuto = profile?.hideAutoSessionsIPhone ?? false
@@ -150,6 +161,9 @@ struct BookDetailView: View {
         }
         .sheet(isPresented: $showEditBook) {
             EditBookView(book: book)
+        }
+        .sheet(isPresented: $showAddQuote) {
+            AddQuoteView(book: book)
         }
         .alert("Delete Book?", isPresented: $showDeleteAlert) {
             Button("Delete", role: .destructive) {
@@ -278,6 +292,75 @@ struct BookDetailView: View {
                     .frame(maxWidth: .infinity)
                     .padding(Theme.Spacing.md)
                     .cardStyle()
+            }
+        }
+    }
+
+    private func lastPositionSection(_ lastPos: BookPosition) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            HStack {
+                Text("Last Reading Position")
+                    .font(Theme.Typography.title3)
+                    .foregroundStyle(Theme.Colors.text)
+
+                Spacer()
+
+                Button {
+                    book.currentPage = lastPos.pageNumber
+                } label: {
+                    Label("Resume", systemImage: "arrow.forward.circle.fill")
+                        .font(.caption)
+                }
+                .buttonStyle(.bordered)
+                .tint(themeColor.color)
+            }
+
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                Text(lastPos.positionDescription)
+                    .font(Theme.Typography.headline)
+                    .foregroundStyle(Theme.Colors.text)
+
+                if let note = lastPos.note {
+                    Text(note)
+                        .font(Theme.Typography.body)
+                        .foregroundStyle(Theme.Colors.secondaryText)
+                }
+
+                Text("Saved \(lastPos.timestamp.formatted(date: .abbreviated, time: .shortened))")
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(Theme.Colors.tertiaryText)
+            }
+            .padding(Theme.Spacing.md)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .cardStyle()
+        }
+    }
+
+    private func quotesSection(_ quotes: [Quote]) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            HStack {
+                Text("Saved Quotes")
+                    .font(Theme.Typography.title3)
+                    .foregroundStyle(Theme.Colors.text)
+
+                Spacer()
+
+                Button {
+                    showAddQuote = true
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(themeColor.color)
+            }
+
+            ForEach(quotes.sorted { $0.dateAdded > $1.dateAdded }) { quote in
+                NavigationLink {
+                    QuoteDetailView(quote: quote, book: book)
+                } label: {
+                    QuoteRow(quote: quote)
+                }
+                .buttonStyle(.plain)
             }
         }
     }

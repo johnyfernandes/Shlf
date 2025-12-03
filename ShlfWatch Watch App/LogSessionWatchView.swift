@@ -187,6 +187,16 @@ struct LogSessionWatchView: View {
                         .buttonStyle(.borderedProminent)
                         .tint(.green)
                         .disabled(pagesRead == 0)
+
+                        // Mark Position Button
+                        Button {
+                            markPosition()
+                        } label: {
+                            Label("Mark Position", systemImage: "mappin.circle.fill")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(themeColor.color)
                     }
                 }
             }
@@ -531,6 +541,36 @@ struct LogSessionWatchView: View {
             dismiss()
         } catch {
             WatchConnectivityManager.logger.error("Failed to save session: \(error)")
+        }
+    }
+
+    private func markPosition() {
+        let position = BookPosition(
+            book: book,
+            pageNumber: currentPage,
+            timestamp: Date()
+        )
+
+        modelContext.insert(position)
+
+        if book.bookPositions == nil {
+            book.bookPositions = []
+        }
+        book.bookPositions?.append(position)
+
+        do {
+            try modelContext.save()
+            WatchConnectivityManager.logger.info("Marked position: Page \(currentPage)")
+
+            // Send position to iPhone
+            Task.detached(priority: .userInitiated) {
+                await WatchConnectivityManager.shared.sendBookPositionToPhone(position)
+            }
+
+            // Provide haptic feedback
+            WKInterfaceDevice.current().play(.success)
+        } catch {
+            WatchConnectivityManager.logger.error("Failed to save position: \(error)")
         }
     }
 

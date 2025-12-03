@@ -322,6 +322,89 @@ class WatchConnectivityManager: NSObject {
         }
     }
 
+    func sendBookPositionToWatch(_ position: BookPosition) {
+        guard WCSession.default.activationState == .activated else {
+            Self.logger.warning("WC not activated")
+            return
+        }
+
+        guard let bookId = position.book?.id else {
+            Self.logger.warning("Cannot send position without book")
+            return
+        }
+
+        do {
+            let transfer = BookPositionTransfer(
+                id: position.id,
+                bookId: bookId,
+                pageNumber: position.pageNumber,
+                lineNumber: position.lineNumber,
+                timestamp: position.timestamp,
+                note: position.note
+            )
+
+            let data = try JSONEncoder().encode(transfer)
+            if WCSession.default.isReachable {
+                WCSession.default.sendMessage(
+                    ["bookPosition": data],
+                    replyHandler: nil,
+                    errorHandler: { error in
+                        Self.logger.error("Failed to send position to Watch: \(error)")
+                    }
+                )
+                Self.logger.info("Sent position to Watch: Page \(position.pageNumber)")
+            } else {
+                WCSession.default.transferUserInfo(["bookPosition": data])
+                Self.logger.info("Queued position to Watch: Page \(position.pageNumber)")
+            }
+        } catch {
+            Self.logger.error("Encoding error: \(error)")
+        }
+    }
+
+    func sendQuotesToWatch(for book: Book) {
+        guard WCSession.default.activationState == .activated else {
+            Self.logger.warning("WC not activated")
+            return
+        }
+
+        guard let quotes = book.quotes, !quotes.isEmpty else {
+            Self.logger.info("No quotes to send for book")
+            return
+        }
+
+        do {
+            let transfers = quotes.map { quote in
+                QuoteTransfer(
+                    id: quote.id,
+                    bookId: book.id,
+                    text: quote.text,
+                    pageNumber: quote.pageNumber,
+                    dateAdded: quote.dateAdded,
+                    note: quote.note,
+                    isFavorite: quote.isFavorite
+                )
+            }
+
+            let data = try JSONEncoder().encode(transfers)
+            if WCSession.default.isReachable {
+                WCSession.default.sendMessage(
+                    ["quotes": data],
+                    replyHandler: nil,
+                    errorHandler: { error in
+                        Self.logger.error("Failed to send quotes to Watch: \(error)")
+                    }
+                )
+                Self.logger.info("Sent \(quotes.count) quotes to Watch")
+            } else {
+                WCSession.default.transferUserInfo(["quotes": data])
+                Self.logger.info("Queued \(quotes.count) quotes to Watch")
+            }
+        } catch {
+            Self.logger.error("Encoding error: \(error)")
+        }
+    }
+
     @MainActor
     func syncBooksToWatch() async {
         guard WCSession.default.activationState == .activated,
@@ -567,6 +650,32 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 }
             }
         }
+
+        // Handle book position from Watch
+        if let positionData = message["bookPosition"] as? Data {
+            Task { @MainActor in
+                do {
+                    let transfer = try JSONDecoder().decode(BookPositionTransfer.self, from: positionData)
+                    Self.logger.info("Received book position from Watch: Page \(transfer.pageNumber)")
+                    await self.handleBookPosition(transfer)
+                } catch {
+                    Self.logger.error("Book position decoding error: \(error)")
+                }
+            }
+        }
+
+        // Handle quotes from Watch
+        if let quotesData = message["quotes"] as? Data {
+            Task { @MainActor in
+                do {
+                    let transfers = try JSONDecoder().decode([QuoteTransfer].self, from: quotesData)
+                    Self.logger.info("Received \(transfers.count) quotes from Watch")
+                    await self.handleQuotes(transfers)
+                } catch {
+                    Self.logger.error("Quotes decoding error: \(error)")
+                }
+            }
+        }
     }
 
     nonisolated func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any]) {
@@ -694,6 +803,32 @@ extension WatchConnectivityManager: WCSessionDelegate {
                     await self.handleSessionCompletion(completion)
                 } catch {
                     Self.logger.error("Session completion userInfo decoding error: \(error)")
+                }
+            }
+        }
+
+        // Handle queued book position from Watch
+        if let positionData = userInfo["bookPosition"] as? Data {
+            Task { @MainActor in
+                do {
+                    let transfer = try JSONDecoder().decode(BookPositionTransfer.self, from: positionData)
+                    Self.logger.info("📦 Received queued book position from Watch: Page \(transfer.pageNumber)")
+                    await self.handleBookPosition(transfer)
+                } catch {
+                    Self.logger.error("Book position userInfo decoding error: \(error)")
+                }
+            }
+        }
+
+        // Handle queued quotes from Watch
+        if let quotesData = userInfo["quotes"] as? Data {
+            Task { @MainActor in
+                do {
+                    let transfers = try JSONDecoder().decode([QuoteTransfer].self, from: quotesData)
+                    Self.logger.info("📦 Received queued \(transfers.count) quotes from Watch")
+                    await self.handleQuotes(transfers)
+                } catch {
+                    Self.logger.error("Quotes userInfo decoding error: \(error)")
                 }
             }
         }
@@ -1160,5 +1295,98 @@ extension WatchConnectivityManager: WCSessionDelegate {
         NotificationCenter.default.post(name: .watchSessionReceived, object: nil)
 
         Self.logger.info("✅ Atomic session completion handled successfully")
+    }
+
+    @MainActor
+    private func handleBookPosition(_ transfer: BookPositionTransfer) async {
+        guard let modelContext = await resolvedModelContext() else {
+            Self.logger.warning("ModelContext not configured")
+            return
+        }
+
+        do {
+            // Find the book
+            let bookDescriptor = FetchDescriptor<Book>(
+                predicate: #Predicate<Book> { book in
+                    book.id == transfer.bookId
+                }
+            )
+            let books = try modelContext.fetch(bookDescriptor)
+
+            guard let book = books.first else {
+                Self.logger.warning("Book not found for position: \(transfer.bookId)")
+                return
+            }
+
+            // Create or update position
+            let position = BookPosition(
+                book: book,
+                pageNumber: transfer.pageNumber,
+                lineNumber: transfer.lineNumber,
+                timestamp: transfer.timestamp,
+                note: transfer.note
+            )
+            position.id = transfer.id
+
+            modelContext.insert(position)
+
+            if book.bookPositions == nil {
+                book.bookPositions = []
+            }
+            book.bookPositions?.append(position)
+
+            try modelContext.save()
+            Self.logger.info("✅ Saved book position from Watch: Page \(transfer.pageNumber)")
+        } catch {
+            Self.logger.error("Failed to handle book position: \(error)")
+        }
+    }
+
+    @MainActor
+    private func handleQuotes(_ transfers: [QuoteTransfer]) async {
+        guard let modelContext = await resolvedModelContext() else {
+            Self.logger.warning("ModelContext not configured")
+            return
+        }
+
+        do {
+            for transfer in transfers {
+                // Find the book
+                let bookDescriptor = FetchDescriptor<Book>(
+                    predicate: #Predicate<Book> { book in
+                        book.id == transfer.bookId
+                    }
+                )
+                let books = try modelContext.fetch(bookDescriptor)
+
+                guard let book = books.first else {
+                    Self.logger.warning("Book not found for quote: \(transfer.bookId)")
+                    continue
+                }
+
+                // Create quote
+                let quote = Quote(
+                    book: book,
+                    text: transfer.text,
+                    pageNumber: transfer.pageNumber,
+                    note: transfer.note,
+                    isFavorite: transfer.isFavorite
+                )
+                quote.id = transfer.id
+                quote.dateAdded = transfer.dateAdded
+
+                modelContext.insert(quote)
+
+                if book.quotes == nil {
+                    book.quotes = []
+                }
+                book.quotes?.append(quote)
+            }
+
+            try modelContext.save()
+            Self.logger.info("✅ Saved \(transfers.count) quotes from Watch")
+        } catch {
+            Self.logger.error("Failed to handle quotes: \(error)")
+        }
     }
 }

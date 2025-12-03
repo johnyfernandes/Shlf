@@ -92,12 +92,10 @@ final class GamificationEngine {
         // Calculate longest and current streak
         var longestStreak = 0
         var currentStreakCount = 0
-        var streakInProgress = false
 
         for (index, day) in sortedDays.enumerated() {
             if index == 0 {
                 currentStreakCount = 1
-                streakInProgress = true
             } else {
                 let previousDay = sortedDays[index - 1]
                 let daysSince = calendar.dateComponents([.day], from: previousDay, to: day).day ?? 0
@@ -109,7 +107,6 @@ final class GamificationEngine {
                     // Streak broken
                     longestStreak = max(longestStreak, currentStreakCount)
                     currentStreakCount = 1
-                    streakInProgress = (index == sortedDays.count - 1) // Only in progress if it's the last day
                 }
             }
 

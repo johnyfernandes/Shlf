@@ -30,10 +30,20 @@ struct LogReadingSessionView: View {
     @State private var showActiveSessionAlert = false
     @State private var pendingActiveSession: ActiveReadingSession?
 
+    // Position tracking
+    @State private var shouldSavePosition = false
+    @State private var positionPage: Int
+    @State private var positionLineText = ""
+    @State private var positionNote = ""
+
+    // Quote management
+    @State private var showAddQuote = false
+
     init(book: Book) {
         self.book = book
         _startPage = State(initialValue: book.currentPage)
         _endPage = State(initialValue: book.currentPage)
+        _positionPage = State(initialValue: book.currentPage)
     }
 
     // SINGLE SOURCE OF TRUTH - use active session if exists
@@ -233,6 +243,45 @@ struct LogReadingSessionView: View {
                     }
                 }
 
+                Section("Mark Stopping Position (Optional)") {
+                    Toggle("Save reading position", isOn: $shouldSavePosition)
+
+                    if shouldSavePosition {
+                        HStack {
+                            Text("Page")
+                            Spacer()
+                            TextField("Page", value: $positionPage, format: .number)
+                                .keyboardType(.numberPad)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 80)
+                        }
+
+                        HStack {
+                            Text("Line (optional)")
+                            Spacer()
+                            TextField("Line", text: $positionLineText)
+                                .keyboardType(.numberPad)
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 80)
+                        }
+
+                        TextField("Note (optional)", text: $positionNote, axis: .vertical)
+                            .lineLimit(2...4)
+                    }
+                }
+                .headerProminence(.increased)
+
+                Section("Save Quote") {
+                    Button {
+                        showAddQuote = true
+                    } label: {
+                        Label("Add Quote from this Session", systemImage: "quote.bubble")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(themeColor.color)
+                }
+
                 Section("Date") {
                     DatePicker("Session Date", selection: $sessionDate, displayedComponents: [.date, .hourAndMinute])
                 }
@@ -318,6 +367,9 @@ struct LogReadingSessionView: View {
                 } else {
                     Text("There's already an active reading session. End it and start a new one?")
                 }
+            }
+            .sheet(isPresented: $showAddQuote) {
+                AddQuoteView(book: book, prefillPage: endPage)
             }
         }
     }
@@ -452,6 +504,17 @@ struct LogReadingSessionView: View {
         }
         book.readingSessions?.append(session)
 
+        // Save position if requested
+        if shouldSavePosition {
+            let position = BookPosition(
+                book: book,
+                pageNumber: positionPage,
+                lineNumber: Int(positionLineText),
+                note: positionNote.isEmpty ? nil : positionNote
+            )
+            modelContext.insert(position)
+        }
+
         // Clamp to max pages
         let maxPages = book.totalPages ?? Int.max
         book.currentPage = min(maxPages, activeSession.currentPage)
@@ -525,6 +588,17 @@ struct LogReadingSessionView: View {
             book.readingSessions = []
         }
         book.readingSessions?.append(session)
+
+        // Save position if requested
+        if shouldSavePosition {
+            let position = BookPosition(
+                book: book,
+                pageNumber: positionPage,
+                lineNumber: Int(positionLineText),
+                note: positionNote.isEmpty ? nil : positionNote
+            )
+            modelContext.insert(position)
+        }
 
         // Update page and send to Watch (clamp to max pages)
         let maxPages = book.totalPages ?? Int.max

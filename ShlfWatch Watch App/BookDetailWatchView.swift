@@ -153,6 +153,52 @@ struct BookDetailWatchView: View {
                     }
                     .buttonStyle(.bordered)
                 }
+
+                // Last Reading Position
+                if let lastPos = book.lastPosition {
+                    Divider()
+                        .padding(.vertical, 4)
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Last Position")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        Text(lastPos.positionDescription)
+                            .font(.footnote.weight(.medium))
+
+                        if let note = lastPos.note {
+                            Text(note)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(2)
+                        }
+
+                        Button {
+                            book.currentPage = lastPos.pageNumber
+                        } label: {
+                            Label("Resume Here", systemImage: "arrow.forward.circle")
+                                .font(.caption)
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(themeColor.color)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                // Quotes
+                if let quotes = book.quotes, !quotes.isEmpty {
+                    Divider()
+                        .padding(.vertical, 4)
+
+                    NavigationLink {
+                        QuotesListWatchView(quotes: quotes)
+                    } label: {
+                        Label("View Quotes (\(quotes.count))", systemImage: "quote.bubble")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                }
             }
             .padding()
         }
