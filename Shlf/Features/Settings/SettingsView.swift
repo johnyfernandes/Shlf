@@ -389,24 +389,6 @@ struct ReadingPreferencesView: View {
                         .foregroundStyle(Theme.Colors.secondaryText)
                 }
             }
-
-            Section("Reading History") {
-                Toggle(isOn: $profile.hideAutoSessionsIPhone) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Hide Quick Sessions")
-                        Text("Only show timer-based sessions in reading history")
-                            .font(Theme.Typography.caption)
-                            .foregroundStyle(Theme.Colors.secondaryText)
-                    }
-                }
-                .onChange(of: profile.hideAutoSessionsIPhone) { oldValue, newValue in
-                    try? modelContext.save()
-                }
-
-                Text("Quick sessions are created when you tap +1, +5, etc. Timer sessions are created using the reading timer.")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(Theme.Colors.secondaryText)
-            }
         }
         .navigationTitle("Reading Preferences")
         .navigationBarTitleDisplayMode(.inline)

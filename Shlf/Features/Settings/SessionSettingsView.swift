@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 
 struct SessionSettingsView: View {
+    @Environment(\.modelContext) private var modelContext
     @Bindable var profile: UserProfile
     @State private var showCustomHoursInput = false
     @State private var customHours: String = ""
@@ -66,6 +67,26 @@ struct SessionSettingsView: View {
                         }
                     }
                 }
+            }
+
+            Section {
+                Toggle(isOn: $profile.hideAutoSessionsIPhone) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Hide Quick Sessions on iPhone")
+                        Text("Only show timer-based sessions in reading history")
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(Theme.Colors.secondaryText)
+                    }
+                }
+                .onChange(of: profile.hideAutoSessionsIPhone) { oldValue, newValue in
+                    try? modelContext.save()
+                }
+                .tint(Theme.Colors.primary)
+            } header: {
+                Text("Session Display")
+            } footer: {
+                Text("Quick sessions are created when you tap +1, +5, etc. Timer sessions are created using the reading timer. To control Apple Watch sessions, go to Watch Settings.")
+                    .font(Theme.Typography.caption)
             }
 
             Section {
