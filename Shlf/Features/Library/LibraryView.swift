@@ -200,13 +200,17 @@ struct BookRow: View {
                     .foregroundStyle(Theme.Colors.text)
                     .lineLimit(2)
 
-                Text(book.author)
-                    .font(Theme.Typography.subheadline)
-                    .foregroundStyle(Theme.Colors.secondaryText)
-                    .lineLimit(1)
-
                 HStack(spacing: Theme.Spacing.xs) {
+                    Text(book.author)
+                        .font(Theme.Typography.subheadline)
+                        .foregroundStyle(Theme.Colors.secondaryText)
+                        .lineLimit(1)
+
                     if let totalPages = book.totalPages {
+                        Text("•")
+                            .font(Theme.Typography.caption2)
+                            .foregroundStyle(Theme.Colors.tertiaryText)
+
                         HStack(spacing: 3) {
                             Image(systemName: "book.pages")
                                 .font(.caption2)
@@ -217,11 +221,9 @@ struct BookRow: View {
                     }
 
                     if let year = yearPublished {
-                        if book.totalPages != nil {
-                            Text("•")
-                                .font(Theme.Typography.caption2)
-                                .foregroundStyle(Theme.Colors.tertiaryText)
-                        }
+                        Text("•")
+                            .font(Theme.Typography.caption2)
+                            .foregroundStyle(Theme.Colors.tertiaryText)
 
                         HStack(spacing: 3) {
                             Image(systemName: "calendar")

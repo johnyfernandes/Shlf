@@ -293,6 +293,7 @@ struct HomeView: View {
 // MARK: - Currently Reading Card
 
 struct CurrentlyReadingCard: View {
+    @Environment(\.themeColor) private var themeColor
     let book: Book
 
     var body: some View {
@@ -323,7 +324,7 @@ struct CurrentlyReadingCard: View {
                         HStack {
                             Text("\(book.currentPage)")
                                 .font(Theme.Typography.headline)
-                                .foregroundStyle(Theme.Colors.primary)
+                                .foregroundStyle(themeColor.color)
 
                             Text("/ \(totalPages) pages")
                                 .font(Theme.Typography.caption)
@@ -334,11 +335,11 @@ struct CurrentlyReadingCard: View {
                             Text("\(Int(book.progressPercentage))%")
                                 .font(Theme.Typography.subheadline)
                                 .fontWeight(.semibold)
-                                .foregroundStyle(Theme.Colors.primary)
+                                .foregroundStyle(themeColor.color)
                         }
 
                         ProgressView(value: book.progressPercentage, total: 100)
-                            .tint(Theme.Colors.primary)
+                            .tint(themeColor.color)
                             .scaleEffect(y: 1.2)
                     }
                 }
