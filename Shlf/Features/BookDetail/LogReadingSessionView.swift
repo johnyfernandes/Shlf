@@ -217,7 +217,7 @@ struct LogReadingSessionView: View {
                             Button("Start Timer") {
                                 startTimer()
                             }
-                            .primaryButton()
+                            .primaryButton(color: themeColor.color)
                             .frame(maxWidth: .infinity)
                         }
                     } else {

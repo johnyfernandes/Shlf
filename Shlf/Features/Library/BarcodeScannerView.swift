@@ -11,6 +11,7 @@ import Vision
 
 struct BarcodeScannerView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.themeColor) private var themeColor
     let onScan: (String) -> Void
 
     var body: some View {
@@ -38,7 +39,7 @@ struct BarcodeScannerView: View {
                     Button("Close") {
                         dismiss()
                     }
-                    .primaryButton()
+                    .primaryButton(color: themeColor.color)
                 }
                 .padding(Theme.Spacing.xl)
             }

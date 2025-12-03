@@ -172,16 +172,17 @@ extension View {
 
     // MARK: - Button Styles
 
-    func primaryButton(fullWidth: Bool = false) -> some View {
-        self
+    func primaryButton(fullWidth: Bool = false, color: Color? = nil) -> some View {
+        let buttonColor = color ?? Theme.Colors.primary
+        return self
             .font(Theme.Typography.headline)
             .foregroundStyle(.white)
             .frame(maxWidth: fullWidth ? .infinity : nil)
             .padding(.horizontal, Theme.Spacing.lg)
             .padding(.vertical, Theme.Spacing.md)
-            .background(Theme.Colors.primary)
+            .background(buttonColor)
             .clipShape(RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous))
-            .shadow(color: Theme.Colors.primary.opacity(0.3), radius: 8, y: 4)
+            .shadow(color: buttonColor.opacity(0.3), radius: 8, y: 4)
     }
 
     func secondaryButton(fullWidth: Bool = false) -> some View {

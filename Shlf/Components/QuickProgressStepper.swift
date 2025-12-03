@@ -112,7 +112,7 @@ struct QuickProgressStepper: View {
                     }
                     .font(Theme.Typography.headline)
                     .frame(maxWidth: .infinity)
-                    .primaryButton()
+                    .primaryButton(color: themeColor.color)
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }

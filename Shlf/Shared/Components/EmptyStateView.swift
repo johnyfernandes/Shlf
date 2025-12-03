@@ -68,7 +68,7 @@ struct EmptyStateView: View {
 
                         Text(actionTitle)
                     }
-                    .primaryButton()
+                    .primaryButton(color: themeColor.color)
                 }
             }
         }

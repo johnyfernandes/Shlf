@@ -62,7 +62,7 @@ struct OnboardingView: View {
                 } label: {
                     Text(currentPage < pages.count - 1 ? "Next" : "Get Started")
                         .frame(maxWidth: .infinity)
-                        .primaryButton()
+                        .primaryButton(color: themeColor.color)
                 }
 
                 if currentPage < pages.count - 1 {

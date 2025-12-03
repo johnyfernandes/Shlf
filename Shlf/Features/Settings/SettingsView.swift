@@ -200,6 +200,7 @@ struct SettingsView: View {
 
 struct UpgradeView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.themeColor) private var themeColor
     @State private var storeKit = StoreKitService.shared
     @State private var isPurchasing = false
 
@@ -247,7 +248,7 @@ struct UpgradeView: View {
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        .primaryButton()
+                        .primaryButton(color: themeColor.color)
                         .disabled(isPurchasing)
                     } else {
                         ProgressView()
