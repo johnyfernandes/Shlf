@@ -708,10 +708,19 @@ struct BookDetailView: View {
         // Deleting a book cascade-deletes its sessions, so we need to recalculate stats
         modelContext.delete(book)
 
+        // CRITICAL: Save the deletion first before recalculating
+        do {
+            try modelContext.save()
+        } catch {
+            print("Failed to delete book: \(error.localizedDescription)")
+            return
+        }
+
         // Recalculate stats after cascade deletion of sessions
         if let profile = profile {
             let engine = GamificationEngine(modelContext: modelContext)
             engine.recalculateStats(for: profile)
+            // recalculateStats() saves internally
         }
 
         // Sync to Watch after deletion

@@ -96,7 +96,9 @@ final class Book {
 
     var progressPercentage: Double {
         guard let total = totalPages, total > 0 else { return 0 }
-        return Double(currentPage) / Double(total) * 100
+        // Clamp to [0, 100] to prevent overflow if currentPage > totalPages
+        let percentage = Double(currentPage) / Double(total) * 100
+        return min(100, max(0, percentage))
     }
 
     var isFinished: Bool {
