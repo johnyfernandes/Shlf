@@ -23,6 +23,8 @@ struct BookPreviewView: View {
     @State private var isLoading = false
     @State private var fullBookInfo: BookInfo?
     @State private var showUpgradeAlert = false
+    @State private var showDuplicateAlert = false
+    @State private var existingBook: Book?
 
     private let bookAPI = BookAPIService()
 
@@ -292,6 +294,15 @@ struct BookPreviewView: View {
         } message: {
             Text("You've reached the limit of 5 books. Upgrade to Pro for unlimited books.")
         }
+        .alert("Book Already in Library", isPresented: $showDuplicateAlert) {
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            if let existing = existingBook {
+                Text("You already have \"\(existing.title)\" by \(existing.author) in your library.")
+            } else {
+                Text("This book is already in your library.")
+            }
+        }
         .task {
             isLoading = true
             defer { isLoading = false }
@@ -323,43 +334,67 @@ struct BookPreviewView: View {
             return
         }
 
-        let book = Book(
-            title: displayInfo.title,
-            author: displayInfo.author,
-            isbn: displayInfo.isbn,
-            coverImageURL: displayInfo.coverImageURL,
-            totalPages: displayInfo.totalPages ?? 0,
-            currentPage: readingStatus == .currentlyReading ? currentPage : 0,
-            bookType: bookType,
-            readingStatus: readingStatus,
-            bookDescription: displayInfo.description,
-            subjects: displayInfo.subjects,
-            publisher: displayInfo.publisher,
-            publishedDate: displayInfo.publishedDate,
-            language: displayInfo.language
-        )
+        // Check for duplicates using centralized service
+        do {
+            let duplicateCheck = try BookLibraryService.checkForDuplicate(
+                title: displayInfo.title,
+                author: displayInfo.author,
+                isbn: displayInfo.isbn,
+                in: modelContext
+            )
 
-        modelContext.insert(book)
+            switch duplicateCheck {
+            case .duplicate(let existing):
+                // Show duplicate alert
+                existingBook = existing
+                showDuplicateAlert = true
+                return
 
-        // Update profile stats if exists
-        if let profile = profiles.first {
-            let engine = GamificationEngine(modelContext: modelContext)
-            engine.checkAchievements(for: profile)
-        }
+            case .noDuplicate:
+                // Proceed with adding the book
+                let book = Book(
+                    title: displayInfo.title,
+                    author: displayInfo.author,
+                    isbn: displayInfo.isbn,
+                    coverImageURL: displayInfo.coverImageURL,
+                    totalPages: displayInfo.totalPages ?? 0,
+                    currentPage: readingStatus == .currentlyReading ? currentPage : 0,
+                    bookType: bookType,
+                    readingStatus: readingStatus,
+                    bookDescription: displayInfo.description,
+                    subjects: displayInfo.subjects,
+                    publisher: displayInfo.publisher,
+                    publishedDate: displayInfo.publishedDate,
+                    language: displayInfo.language
+                )
 
-        // Refresh widget with new book data
-        WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+                modelContext.insert(book)
 
-        // Sync to Watch if currently reading
-        if readingStatus == .currentlyReading {
-            Task {
-                await WatchConnectivityManager.shared.syncBooksToWatch()
+                // Update profile stats if exists
+                if let profile = profiles.first {
+                    let engine = GamificationEngine(modelContext: modelContext)
+                    engine.checkAchievements(for: profile)
+                }
+
+                // Refresh widget with new book data
+                WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+
+                // Sync to Watch if currently reading
+                if readingStatus == .currentlyReading {
+                    Task {
+                        await WatchConnectivityManager.shared.syncBooksToWatch()
+                    }
+                }
+
+                // Switch to Library tab and dismiss
+                selectedTab = 1
+                onDismiss()
             }
+        } catch {
+            print("Error checking for duplicates: \(error)")
+            // On error, show alert to be safe
+            showDuplicateAlert = true
         }
-
-        // Switch to Library tab and dismiss
-        selectedTab = 1
-        onDismiss()
     }
 }
 
