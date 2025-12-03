@@ -14,12 +14,16 @@ struct XPCalculator {
 
     /// Calculate XP for a reading session
     /// - Parameters:
-    ///   - pagesRead: Number of pages read in the session
+    ///   - pagesRead: Number of pages read in the session (can be negative for corrections)
     ///   - durationMinutes: Total duration of the session in minutes
-    /// - Returns: Total XP earned (base + duration bonus)
+    /// - Returns: Total XP earned (base + duration bonus). Can be negative for page removals.
     static func calculate(pagesRead: Int, durationMinutes: Int) -> Int {
-        let baseXP = max(0, pagesRead) * 10
-        let durationBonus = calculateDurationBonus(durationMinutes: durationMinutes)
+        // Allow negative XP for page removals
+        let baseXP = pagesRead * 10
+
+        // Only apply duration bonus for positive progress
+        let durationBonus = pagesRead > 0 ? calculateDurationBonus(durationMinutes: durationMinutes) : 0
+
         return baseXP + durationBonus
     }
 
