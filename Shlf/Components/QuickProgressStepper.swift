@@ -222,8 +222,11 @@ struct QuickProgressStepper: View {
         let impact = UIImpactFeedbackGenerator(style: .heavy)
         impact.impactOccurred()
 
-        // Check if user reached the last page
-        if let totalPages = book.totalPages, totalPendingPages >= totalPages && book.readingStatus == .currentlyReading {
+        // Check if user reached the last page (regardless of reading status)
+        // Only show finish alert if book is currently being read
+        if let totalPages = book.totalPages,
+           totalPendingPages >= totalPages,
+           (book.readingStatus == .currentlyReading || book.readingStatus == .wantToRead) {
             showFinishAlert = true
         } else {
             applyProgressUpdate()
@@ -231,11 +234,19 @@ struct QuickProgressStepper: View {
     }
 
     private func applyProgressUpdate() {
-        let pagesRead = pendingPages
+        let originalCurrentPage = book.currentPage
 
-        book.currentPage = totalPendingPages
+        // CRITICAL: Clamp currentPage to valid range [0, totalPages]
+        let minPage = 0
+        let maxPage = book.totalPages ?? Int.max
+        let clampedPage = min(maxPage, max(minPage, totalPendingPages))
 
-        if book.readingStatus == .wantToRead && totalPendingPages > 0 {
+        book.currentPage = clampedPage
+
+        // Calculate ACTUAL pages read (accounting for clamping)
+        let actualPagesRead = clampedPage - originalCurrentPage
+
+        if book.readingStatus == .wantToRead && clampedPage > 0 {
             book.readingStatus = .currentlyReading
             book.dateStarted = Date()
         }
@@ -245,10 +256,11 @@ struct QuickProgressStepper: View {
             showSaveButton = false
         }
 
-        // Send to Watch
-        WatchConnectivityManager.shared.sendPageDeltaToWatch(bookUUID: book.id, delta: pagesRead)
+        // Send ACTUAL delta to Watch (not pending, which might have been clamped)
+        WatchConnectivityManager.shared.sendPageDeltaToWatch(bookUUID: book.id, delta: actualPagesRead)
 
-        onSave(pagesRead)
+        // Create session with ACTUAL pages read
+        onSave(actualPagesRead)
     }
 }
 
