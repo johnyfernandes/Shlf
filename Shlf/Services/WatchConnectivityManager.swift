@@ -1076,12 +1076,18 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 return
             }
 
+            // Get theme color from profile
+            let profileDescriptor = FetchDescriptor<UserProfile>()
+            let profile = try? modelContext.fetch(profileDescriptor).first
+            let themeHex = profile?.themeColor.color.toHex() ?? "#00CED1"
+
             // Start Live Activity with the authoritative baseline from Watch
             await ReadingSessionActivityManager.shared.startActivity(
                 book: book,
                 currentPage: transfer.currentPage,
                 startPage: transfer.startPage,
-                startTime: transfer.startTime
+                startTime: transfer.startTime,
+                themeColorHex: themeHex
             )
             Self.logger.info("✅ Started Live Activity from Watch: \(transfer.bookTitle)")
         } catch {

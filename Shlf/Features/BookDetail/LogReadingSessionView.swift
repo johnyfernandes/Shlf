@@ -456,7 +456,8 @@ struct LogReadingSessionView: View {
 
         // Start Live Activity with current page
         Task {
-            await ReadingSessionActivityManager.shared.startActivity(book: book, currentPage: endPage)
+            let themeHex = profiles.first?.themeColor.color.toHex() ?? "#00CED1"
+            await ReadingSessionActivityManager.shared.startActivity(book: book, currentPage: endPage, themeColorHex: themeHex)
         }
     }
 

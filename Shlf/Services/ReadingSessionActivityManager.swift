@@ -25,7 +25,7 @@ class ReadingSessionActivityManager {
 
     // MARK: - Start Activity
 
-    func startActivity(book: Book, currentPage: Int? = nil, startPage: Int? = nil, startTime: Date? = nil) async {
+    func startActivity(book: Book, currentPage: Int? = nil, startPage: Int? = nil, startTime: Date? = nil, themeColorHex: String = "#00CED1") async {
         // End any existing activity first
         await endActivity()
 
@@ -43,7 +43,8 @@ class ReadingSessionActivityManager {
             bookAuthor: book.author,
             totalPages: book.totalPages ?? 0,
             startPage: startPageValue,
-            startTime: activityStartTime
+            startTime: activityStartTime,
+            themeColorHex: themeColorHex
         )
 
         let initialState = ReadingSessionWidgetAttributes.ContentState(
