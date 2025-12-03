@@ -106,7 +106,7 @@ struct SessionSettingsView: View {
                 .padding(.vertical, Theme.Spacing.xs)
             }
         }
-        .navigationTitle("Session Settings")
+        .navigationTitle("Sessions")
         .navigationBarTitleDisplayMode(.inline)
         .alert("Custom Duration", isPresented: $showCustomHoursInput) {
             TextField("Hours", text: $customHours)

@@ -36,25 +36,25 @@ struct SettingsView: View {
                     NavigationLink {
                         HomeCardSettingsView(profile: profile)
                     } label: {
-                        Label("Home Page Cards", systemImage: "square.grid.3x3")
+                        Label("Home Screen", systemImage: "square.grid.3x3")
                     }
 
                     NavigationLink {
                         ReadingPreferencesView(profile: profile)
                     } label: {
-                        Label("Reading Preferences", systemImage: "book")
+                        Label("Reading Progress", systemImage: "book")
                     }
 
                     NavigationLink {
                         SessionSettingsView(profile: profile)
                     } label: {
-                        Label("Session Settings", systemImage: "timer")
+                        Label("Sessions", systemImage: "timer")
                     }
 
                     NavigationLink {
                         BookDetailCustomizationView(profile: profile)
                     } label: {
-                        Label("Customize Book Details", systemImage: "slider.horizontal.3")
+                        Label("Book Details", systemImage: "slider.horizontal.3")
                     }
                 }
 
@@ -62,7 +62,7 @@ struct SettingsView: View {
                     NavigationLink {
                         WatchSettingsView()
                     } label: {
-                        Label("Watch Settings", systemImage: "applewatch")
+                        Label("Apple Watch", systemImage: "applewatch")
                     }
                 }
 
@@ -83,7 +83,7 @@ struct SettingsView: View {
                     NavigationLink {
                         AboutView()
                     } label: {
-                        Label("About Shlf", systemImage: "info.circle")
+                        Label("About", systemImage: "info.circle")
                     }
 
                     Link(destination: URL(string: "https://shlf.app")!) {
@@ -390,7 +390,7 @@ struct ReadingPreferencesView: View {
                 }
             }
         }
-        .navigationTitle("Reading Preferences")
+        .navigationTitle("Reading Progress")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -467,7 +467,7 @@ struct BookDetailCustomizationView: View {
                 }
             }
         }
-        .navigationTitle("Customize Book Details")
+        .navigationTitle("Book Details")
         .navigationBarTitleDisplayMode(.inline)
     }
 }

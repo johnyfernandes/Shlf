@@ -149,7 +149,7 @@ struct HomeCardSettingsView: View {
                 }
             }
         }
-        .navigationTitle("Home Page Cards")
+        .navigationTitle("Home Screen")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
