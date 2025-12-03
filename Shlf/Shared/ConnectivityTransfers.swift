@@ -81,6 +81,25 @@ struct ProfileStatsTransfer: Codable, Sendable {
     let currentStreak: Int
     let longestStreak: Int
     let lastReadingDate: Date?
+    let syncTimestamp: Date
+
+    init(totalXP: Int, currentStreak: Int, longestStreak: Int, lastReadingDate: Date?, syncTimestamp: Date = Date()) {
+        self.totalXP = totalXP
+        self.currentStreak = currentStreak
+        self.longestStreak = longestStreak
+        self.lastReadingDate = lastReadingDate
+        self.syncTimestamp = syncTimestamp
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        totalXP = try container.decode(Int.self, forKey: .totalXP)
+        currentStreak = try container.decode(Int.self, forKey: .currentStreak)
+        longestStreak = try container.decode(Int.self, forKey: .longestStreak)
+        lastReadingDate = try container.decodeIfPresent(Date.self, forKey: .lastReadingDate)
+        // For backward compatibility with old messages without timestamp
+        syncTimestamp = try container.decodeIfPresent(Date.self, forKey: .syncTimestamp) ?? Date()
+    }
 }
 
 struct LiveActivityStartTransfer: Codable, Sendable {

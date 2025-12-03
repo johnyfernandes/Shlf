@@ -52,11 +52,21 @@ final class GamificationEngine {
 
         // Check all achievements
         checkAchievements(for: profile)
+
+        // CRITICAL: Save all changes to persist recalculated stats
+        try? modelContext.save()
     }
 
     func awardXP(_ amount: Int, to profile: UserProfile) {
         let previousLevel = profile.currentLevel
-        profile.totalXP += amount
+
+        // Prevent overflow and ensure totalXP never goes negative
+        let newTotal = profile.totalXP.addingReportingOverflow(amount)
+        if newTotal.overflow {
+            profile.totalXP = amount >= 0 ? Int.max : 0
+        } else {
+            profile.totalXP = max(0, newTotal.partialValue)
+        }
 
         // Check for level-up achievements
         let newLevel = profile.currentLevel
@@ -80,6 +90,9 @@ final class GamificationEngine {
             return
         }
 
+        // NOTE: Streak calculation uses current timezone
+        // If user travels across timezones, streaks are calculated based on local midnight
+        // This is acceptable behavior - users generally expect streaks based on their local day
         let calendar = Calendar.current
 
         // Sort sessions by date
@@ -134,18 +147,22 @@ final class GamificationEngine {
     func updateStreak(for profile: UserProfile, sessionDate: Date = Date()) {
         let calendar = Calendar.current
 
+        // Prevent future dates (clock skew protection)
+        // Allow small tolerance (60 seconds) for clock drift
+        let validSessionDate = min(sessionDate, Date().addingTimeInterval(60))
+
         guard let lastReadingDate = profile.lastReadingDate else {
             // First reading session ever
             profile.currentStreak = 1
             profile.longestStreak = 1
-            profile.lastReadingDate = sessionDate
+            profile.lastReadingDate = validSessionDate
             return
         }
 
         let daysSinceLastReading = calendar.dateComponents(
             [.day],
             from: calendar.startOfDay(for: lastReadingDate),
-            to: calendar.startOfDay(for: sessionDate)
+            to: calendar.startOfDay(for: validSessionDate)
         ).day ?? 0
 
         switch daysSinceLastReading {
@@ -158,12 +175,12 @@ final class GamificationEngine {
             if profile.currentStreak > profile.longestStreak {
                 profile.longestStreak = profile.currentStreak
             }
-            profile.lastReadingDate = sessionDate
+            profile.lastReadingDate = validSessionDate
             checkStreakAchievements(streak: profile.currentStreak, profile: profile)
         default:
             // Streak broken
             profile.currentStreak = 1
-            profile.lastReadingDate = sessionDate
+            profile.lastReadingDate = validSessionDate
         }
     }
 
@@ -260,11 +277,29 @@ final class GamificationEngine {
     }
 
     private func unlockAchievement(_ type: AchievementType, for profile: UserProfile) {
-        // Check if achievement already exists
+        // Check if achievement already exists in profile relationship
         let alreadyUnlocked = (profile.achievements ?? []).contains { $0.type == type }
         guard !alreadyUnlocked else { return }
 
+        // Double-check by querying database to prevent race condition
+        // (in case another device just inserted the same achievement)
+        let typeValue = type.rawValue
+        let descriptor = FetchDescriptor<Achievement>(
+            predicate: #Predicate<Achievement> { achievement in
+                achievement.typeRawValue == typeValue
+            }
+        )
+
+        // Fetch and filter by profile manually (avoids optional chain in predicate)
+        if let existingAchievements = try? modelContext.fetch(descriptor) {
+            let profileMatch = existingAchievements.contains { $0.profile?.id == profile.id }
+            if profileMatch {
+                return  // Achievement already exists, avoid duplicate
+            }
+        }
+
         let achievement = Achievement(type: type)
+        achievement.profile = profile
         if profile.achievements == nil {
             profile.achievements = []
         }

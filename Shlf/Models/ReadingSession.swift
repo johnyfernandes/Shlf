@@ -49,4 +49,49 @@ final class ReadingSession {
     var isActive: Bool {
         endDate == nil
     }
+
+    /// Validates session dates for data integrity
+    /// Returns true if dates are valid, false otherwise
+    var hasValidDates: Bool {
+        // Allow 60 second tolerance for clock drift
+        let futureTolerance: TimeInterval = 60
+        let now = Date()
+
+        // startDate should not be too far in future
+        guard startDate <= now.addingTimeInterval(futureTolerance) else {
+            return false
+        }
+
+        // If endDate exists, it must be >= startDate
+        if let endDate = endDate {
+            guard endDate >= startDate else {
+                return false
+            }
+
+            // endDate should not be in future (beyond tolerance)
+            guard endDate <= now.addingTimeInterval(futureTolerance) else {
+                return false
+            }
+        }
+
+        // Dates should not be too far in past (10 years is reasonable limit)
+        let tenYearsAgo = now.addingTimeInterval(-10 * 365 * 24 * 3600)
+        guard startDate >= tenYearsAgo else {
+            return false
+        }
+
+        return true
+    }
+
+    /// Duration in minutes, returns nil if dates are invalid
+    var validDurationMinutes: Int? {
+        guard hasValidDates, let endDate = endDate else {
+            return nil
+        }
+
+        let duration = endDate.timeIntervalSince(startDate)
+        guard duration >= 0 else { return nil }
+
+        return max(0, Int(duration / 60))
+    }
 }

@@ -158,7 +158,8 @@ final class UserProfile {
 
     var currentLevel: Int {
         // Simple level calculation: every 1000 XP = 1 level
-        totalXP / 1000 + 1
+        // Ensure level never goes below 1, even with negative XP
+        max(1, max(0, totalXP) / 1000 + 1)
     }
 
     var xpForNextLevel: Int {
@@ -167,7 +168,8 @@ final class UserProfile {
     }
 
     var xpProgressInCurrentLevel: Int {
-        totalXP % 1000
+        // Ensure progress is never negative
+        max(0, totalXP) % 1000
     }
 
     var xpProgressPercentage: Double {

@@ -109,6 +109,34 @@ class WatchConnectivityManager: NSObject {
         }
     }
 
+    func sendSessionDeletionToWatch(sessionIds: [UUID]) {
+        guard WCSession.default.activationState == .activated else {
+            Self.logger.warning("WC not activated")
+            return
+        }
+
+        guard !sessionIds.isEmpty else { return }
+
+        do {
+            let data = try JSONEncoder().encode(sessionIds)
+            if WCSession.default.isReachable {
+                WCSession.default.sendMessage(
+                    ["sessionDeletion": data],
+                    replyHandler: nil,
+                    errorHandler: { error in
+                        Self.logger.error("Failed to send session deletion to Watch: \(error)")
+                    }
+                )
+                Self.logger.info("📤 Sent session deletion to Watch: \(sessionIds.count) session(s)")
+            } else {
+                WCSession.default.transferUserInfo(["sessionDeletion": data])
+                Self.logger.info("📦 Queued session deletion to Watch: \(sessionIds.count) session(s)")
+            }
+        } catch {
+            Self.logger.error("Encoding error: \(error)")
+        }
+    }
+
     func sendSessionToWatch(_ session: ReadingSession) {
         guard WCSession.default.activationState == .activated else {
             Self.logger.warning("WC not activated")
@@ -194,7 +222,8 @@ class WatchConnectivityManager: NSObject {
                 totalXP: profile.totalXP,
                 currentStreak: profile.currentStreak,
                 longestStreak: profile.longestStreak,
-                lastReadingDate: profile.lastReadingDate
+                lastReadingDate: profile.lastReadingDate,
+                syncTimestamp: Date()
             )
             let data = try JSONEncoder().encode(transfer)
             if WCSession.default.isReachable {
@@ -1027,12 +1056,23 @@ extension WatchConnectivityManager: WCSessionDelegate {
             let profiles = try modelContext.fetch(descriptor)
 
             if let profile = profiles.first {
-                profile.totalXP = stats.totalXP
-                profile.currentStreak = stats.currentStreak
-                profile.longestStreak = stats.longestStreak
-                profile.lastReadingDate = stats.lastReadingDate
+                // Use max to prevent race condition data loss
+                // (iPhone might have newer stats that Watch hasn't synced yet)
+                profile.totalXP = max(profile.totalXP, stats.totalXP)
+                profile.currentStreak = max(profile.currentStreak, stats.currentStreak)
+                profile.longestStreak = max(profile.longestStreak, stats.longestStreak)
+
+                // Use most recent lastReadingDate
+                if let newDate = stats.lastReadingDate {
+                    if let existingDate = profile.lastReadingDate {
+                        profile.lastReadingDate = max(existingDate, newDate)
+                    } else {
+                        profile.lastReadingDate = newDate
+                    }
+                }
+
                 try modelContext.save()
-                Self.logger.info("Updated profile stats from Watch: XP=\(stats.totalXP), Streak=\(stats.currentStreak)")
+                Self.logger.info("Merged profile stats from Watch: XP=\(profile.totalXP), Streak=\(profile.currentStreak)")
 
                 // Refresh widget with updated stats
                 WidgetDataExporter.exportSnapshot(modelContext: modelContext)
@@ -1155,18 +1195,19 @@ extension WatchConnectivityManager: WCSessionDelegate {
         }
 
         do {
-            // Fetch existing session
+            // Fetch existing sessions
             let descriptor = FetchDescriptor<ActiveReadingSession>()
             let existingSessions = try modelContext.fetch(descriptor)
 
-            if let existingSession = existingSessions.first {
+            // Check if we have an existing session with the same ID
+            if let existingSession = existingSessions.first(where: { $0.id == transfer.id }) {
                 // Drop stale updates that arrive out of order
                 if transfer.lastUpdated <= existingSession.lastUpdated {
                     Self.logger.info("Ignoring stale active session update from Watch (existing newer)")
                     return
                 }
 
-                // UPDATE in place - don't delete!
+                // UPDATE in place
                 existingSession.currentPage = transfer.currentPage
                 existingSession.isPaused = transfer.isPaused
                 existingSession.pausedAt = transfer.pausedAt
@@ -1179,6 +1220,11 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 try? modelContext.save()
                 WidgetDataExporter.exportSnapshot(modelContext: modelContext)
             } else {
+                // ENFORCE SINGLE SESSION: Delete all existing sessions before creating new one
+                for oldSession in existingSessions {
+                    Self.logger.info("🧹 Deleting old active session \(oldSession.id) to enforce single session")
+                    modelContext.delete(oldSession)
+                }
                 // Find the book
                 let bookDescriptor = FetchDescriptor<Book>(
                     predicate: #Predicate<Book> { book in

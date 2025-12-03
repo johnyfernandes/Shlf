@@ -65,11 +65,21 @@ final class ActiveReadingSession {
     }
 
     var pagesRead: Int {
-        max(0, currentPage - startPage)
+        // Allow negative values for consistency with ReadingSession
+        // (when user goes backwards in book during active session)
+        currentPage - startPage
     }
 
     var durationMinutes: Int {
-        max(1, Int(elapsedTime / 60))
+        let seconds = elapsedTime
+        let minutes = seconds / 60
+
+        // Prevent integer overflow: cap at 7 days (10,080 minutes)
+        // If session ran longer, something is wrong anyway
+        let maxMinutes = 7 * 24 * 60 // 10,080 minutes
+        let clampedMinutes = min(minutes, Double(maxMinutes))
+
+        return max(1, Int(clampedMinutes))
     }
 
     // Check if session should auto-end based on inactivity

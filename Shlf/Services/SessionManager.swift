@@ -26,6 +26,9 @@ final class SessionManager {
             return
         }
 
+        // Store session ID before deletion
+        let sessionId = session.id
+
         // Delete the session
         modelContext.delete(session)
 
@@ -39,7 +42,10 @@ final class SessionManager {
         // Save updated stats
         try modelContext.save()
 
-        // Sync to Watch
+        // Sync deletion to Watch (CRITICAL - prevents Watch from showing deleted sessions)
+        WatchConnectivityManager.shared.sendSessionDeletionToWatch(sessionIds: [sessionId])
+
+        // Sync updated stats to Watch
         Task {
             await WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
         }
@@ -66,6 +72,9 @@ final class SessionManager {
             return
         }
 
+        // Store session IDs before deletion
+        let sessionIds = sessions.map { $0.id }
+
         // Delete all sessions
         for session in sessions {
             modelContext.delete(session)
@@ -81,7 +90,10 @@ final class SessionManager {
         // Save updated stats
         try modelContext.save()
 
-        // Sync to Watch
+        // Sync deletions to Watch (CRITICAL - batch deletion)
+        WatchConnectivityManager.shared.sendSessionDeletionToWatch(sessionIds: sessionIds)
+
+        // Sync updated stats to Watch
         Task {
             await WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
         }

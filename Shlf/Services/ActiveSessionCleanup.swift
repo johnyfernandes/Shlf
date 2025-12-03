@@ -50,15 +50,19 @@ struct ActiveSessionCleanup {
             var cleanedCount = 0
             for session in activeSessions {
                 if session.shouldAutoEnd(inactivityHours: autoEndHours) {
-                    logger.info("🗑️ Auto-ending stale session: \(session.id) (paused at: \(session.pausedAt?.formatted() ?? "unknown"))")
+                    logger.info("🗑️ Auto-ending stale session: \(session.id) (last updated: \(session.lastUpdated.formatted()))")
 
-                    // Delete the stale session
-                    modelContext.delete(session)
-                    cleanedCount += 1
-
-                    // Notify Watch and end Live Activity
+                    // CRITICAL: Notify Watch BEFORE deleting to prevent race condition
+                    // If we delete first, Watch might send update and recreate session
                     WatchConnectivityManager.shared.sendActiveSessionEndToWatch(activeSessionId: session.id)
                     await ReadingSessionActivityManager.shared.endActivity()
+
+                    // Small delay to ensure Watch processes end message
+                    try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+
+                    // Now safe to delete
+                    modelContext.delete(session)
+                    cleanedCount += 1
                 }
             }
 
@@ -75,27 +79,51 @@ struct ActiveSessionCleanup {
     }
 
     /// Check for orphaned Live Activity (Live Activity running without corresponding ActiveReadingSession)
+    /// OR restore Live Activity from ActiveReadingSession if it was lost due to crash
     private static func checkForOrphanedLiveActivity(modelContext: ModelContext) async {
-        // Check if Live Activity is currently active
-        guard ReadingSessionActivityManager.shared.isActive else {
-            logger.info("No Live Activity running")
-            return
-        }
-
-        logger.info("🔍 Live Activity detected, checking for corresponding ActiveReadingSession...")
-
         do {
             // Fetch all active sessions
             let sessionDescriptor = FetchDescriptor<ActiveReadingSession>()
             let activeSessions = try modelContext.fetch(sessionDescriptor)
 
-            if activeSessions.isEmpty {
-                // Orphaned Live Activity detected!
-                logger.warning("⚠️ Orphaned Live Activity detected (no ActiveReadingSession found) - ending it")
+            let liveActivityIsActive = ReadingSessionActivityManager.shared.isActive
+
+            // Case 1: Live Activity running but no ActiveReadingSession
+            if liveActivityIsActive && activeSessions.isEmpty {
+                logger.warning("⚠️ Orphaned Live Activity detected (no ActiveReadingSession) - ending it")
                 await ReadingSessionActivityManager.shared.endActivity()
                 WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+                return
+            }
+
+            // Case 2: ActiveReadingSession exists but no Live Activity (likely crashed)
+            if !liveActivityIsActive && !activeSessions.isEmpty {
+                logger.info("🔄 Restoring Live Activity from ActiveReadingSession after crash")
+
+                guard let session = activeSessions.first,
+                      let book = session.book else {
+                    logger.warning("Cannot restore Live Activity - session missing book")
+                    return
+                }
+
+                // Get profile for theme color
+                let profileDescriptor = FetchDescriptor<UserProfile>()
+                let profile = try? modelContext.fetch(profileDescriptor).first
+                let themeHex = profile?.themeColor.color.toHex() ?? "#00CED1"
+
+                // Restore Live Activity with current session state
+                await ReadingSessionActivityManager.shared.startActivity(
+                    book: book,
+                    currentPage: session.currentPage,
+                    startPage: session.startPage,
+                    startTime: session.startDate,
+                    themeColorHex: themeHex
+                )
+                logger.info("✅ Live Activity restored successfully")
+            } else if liveActivityIsActive && !activeSessions.isEmpty {
+                logger.info("✅ Live Activity and ActiveReadingSession in sync")
             } else {
-                logger.info("✅ Live Activity has corresponding ActiveReadingSession")
+                logger.info("No active sessions or Live Activity")
             }
         } catch {
             logger.error("Failed to check for orphaned Live Activity: \(error)")
@@ -110,11 +138,16 @@ struct ActiveSessionCleanup {
         }
 
         logger.info("🗑️ Auto-ending stale session: \(session.id)")
-        modelContext.delete(session)
 
-        // Notify Watch and end Live Activity
+        // CRITICAL: Notify Watch BEFORE deleting to prevent race condition
         WatchConnectivityManager.shared.sendActiveSessionEndToWatch(activeSessionId: session.id)
         await ReadingSessionActivityManager.shared.endActivity()
+
+        // Small delay to ensure Watch processes end message
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+
+        // Now safe to delete
+        modelContext.delete(session)
 
         do {
             try modelContext.save()

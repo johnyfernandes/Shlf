@@ -41,7 +41,7 @@ class ReadingSessionActivityManager {
         let attributes = ReadingSessionWidgetAttributes(
             bookTitle: book.title,
             bookAuthor: book.author,
-            totalPages: book.totalPages ?? 0,
+            totalPages: max(1, book.totalPages ?? 1),  // Never 0 to prevent divide by zero
             startPage: startPageValue,
             startTime: activityStartTime,
             themeColorHex: themeColorHex

@@ -7,10 +7,12 @@
 
 import Foundation
 import SwiftData
+import OSLog
 
 @MainActor
 class GoalTracker {
     let modelContext: ModelContext
+    private static let logger = Logger(subsystem: "com.shlf.app", category: "GoalTracker")
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -20,6 +22,13 @@ class GoalTracker {
         let activeGoals = (profile.readingGoals ?? []).filter { $0.isActive }
 
         for goal in activeGoals {
+            // Skip goals that have ended (end date is in the past)
+            // Users can manually mark them complete or delete them
+            if goal.endDate < Date() {
+                Self.logger.debug("⏭️ Skipping ended goal: \(goal.type.rawValue)")
+                continue
+            }
+
             let newValue = calculateProgress(for: goal, profile: profile)
             goal.currentValue = newValue
 
@@ -87,8 +96,48 @@ class GoalTracker {
             return totalMinutes / daysElapsed
 
         case .readingStreak:
-            // Use the current streak from profile
-            return profile.currentStreak
+            // Calculate longest streak within the goal period
+            // This ensures streak goals only count consecutive days within the goal's date range
+            let sessionDescriptor = FetchDescriptor<ReadingSession>()
+            let allSessions = (try? modelContext.fetch(sessionDescriptor)) ?? []
+
+            // Filter sessions within goal period
+            let sessionsInPeriod = allSessions.filter { session in
+                session.startDate >= goal.startDate &&
+                session.startDate <= goal.endDate
+            }
+
+            guard !sessionsInPeriod.isEmpty else { return 0 }
+
+            // Get unique reading days within period
+            let readingDays = Set(sessionsInPeriod.map { calendar.startOfDay(for: $0.startDate) })
+            let sortedDays = readingDays.sorted()
+
+            // Calculate longest consecutive streak in this period
+            var longestStreak = 0
+            var currentStreakCount = 0
+
+            for (index, day) in sortedDays.enumerated() {
+                if index == 0 {
+                    currentStreakCount = 1
+                } else {
+                    let previousDay = sortedDays[index - 1]
+                    let daysSince = calendar.dateComponents([.day], from: previousDay, to: day).day ?? 0
+
+                    if daysSince == 1 {
+                        // Consecutive day
+                        currentStreakCount += 1
+                    } else {
+                        // Streak broken, record previous and restart
+                        longestStreak = max(longestStreak, currentStreakCount)
+                        currentStreakCount = 1
+                    }
+                }
+
+                longestStreak = max(longestStreak, currentStreakCount)
+            }
+
+            return longestStreak
         }
     }
 }
