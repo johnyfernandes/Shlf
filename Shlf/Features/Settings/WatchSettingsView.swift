@@ -176,6 +176,26 @@ struct WatchSettingsView: View {
             }
 
             if let profile = profile, isWatchAppInstalled {
+                Section("Watch Features") {
+                    Toggle(isOn: Binding(
+                        get: { profile.enableWatchPositionMarking },
+                        set: { newValue in
+                            profile.enableWatchPositionMarking = newValue
+                            try? modelContext.save()
+                            WatchConnectivityManager.shared.sendProfileSettingsToWatch(profile)
+                        }
+                    )) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Mark Reading Position")
+                                .font(Theme.Typography.body)
+                            Text("Allow marking exact reading position (page + line) from Watch during sessions")
+                                .font(Theme.Typography.caption)
+                                .foregroundStyle(Theme.Colors.secondaryText)
+                        }
+                    }
+                    .tint(profile.themeColor.color)
+                }
+
                 Section("Watch App UI") {
                     Toggle(isOn: Binding(
                         get: { profile.showSettingsOnWatch },

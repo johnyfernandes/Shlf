@@ -191,20 +191,22 @@ struct LogSessionWatchView: View {
                         .tint(.green)
                         .disabled(pagesRead == 0)
 
-                        // Mark Position Button
-                        Button {
-                            markPageLine = 1
-                            showMarkPageSheet = true
-                        } label: {
-                            Label(
-                                showPositionMarked ? "Position Saved!" : "Mark Position",
-                                systemImage: showPositionMarked ? "checkmark.circle.fill" : "bookmark.fill"
-                            )
-                            .frame(maxWidth: .infinity)
+                        // Mark Position Button (if enabled in settings)
+                        if profile.enableWatchPositionMarking {
+                            Button {
+                                markPageLine = 1
+                                showMarkPageSheet = true
+                            } label: {
+                                Label(
+                                    showPositionMarked ? "Position Saved!" : "Mark Position",
+                                    systemImage: showPositionMarked ? "checkmark.circle.fill" : "bookmark.fill"
+                                )
+                                .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.bordered)
+                            .tint(showPositionMarked ? .green : themeColor.color)
+                            .disabled(showPositionMarked)
                         }
-                        .buttonStyle(.bordered)
-                        .tint(showPositionMarked ? .green : themeColor.color)
-                        .disabled(showPositionMarked)
                     }
                 }
             }

@@ -40,6 +40,7 @@ final class UserProfile {
     var useProgressSlider: Bool = false // false = stepper, true = slider
     var showSliderButtons: Bool = false // show +/- buttons with slider
     var useCircularProgressWatch: Bool = false // false = progress bar (default), true = circular
+    var enableWatchPositionMarking: Bool = true // allow marking reading position from Watch
 
     // Session Display Preferences
     var hideAutoSessionsIPhone: Bool = false // hide quick +1/-1 sessions on iPhone

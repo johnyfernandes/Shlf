@@ -58,6 +58,24 @@ struct SettingsWatchView: View {
                             }
                         }
                         .tint(themeColor.color)
+
+                        Toggle(isOn: Binding(
+                            get: { profile.enableWatchPositionMarking },
+                            set: { newValue in
+                                profile.enableWatchPositionMarking = newValue
+                                try? modelContext.save()
+                                WatchConnectivityManager.shared.sendProfileSettingsToPhone(profile)
+                            }
+                        )) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Mark Position")
+                                    .font(.caption)
+                                Text("Save page + line number")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .tint(themeColor.color)
                     } header: {
                         Text("Customization")
                     }
