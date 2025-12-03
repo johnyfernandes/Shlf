@@ -204,21 +204,19 @@ struct StatsView: View {
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
 
-            if (profile.achievements ?? []).isEmpty {
-                HStack {
-                    Spacer()
-                    EmptyStateView(
-                        icon: "trophy",
-                        title: "No Achievements Yet",
-                        message: "Keep reading to unlock achievements"
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Spacing.sm) {
+                ForEach(AchievementType.allCases, id: \.self) { type in
+                    let unlockedAchievement = (profile.achievements ?? []).first { $0.type == type }
+                    AchievementCard(
+                        type: type,
+                        achievement: unlockedAchievement,
+                        onView: {
+                            if let achievement = unlockedAchievement, achievement.isNew {
+                                achievement.isNew = false
+                                try? modelContext.save()
+                            }
+                        }
                     )
-                    Spacer()
-                }
-            } else {
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Spacing.sm) {
-                    ForEach((profile.achievements ?? []).sorted { $0.unlockedAt > $1.unlockedAt }) { achievement in
-                        AchievementCard(achievement: achievement)
-                    }
                 }
             }
         }
@@ -329,33 +327,111 @@ struct ReadingActivityChart: View {
 }
 
 struct AchievementCard: View {
-    let achievement: Achievement
+    @Environment(\.themeColor) private var themeColor
+    let type: AchievementType
+    let achievement: Achievement?
+    let onView: () -> Void
+
+    @State private var shimmerPhase: CGFloat = 0
+
+    private var isUnlocked: Bool {
+        achievement != nil
+    }
 
     var body: some View {
-        VStack(spacing: Theme.Spacing.xs) {
-            Image(systemName: achievement.type.icon)
-                .font(.title2)
-                .foregroundStyle(Theme.Colors.accent)
+        Button {
+            onView()
+        } label: {
+            ZStack {
+                VStack(spacing: Theme.Spacing.xs) {
+                    ZStack {
+                        // Glow effect for unlocked achievements
+                        if isUnlocked {
+                            Image(systemName: type.icon)
+                                .font(.title)
+                                .foregroundStyle(themeColor.color)
+                                .blur(radius: 8)
+                                .opacity(0.6)
+                        }
 
-            Text(achievement.type.title)
-                .font(Theme.Typography.caption)
-                .foregroundStyle(Theme.Colors.text)
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
+                        Image(systemName: type.icon)
+                            .font(.title)
+                            .foregroundStyle(isUnlocked ? themeColor.color : Theme.Colors.tertiaryText)
+                    }
+                    .overlay {
+                        if isUnlocked {
+                            // Shimmer effect
+                            LinearGradient(
+                                colors: [
+                                    .clear,
+                                    .white.opacity(0.6),
+                                    .clear
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                            .rotationEffect(.degrees(30))
+                            .offset(x: shimmerPhase)
+                            .mask(
+                                Image(systemName: type.icon)
+                                    .font(.title)
+                            )
+                            .blendMode(.overlay)
+                        }
+                    }
 
-            if achievement.isNew {
-                Text("New!")
-                    .font(Theme.Typography.caption2)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, Theme.Spacing.xs)
-                    .padding(.vertical, 2)
-                    .background(Theme.Colors.accent)
-                    .clipShape(Capsule())
+                    Text(type.title)
+                        .font(Theme.Typography.caption2)
+                        .foregroundStyle(isUnlocked ? Theme.Colors.text : Theme.Colors.tertiaryText)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.8)
+
+                    if let achievement = achievement, achievement.isNew {
+                        Text("New!")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(themeColor.color)
+                            .clipShape(Capsule())
+                    }
+                }
+                .padding(.vertical, Theme.Spacing.sm)
+                .padding(.horizontal, 4)
+                .frame(maxWidth: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(isUnlocked ? themeColor.color.opacity(0.08) : Color.clear)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(isUnlocked ? themeColor.color.opacity(0.3) : Theme.Colors.tertiaryText.opacity(0.2), lineWidth: 1)
+                )
+
+                // Lock icon for locked achievements
+                if !isUnlocked {
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            Image(systemName: "lock.fill")
+                                .font(.caption2)
+                                .foregroundStyle(Theme.Colors.tertiaryText)
+                                .padding(4)
+                        }
+                    }
+                }
             }
         }
-        .padding(Theme.Spacing.sm)
-        .frame(maxWidth: .infinity)
-        .cardStyle()
+        .buttonStyle(.plain)
+        .onAppear {
+            if isUnlocked {
+                withAnimation(.linear(duration: 2).repeatForever(autoreverses: false)) {
+                    shimmerPhase = 200
+                }
+            }
+        }
     }
 }
 
