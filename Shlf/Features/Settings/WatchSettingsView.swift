@@ -119,6 +119,32 @@ struct WatchSettingsView: View {
                 }
             }
 
+            if let profile = profile {
+                Section {
+                    Picker("Progress Style", selection: Binding(
+                        get: { profile.useCircularProgressWatch },
+                        set: { newValue in
+                            profile.useCircularProgressWatch = newValue
+                            try? modelContext.save()
+                            WatchConnectivityManager.shared.sendProfileSettingsToWatch(profile)
+                        }
+                    )) {
+                        Label("Progress Bar", systemImage: "minus")
+                            .tag(false)
+                        Label("Circular Ring", systemImage: "circle")
+                            .tag(true)
+                    }
+                    .pickerStyle(.inline)
+                } header: {
+                    Text("Progress Display")
+                } footer: {
+                    Text(profile.useCircularProgressWatch ?
+                        "Show progress as a circular ring on Apple Watch" :
+                        "Show progress as a linear bar on Apple Watch")
+                        .font(Theme.Typography.caption)
+                }
+            }
+
             Section {
                 if let profile = profile {
                     Toggle(isOn: Binding(
@@ -141,7 +167,7 @@ struct WatchSettingsView: View {
                     .tint(Theme.Colors.primary)
                 }
             } header: {
-                Text("Watch Session Display")
+                Text("Session Display")
             } footer: {
                 Text("Control which sessions appear on your Apple Watch. This setting syncs with the Watch app. To control iPhone sessions, go to Reading Preferences.")
                     .font(Theme.Typography.caption)

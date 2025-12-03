@@ -17,7 +17,7 @@ private enum ReadingConstants {
 
 class WatchConnectivityManager: NSObject {
     static let shared = WatchConnectivityManager()
-    nonisolated(unsafe) static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.shlf.watch", category: "WatchSync")
+    static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.shlf.watch", category: "WatchSync")
     private var modelContext: ModelContext?
     private var lastActiveSessionEndDate: Date?
     private var endedActiveSessionIDs: [UUID: Date] = [:] // Track UUID -> timestamp when ended
@@ -147,7 +147,8 @@ class WatchConnectivityManager: NSObject {
             let transfer = ProfileSettingsTransfer(
                 hideAutoSessionsIPhone: profile.hideAutoSessionsIPhone,
                 hideAutoSessionsWatch: profile.hideAutoSessionsWatch,
-                showSettingsOnWatch: profile.showSettingsOnWatch
+                showSettingsOnWatch: profile.showSettingsOnWatch,
+                useCircularProgressWatch: profile.useCircularProgressWatch
             )
             let data = try JSONEncoder().encode(transfer)
             if WCSession.default.isReachable {
@@ -704,6 +705,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 profile.hideAutoSessionsIPhone = settings.hideAutoSessionsIPhone
                 profile.hideAutoSessionsWatch = settings.hideAutoSessionsWatch
                 profile.showSettingsOnWatch = settings.showSettingsOnWatch
+                profile.useCircularProgressWatch = settings.useCircularProgressWatch
                 try modelContext.save()
                 Self.logger.info("Updated profile settings from iPhone")
             }

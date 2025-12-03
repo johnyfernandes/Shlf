@@ -38,6 +38,7 @@ final class UserProfile {
     var pageIncrementAmount: Int = 1
     var useProgressSlider: Bool = false // false = stepper, true = slider
     var showSliderButtons: Bool = false // show +/- buttons with slider
+    var useCircularProgressWatch: Bool = false // false = progress bar (default), true = circular
 
     // Session Display Preferences
     var hideAutoSessionsIPhone: Bool = false // hide quick +1/-1 sessions on iPhone
@@ -83,6 +84,7 @@ final class UserProfile {
         pageIncrementAmount: Int = 1,
         useProgressSlider: Bool = false,
         showSliderButtons: Bool = false,
+        useCircularProgressWatch: Bool = false,
         hideAutoSessionsIPhone: Bool = false,
         hideAutoSessionsWatch: Bool = false,
         showSettingsOnWatch: Bool = true,
@@ -113,6 +115,7 @@ final class UserProfile {
         self.pageIncrementAmount = pageIncrementAmount
         self.useProgressSlider = useProgressSlider
         self.showSliderButtons = showSliderButtons
+        self.useCircularProgressWatch = useCircularProgressWatch
         self.hideAutoSessionsIPhone = hideAutoSessionsIPhone
         self.hideAutoSessionsWatch = hideAutoSessionsWatch
         self.showSettingsOnWatch = showSettingsOnWatch

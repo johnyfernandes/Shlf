@@ -498,16 +498,17 @@ struct BookDetailView: View {
             try modelContext.save()
 
             // Do ALL sync operations in background to avoid blocking UI
+            let currentPage = book.currentPage
             Task.detached(priority: .userInitiated) {
                 // Refresh Live Activity if it's running
                 await ReadingSessionActivityManager.shared.updateActivity(
-                    currentPage: book.currentPage,
+                    currentPage: currentPage,
                     xpEarned: session.xpEarned
                 )
 
                 // Keep Watch in sync with new session and stats
-                WatchConnectivityManager.shared.sendSessionToWatch(session)
-                WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
+                await WatchConnectivityManager.shared.sendSessionToWatch(session)
+                await WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
 
                 // Export widget data
                 await MainActor.run {

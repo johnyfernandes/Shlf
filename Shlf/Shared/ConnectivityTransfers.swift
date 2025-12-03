@@ -42,15 +42,18 @@ struct ProfileSettingsTransfer: Codable, Sendable {
     let hideAutoSessionsIPhone: Bool
     let hideAutoSessionsWatch: Bool
     let showSettingsOnWatch: Bool
+    let useCircularProgressWatch: Bool
 
     init(
         hideAutoSessionsIPhone: Bool,
         hideAutoSessionsWatch: Bool,
-        showSettingsOnWatch: Bool = true
+        showSettingsOnWatch: Bool = true,
+        useCircularProgressWatch: Bool = false
     ) {
         self.hideAutoSessionsIPhone = hideAutoSessionsIPhone
         self.hideAutoSessionsWatch = hideAutoSessionsWatch
         self.showSettingsOnWatch = showSettingsOnWatch
+        self.useCircularProgressWatch = useCircularProgressWatch
     }
 
     init(from decoder: Decoder) throws {
@@ -58,10 +61,12 @@ struct ProfileSettingsTransfer: Codable, Sendable {
         let hideIPhone = try container.decode(Bool.self, forKey: .hideAutoSessionsIPhone)
         let hideWatch = try container.decode(Bool.self, forKey: .hideAutoSessionsWatch)
         let showSettings = try container.decodeIfPresent(Bool.self, forKey: .showSettingsOnWatch) ?? true
+        let useCircular = try container.decodeIfPresent(Bool.self, forKey: .useCircularProgressWatch) ?? false
         self.init(
             hideAutoSessionsIPhone: hideIPhone,
             hideAutoSessionsWatch: hideWatch,
-            showSettingsOnWatch: showSettings
+            showSettingsOnWatch: showSettings,
+            useCircularProgressWatch: useCircular
         )
     }
 }

@@ -11,9 +11,9 @@ import SwiftData
 import OSLog
 
 extension Notification.Name {
-    nonisolated(unsafe) static let watchReachabilityDidChange = Notification.Name("watchReachabilityDidChange")
-    nonisolated(unsafe) static let watchSessionReceived = Notification.Name("watchSessionReceived")
-    nonisolated(unsafe) static let watchStatsUpdated = Notification.Name("watchStatsUpdated")
+    static let watchReachabilityDidChange = Notification.Name("watchReachabilityDidChange")
+    static let watchSessionReceived = Notification.Name("watchSessionReceived")
+    static let watchStatsUpdated = Notification.Name("watchStatsUpdated")
 }
 
 private enum ReadingConstants {
@@ -22,7 +22,7 @@ private enum ReadingConstants {
 
 class WatchConnectivityManager: NSObject {
     static let shared = WatchConnectivityManager()
-    nonisolated(unsafe) static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.shlf.app", category: "WatchSync")
+    static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.shlf.app", category: "WatchSync")
 
     private var modelContext: ModelContext?
     private var lastActiveSessionEndDate: Date?
@@ -163,7 +163,8 @@ class WatchConnectivityManager: NSObject {
             let transfer = ProfileSettingsTransfer(
                 hideAutoSessionsIPhone: profile.hideAutoSessionsIPhone,
                 hideAutoSessionsWatch: profile.hideAutoSessionsWatch,
-                showSettingsOnWatch: profile.showSettingsOnWatch
+                showSettingsOnWatch: profile.showSettingsOnWatch,
+                useCircularProgressWatch: profile.useCircularProgressWatch
             )
             let data = try JSONEncoder().encode(transfer)
             if WCSession.default.isReachable {
@@ -868,6 +869,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 profile.hideAutoSessionsIPhone = settings.hideAutoSessionsIPhone
                 profile.hideAutoSessionsWatch = settings.hideAutoSessionsWatch
                 profile.showSettingsOnWatch = settings.showSettingsOnWatch
+                profile.useCircularProgressWatch = settings.useCircularProgressWatch
                 try modelContext.save()
                 Self.logger.info("Updated profile settings from Watch")
             }

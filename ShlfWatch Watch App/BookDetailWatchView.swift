@@ -37,7 +37,7 @@ struct BookDetailWatchView: View {
         ScrollView {
             VStack(spacing: 16) {
                 // Book info
-                VStack(spacing: 4) {
+                VStack(spacing: 2) {
                     Text(book.title)
                         .font(.headline)
                         .multilineTextAlignment(.center)
@@ -49,19 +49,46 @@ struct BookDetailWatchView: View {
 
                 // Progress
                 if let totalPages = book.totalPages {
-                    VStack(spacing: 8) {
-                        Text("\(book.currentPage)")
-                            .font(.system(size: 48, weight: .bold, design: .rounded))
-                            .foregroundStyle(.cyan)
+                    if profile.useCircularProgressWatch {
+                        // Circular progress
+                        ZStack {
+                            Circle()
+                                .stroke(.tertiary.opacity(0.2), lineWidth: 6)
+                                .frame(width: 100, height: 100)
 
-                        Text("of \(totalPages) pages")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            Circle()
+                                .trim(from: 0, to: book.progressPercentage / 100)
+                                .stroke(.cyan, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                                .rotationEffect(.degrees(-90))
+                                .frame(width: 100, height: 100)
+                                .animation(.spring(response: 0.6, dampingFraction: 0.8), value: book.currentPage)
 
-                        ProgressView(value: Double(book.currentPage), total: Double(totalPages))
-                            .tint(.cyan)
+                            VStack(spacing: 0) {
+                                Text("\(book.currentPage)")
+                                    .font(.system(size: 40, weight: .bold, design: .rounded))
+
+                                Text("/ \(totalPages)")
+                                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    } else {
+                        // Progress bar (default)
+                        VStack(spacing: 6) {
+                            Text("\(book.currentPage)")
+                                .font(.system(size: 48, weight: .bold, design: .rounded))
+                                .foregroundStyle(.cyan)
+
+                            Text("of \(totalPages) pages")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+
+                            ProgressView(value: Double(book.currentPage), total: Double(totalPages))
+                                .tint(.cyan)
+                        }
+                        .padding(.vertical)
                     }
-                    .padding(.vertical)
                 }
 
                 // Quick stepper (Apple-style)
@@ -188,8 +215,8 @@ struct BookDetailWatchView: View {
 
                 // Sync in background to avoid blocking UI
                 Task.detached(priority: .userInitiated) {
-                    WatchConnectivityManager.shared.sendSessionToPhone(session)
-                    WatchConnectivityManager.shared.sendProfileStatsToPhone(currentProfile)
+                    await WatchConnectivityManager.shared.sendSessionToPhone(session)
+                    await WatchConnectivityManager.shared.sendProfileStatsToPhone(currentProfile)
                 }
             } catch {
                 WatchConnectivityManager.logger.error("Failed to save reading session: \(error)")
@@ -308,8 +335,8 @@ struct AddPagesWatchView: View {
             do {
                 try modelContext.save()
                 Task.detached(priority: .userInitiated) {
-                    WatchConnectivityManager.shared.sendSessionToPhone(session)
-                    WatchConnectivityManager.shared.sendProfileStatsToPhone(currentProfile)
+                    await WatchConnectivityManager.shared.sendSessionToPhone(session)
+                    await WatchConnectivityManager.shared.sendProfileStatsToPhone(currentProfile)
                 }
             } catch {
                 WatchConnectivityManager.logger.error("Failed to save: \(error)")

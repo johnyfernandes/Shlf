@@ -39,8 +39,26 @@ struct SettingsWatchView: View {
                             }
                         }
                         .tint(.cyan)
+
+                        Toggle(isOn: Binding(
+                            get: { profile.useCircularProgressWatch },
+                            set: { newValue in
+                                profile.useCircularProgressWatch = newValue
+                                try? modelContext.save()
+                                WatchConnectivityManager.shared.sendProfileSettingsToPhone(profile)
+                            }
+                        )) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Circular Progress")
+                                    .font(.caption)
+                                Text("Show progress as a ring")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .tint(.cyan)
                     } header: {
-                        Text("Session Display")
+                        Text("Customization")
                     }
 
                     Section {
