@@ -250,6 +250,11 @@ struct LogReadingSessionView: View {
                                 positionPage = endPage
                             }
                         }
+                        .onChange(of: endPage) { oldValue, newValue in
+                            if shouldSavePosition {
+                                positionPage = newValue
+                            }
+                        }
 
                     if shouldSavePosition {
                         HStack {
