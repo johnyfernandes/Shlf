@@ -155,9 +155,12 @@ struct BookDetailWatchView: View {
             // Save changes
             do {
                 try modelContext.save()
-                // Sync quick session AND stats to iPhone so everything updates immediately
-                WatchConnectivityManager.shared.sendSessionToPhone(session)
-                WatchConnectivityManager.shared.sendProfileStatsToPhone(currentProfile)
+
+                // Sync in background to avoid blocking UI
+                Task.detached(priority: .userInitiated) {
+                    WatchConnectivityManager.shared.sendSessionToPhone(session)
+                    WatchConnectivityManager.shared.sendProfileStatsToPhone(currentProfile)
+                }
             } catch {
                 WatchConnectivityManager.logger.error("Failed to save reading session: \(error)")
             }
@@ -245,9 +248,12 @@ struct AddPagesWatchView: View {
             // Save changes
             do {
                 try modelContext.save()
-                // Sync quick session AND stats to iPhone so everything updates immediately
-                WatchConnectivityManager.shared.sendSessionToPhone(session)
-                WatchConnectivityManager.shared.sendProfileStatsToPhone(currentProfile)
+
+                // Sync in background to avoid blocking UI
+                Task.detached(priority: .userInitiated) {
+                    WatchConnectivityManager.shared.sendSessionToPhone(session)
+                    WatchConnectivityManager.shared.sendProfileStatsToPhone(currentProfile)
+                }
             } catch {
                 WatchConnectivityManager.logger.error("Failed to save reading session: \(error)")
             }
