@@ -74,7 +74,6 @@ struct BookDetailWatchView: View {
                             .frame(width: 44, height: 44)
                     }
                     .buttonStyle(.bordered)
-                    .tint(.orange)
                     .disabled(book.currentPage <= 0)
 
                     Button {
