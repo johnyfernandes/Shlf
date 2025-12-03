@@ -47,6 +47,7 @@ struct LogSessionWatchView: View {
     @State private var pendingActiveSession: ActiveReadingSession?
     @State private var debounceTask: Task<Void, Never>?
     @State private var showBackButtonAlert = false
+    @State private var showPositionMarked = false
 
     init(book: Book) {
         self.book = book
@@ -192,11 +193,15 @@ struct LogSessionWatchView: View {
                         Button {
                             markPosition()
                         } label: {
-                            Label("Mark Position", systemImage: "mappin.circle.fill")
-                                .frame(maxWidth: .infinity)
+                            Label(
+                                showPositionMarked ? "Position Marked!" : "Mark Position",
+                                systemImage: showPositionMarked ? "checkmark.circle.fill" : "mappin.circle.fill"
+                            )
+                            .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.bordered)
-                        .tint(themeColor.color)
+                        .tint(showPositionMarked ? .green : themeColor.color)
+                        .disabled(showPositionMarked)
                     }
                 }
             }
@@ -213,6 +218,8 @@ struct LogSessionWatchView: View {
                     } label: {
                         Image(systemName: "chevron.left")
                             .font(.body.weight(.semibold))
+                            .symbolRenderingMode(.monochrome)
+                            .foregroundStyle(.white)
                     }
                 }
             }
@@ -569,6 +576,19 @@ struct LogSessionWatchView: View {
 
             // Provide haptic feedback
             WKInterfaceDevice.current().play(.success)
+
+            // Show visual confirmation
+            withAnimation {
+                showPositionMarked = true
+            }
+
+            // Hide confirmation after 2 seconds
+            Task {
+                try? await Task.sleep(for: .seconds(2))
+                withAnimation {
+                    showPositionMarked = false
+                }
+            }
         } catch {
             WatchConnectivityManager.logger.error("Failed to save position: \(error)")
         }
