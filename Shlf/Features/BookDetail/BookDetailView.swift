@@ -496,17 +496,24 @@ struct BookDetailView: View {
 
         do {
             try modelContext.save()
-            // Refresh Live Activity if it's running
-            Task {
+
+            // Do ALL sync operations in background to avoid blocking UI
+            Task.detached(priority: .userInitiated) {
+                // Refresh Live Activity if it's running
                 await ReadingSessionActivityManager.shared.updateActivity(
                     currentPage: book.currentPage,
                     xpEarned: session.xpEarned
                 )
+
+                // Keep Watch in sync with new session and stats
+                WatchConnectivityManager.shared.sendSessionToWatch(session)
+                WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
+
+                // Export widget data
+                await MainActor.run {
+                    WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+                }
             }
-            // Keep Watch in sync with new session and stats
-            WatchConnectivityManager.shared.sendSessionToWatch(session)
-            WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
-            WidgetDataExporter.exportSnapshot(modelContext: modelContext)
         } catch {
             WatchConnectivityManager.logger.error("Failed to save quick session: \(error.localizedDescription)")
         }
