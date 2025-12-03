@@ -24,6 +24,9 @@ struct BookDetailView: View {
     @State private var showAddQuote = false
     @State private var showResumeAlert = false
     @State private var pendingResumePosition: BookPosition?
+    @State private var showStatusChangeAlert = false
+    @State private var pendingStatus: ReadingStatus?
+    @State private var savedProgress: Int?
 
     private var profile: UserProfile? {
         profiles.first
@@ -37,6 +40,9 @@ struct BookDetailView: View {
         ScrollView {
             VStack(spacing: Theme.Spacing.lg) {
                 bookHeader
+
+                // Modern Status Selector
+                statusSelector
 
                 if hasActiveSession {
                     activeSessionBanner
@@ -190,6 +196,21 @@ struct BookDetailView: View {
                 Text("You're currently on page \(book.currentPage). Resuming will go back to page \(position.pageNumber).")
             }
         }
+        .alert("Change Reading Status?", isPresented: $showStatusChangeAlert) {
+            Button("Change Status", role: .destructive) {
+                if let status = pendingStatus {
+                    updateReadingStatus(to: status)
+                }
+                pendingStatus = nil
+            }
+            Button("Cancel", role: .cancel) {
+                pendingStatus = nil
+            }
+        } message: {
+            if let status = pendingStatus {
+                Text("You're on page \(book.currentPage). Changing to \"\(status.rawValue)\" will reset your progress, but it will be saved and restored if you switch back to \"Currently Reading\".")
+            }
+        }
     }
 
     private var activeSessionBanner: some View {
@@ -232,6 +253,52 @@ struct BookDetailView: View {
         .buttonStyle(.plain)
     }
 
+    private var statusSelector: some View {
+        Menu {
+            ForEach(ReadingStatus.allCases, id: \.self) { status in
+                Button {
+                    handleStatusChange(to: status)
+                } label: {
+                    HStack {
+                        Image(systemName: status.icon)
+                        Text(status.rawValue)
+                        if book.readingStatus == status {
+                            Spacer()
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
+        } label: {
+            HStack {
+                Image(systemName: book.readingStatus.icon)
+                    .font(.body)
+                    .frame(width: 24)
+                    .foregroundStyle(themeColor.color)
+
+                Text(book.readingStatus.rawValue)
+                    .font(Theme.Typography.body)
+                    .foregroundStyle(Theme.Colors.text)
+
+                Spacer()
+
+                Image(systemName: "chevron.down")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Theme.Colors.tertiaryText)
+            }
+            .padding(Theme.Spacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(themeColor.color.opacity(0.08))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(themeColor.color.opacity(0.3), lineWidth: 1)
+            )
+        }
+        .padding(.horizontal, Theme.Spacing.md)
+    }
+
     private var bookHeader: some View {
         VStack(spacing: Theme.Spacing.md) {
             BookCoverView(
@@ -252,24 +319,9 @@ struct BookDetailView: View {
                     .foregroundStyle(Theme.Colors.secondaryText)
                     .multilineTextAlignment(.center)
 
-                HStack(spacing: Theme.Spacing.sm) {
-                    Label(book.bookType.rawValue, systemImage: book.bookType.icon)
-                    Text("•")
-
-                    Menu {
-                        ForEach(ReadingStatus.allCases, id: \.self) { status in
-                            Button {
-                                updateReadingStatus(to: status)
-                            } label: {
-                                Label(status.rawValue, systemImage: status.icon)
-                            }
-                        }
-                    } label: {
-                        Label(book.readingStatus.rawValue, systemImage: book.readingStatus.icon)
-                    }
-                }
-                .font(Theme.Typography.caption)
-                .foregroundStyle(Theme.Colors.tertiaryText)
+                Label(book.bookType.rawValue, systemImage: book.bookType.icon)
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(Theme.Colors.tertiaryText)
             }
         }
     }
@@ -521,14 +573,36 @@ struct BookDetailView: View {
         }
     }
 
+    private func handleStatusChange(to status: ReadingStatus) {
+        // If changing from Currently Reading with progress, show warning
+        if book.readingStatus == .currentlyReading &&
+           book.currentPage > 0 &&
+           status != .currentlyReading {
+            pendingStatus = status
+            showStatusChangeAlert = true
+        } else {
+            updateReadingStatus(to: status)
+        }
+    }
+
     private func updateReadingStatus(to status: ReadingStatus) {
         let previousStatus = book.readingStatus
+
+        // Save progress when leaving Currently Reading
+        if previousStatus == .currentlyReading && status != .currentlyReading && book.currentPage > 0 {
+            savedProgress = book.currentPage
+        }
+
         book.readingStatus = status
 
         switch status {
         case .currentlyReading:
             if book.dateStarted == nil {
                 book.dateStarted = Date()
+            }
+            // Offer to restore saved progress
+            if let saved = savedProgress, saved > book.currentPage {
+                book.currentPage = saved
             }
         case .finished:
             let previousPage = book.currentPage
