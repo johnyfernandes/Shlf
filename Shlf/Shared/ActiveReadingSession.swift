@@ -51,6 +51,12 @@ final class ActiveReadingSession {
     }
 
     func elapsedTime(at date: Date = Date()) -> TimeInterval {
+        // If startDate is in future (clock skew), return 0
+        // Session hasn't actually started yet
+        guard date >= startDate else {
+            return 0
+        }
+
         let totalElapsed = date.timeIntervalSince(startDate)
 
         // Subtract total paused duration
@@ -58,7 +64,10 @@ final class ActiveReadingSession {
 
         // Add current pause if paused now
         if isPaused, let pausedAt = pausedAt {
-            pausedTime += date.timeIntervalSince(pausedAt)
+            // Only add if pausedAt is valid (not in future)
+            if date >= pausedAt {
+                pausedTime += date.timeIntervalSince(pausedAt)
+            }
         }
 
         return max(0, totalElapsed - pausedTime)

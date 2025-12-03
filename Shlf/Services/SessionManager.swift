@@ -7,51 +7,77 @@
 
 import Foundation
 import SwiftData
+import OSLog
 
 /// Centralized service for managing reading sessions
 @MainActor
 final class SessionManager {
+    private static let logger = Logger(subsystem: "com.shlf.app", category: "SessionManager")
 
     /// Delete a reading session and recalculate stats
     /// - Parameters:
     ///   - session: Session to delete
     ///   - modelContext: SwiftData model context
     static func deleteSession(_ session: ReadingSession, in modelContext: ModelContext) throws {
-        // Get profile before deleting
-        let profileDescriptor = FetchDescriptor<UserProfile>()
-        let profiles = try modelContext.fetch(profileDescriptor)
-        guard let profile = profiles.first else {
-            // No profile, just delete
-            modelContext.delete(session)
-            return
-        }
-
-        // Store session ID before deletion
         let sessionId = session.id
+        logger.info("🗑️ Deleting session: \(sessionId)")
 
-        // Delete the session
-        modelContext.delete(session)
+        do {
+            // Get profile before deleting
+            let profileDescriptor = FetchDescriptor<UserProfile>()
+            let profiles = try modelContext.fetch(profileDescriptor)
+            guard let profile = profiles.first else {
+                // No profile, just delete
+                modelContext.delete(session)
+                logger.warning("⚠️ Deleted session without profile")
+                return
+            }
 
-        // Save deletion first
-        try modelContext.save()
+            // Delete the session
+            modelContext.delete(session)
 
-        // Recalculate stats from remaining sessions
-        let engine = GamificationEngine(modelContext: modelContext)
-        engine.recalculateStats(for: profile)
+            // Save deletion first
+            do {
+                try modelContext.save()
+                logger.info("✅ Session deleted and saved")
+            } catch {
+                logger.error("❌ Failed to save session deletion: \(error.localizedDescription)")
+                throw error
+            }
 
-        // Save updated stats
-        try modelContext.save()
+            // Recalculate stats from remaining sessions
+            do {
+                let engine = GamificationEngine(modelContext: modelContext)
+                engine.recalculateStats(for: profile)
+                logger.info("📊 Stats recalculated")
+            } catch {
+                logger.error("❌ Failed to recalculate stats: \(error.localizedDescription)")
+                // Don't throw - deletion already saved, just log error
+            }
 
-        // Sync deletion to Watch (CRITICAL - prevents Watch from showing deleted sessions)
-        WatchConnectivityManager.shared.sendSessionDeletionToWatch(sessionIds: [sessionId])
+            // Save updated stats
+            do {
+                try modelContext.save()
+            } catch {
+                logger.error("❌ Failed to save updated stats: \(error.localizedDescription)")
+                // Don't throw - session already deleted
+            }
 
-        // Sync updated stats to Watch
-        Task {
-            await WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
+            // Sync deletion to Watch (CRITICAL - prevents Watch from showing deleted sessions)
+            WatchConnectivityManager.shared.sendSessionDeletionToWatch(sessionIds: [sessionId])
+
+            // Sync updated stats to Watch
+            Task {
+                await WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
+            }
+
+            // Update widget
+            WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+
+        } catch {
+            logger.error("❌ Fatal error deleting session: \(error.localizedDescription)")
+            throw error
         }
-
-        // Update widget
-        WidgetDataExporter.exportSnapshot(modelContext: modelContext)
     }
 
     /// Delete multiple sessions and recalculate stats once
@@ -61,44 +87,63 @@ final class SessionManager {
     static func deleteSessions(_ sessions: [ReadingSession], in modelContext: ModelContext) throws {
         guard !sessions.isEmpty else { return }
 
-        // Get profile before deleting
-        let profileDescriptor = FetchDescriptor<UserProfile>()
-        let profiles = try modelContext.fetch(profileDescriptor)
-        guard let profile = profiles.first else {
-            // No profile, just delete
+        logger.info("🗑️ Deleting \(sessions.count) sessions")
+
+        do {
+            // Get profile before deleting
+            let profileDescriptor = FetchDescriptor<UserProfile>()
+            let profiles = try modelContext.fetch(profileDescriptor)
+            guard let profile = profiles.first else {
+                // No profile, just delete
+                for session in sessions {
+                    modelContext.delete(session)
+                }
+                logger.warning("⚠️ Deleted sessions without profile")
+                return
+            }
+
+            // Store session IDs before deletion
+            let sessionIds = sessions.map { $0.id }
+
+            // Delete all sessions
             for session in sessions {
                 modelContext.delete(session)
             }
-            return
+
+            // Save deletions first
+            do {
+                try modelContext.save()
+                logger.info("✅ \(sessions.count) sessions deleted")
+            } catch {
+                logger.error("❌ Failed to save deletions: \(error.localizedDescription)")
+                throw error
+            }
+
+            // Recalculate stats once from remaining sessions
+            do {
+                let engine = GamificationEngine(modelContext: modelContext)
+                engine.recalculateStats(for: profile)
+                try modelContext.save()
+                logger.info("📊 Stats recalculated and saved")
+            } catch {
+                logger.error("❌ Failed to recalculate stats: \(error.localizedDescription)")
+                // Don't throw - deletions already saved
+            }
+
+            // Sync deletions to Watch (CRITICAL - batch deletion)
+            WatchConnectivityManager.shared.sendSessionDeletionToWatch(sessionIds: sessionIds)
+
+            // Sync updated stats to Watch
+            Task {
+                await WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
+            }
+
+            // Update widget
+            WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+
+        } catch {
+            logger.error("❌ Fatal error deleting sessions: \(error.localizedDescription)")
+            throw error
         }
-
-        // Store session IDs before deletion
-        let sessionIds = sessions.map { $0.id }
-
-        // Delete all sessions
-        for session in sessions {
-            modelContext.delete(session)
-        }
-
-        // Save deletions first
-        try modelContext.save()
-
-        // Recalculate stats once from remaining sessions
-        let engine = GamificationEngine(modelContext: modelContext)
-        engine.recalculateStats(for: profile)
-
-        // Save updated stats
-        try modelContext.save()
-
-        // Sync deletions to Watch (CRITICAL - batch deletion)
-        WatchConnectivityManager.shared.sendSessionDeletionToWatch(sessionIds: sessionIds)
-
-        // Sync updated stats to Watch
-        Task {
-            await WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
-        }
-
-        // Update widget
-        WidgetDataExporter.exportSnapshot(modelContext: modelContext)
     }
 }

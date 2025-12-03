@@ -902,6 +902,37 @@ extension WatchConnectivityManager: WCSessionDelegate {
         }
     }
 
+    /// Check for duplicate sessions (same book, overlapping time range)
+    @MainActor
+    private func findDuplicateSession(for transfer: SessionTransfer, in modelContext: ModelContext) -> ReadingSession? {
+        // Fetch all sessions for this book
+        let bookId = transfer.bookId
+        let descriptor = FetchDescriptor<ReadingSession>()
+        guard let allSessions = try? modelContext.fetch(descriptor) else { return nil }
+
+        let bookSessions = allSessions.filter { $0.book?.id == bookId && $0.id != transfer.id }
+
+        // Check for overlapping time ranges (within 5 minutes tolerance)
+        let tolerance: TimeInterval = 300 // 5 minutes
+        for session in bookSessions {
+            let sessionStart = session.startDate
+            let sessionEnd = session.endDate ?? Date()
+            let transferStart = transfer.startDate
+            let transferEnd = transfer.endDate ?? Date()
+
+            // Check if time ranges overlap
+            let startsClose = abs(sessionStart.timeIntervalSince(transferStart)) < tolerance
+            let endsClose = abs(sessionEnd.timeIntervalSince(transferEnd)) < tolerance
+
+            if startsClose && endsClose {
+                Self.logger.warning("⚠️ Potential duplicate session detected: \(session.id)")
+                return session
+            }
+        }
+
+        return nil
+    }
+
     @MainActor
     private func handleWatchSession(_ transfer: SessionTransfer) async {
         guard let modelContext = await resolvedModelContext() else {
@@ -917,7 +948,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
             var xpDelta = 0
             var xpForActivity = 0
 
-            // Check if session already exists
+            // Check if session already exists by ID
             let descriptor = FetchDescriptor<ReadingSession>(
                 predicate: #Predicate<ReadingSession> { session in
                     session.id == transfer.id
