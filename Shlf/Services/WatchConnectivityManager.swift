@@ -1344,10 +1344,58 @@ extension WatchConnectivityManager: WCSessionDelegate {
     }
 
     /// Handles consolidated session completion from Watch (ATOMIC - replaces separate handling)
+    /// Validate session completion data before processing
+    private func validateSessionCompletion(_ completion: SessionCompletionTransfer) -> Bool {
+        let session = completion.completedSession
+
+        // Validate dates
+        if let endDate = session.endDate {
+            // endDate should be >= startDate
+            guard endDate >= session.startDate else {
+                Self.logger.error("⚠️ Invalid session: endDate < startDate")
+                return false
+            }
+
+            // endDate should not be too far in future (5 min tolerance)
+            let maxFuture = Date().addingTimeInterval(300)
+            guard endDate <= maxFuture else {
+                Self.logger.error("⚠️ Invalid session: endDate in future")
+                return false
+            }
+
+            // For completed sessions ending recently (< 5 min ago), process normally
+            // For older sessions, log warning but still process (late sync is OK)
+            let timeSinceEnd = Date().timeIntervalSince(endDate)
+            if timeSinceEnd > 3600 { // 1 hour
+                Self.logger.info("ℹ️ Processing old session (ended \(Int(timeSinceEnd/60)) min ago)")
+            }
+        }
+
+        // Validate pages are reasonable
+        guard session.startPage >= 0 && session.endPage >= 0 else {
+            Self.logger.error("⚠️ Invalid session: negative pages")
+            return false
+        }
+
+        // Validate duration is reasonable (< 24 hours)
+        guard session.durationMinutes >= 0 && session.durationMinutes < 1440 else {
+            Self.logger.error("⚠️ Invalid session: duration out of range")
+            return false
+        }
+
+        return true
+    }
+
     @MainActor
     private func handleSessionCompletion(_ completion: SessionCompletionTransfer) async {
         guard let modelContext = await resolvedModelContext() else {
             Self.logger.warning("ModelContext not configured")
+            return
+        }
+
+        // VALIDATION: Ensure completion data is valid before processing
+        guard validateSessionCompletion(completion) else {
+            Self.logger.error("❌ Session completion validation failed, ignoring")
             return
         }
 

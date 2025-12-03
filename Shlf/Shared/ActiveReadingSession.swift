@@ -96,4 +96,21 @@ final class ActiveReadingSession {
         let inactivityThreshold = TimeInterval(inactivityHours * 3600)
         return Date().timeIntervalSince(lastUpdated) > inactivityThreshold
     }
+
+    /// Update the lastUpdated timestamp to current time
+    /// Call this whenever the session is meaningfully modified
+    func touch() {
+        lastUpdated = Date()
+    }
+
+    /// Validate pause/resume state transitions
+    func validatePauseState() -> Bool {
+        if isPaused {
+            // If paused, must have pausedAt timestamp
+            guard pausedAt != nil else { return false }
+            // pausedAt should not be in future
+            guard let pausedAt = pausedAt, pausedAt <= Date() else { return false }
+        }
+        return true
+    }
 }

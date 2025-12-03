@@ -14,6 +14,52 @@ import OSLog
 final class SessionManager {
     private static let logger = Logger(subsystem: "com.shlf.app", category: "SessionManager")
 
+    // MARK: - Fetch Helpers
+
+    /// Fetch recent sessions with limit (optimized for performance)
+    /// - Parameters:
+    ///   - modelContext: SwiftData context
+    ///   - limit: Maximum number of sessions to fetch (default 100)
+    ///   - daysBack: Only fetch sessions from last N days (default 90)
+    /// - Returns: Array of recent sessions, sorted newest first
+    static func fetchRecentSessions(
+        in modelContext: ModelContext,
+        limit: Int = 100,
+        daysBack: Int = 90
+    ) throws -> [ReadingSession] {
+        let cutoffDate = Calendar.current.date(byAdding: .day, value: -daysBack, to: Date()) ?? Date()
+
+        var descriptor = FetchDescriptor<ReadingSession>(
+            predicate: #Predicate<ReadingSession> { session in
+                session.startDate >= cutoffDate
+            },
+            sortBy: [SortDescriptor(\.startDate, order: .reverse)]
+        )
+        descriptor.fetchLimit = limit
+
+        return try modelContext.fetch(descriptor)
+    }
+
+    /// Fetch sessions for a specific book (optimized)
+    static func fetchSessions(
+        for book: Book,
+        in modelContext: ModelContext,
+        limit: Int = 50
+    ) throws -> [ReadingSession] {
+        let bookId = book.id
+        var descriptor = FetchDescriptor<ReadingSession>(
+            predicate: #Predicate<ReadingSession> { session in
+                session.book?.id == bookId
+            },
+            sortBy: [SortDescriptor(\.startDate, order: .reverse)]
+        )
+        descriptor.fetchLimit = limit
+
+        return try modelContext.fetch(descriptor)
+    }
+
+    // MARK: - Delete Operations
+
     /// Delete a reading session and recalculate stats
     /// - Parameters:
     ///   - session: Session to delete

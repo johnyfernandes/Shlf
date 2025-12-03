@@ -8,6 +8,24 @@
 import Foundation
 import SwiftData
 
+/// Reading session model with comprehensive validation
+///
+/// ## Timezone Handling
+/// - All dates stored as absolute timestamps (UTC internally)
+/// - Displayed in UI using current timezone
+/// - When user travels: sessions display in local time of current timezone
+/// - Stats like "pages read today" use current timezone's midnight boundary
+///
+/// ## Multiple Active Sessions
+/// - System enforces ONE total active session at a time
+/// - Creating new active session replaces any existing one
+/// - Users cannot track multiple books simultaneously in active state
+///
+/// ## Validation
+/// - Use `isValid` to check comprehensive validity
+/// - Use `hasValidDates` for date-specific validation
+/// - Use `hasValidPages` for page number validation
+/// - Use `validationErrors` for debugging invalid sessions
 @Model
 final class ReadingSession {
     var id: UUID = UUID()
