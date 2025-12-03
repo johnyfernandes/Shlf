@@ -670,7 +670,11 @@ struct BookDetailView: View {
         modelContext.insert(session)
 
         // Award XP/streak and achievements using authoritative engine
-        engine.awardXP(session.xpEarned, to: profile)
+        // CRITICAL: Only award if not already awarded (prevent double-counting)
+        if !session.xpAwarded {
+            engine.awardXP(session.xpEarned, to: profile)
+            session.xpAwarded = true
+        }
         engine.updateStreak(for: profile, sessionDate: Date())
         engine.checkAchievements(for: profile)
 

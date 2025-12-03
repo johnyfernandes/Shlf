@@ -535,7 +535,11 @@ struct LogReadingSessionView: View {
         }
 
         if let profile = profiles.first {
-            engine.awardXP(xp, to: profile)
+            // CRITICAL: Only award if not already awarded (prevent double-counting)
+            if !session.xpAwarded {
+                engine.awardXP(xp, to: profile)
+                session.xpAwarded = true
+            }
             engine.updateStreak(for: profile, sessionDate: activeSession.startDate)
             engine.checkAchievements(for: profile)
 
@@ -623,7 +627,11 @@ struct LogReadingSessionView: View {
     }
 
     if let profile = profiles.first {
-        engine.awardXP(xp, to: profile)
+        // CRITICAL: Only award if not already awarded (prevent double-counting)
+        if !session.xpAwarded {
+            engine.awardXP(xp, to: profile)
+            session.xpAwarded = true
+        }
         engine.updateStreak(for: profile, sessionDate: sessionDate)
         engine.checkAchievements(for: profile)
 
