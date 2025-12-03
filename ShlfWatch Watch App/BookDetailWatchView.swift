@@ -17,6 +17,7 @@ private enum ReadingConstants {
 
 struct BookDetailWatchView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.themeColor) private var themeColor
     @Bindable var book: Book
     @Query private var profiles: [UserProfile]
 
@@ -58,7 +59,7 @@ struct BookDetailWatchView: View {
 
                             Circle()
                                 .trim(from: 0, to: book.progressPercentage / 100)
-                                .stroke(.cyan, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                                .stroke(themeColor.color, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                                 .rotationEffect(.degrees(-90))
                                 .frame(width: 100, height: 100)
                                 .animation(.spring(response: 0.6, dampingFraction: 0.8), value: book.currentPage)
@@ -78,14 +79,14 @@ struct BookDetailWatchView: View {
                         VStack(spacing: 6) {
                             Text("\(book.currentPage)")
                                 .font(.system(size: 48, weight: .bold, design: .rounded))
-                                .foregroundStyle(.cyan)
+                                .foregroundStyle(themeColor.color)
 
                             Text("of \(totalPages) pages")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
 
                             ProgressView(value: Double(book.currentPage), total: Double(totalPages))
-                                .tint(.cyan)
+                                .tint(themeColor.color)
                         }
                         .padding(.vertical)
                     }
@@ -111,7 +112,7 @@ struct BookDetailWatchView: View {
                             .frame(width: 44, height: 44)
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(.cyan)
+                    .tint(themeColor.color)
                 }
 
                 // Preset quick adds
@@ -172,7 +173,7 @@ struct BookDetailWatchView: View {
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.bordered)
-        .tint(.cyan)
+        .tint(themeColor.color)
     }
 
     private func addPages(_ pages: Int) {
@@ -228,6 +229,7 @@ struct BookDetailWatchView: View {
 struct AddPagesWatchView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.themeColor) private var themeColor
     @Bindable var book: Book
     @Query private var profiles: [UserProfile]
 
@@ -259,7 +261,7 @@ struct AddPagesWatchView: View {
             // Digital Crown scrollable value
             Text("\(intAmount > 0 ? "+" : "")\(intAmount)")
                 .font(.system(size: 64, weight: .bold, design: .rounded))
-                .foregroundStyle(intAmount > 0 ? .cyan : intAmount < 0 ? .orange : .secondary)
+                .foregroundStyle(intAmount > 0 ? themeColor.color : intAmount < 0 ? .orange : .secondary)
                 .focusable()
                 .digitalCrownRotation($amount, from: -50.0, through: 100.0, by: 1.0, sensitivity: .low, isContinuous: false, isHapticFeedbackEnabled: true)
                 .focused($isFocused)
@@ -285,7 +287,7 @@ struct AddPagesWatchView: View {
                     Text("Apply")
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(intAmount > 0 ? .cyan : .orange)
+                .tint(intAmount > 0 ? themeColor.color : .orange)
                 .disabled(intAmount == 0)
             }
             .padding(.horizontal)

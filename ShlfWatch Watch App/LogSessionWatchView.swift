@@ -19,6 +19,7 @@ private enum ReadingConstants {
 struct LogSessionWatchView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.themeColor) private var themeColor
     @Bindable var book: Book
     @Query private var profiles: [UserProfile]
     @Query private var activeSessions: [ActiveReadingSession]
@@ -60,12 +61,12 @@ struct LogSessionWatchView: View {
                 VStack(spacing: 4) {
                     Text(timeString)
                         .font(.system(size: 48, weight: .bold, design: .rounded))
-                        .foregroundStyle(isPaused ? .orange : .cyan)
+                        .foregroundStyle(isPaused ? Color.orange : themeColor.color)
                         .monospacedDigit()
 
                     Text(isActive ? (isPaused ? "Paused" : "Reading...") : "Ready")
                         .font(.caption)
-                        .foregroundStyle(isPaused ? .orange : .secondary)
+                        .foregroundStyle(isPaused ? Color.orange : Color.secondary)
                 }
                 .padding(.vertical)
 
@@ -83,7 +84,7 @@ struct LogSessionWatchView: View {
                         .frame(maxWidth: .infinity)
 
                         Image(systemName: "arrow.right")
-                            .foregroundStyle(.cyan)
+                            .foregroundStyle(themeColor.color)
 
                         VStack {
                             Text("\(currentPage)")
@@ -106,7 +107,7 @@ struct LogSessionWatchView: View {
                                 adjustPage(-1)
                             } label: {
                                 Image(systemName: "minus.circle.fill")
-                                    .foregroundStyle(currentPage <= startPage ? Color.secondary : Color.cyan)
+                                    .foregroundStyle(currentPage <= startPage ? Color.secondary : themeColor.color)
                             }
                             .buttonStyle(.borderless)
                             .disabled(currentPage <= startPage)
@@ -115,7 +116,7 @@ struct LogSessionWatchView: View {
                                 adjustPage(1)
                             } label: {
                                 Image(systemName: "plus.circle.fill")
-                                    .foregroundStyle(currentPage >= (book.totalPages ?? ReadingConstants.defaultMaxPages) ? Color.secondary : Color.cyan)
+                                    .foregroundStyle(currentPage >= (book.totalPages ?? ReadingConstants.defaultMaxPages) ? Color.secondary : themeColor.color)
                             }
                             .buttonStyle(.borderless)
                             .disabled(currentPage >= (book.totalPages ?? ReadingConstants.defaultMaxPages))
@@ -161,7 +162,7 @@ struct LogSessionWatchView: View {
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(.cyan)
+                        .tint(themeColor.color)
                     } else {
                         // Pause/Resume Button
                         Button {

@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 
 struct SessionDetailWatchView: View {
+    @Environment(\.themeColor) private var themeColor
     let session: ReadingSession
 
     private var formattedDate: String {
@@ -32,7 +33,7 @@ struct SessionDetailWatchView: View {
                         icon: "book.fill",
                         value: "\(pagesRead)",
                         label: "Pages Read",
-                        color: .cyan
+                        color: themeColor.color
                     )
 
                     // Duration
@@ -70,7 +71,7 @@ struct SessionDetailWatchView: View {
                         .frame(maxWidth: .infinity)
 
                         Image(systemName: "arrow.right")
-                            .foregroundStyle(.cyan)
+                            .foregroundStyle(themeColor.color)
 
                         VStack {
                             Text("\(session.endPage)")

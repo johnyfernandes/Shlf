@@ -10,6 +10,7 @@ import SwiftData
 
 struct SettingsWatchView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.themeColor) private var themeColor
     @Query private var profiles: [UserProfile]
 
     private var profile: UserProfile? {
@@ -38,7 +39,7 @@ struct SettingsWatchView: View {
                                     .foregroundStyle(.secondary)
                             }
                         }
-                        .tint(.cyan)
+                        .tint(themeColor.color)
 
                         Toggle(isOn: Binding(
                             get: { profile.useCircularProgressWatch },
@@ -56,7 +57,7 @@ struct SettingsWatchView: View {
                                     .foregroundStyle(.secondary)
                             }
                         }
-                        .tint(.cyan)
+                        .tint(themeColor.color)
                     } header: {
                         Text("Customization")
                     }

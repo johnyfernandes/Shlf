@@ -132,6 +132,7 @@ struct ContentView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink(destination: SettingsWatchView()) {
                     Image(systemName: "gearshape.fill")
+                        .font(.body)
                         .foregroundStyle(currentThemeColor.color)
                 }
             }

@@ -128,6 +128,7 @@ struct TodaysSummaryCard: View {
 }
 
 struct StatItem: View {
+    @Environment(\.themeColor) private var themeColor
     let icon: String
     let value: String
     let label: String
@@ -135,7 +136,7 @@ struct StatItem: View {
     var body: some View {
         VStack(spacing: 4) {
             Image(systemName: icon)
-                .foregroundStyle(.cyan)
+                .foregroundStyle(themeColor.color)
                 .font(.caption)
 
             Text(value)
@@ -151,6 +152,7 @@ struct StatItem: View {
 }
 
 struct SessionRowWatch: View {
+    @Environment(\.themeColor) private var themeColor
     let session: ReadingSession
 
     private var timeAgo: String {
@@ -167,7 +169,7 @@ struct SessionRowWatch: View {
                 Spacer()
                 Text("\(session.xpEarned) XP")
                     .font(.caption)
-                    .foregroundStyle(.cyan)
+                    .foregroundStyle(themeColor.color)
             }
 
             HStack {
