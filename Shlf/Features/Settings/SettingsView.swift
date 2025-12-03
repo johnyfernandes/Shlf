@@ -46,10 +46,11 @@ struct SettingsView: View {
                     NavigationLink {
                         ThemeColorSettingsView(profile: profile)
                     } label: {
-                        HStack {
+                        Label {
+                            Text("Theme Color")
+                        } icon: {
                             Image(systemName: "paintbrush.fill")
                                 .foregroundStyle(profile.themeColor.gradient)
-                            Text("Theme Color")
                         }
                     }
 
