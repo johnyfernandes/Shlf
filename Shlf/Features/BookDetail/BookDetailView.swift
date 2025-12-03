@@ -521,11 +521,21 @@ struct BookDetailView: View {
     }
 
     private func deleteBook() {
+        // Deleting a book cascade-deletes its sessions, so we need to recalculate stats
         modelContext.delete(book)
+
+        // Recalculate stats after cascade deletion of sessions
+        if let profile = profile {
+            let engine = GamificationEngine(modelContext: modelContext)
+            engine.recalculateStats(for: profile)
+        }
 
         // Sync to Watch after deletion
         Task {
             await WatchConnectivityManager.shared.syncBooksToWatch()
+            if let profile = profile {
+                await WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
+            }
         }
 
         // Update widget snapshot so deleted books disappear

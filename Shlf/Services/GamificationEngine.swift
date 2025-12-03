@@ -25,6 +25,35 @@ final class GamificationEngine {
         return XPCalculator.calculate(for: session)
     }
 
+    /// Recalculate total XP from all sessions (source of truth)
+    /// Call this after deleting sessions, removing pages, or to fix stats
+    func recalculateStats(for profile: UserProfile) {
+        let previousLevel = profile.currentLevel
+
+        // Recalculate XP from all sessions
+        let sessionDescriptor = FetchDescriptor<ReadingSession>()
+        guard let allSessions = try? modelContext.fetch(sessionDescriptor) else { return }
+
+        let totalXP = allSessions.reduce(0) { $0 + $1.xpEarned }
+        profile.totalXP = totalXP // Set directly, don't add
+
+        // Check for level-up achievements
+        let newLevel = profile.currentLevel
+        if newLevel > previousLevel {
+            checkLevelAchievements(level: newLevel, profile: profile)
+        }
+
+        // Recalculate streak
+        recalculateStreak(for: profile, sessions: allSessions)
+
+        // Update goals
+        let tracker = GoalTracker(modelContext: modelContext)
+        tracker.updateGoals(for: profile)
+
+        // Check all achievements
+        checkAchievements(for: profile)
+    }
+
     func awardXP(_ amount: Int, to profile: UserProfile) {
         let previousLevel = profile.currentLevel
         profile.totalXP += amount
@@ -41,6 +70,69 @@ final class GamificationEngine {
     }
 
     // MARK: - Streak Management
+
+    /// Recalculate streak from all sessions (source of truth)
+    private func recalculateStreak(for profile: UserProfile, sessions: [ReadingSession]) {
+        guard !sessions.isEmpty else {
+            profile.currentStreak = 0
+            profile.longestStreak = 0
+            profile.lastReadingDate = nil
+            return
+        }
+
+        let calendar = Calendar.current
+
+        // Sort sessions by date
+        let sortedSessions = sessions.sorted { $0.startDate < $1.startDate }
+
+        // Get unique reading days
+        let readingDays = Set(sortedSessions.map { calendar.startOfDay(for: $0.startDate) })
+        let sortedDays = readingDays.sorted()
+
+        // Calculate longest and current streak
+        var longestStreak = 0
+        var currentStreakCount = 0
+        var streakInProgress = false
+
+        for (index, day) in sortedDays.enumerated() {
+            if index == 0 {
+                currentStreakCount = 1
+                streakInProgress = true
+            } else {
+                let previousDay = sortedDays[index - 1]
+                let daysSince = calendar.dateComponents([.day], from: previousDay, to: day).day ?? 0
+
+                if daysSince == 1 {
+                    // Consecutive day
+                    currentStreakCount += 1
+                } else {
+                    // Streak broken
+                    longestStreak = max(longestStreak, currentStreakCount)
+                    currentStreakCount = 1
+                    streakInProgress = (index == sortedDays.count - 1) // Only in progress if it's the last day
+                }
+            }
+
+            longestStreak = max(longestStreak, currentStreakCount)
+        }
+
+        // Check if current streak is still active (read today or yesterday)
+        if let lastDay = sortedDays.last {
+            let today = calendar.startOfDay(for: Date())
+            let daysSinceLastReading = calendar.dateComponents([.day], from: lastDay, to: today).day ?? 0
+
+            if daysSinceLastReading <= 1 {
+                // Streak is active
+                profile.currentStreak = currentStreakCount
+            } else {
+                // Streak broken
+                profile.currentStreak = 0
+            }
+        }
+
+        profile.longestStreak = longestStreak
+        profile.lastReadingDate = sortedSessions.last?.startDate
+    }
 
     func updateStreak(for profile: UserProfile, sessionDate: Date = Date()) {
         let calendar = Calendar.current

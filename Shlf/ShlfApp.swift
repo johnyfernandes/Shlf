@@ -44,6 +44,17 @@ struct ShlfApp: App {
                         Task { @MainActor in
                             await ActiveSessionCleanup.cleanupStaleSessionsIfNeeded(modelContext: container.mainContext)
                         }
+
+                        // Recalculate stats on launch (fixes any incorrect XP/streak from deletions)
+                        Task { @MainActor in
+                            let descriptor = FetchDescriptor<UserProfile>()
+                            if let profiles = try? container.mainContext.fetch(descriptor),
+                               let profile = profiles.first {
+                                let engine = GamificationEngine(modelContext: container.mainContext)
+                                engine.recalculateStats(for: profile)
+                                try? container.mainContext.save()
+                            }
+                        }
                     }
             } else {
                 ProgressView()
