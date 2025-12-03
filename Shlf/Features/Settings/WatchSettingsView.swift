@@ -119,7 +119,7 @@ struct WatchSettingsView: View {
                 }
             }
 
-            if let profile = profile {
+            if let profile = profile, isWatchAppInstalled {
                 Section {
                     Picker("Progress Style", selection: Binding(
                         get: { profile.useCircularProgressWatch },
@@ -145,35 +145,37 @@ struct WatchSettingsView: View {
                 }
             }
 
-            Section {
-                if let profile = profile {
-                    Toggle(isOn: Binding(
-                        get: { profile.hideAutoSessionsWatch },
-                        set: { newValue in
-                            profile.hideAutoSessionsWatch = newValue
-                            try? modelContext.save()
-                            // Send to Watch immediately
-                            WatchConnectivityManager.shared.sendProfileSettingsToWatch(profile)
+            if isWatchAppInstalled {
+                Section {
+                    if let profile = profile {
+                        Toggle(isOn: Binding(
+                            get: { profile.hideAutoSessionsWatch },
+                            set: { newValue in
+                                profile.hideAutoSessionsWatch = newValue
+                                try? modelContext.save()
+                                // Send to Watch immediately
+                                WatchConnectivityManager.shared.sendProfileSettingsToWatch(profile)
+                            }
+                        )) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Hide Quick Sessions on Watch")
+                                    .font(Theme.Typography.body)
+                                Text("Only show timer sessions in Watch session list")
+                                    .font(Theme.Typography.caption)
+                                    .foregroundStyle(Theme.Colors.secondaryText)
+                            }
                         }
-                    )) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Hide Quick Sessions on Watch")
-                                .font(Theme.Typography.body)
-                            Text("Only show timer sessions in Watch session list")
-                                .font(Theme.Typography.caption)
-                                .foregroundStyle(Theme.Colors.secondaryText)
-                        }
+                        .tint(Theme.Colors.primary)
                     }
-                    .tint(Theme.Colors.primary)
+                } header: {
+                    Text("Session Display")
+                } footer: {
+                    Text("Control which sessions appear on your Apple Watch. This setting syncs with the Watch app. To control iPhone sessions, go to Sessions.")
+                        .font(Theme.Typography.caption)
                 }
-            } header: {
-                Text("Session Display")
-            } footer: {
-                Text("Control which sessions appear on your Apple Watch. This setting syncs with the Watch app. To control iPhone sessions, go to Reading Preferences.")
-                    .font(Theme.Typography.caption)
             }
 
-            if let profile = profile {
+            if let profile = profile, isWatchAppInstalled {
                 Section("Watch App UI") {
                     Toggle(isOn: Binding(
                         get: { profile.showSettingsOnWatch },
