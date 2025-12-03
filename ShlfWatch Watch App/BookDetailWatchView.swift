@@ -64,34 +64,46 @@ struct BookDetailWatchView: View {
                     .padding(.vertical)
                 }
 
-                // Quick actions
-                VStack(spacing: 8) {
+                // Quick stepper (Apple-style)
+                HStack(spacing: 12) {
+                    Button {
+                        addPages(-1)
+                    } label: {
+                        Image(systemName: "minus")
+                            .font(.title2.weight(.semibold))
+                            .frame(width: 44, height: 44)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.orange)
+                    .disabled(book.currentPage <= 0)
+
                     Button {
                         addPages(1)
                     } label: {
-                        Label("+1 Page", systemImage: "plus.circle.fill")
-                            .frame(maxWidth: .infinity)
+                        Image(systemName: "plus")
+                            .font(.title2.weight(.semibold))
+                            .frame(width: 44, height: 44)
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.cyan)
-
-                    Button {
-                        addPages(5)
-                    } label: {
-                        Label("+5 Pages", systemImage: "plus.circle.fill")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(.cyan)
-
-                    Button {
-                        showingAddPages = true
-                    } label: {
-                        Label("Custom", systemImage: "number")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
                 }
+
+                // Preset quick adds
+                HStack(spacing: 6) {
+                    quickAddButton(5)
+                    quickAddButton(10)
+                    quickAddButton(20)
+                }
+
+                // Custom amount with Digital Crown
+                Button {
+                    showingAddPages = true
+                } label: {
+                    Label("Custom Amount", systemImage: "slider.horizontal.3")
+                        .font(.footnote)
+                }
+                .buttonStyle(.bordered)
+                .tint(.secondary)
 
                 // Session actions
                 Divider()
@@ -124,15 +136,34 @@ struct BookDetailWatchView: View {
         }
     }
 
+    @ViewBuilder
+    private func quickAddButton(_ amount: Int) -> some View {
+        Button {
+            addPages(amount)
+        } label: {
+            Text("+\(amount)")
+                .font(.caption2.weight(.medium))
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        .tint(.cyan)
+    }
+
     private func addPages(_ pages: Int) {
         let oldPage = book.currentPage
-        book.currentPage = min((book.totalPages ?? ReadingConstants.defaultMaxPages), book.currentPage + pages)
+        let newPage = book.currentPage + pages
 
-        // Send delta to iPhone via WatchConnectivity
-        let delta = PageDelta(bookUUID: book.id, delta: pages)
+        // Clamp to valid range
+        book.currentPage = max(0, min((book.totalPages ?? ReadingConstants.defaultMaxPages), newPage))
+
+        let actualDelta = book.currentPage - oldPage
+        if actualDelta == 0 { return }
+
+        // Send delta to iPhone
+        let delta = PageDelta(bookUUID: book.id, delta: actualDelta)
         WatchConnectivityManager.shared.sendPageDelta(delta)
 
-        // Create auto-generated session
+        // Create session only for positive progress
         let pagesRead = book.currentPage - oldPage
         if pagesRead > 0 {
             let currentProfile = profile
@@ -174,66 +205,97 @@ struct AddPagesWatchView: View {
     @Bindable var book: Book
     @Query private var profiles: [UserProfile]
 
-    @State private var pagesToAdd = 10
+    @State private var amount = 0.0
+    @FocusState private var isFocused: Bool
+
+    private var intAmount: Int {
+        Int(amount.rounded())
+    }
 
     private var profile: UserProfile {
         if let existing = profiles.first {
             return existing
         }
-        // Auto-create profile if it doesn't exist
         let new = UserProfile()
         modelContext.insert(new)
         return new
     }
 
     var body: some View {
-        VStack(spacing: 12) {
-            Text("Add Pages")
-                .font(.headline)
+        VStack(spacing: 0) {
+            Spacer()
 
-            Picker("Pages", selection: $pagesToAdd) {
-                Text("5").tag(5)
-                Text("10").tag(10)
-                Text("15").tag(15)
-                Text("20").tag(20)
-                Text("30").tag(30)
-            }
-            .pickerStyle(.wheel)
+            Text("Adjust Pages")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(.bottom, 8)
 
-            Button {
-                addPages()
-            } label: {
-                Text("Add \(pagesToAdd)")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.cyan)
+            // Digital Crown scrollable value
+            Text("\(intAmount > 0 ? "+" : "")\(intAmount)")
+                .font(.system(size: 64, weight: .bold, design: .rounded))
+                .foregroundStyle(intAmount > 0 ? .cyan : intAmount < 0 ? .orange : .secondary)
+                .focusable()
+                .digitalCrownRotation($amount, from: -50.0, through: 100.0, by: 1.0, sensitivity: .low, isContinuous: false, isHapticFeedbackEnabled: true)
+                .focused($isFocused)
+                .frame(height: 80)
 
-            Button("Cancel") {
-                dismiss()
+            Text(intAmount == 0 ? "Use Digital Crown" : intAmount > 0 ? "pages to add" : "pages to remove")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .padding(.top, 4)
+
+            Spacer()
+
+            // Buttons always visible in same position
+            HStack(spacing: 8) {
+                Button("Cancel") {
+                    dismiss()
+                }
+                .buttonStyle(.bordered)
+
+                Button {
+                    applyAndDismiss()
+                } label: {
+                    Text("Apply")
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(intAmount > 0 ? .cyan : .orange)
+                .disabled(intAmount == 0)
             }
-            .buttonStyle(.bordered)
+            .padding(.horizontal)
+            .padding(.bottom, 8)
         }
-        .padding()
+        .onAppear {
+            isFocused = true
+        }
     }
 
-    private func addPages() {
+    private func applyAndDismiss() {
         let oldPage = book.currentPage
-        book.currentPage = min((book.totalPages ?? ReadingConstants.defaultMaxPages), book.currentPage + pagesToAdd)
+        let newPage = book.currentPage + intAmount
 
-        // Send delta to iPhone via WatchConnectivity
-        let delta = PageDelta(bookUUID: book.id, delta: pagesToAdd)
+        // Clamp to valid range
+        book.currentPage = max(0, min((book.totalPages ?? ReadingConstants.defaultMaxPages), newPage))
+
+        let actualDelta = book.currentPage - oldPage
+
+        if actualDelta == 0 {
+            dismiss()
+            return
+        }
+
+        // Send delta to iPhone
+        let delta = PageDelta(bookUUID: book.id, delta: actualDelta)
         WatchConnectivityManager.shared.sendPageDelta(delta)
 
-        // Create auto-generated session
-        let pagesRead = book.currentPage - oldPage
-        if pagesRead > 0 {
+        // Create session only for positive progress
+        if actualDelta > 0 {
             let currentProfile = profile
             let engine = GamificationEngine(modelContext: modelContext)
             let session = ReadingSession(
                 startPage: oldPage,
                 endPage: book.currentPage,
-                durationMinutes: pagesRead * ReadingConstants.estimatedMinutesPerPage,
+                durationMinutes: actualDelta * ReadingConstants.estimatedMinutesPerPage,
                 xpEarned: 0,
                 isAutoGenerated: true,
                 book: book
@@ -241,21 +303,17 @@ struct AddPagesWatchView: View {
             session.xpEarned = engine.calculateXP(for: session)
             modelContext.insert(session)
 
-            // Update goals locally for Watch UI
             let tracker = GoalTracker(modelContext: modelContext)
             tracker.updateGoals(for: currentProfile)
 
-            // Save changes
             do {
                 try modelContext.save()
-
-                // Sync in background to avoid blocking UI
                 Task.detached(priority: .userInitiated) {
                     WatchConnectivityManager.shared.sendSessionToPhone(session)
                     WatchConnectivityManager.shared.sendProfileStatsToPhone(currentProfile)
                 }
             } catch {
-                WatchConnectivityManager.logger.error("Failed to save reading session: \(error)")
+                WatchConnectivityManager.logger.error("Failed to save: \(error)")
             }
         }
 
