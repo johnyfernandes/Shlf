@@ -14,6 +14,8 @@ struct BarcodeScannerView: View {
     @Environment(\.themeColor) private var themeColor
     let onScan: (String) -> Void
 
+    @State private var showCameraOverlay = true
+
     var body: some View {
         ZStack {
             if DataScannerViewController.isSupported && DataScannerViewController.isAvailable {
@@ -44,6 +46,25 @@ struct BarcodeScannerView: View {
                 .padding(Theme.Spacing.xl)
             }
 
+            // Camera stabilization overlay
+            if showCameraOverlay {
+                Color.black
+                    .ignoresSafeArea()
+                    .overlay {
+                        VStack(spacing: Theme.Spacing.lg) {
+                            ProgressView()
+                                .progressViewStyle(.circular)
+                                .tint(.white)
+                                .scaleEffect(1.5)
+
+                            Text("Initializing Camera...")
+                                .font(Theme.Typography.body)
+                                .foregroundStyle(.white)
+                        }
+                    }
+                    .transition(.opacity)
+            }
+
             VStack {
                 HStack {
                     Spacer()
@@ -60,13 +81,23 @@ struct BarcodeScannerView: View {
 
                 Spacer()
 
-                Text("Scan ISBN Barcode")
-                    .font(Theme.Typography.headline)
-                    .foregroundStyle(.white)
-                    .padding(Theme.Spacing.sm)
-                    .background(.ultraThinMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: Theme.CornerRadius.sm))
-                    .padding(Theme.Spacing.lg)
+                if !showCameraOverlay {
+                    Text("Scan ISBN Barcode")
+                        .font(Theme.Typography.headline)
+                        .foregroundStyle(.white)
+                        .padding(Theme.Spacing.sm)
+                        .background(.ultraThinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: Theme.CornerRadius.sm))
+                        .padding(Theme.Spacing.lg)
+                        .transition(.opacity)
+                }
+            }
+        }
+        .animation(.easeInOut(duration: 0.5), value: showCameraOverlay)
+        .onAppear {
+            // Hide overlay after camera has time to stabilize
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                showCameraOverlay = false
             }
         }
     }
@@ -86,7 +117,7 @@ struct DataScannerRepresentable: UIViewControllerRepresentable {
 
         let scanner = DataScannerViewController(
             recognizedDataTypes: recognizedDataTypes,
-            qualityLevel: .accurate,
+            qualityLevel: .fast,
             recognizesMultipleItems: false,
             isHighFrameRateTrackingEnabled: false,
             isPinchToZoomEnabled: true,
