@@ -23,7 +23,6 @@ struct HomeView: View {
 
     @State private var showAddBook = false
     @State private var isEditingCards = false
-    @State private var draggingCard: StatCardType?
     @State private var showLevelDetail = false
 
     private var profile: UserProfile {
@@ -110,7 +109,6 @@ struct HomeView: View {
                                 Button {
                                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                                         isEditingCards = false
-                                        draggingCard = nil
                                     }
                                 } label: {
                                     Image(systemName: "checkmark.circle.fill")
@@ -191,48 +189,51 @@ struct HomeView: View {
                         }
                     }
                 )
-                .scaleEffect(draggingCard == cardType && isEditingCards ? 1.05 : 1.0)
-                .highPriorityGesture(
-                    LongPressGesture(minimumDuration: 0.3)
-                        .onEnded { _ in
-                            if !isEditingCards {
-                                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                    isEditingCards = true
-                                }
-                            }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    if !isEditingCards {
+                        handleCardTap(cardType)
+                    }
+                }
+                .onLongPressGesture(minimumDuration: 0.5) {
+                    if !isEditingCards {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            isEditingCards = true
                         }
-                )
-                .simultaneousGesture(
-                    TapGesture()
-                        .onEnded {
-                            if !isEditingCards {
-                                handleCardTap(cardType)
-                            }
-                        }
-                )
+                    }
+                }
                 .if(isEditingCards) { view in
                     view
-                        .onDrag {
-                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                            withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
-                                self.draggingCard = cardType
-                            }
-                            return NSItemProvider(object: cardType.rawValue as NSString)
+                        .draggable(cardType.rawValue) {
+                            // Drag preview
+                            StatCard(
+                                title: cardType.title,
+                                value: getValue(for: cardType),
+                                icon: cardType.icon,
+                                gradient: cardType.gradient,
+                                isEditing: false
+                            )
+                            .frame(width: 120)
+                            .opacity(0.8)
                         }
-                        .onDrop(of: [.text], delegate: CardDropDelegate(
-                            item: cardType,
-                            items: profile.homeCards,
-                            draggingItem: $draggingCard,
-                            onMove: { from, to in
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                    profile.homeCardOrder.move(
-                                        fromOffsets: IndexSet(integer: from),
-                                        toOffset: to
-                                    )
-                                }
+                        .dropDestination(for: String.self) { items, location in
+                            guard let droppedItem = items.first,
+                                  let droppedCardType = StatCardType(rawValue: droppedItem),
+                                  let fromIndex = profile.homeCards.firstIndex(of: droppedCardType),
+                                  let toIndex = profile.homeCards.firstIndex(of: cardType),
+                                  fromIndex != toIndex else { return false }
+
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                profile.homeCardOrder.move(
+                                    fromOffsets: IndexSet(integer: fromIndex),
+                                    toOffset: toIndex > fromIndex ? toIndex + 1 : toIndex
+                                )
+                                try? modelContext.save()
                             }
-                        ))
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            return true
+                        }
                 }
             }
         }
@@ -362,33 +363,6 @@ extension View {
         } else {
             self
         }
-    }
-}
-
-// MARK: - Card Drop Delegate
-
-struct CardDropDelegate: DropDelegate {
-    let item: StatCardType
-    let items: [StatCardType]
-    @Binding var draggingItem: StatCardType?
-    let onMove: (Int, Int) -> Void
-
-    func dropEntered(info: DropInfo) {
-        guard let draggingItem = draggingItem,
-              draggingItem != item else { return }
-
-        if let fromIndex = items.firstIndex(of: draggingItem),
-           let toIndex = items.firstIndex(of: item),
-           fromIndex != toIndex {
-            onMove(fromIndex, toIndex > fromIndex ? toIndex + 1 : toIndex)
-        }
-    }
-
-    func performDrop(info: DropInfo) -> Bool {
-        withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
-            draggingItem = nil
-        }
-        return true
     }
 }
 

@@ -151,6 +151,11 @@ struct HomeCardSettingsView: View {
         }
         .navigationTitle("Home Screen")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if !profile.homeCards.isEmpty {
+                EditButton()
+            }
+        }
     }
 }
 
