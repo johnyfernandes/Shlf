@@ -13,6 +13,8 @@ struct SessionSettingsView: View {
     @Bindable var profile: UserProfile
     @State private var showCustomHoursInput = false
     @State private var customHours: String = ""
+    @State private var showSaveError = false
+    @State private var saveErrorMessage = ""
 
     private let presetHours: [(label: String, hours: Int)] = [
         ("12 hours", 12),
@@ -79,7 +81,14 @@ struct SessionSettingsView: View {
                     }
                 }
                 .onChange(of: profile.hideAutoSessionsIPhone) { oldValue, newValue in
-                    try? modelContext.save()
+                    do {
+                        try modelContext.save()
+                    } catch {
+                        saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
+                        showSaveError = true
+                        // Revert on failure
+                        profile.hideAutoSessionsIPhone = oldValue
+                    }
                 }
                 .tint(profile.themeColor.color)
             } header: {
@@ -113,12 +122,23 @@ struct SessionSettingsView: View {
                 .keyboardType(.numberPad)
             Button("Cancel", role: .cancel) {}
             Button("Set") {
-                if let hours = Int(customHours), hours > 0 {
+                if let hours = Int(customHours), hours > 0 && hours <= 168 {
                     profile.autoEndSessionHours = hours
+                    do {
+                        try modelContext.save()
+                    } catch {
+                        saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
+                        showSaveError = true
+                    }
                 }
             }
         } message: {
             Text("Enter the number of hours after which inactive sessions should auto-end (1-168 hours)")
+        }
+        .alert("Save Error", isPresented: $showSaveError) {
+            Button("OK") {}
+        } message: {
+            Text(saveErrorMessage)
         }
     }
 }

@@ -133,6 +133,8 @@ final class UserProfile {
 
     // Helper methods for managing home cards
     func addHomeCard(_ card: StatCardType) {
+        // CRITICAL: Enforce max 3 cards limit
+        guard homeCardOrder.count < 3 else { return }
         if !homeCardOrder.contains(card.rawValue) {
             homeCardOrder.append(card.rawValue)
         }

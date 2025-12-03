@@ -22,8 +22,18 @@ struct SettingsView: View {
         if let existing = profiles.first {
             return existing
         }
+
+        // CRITICAL: Check again after fetching to prevent race condition
+        // Another thread might have created profile between @Query and here
+        let descriptor = FetchDescriptor<UserProfile>()
+        if let existingAfterFetch = try? modelContext.fetch(descriptor).first {
+            return existingAfterFetch
+        }
+
+        // Now safe to create
         let new = UserProfile()
         modelContext.insert(new)
+        try? modelContext.save() // Save immediately to prevent other threads from creating
         return new
     }
 
@@ -119,7 +129,7 @@ struct SettingsView: View {
                     HStack {
                         Text("Version")
                         Spacer()
-                        Text("1.0.0")
+                        Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0")
                             .foregroundStyle(Theme.Colors.secondaryText)
                     }
                 }
@@ -135,6 +145,12 @@ struct SettingsView: View {
             }
             .task {
                 await storeKit.loadProducts()
+
+                // Sync Pro status on launch (StoreKit is source of truth)
+                if profile.isProUser != storeKit.isProUser {
+                    profile.isProUser = storeKit.isProUser
+                    try? modelContext.save()
+                }
             }
         }
     }
@@ -187,9 +203,9 @@ struct SettingsView: View {
                         await storeKit.restorePurchases()
                         showRestoreAlert = true
 
-                        if storeKit.isProUser {
-                            profile.isProUser = true
-                        }
+                        // CRITICAL: Sync Pro status - StoreKit is source of truth
+                        profile.isProUser = storeKit.isProUser
+                        try? modelContext.save()
                     }
                 }
             }
@@ -344,6 +360,8 @@ struct AboutView: View {
 struct ReadingPreferencesView: View {
     @Environment(\.modelContext) private var modelContext
     @Bindable var profile: UserProfile
+    @State private var showSaveError = false
+    @State private var saveErrorMessage = ""
 
     var body: some View {
         Form {
@@ -362,7 +380,13 @@ struct ReadingPreferencesView: View {
                 }
                 .pickerStyle(.inline)
                 .onChange(of: profile.useProgressSlider) { oldValue, newValue in
-                    try? modelContext.save()
+                    do {
+                        try modelContext.save()
+                    } catch {
+                        saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
+                        showSaveError = true
+                        profile.useProgressSlider = oldValue
+                    }
                 }
 
                 Text(profile.useProgressSlider ?
@@ -378,7 +402,13 @@ struct ReadingPreferencesView: View {
                         Label("Show +/- Buttons", systemImage: "plus.forwardslash.minus")
                     }
                     .onChange(of: profile.showSliderButtons) { oldValue, newValue in
-                        try? modelContext.save()
+                        do {
+                            try modelContext.save()
+                        } catch {
+                            saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
+                            showSaveError = true
+                            profile.showSliderButtons = oldValue
+                        }
                     }
 
                     Text("Add increment/decrement buttons alongside the slider for quick adjustments")
@@ -405,10 +435,16 @@ struct ReadingPreferencesView: View {
         }
         .navigationTitle("Reading Progress")
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Save Error", isPresented: $showSaveError) {
+            Button("OK") {}
+        } message: {
+            Text(saveErrorMessage)
+        }
     }
 }
 
 struct BookDetailCustomizationView: View {
+    @Environment(\.modelContext) private var modelContext
     @Bindable var profile: UserProfile
 
     var body: some View {
@@ -477,6 +513,7 @@ struct BookDetailCustomizationView: View {
                     profile.showLanguage = true
                     profile.showISBN = true
                     profile.showReadingTime = true
+                    try? modelContext.save()
                 }
             }
         }

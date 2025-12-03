@@ -43,6 +43,7 @@ struct ProfileSettingsTransfer: Codable, Sendable {
     let hideAutoSessionsWatch: Bool
     let showSettingsOnWatch: Bool
     let useCircularProgressWatch: Bool
+    let enableWatchPositionMarking: Bool
     let themeColorRawValue: String
 
     init(
@@ -50,12 +51,14 @@ struct ProfileSettingsTransfer: Codable, Sendable {
         hideAutoSessionsWatch: Bool,
         showSettingsOnWatch: Bool = true,
         useCircularProgressWatch: Bool = false,
+        enableWatchPositionMarking: Bool = true,
         themeColorRawValue: String = ThemeColor.blue.rawValue
     ) {
         self.hideAutoSessionsIPhone = hideAutoSessionsIPhone
         self.hideAutoSessionsWatch = hideAutoSessionsWatch
         self.showSettingsOnWatch = showSettingsOnWatch
         self.useCircularProgressWatch = useCircularProgressWatch
+        self.enableWatchPositionMarking = enableWatchPositionMarking
         self.themeColorRawValue = themeColorRawValue
     }
 
@@ -65,12 +68,14 @@ struct ProfileSettingsTransfer: Codable, Sendable {
         let hideWatch = try container.decode(Bool.self, forKey: .hideAutoSessionsWatch)
         let showSettings = try container.decodeIfPresent(Bool.self, forKey: .showSettingsOnWatch) ?? true
         let useCircular = try container.decodeIfPresent(Bool.self, forKey: .useCircularProgressWatch) ?? false
+        let enablePosition = try container.decodeIfPresent(Bool.self, forKey: .enableWatchPositionMarking) ?? true
         let themeColor = try container.decodeIfPresent(String.self, forKey: .themeColorRawValue) ?? ThemeColor.blue.rawValue
         self.init(
             hideAutoSessionsIPhone: hideIPhone,
             hideAutoSessionsWatch: hideWatch,
             showSettingsOnWatch: showSettings,
             useCircularProgressWatch: useCircular,
+            enableWatchPositionMarking: enablePosition,
             themeColorRawValue: themeColor
         )
     }

@@ -93,7 +93,9 @@ final class ActiveReadingSession {
 
     // Check if session should auto-end based on inactivity
     func shouldAutoEnd(inactivityHours: Int) -> Bool {
-        let inactivityThreshold = TimeInterval(inactivityHours * 3600)
+        // CRITICAL: Clamp to prevent overflow (max 1 week = 168 hours)
+        let clampedHours = min(168, max(1, inactivityHours))
+        let inactivityThreshold = TimeInterval(clampedHours * 3600)
         return Date().timeIntervalSince(lastUpdated) > inactivityThreshold
     }
 

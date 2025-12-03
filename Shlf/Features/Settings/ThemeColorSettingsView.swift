@@ -88,6 +88,9 @@ struct ThemeColorSettingsView: View {
                                         await updateLiveActivityThemeColor(newThemeColor: themeColor)
                                     }
 
+                                    // Update widgets with new theme color
+                                    WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+
                                     // Give haptic feedback
                                     UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                                 }

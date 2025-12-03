@@ -14,6 +14,8 @@ struct WatchSettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var profiles: [UserProfile]
     @StateObject private var connectionObserver = WatchConnectionObserver()
+    @State private var showSaveError = false
+    @State private var saveErrorMessage = ""
 
     private var profile: UserProfile? {
         profiles.first
@@ -125,8 +127,13 @@ struct WatchSettingsView: View {
                         get: { profile.useCircularProgressWatch },
                         set: { newValue in
                             profile.useCircularProgressWatch = newValue
-                            try? modelContext.save()
-                            WatchConnectivityManager.shared.sendProfileSettingsToWatch(profile)
+                            do {
+                                try modelContext.save()
+                                WatchConnectivityManager.shared.sendProfileSettingsToWatch(profile)
+                            } catch {
+                                saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
+                                showSaveError = true
+                            }
                         }
                     )) {
                         Label("Progress Bar", systemImage: "minus")
@@ -152,9 +159,14 @@ struct WatchSettingsView: View {
                             get: { profile.hideAutoSessionsWatch },
                             set: { newValue in
                                 profile.hideAutoSessionsWatch = newValue
-                                try? modelContext.save()
-                                // Send to Watch immediately
-                                WatchConnectivityManager.shared.sendProfileSettingsToWatch(profile)
+                                do {
+                                    try modelContext.save()
+                                    // Send to Watch immediately
+                                    WatchConnectivityManager.shared.sendProfileSettingsToWatch(profile)
+                                } catch {
+                                    saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
+                                    showSaveError = true
+                                }
                             }
                         )) {
                             VStack(alignment: .leading, spacing: 4) {
@@ -181,8 +193,13 @@ struct WatchSettingsView: View {
                         get: { profile.enableWatchPositionMarking },
                         set: { newValue in
                             profile.enableWatchPositionMarking = newValue
-                            try? modelContext.save()
-                            WatchConnectivityManager.shared.sendProfileSettingsToWatch(profile)
+                            do {
+                                try modelContext.save()
+                                WatchConnectivityManager.shared.sendProfileSettingsToWatch(profile)
+                            } catch {
+                                saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
+                                showSaveError = true
+                            }
                         }
                     )) {
                         VStack(alignment: .leading, spacing: 4) {
@@ -201,8 +218,13 @@ struct WatchSettingsView: View {
                         get: { profile.showSettingsOnWatch },
                         set: { newValue in
                             profile.showSettingsOnWatch = newValue
-                            try? modelContext.save()
-                            WatchConnectivityManager.shared.sendProfileSettingsToWatch(profile)
+                            do {
+                                try modelContext.save()
+                                WatchConnectivityManager.shared.sendProfileSettingsToWatch(profile)
+                            } catch {
+                                saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
+                                showSaveError = true
+                            }
                         }
                     )) {
                         VStack(alignment: .leading, spacing: 4) {
@@ -235,6 +257,11 @@ struct WatchSettingsView: View {
         }
         .navigationTitle("Apple Watch")
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Save Error", isPresented: $showSaveError) {
+            Button("OK") {}
+        } message: {
+            Text(saveErrorMessage)
+        }
     }
 }
 

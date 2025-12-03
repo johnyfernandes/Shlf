@@ -11,6 +11,8 @@ import SwiftData
 struct HomeCardSettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Bindable var profile: UserProfile
+    @State private var showSaveError = false
+    @State private var saveErrorMessage = ""
 
     private var engine: GamificationEngine {
         GamificationEngine(modelContext: modelContext)
@@ -80,7 +82,12 @@ struct HomeCardSettingsView: View {
                             Button(role: .destructive) {
                                 withAnimation {
                                     profile.removeHomeCard(cardType)
-                                    try? modelContext.save()
+                                    do {
+                                        try modelContext.save()
+                                    } catch {
+                                        saveErrorMessage = "Failed to remove card: \(error.localizedDescription)"
+                                        showSaveError = true
+                                    }
                                 }
                             } label: {
                                 Label("Remove", systemImage: "trash")
@@ -89,7 +96,12 @@ struct HomeCardSettingsView: View {
                     }
                     .onMove { from, to in
                         profile.moveHomeCard(from: from, to: to)
-                        try? modelContext.save()
+                        do {
+                            try modelContext.save()
+                        } catch {
+                            saveErrorMessage = "Failed to reorder cards: \(error.localizedDescription)"
+                            showSaveError = true
+                        }
                     }
                 }
             }
@@ -101,7 +113,12 @@ struct HomeCardSettingsView: View {
                             if profile.homeCards.count < 3 {
                                 withAnimation {
                                     profile.addHomeCard(cardType)
-                                    try? modelContext.save()
+                                    do {
+                                        try modelContext.save()
+                                    } catch {
+                                        saveErrorMessage = "Failed to add card: \(error.localizedDescription)"
+                                        showSaveError = true
+                                    }
                                 }
                             }
                         } label: {
@@ -143,7 +160,12 @@ struct HomeCardSettingsView: View {
                     Button("Remove All Cards", role: .destructive) {
                         withAnimation {
                             profile.homeCardOrder.removeAll()
-                            try? modelContext.save()
+                            do {
+                                try modelContext.save()
+                            } catch {
+                                saveErrorMessage = "Failed to remove all cards: \(error.localizedDescription)"
+                                showSaveError = true
+                            }
                         }
                     }
                 }
@@ -155,6 +177,11 @@ struct HomeCardSettingsView: View {
             if !profile.homeCards.isEmpty {
                 EditButton()
             }
+        }
+        .alert("Save Error", isPresented: $showSaveError) {
+            Button("OK") {}
+        } message: {
+            Text(saveErrorMessage)
         }
     }
 }

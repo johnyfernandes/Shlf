@@ -149,6 +149,7 @@ class WatchConnectivityManager: NSObject {
                 hideAutoSessionsWatch: profile.hideAutoSessionsWatch,
                 showSettingsOnWatch: profile.showSettingsOnWatch,
                 useCircularProgressWatch: profile.useCircularProgressWatch,
+                enableWatchPositionMarking: profile.enableWatchPositionMarking,
                 themeColorRawValue: profile.themeColorRawValue
             )
             let data = try JSONEncoder().encode(transfer)

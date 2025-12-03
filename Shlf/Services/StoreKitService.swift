@@ -47,11 +47,24 @@ final class StoreKitService {
     }
 
     func loadProducts() async {
-        do {
-            products = try await Product.products(for: productIDs)
-        } catch {
-            print("Failed to load products: \(error)")
+        // Retry up to 3 times with exponential backoff
+        for attempt in 1...3 {
+            do {
+                products = try await Product.products(for: productIDs)
+                return // Success, exit early
+            } catch {
+                print("Failed to load products (attempt \(attempt)/3): \(error)")
+
+                if attempt < 3 {
+                    // Exponential backoff: 1s, 2s
+                    let delay = UInt64(attempt * 1_000_000_000) // nanoseconds
+                    try? await Task.sleep(nanoseconds: delay)
+                }
+            }
         }
+
+        // All retries failed - products will remain empty
+        print("All product loading attempts failed")
     }
 
     func purchase(_ product: Product) async throws {
