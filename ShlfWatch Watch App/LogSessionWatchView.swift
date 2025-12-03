@@ -48,6 +48,8 @@ struct LogSessionWatchView: View {
     @State private var debounceTask: Task<Void, Never>?
     @State private var showBackButtonAlert = false
     @State private var showPositionMarked = false
+    @State private var showMarkPageSheet = false
+    @State private var markPageLine: Int = 1
 
     init(book: Book) {
         self.book = book
@@ -191,11 +193,12 @@ struct LogSessionWatchView: View {
 
                         // Mark Position Button
                         Button {
-                            markPosition()
+                            markPageLine = 1
+                            showMarkPageSheet = true
                         } label: {
                             Label(
-                                showPositionMarked ? "Position Marked!" : "Mark Position",
-                                systemImage: showPositionMarked ? "checkmark.circle.fill" : "mappin.circle.fill"
+                                showPositionMarked ? "Position Saved!" : "Mark Position",
+                                systemImage: showPositionMarked ? "checkmark.circle.fill" : "bookmark.fill"
                             )
                             .frame(maxWidth: .infinity)
                         }
@@ -231,6 +234,15 @@ struct LogSessionWatchView: View {
             }
         } message: {
             Text("Your session is still active. Leaving won't end it, but you won't be able to track pages until you return.")
+        }
+        .sheet(isPresented: $showMarkPageSheet) {
+            MarkPositionSheet(
+                page: currentPage,
+                lineNumber: $markPageLine,
+                onSave: {
+                    markPosition(lineNumber: markPageLine)
+                }
+            )
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PageDeltaFromPhone"))) { notification in
             // Sync currentPage with iPhone updates during active session
@@ -551,10 +563,11 @@ struct LogSessionWatchView: View {
         }
     }
 
-    private func markPosition() {
+    private func markPosition(lineNumber: Int) {
         let position = BookPosition(
             book: book,
             pageNumber: currentPage,
+            lineNumber: lineNumber > 0 ? lineNumber : nil,
             timestamp: Date()
         )
 
@@ -567,7 +580,8 @@ struct LogSessionWatchView: View {
 
         do {
             try modelContext.save()
-            WatchConnectivityManager.logger.info("Marked position: Page \(currentPage)")
+            let lineInfo = lineNumber > 0 ? ", Line \(lineNumber)" : ""
+            WatchConnectivityManager.logger.info("Marked position: Page \(currentPage)\(lineInfo)")
 
             // Send position to iPhone
             Task.detached(priority: .userInitiated) {
@@ -690,5 +704,73 @@ struct LogSessionWatchView: View {
             bookType: .physical,
             readingStatus: .currentlyReading
         ))
+    }
+}
+
+// MARK: - Mark Position Sheet
+
+struct MarkPositionSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.themeColor) private var themeColor
+
+    let page: Int
+    @Binding var lineNumber: Int
+    let onSave: () -> Void
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Text("Mark Position")
+                .font(.footnote.weight(.semibold))
+
+            // Page & Line in compact layout
+            HStack(spacing: 16) {
+                VStack(spacing: 2) {
+                    Text("Page")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text("\(page)")
+                        .font(.title3.bold())
+                        .foregroundStyle(themeColor.color)
+                }
+
+                Divider()
+                    .frame(height: 30)
+
+                VStack(spacing: 2) {
+                    Text("Line")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text(lineNumber == 0 ? "—" : "\(lineNumber)")
+                        .font(.title3.bold())
+                        .foregroundStyle(themeColor.color)
+                }
+            }
+            .padding(.vertical, 4)
+
+            // Line number picker (Digital Crown)
+            Picker("Line", selection: $lineNumber) {
+                Text("—").tag(0)
+                ForEach(1...50, id: \.self) { line in
+                    Text("\(line)").tag(line)
+                }
+            }
+            .pickerStyle(.wheel)
+            .frame(height: 60)
+            .labelsHidden()
+
+            // Save button
+            Button {
+                onSave()
+                dismiss()
+            } label: {
+                Text("Save")
+                    .font(.footnote.bold())
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(themeColor.color)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
     }
 }
