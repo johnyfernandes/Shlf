@@ -9,6 +9,7 @@ import SwiftUI
 
 struct LevelDetailView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.themeColor) private var themeColor
     @Bindable var profile: UserProfile
 
     var body: some View {
@@ -91,7 +92,7 @@ struct LevelDetailView: View {
 
                                 Text("\(profile.xpForNextLevel - profile.totalXP) XP")
                                     .font(Theme.Typography.headline)
-                                    .foregroundStyle(Theme.Colors.primary)
+                                    .foregroundStyle(themeColor.color)
                             }
                         }
                         .padding(Theme.Spacing.md)

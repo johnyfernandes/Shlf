@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct ProgressSliderView: View {
+    @Environment(\.themeColor) private var themeColor
     @Bindable var book: Book
     let incrementAmount: Int
     let showButtons: Bool
@@ -55,7 +56,7 @@ struct ProgressSliderView: View {
                         HStack(spacing: Theme.Spacing.sm) {
                             Text("\(currentPage)")
                                 .font(.system(size: 44, weight: .bold, design: .rounded))
-                                .foregroundStyle(isDragging ? Theme.Colors.primary : Theme.Colors.text)
+                                .foregroundStyle(isDragging ? themeColor.color : Theme.Colors.text)
                                 .monospacedDigit()
                                 .contentTransition(.numericText())
 
@@ -82,7 +83,7 @@ struct ProgressSliderView: View {
                         Image(systemName: "plus.circle.fill")
                             .font(.system(size: 40))
                             .symbolRenderingMode(.palette)
-                            .foregroundStyle(.white, Theme.Colors.primary)
+                            .foregroundStyle(.white, themeColor.color)
                     }
                     .disabled(book.totalPages != nil && sliderValue >= Double(book.totalPages!))
                     .opacity(book.totalPages != nil && sliderValue >= Double(book.totalPages!) ? 0.3 : 1.0)
@@ -92,7 +93,7 @@ struct ProgressSliderView: View {
                     HStack(spacing: Theme.Spacing.sm) {
                         Text("\(currentPage)")
                             .font(.system(size: 48, weight: .bold, design: .rounded))
-                            .foregroundStyle(isDragging ? Theme.Colors.primary : Theme.Colors.text)
+                            .foregroundStyle(isDragging ? themeColor.color : Theme.Colors.text)
                             .monospacedDigit()
                             .contentTransition(.numericText())
 
@@ -127,8 +128,8 @@ struct ProgressSliderView: View {
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        Theme.Colors.primary,
-                                        Theme.Colors.primary.opacity(0.8)
+                                        themeColor.color,
+                                        themeColor.color.opacity(0.8)
                                     ],
                                     startPoint: .leading,
                                     endPoint: .trailing
@@ -144,7 +145,7 @@ struct ProgressSliderView: View {
                             .shadow(color: Theme.Shadow.large, radius: isDragging ? 12 : 8, y: isDragging ? 6 : 4)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(Theme.Colors.primary, lineWidth: isDragging ? 3 : 2)
+                                    .strokeBorder(themeColor.color, lineWidth: isDragging ? 3 : 2)
                             )
                             .offset(x: geometry.size.width * (sliderValue / Double(book.totalPages ?? 1)) - (isDragging ? 16 : 12))
                             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isDragging)

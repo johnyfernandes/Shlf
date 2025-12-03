@@ -12,6 +12,7 @@ import SwiftData
 struct BookDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.themeColor) private var themeColor
     @Bindable var book: Book
     @Query private var profiles: [UserProfile]
     @Query private var activeSessions: [ActiveReadingSession]
@@ -262,11 +263,11 @@ struct BookDetailView: View {
 
                         Text("\(Int(book.progressPercentage))%")
                             .font(Theme.Typography.title2)
-                            .foregroundStyle(Theme.Colors.primary)
+                            .foregroundStyle(themeColor.color)
                     }
 
                     ProgressView(value: book.progressPercentage, total: 100)
-                        .tint(Theme.Colors.primary)
+                        .tint(themeColor.color)
                 }
                 .padding(Theme.Spacing.md)
                 .cardStyle()
@@ -388,10 +389,10 @@ struct BookDetailView: View {
                     ForEach(subjects, id: \.self) { subject in
                         Text(subject)
                             .font(Theme.Typography.caption)
-                            .foregroundStyle(Theme.Colors.primary)
+                            .foregroundStyle(themeColor.color)
                             .padding(.horizontal, Theme.Spacing.sm)
                             .padding(.vertical, Theme.Spacing.xxs)
-                            .background(Theme.Colors.primary.opacity(0.1))
+                            .background(themeColor.color.opacity(0.1))
                             .clipShape(Capsule())
                     }
                 }

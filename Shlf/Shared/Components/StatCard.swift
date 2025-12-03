@@ -47,13 +47,13 @@ struct StatCard: View {
                             .foregroundStyle(.white)
                     } else {
                         Circle()
-                            .fill(Theme.Colors.primary.opacity(0.12))
+                            .fill(Color.cyan.opacity(0.12))
                             .frame(width: 36, height: 36)
 
                         Image(systemName: icon)
                             .font(.system(size: 16))
                             .fontWeight(.semibold)
-                            .foregroundStyle(Theme.Colors.primary)
+                            .foregroundStyle(Color.cyan)
                     }
                 }
 

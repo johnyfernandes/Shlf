@@ -14,6 +14,7 @@ struct BookPreviewView: View {
     let onDismiss: () -> Void
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.themeColor) private var themeColor
     @Query private var profiles: [UserProfile]
     @Query private var books: [Book]
 
@@ -141,10 +142,10 @@ struct BookPreviewView: View {
                                 ForEach(subjects.prefix(10), id: \.self) { subject in
                                     Text(subject)
                                         .font(Theme.Typography.caption)
-                                        .foregroundStyle(Theme.Colors.primary)
+                                        .foregroundStyle(themeColor.color)
                                         .padding(.horizontal, Theme.Spacing.sm)
                                         .padding(.vertical, Theme.Spacing.xxs)
-                                        .background(Theme.Colors.primary.opacity(0.1))
+                                        .background(themeColor.color.opacity(0.1))
                                         .clipShape(Capsule())
                                 }
                             }

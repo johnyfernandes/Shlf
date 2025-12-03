@@ -11,6 +11,7 @@ import Charts
 
 struct StatsView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.themeColor) private var themeColor
     @Query private var profiles: [UserProfile]
     @Query private var allSessions: [ReadingSession]
     @Query private var allBooks: [Book]
@@ -165,7 +166,7 @@ struct StatsView: View {
                 VStack(spacing: Theme.Spacing.md) {
                     Image(systemName: "chart.bar.fill")
                         .font(.system(size: 48))
-                        .foregroundStyle(Theme.Colors.primary.opacity(0.3))
+                        .foregroundStyle(themeColor.color.opacity(0.3))
 
                     Text("You've read \(engine.totalPagesRead()) pages!")
                         .font(Theme.Typography.headline)
@@ -237,7 +238,7 @@ struct StatsView: View {
                 } label: {
                     Text("Manage")
                         .font(Theme.Typography.callout)
-                        .foregroundStyle(Theme.Colors.primary)
+                        .foregroundStyle(themeColor.color)
                 }
             }
 
@@ -268,6 +269,7 @@ struct StatsView: View {
 }
 
 struct ReadingActivityChart: View {
+    @Environment(\.themeColor) private var themeColor
     let sessions: [ReadingSession]
 
     private var last7DaysData: [(Date, Int)] {
@@ -299,7 +301,7 @@ struct ReadingActivityChart: View {
                     x: .value("Day", date, unit: .day),
                     y: .value("Pages", pages)
                 )
-                .foregroundStyle(Theme.Colors.primary.gradient)
+                .foregroundStyle(themeColor.color.gradient)
                 .cornerRadius(4)
             }
             .chartXAxis {
@@ -358,13 +360,14 @@ struct AchievementCard: View {
 }
 
 struct GoalCard: View {
+    @Environment(\.themeColor) private var themeColor
     let goal: ReadingGoal
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
             HStack {
                 Image(systemName: goal.type.icon)
-                    .foregroundStyle(Theme.Colors.primary)
+                    .foregroundStyle(themeColor.color)
 
                 Text(goal.type.rawValue)
                     .font(Theme.Typography.headline)
@@ -374,11 +377,11 @@ struct GoalCard: View {
 
                 Text("\(Int(goal.progressPercentage))%")
                     .font(Theme.Typography.callout)
-                    .foregroundStyle(Theme.Colors.primary)
+                    .foregroundStyle(themeColor.color)
             }
 
             ProgressView(value: goal.progressPercentage, total: 100)
-                .tint(Theme.Colors.primary)
+                .tint(themeColor.color)
 
             HStack {
                 Text("\(goal.currentValue) / \(goal.targetValue) \(goal.type.unit)")
@@ -463,6 +466,7 @@ struct ManageGoalsView: View {
 }
 
 struct GoalRow: View {
+    @Environment(\.themeColor) private var themeColor
     let goal: ReadingGoal
     let profile: UserProfile
     @Environment(\.modelContext) private var modelContext
@@ -475,7 +479,7 @@ struct GoalRow: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                 HStack {
                     Image(systemName: goal.type.icon)
-                        .foregroundStyle(goal.isCompleted ? Theme.Colors.success : Theme.Colors.primary)
+                        .foregroundStyle(goal.isCompleted ? Theme.Colors.success : themeColor.color)
 
                     Text(goal.type.rawValue)
                         .font(Theme.Typography.headline)
@@ -490,7 +494,7 @@ struct GoalRow: View {
                 }
 
                 ProgressView(value: goal.progressPercentage, total: 100)
-                    .tint(goal.isCompleted ? Theme.Colors.success : Theme.Colors.primary)
+                    .tint(goal.isCompleted ? Theme.Colors.success : themeColor.color)
 
                 HStack {
                     Text("\(goal.currentValue) / \(goal.targetValue) \(goal.type.unit)")

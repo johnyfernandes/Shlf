@@ -10,6 +10,7 @@ import SwiftData
 
 struct OnboardingView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.themeColor) private var themeColor
     @Query private var profiles: [UserProfile]
     @Binding var isPresented: Bool
 
@@ -100,6 +101,7 @@ struct OnboardingPage {
 }
 
 struct OnboardingPageView: View {
+    @Environment(\.themeColor) private var themeColor
     let page: OnboardingPage
 
     var body: some View {
@@ -108,7 +110,7 @@ struct OnboardingPageView: View {
 
             Image(systemName: page.icon)
                 .font(.system(size: 100))
-                .foregroundStyle(Theme.Colors.primary.gradient)
+                .foregroundStyle(themeColor.color.gradient)
                 .symbolEffect(.bounce, value: page.icon)
 
             VStack(spacing: Theme.Spacing.md) {

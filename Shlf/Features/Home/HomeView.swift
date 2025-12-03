@@ -11,6 +11,7 @@ import UniformTypeIdentifiers
 
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.themeColor) private var themeColor
     @Query private var profiles: [UserProfile]
     @Query(sort: \Book.dateAdded, order: .reverse)
     private var allBooks: [Book]
@@ -137,7 +138,7 @@ struct HomeView: View {
                         } label: {
                             Image(systemName: "plus.circle.fill")
                                 .font(.title2)
-                                .foregroundStyle(Theme.Colors.primary)
+                                .foregroundStyle(themeColor.color)
                         }
                     }
                 }

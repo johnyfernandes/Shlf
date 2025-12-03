@@ -10,6 +10,7 @@ import SwiftData
 
 struct LibraryView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.themeColor) private var themeColor
     @Query(sort: \Book.dateAdded, order: .reverse) private var allBooks: [Book]
     @Binding var selectedTab: Int
 
@@ -64,7 +65,7 @@ struct LibraryView: View {
                     } label: {
                         Image(systemName: "plus.circle.fill")
                             .font(.title2)
-                            .foregroundStyle(Theme.Colors.primary)
+                            .foregroundStyle(themeColor.color)
                     }
                 }
             }
@@ -168,6 +169,7 @@ struct LibraryView: View {
 }
 
 struct BookRow: View {
+    @Environment(\.themeColor) private var themeColor
     let book: Book
 
     private var yearPublished: String? {
@@ -238,7 +240,7 @@ struct BookRow: View {
                         HStack {
                             Text("\(book.currentPage)")
                                 .font(Theme.Typography.headline)
-                                .foregroundStyle(Theme.Colors.primary)
+                                .foregroundStyle(themeColor.color)
 
                             Text("/ \(totalPages) pages")
                                 .font(Theme.Typography.caption)
@@ -249,11 +251,11 @@ struct BookRow: View {
                             Text("\(Int(book.progressPercentage))%")
                                 .font(Theme.Typography.subheadline)
                                 .fontWeight(.semibold)
-                                .foregroundStyle(Theme.Colors.primary)
+                                .foregroundStyle(themeColor.color)
                         }
 
                         ProgressView(value: book.progressPercentage, total: 100)
-                            .tint(Theme.Colors.primary)
+                            .tint(themeColor.color)
                             .scaleEffect(y: 1.2)
                     }
                 }
@@ -274,12 +276,13 @@ struct BookRow: View {
 // MARK: - Status Badge
 
 struct StatusBadge: View {
+    @Environment(\.themeColor) private var themeColor
     let status: ReadingStatus
 
     private var badgeColor: Color {
         switch status {
         case .wantToRead: return Theme.Colors.secondary
-        case .currentlyReading: return Theme.Colors.primary
+        case .currentlyReading: return themeColor.color
         case .finished: return Theme.Colors.success
         case .didNotFinish: return Theme.Colors.tertiaryText
         }
@@ -303,6 +306,7 @@ struct StatusBadge: View {
 }
 
 struct FilterChip: View {
+    @Environment(\.themeColor) private var themeColor
     let title: String
     var icon: String? = nil
     var count: Int? = nil
@@ -340,8 +344,8 @@ struct FilterChip: View {
                 Group {
                     if isSelected {
                         RoundedRectangle(cornerRadius: Theme.CornerRadius.full, style: .continuous)
-                            .fill(Theme.Colors.primary)
-                            .shadow(color: Theme.Colors.primary.opacity(0.3), radius: 8, y: 4)
+                            .fill(themeColor.color)
+                            .shadow(color: themeColor.color.opacity(0.3), radius: 8, y: 4)
                     } else {
                         RoundedRectangle(cornerRadius: Theme.CornerRadius.full, style: .continuous)
                             .fill(Theme.Colors.secondaryBackground)

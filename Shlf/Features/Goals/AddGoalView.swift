@@ -11,6 +11,7 @@ import SwiftData
 struct AddGoalView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.themeColor) private var themeColor
     @Bindable var profile: UserProfile
 
     @State private var selectedType: GoalType = .booksPerMonth
@@ -124,6 +125,7 @@ struct AddGoalView: View {
 }
 
 struct GoalPreviewCard: View {
+    @Environment(\.themeColor) private var themeColor
     let type: GoalType
     let targetValue: Int
     let endDate: Date
@@ -136,7 +138,7 @@ struct GoalPreviewCard: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
             HStack {
                 Image(systemName: type.icon)
-                    .foregroundStyle(Theme.Colors.primary)
+                    .foregroundStyle(themeColor.color)
 
                 Text(type.rawValue)
                     .font(Theme.Typography.headline)
@@ -146,11 +148,11 @@ struct GoalPreviewCard: View {
 
                 Text("0%")
                     .font(Theme.Typography.callout)
-                    .foregroundStyle(Theme.Colors.primary)
+                    .foregroundStyle(themeColor.color)
             }
 
             ProgressView(value: 0, total: 100)
-                .tint(Theme.Colors.primary)
+                .tint(themeColor.color)
 
             HStack {
                 Text("0 / \(targetValue) \(type.unit)")

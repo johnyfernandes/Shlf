@@ -11,6 +11,7 @@ import SwiftData
 struct EditGoalView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.themeColor) private var themeColor
     @Bindable var goal: ReadingGoal
     @Bindable var profile: UserProfile
 
@@ -41,11 +42,11 @@ struct EditGoalView: View {
 
                             Text("\(Int(goal.progressPercentage))%")
                                 .font(Theme.Typography.title2)
-                                .foregroundStyle(goal.isCompleted ? Theme.Colors.success : Theme.Colors.primary)
+                                .foregroundStyle(goal.isCompleted ? Theme.Colors.success : themeColor.color)
                         }
 
                         ProgressView(value: goal.progressPercentage, total: 100)
-                            .tint(goal.isCompleted ? Theme.Colors.success : Theme.Colors.primary)
+                            .tint(goal.isCompleted ? Theme.Colors.success : themeColor.color)
                     }
 
                     Stepper("Current Progress: \(goal.currentValue)", value: $goal.currentValue, in: 0...goal.targetValue)
@@ -73,7 +74,7 @@ struct EditGoalView: View {
                             Spacer()
                             if daysLeft >= 0 {
                                 Text("\(daysLeft) days")
-                                    .foregroundStyle(Theme.Colors.primary)
+                                    .foregroundStyle(themeColor.color)
                             } else {
                                 Text("Expired")
                                     .foregroundStyle(Theme.Colors.error)

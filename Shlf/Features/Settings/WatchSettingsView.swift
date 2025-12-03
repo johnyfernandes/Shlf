@@ -165,7 +165,7 @@ struct WatchSettingsView: View {
                                     .foregroundStyle(Theme.Colors.secondaryText)
                             }
                         }
-                        .tint(Theme.Colors.primary)
+                        .tint(profile.themeColor.color)
                     }
                 } header: {
                     Text("Session Display")
@@ -193,7 +193,7 @@ struct WatchSettingsView: View {
                                 .foregroundStyle(Theme.Colors.secondaryText)
                         }
                     }
-                    .tint(Theme.Colors.primary)
+                    .tint(profile.themeColor.color)
                 }
             }
 

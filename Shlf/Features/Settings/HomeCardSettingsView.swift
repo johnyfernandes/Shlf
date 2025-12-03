@@ -57,7 +57,7 @@ struct HomeCardSettingsView: View {
                         HStack(spacing: Theme.Spacing.sm) {
                             Image(systemName: cardType.icon)
                                 .font(.title3)
-                                .foregroundStyle(cardType.gradient ?? LinearGradient(colors: [Theme.Colors.primary], startPoint: .leading, endPoint: .trailing))
+                                .foregroundStyle(cardType.gradient ?? LinearGradient(colors: [profile.themeColor.color], startPoint: .leading, endPoint: .trailing))
                                 .frame(width: 32)
 
                             VStack(alignment: .leading, spacing: 2) {
@@ -74,7 +74,7 @@ struct HomeCardSettingsView: View {
 
                             Text(getValue(for: cardType))
                                 .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                .foregroundStyle(Theme.Colors.primary)
+                                .foregroundStyle(profile.themeColor.color)
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
@@ -108,7 +108,7 @@ struct HomeCardSettingsView: View {
                             HStack(spacing: Theme.Spacing.sm) {
                                 Image(systemName: cardType.icon)
                                     .font(.title3)
-                                    .foregroundStyle(cardType.gradient ?? LinearGradient(colors: [Theme.Colors.primary], startPoint: .leading, endPoint: .trailing))
+                                    .foregroundStyle(cardType.gradient ?? LinearGradient(colors: [profile.themeColor.color], startPoint: .leading, endPoint: .trailing))
                                     .frame(width: 32)
 
                                 VStack(alignment: .leading, spacing: 2) {
@@ -129,7 +129,7 @@ struct HomeCardSettingsView: View {
                                         .foregroundStyle(Theme.Colors.tertiaryText)
                                 } else {
                                     Image(systemName: "plus.circle.fill")
-                                        .foregroundStyle(Theme.Colors.primary)
+                                        .foregroundStyle(profile.themeColor.color)
                                 }
                             }
                         }

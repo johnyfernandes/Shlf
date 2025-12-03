@@ -25,7 +25,7 @@ struct SessionSettingsView: View {
         Form {
             Section {
                 Toggle("Auto-End Inactive Sessions", isOn: $profile.autoEndSessionEnabled)
-                    .tint(Theme.Colors.primary)
+                    .tint(profile.themeColor.color)
             } footer: {
                 Text("Automatically end reading sessions after a period of inactivity")
                     .font(Theme.Typography.caption)
@@ -44,7 +44,7 @@ struct SessionSettingsView: View {
                                 Spacer()
                                 if profile.autoEndSessionHours == preset.hours {
                                     Image(systemName: "checkmark")
-                                        .foregroundStyle(Theme.Colors.primary)
+                                        .foregroundStyle(profile.themeColor.color)
                                 }
                             }
                         }
@@ -60,9 +60,9 @@ struct SessionSettingsView: View {
                             Spacer()
                             if !presetHours.contains(where: { $0.hours == profile.autoEndSessionHours }) {
                                 Text("\(profile.autoEndSessionHours) hours")
-                                    .foregroundStyle(Theme.Colors.primary)
+                                    .foregroundStyle(profile.themeColor.color)
                                 Image(systemName: "checkmark")
-                                    .foregroundStyle(Theme.Colors.primary)
+                                    .foregroundStyle(profile.themeColor.color)
                             }
                         }
                     }
@@ -81,7 +81,7 @@ struct SessionSettingsView: View {
                 .onChange(of: profile.hideAutoSessionsIPhone) { oldValue, newValue in
                     try? modelContext.save()
                 }
-                .tint(Theme.Colors.primary)
+                .tint(profile.themeColor.color)
             } header: {
                 Text("Session Display")
             } footer: {

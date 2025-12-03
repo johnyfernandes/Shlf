@@ -11,6 +11,7 @@ import SwiftData
 struct AddBookView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.themeColor) private var themeColor
     @Query private var profiles: [UserProfile]
     @Query private var books: [Book]
     @Binding var selectedTab: Int
@@ -92,7 +93,7 @@ struct AddBookView: View {
                 VStack(spacing: Theme.Spacing.md) {
                     Image(systemName: "books.vertical.fill")
                         .font(.system(size: 64))
-                        .foregroundStyle(Theme.Colors.primary.gradient)
+                        .foregroundStyle(themeColor.color.gradient)
                         .padding(.top, Theme.Spacing.xl)
 
                     Text("Add a Book")
@@ -113,12 +114,12 @@ struct AddBookView: View {
                         HStack(spacing: Theme.Spacing.md) {
                             ZStack {
                                 Circle()
-                                    .fill(Theme.Colors.primary.opacity(0.12))
+                                    .fill(themeColor.color.opacity(0.12))
                                     .frame(width: 56, height: 56)
 
                                 Image(systemName: "magnifyingglass")
                                     .font(.title2)
-                                    .foregroundStyle(Theme.Colors.primary)
+                                    .foregroundStyle(themeColor.color)
                             }
 
                             VStack(alignment: .leading, spacing: 4) {

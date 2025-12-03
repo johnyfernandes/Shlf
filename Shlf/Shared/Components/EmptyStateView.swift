@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct EmptyStateView: View {
+    @Environment(\.themeColor) private var themeColor
+
     let icon: String
     let title: String
     let message: String
@@ -32,17 +34,17 @@ struct EmptyStateView: View {
         VStack(spacing: Theme.Spacing.xl) {
             ZStack {
                 Circle()
-                    .fill(Theme.Colors.primary.opacity(0.08))
+                    .fill(themeColor.color.opacity(0.08))
                     .frame(width: 120, height: 120)
 
                 Circle()
-                    .fill(Theme.Colors.primary.opacity(0.05))
+                    .fill(themeColor.color.opacity(0.05))
                     .frame(width: 100, height: 100)
 
                 Image(systemName: icon)
                     .font(.system(size: 48))
                     .fontWeight(.medium)
-                    .foregroundStyle(Theme.Colors.primary.opacity(0.6))
+                    .foregroundStyle(themeColor.color.opacity(0.6))
             }
 
             VStack(spacing: Theme.Spacing.xs) {

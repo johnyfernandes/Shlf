@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct QuickProgressStepper: View {
+    @Environment(\.themeColor) private var themeColor
     @Bindable var book: Book
     let incrementAmount: Int
     @Binding var showConfetti: Bool
@@ -61,11 +62,11 @@ struct QuickProgressStepper: View {
                         if pendingPages != 0 {
                             Image(systemName: "arrow.right")
                                 .font(.title3)
-                                .foregroundStyle(Theme.Colors.primary)
+                                .foregroundStyle(themeColor.color)
 
                             Text("\(totalPendingPages)")
                                 .font(.system(size: 36, weight: .bold, design: .rounded))
-                                .foregroundStyle(Theme.Colors.primary)
+                                .foregroundStyle(themeColor.color)
                                 .monospacedDigit()
                         }
                     }
@@ -87,7 +88,7 @@ struct QuickProgressStepper: View {
                     Image(systemName: "plus.circle.fill")
                         .font(.system(size: 44))
                         .symbolRenderingMode(.palette)
-                        .foregroundStyle(.white, Theme.Colors.primary)
+                        .foregroundStyle(.white, themeColor.color)
                 }
                 .onLongPressGesture(minimumDuration: 0.5, pressing: { isPressing in
                     if isPressing {

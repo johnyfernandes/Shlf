@@ -12,6 +12,7 @@ import Combine
 struct LogReadingSessionView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.themeColor) private var themeColor
     @Query private var profiles: [UserProfile]
     @Query private var activeSessions: [ActiveReadingSession]
 
@@ -122,13 +123,13 @@ struct LogReadingSessionView: View {
 
                     HStack {
                         Image(systemName: "book.pages")
-                            .foregroundStyle(Theme.Colors.primary)
+                            .foregroundStyle(themeColor.color)
 
                         Text("Pages Read")
                         Spacer()
                         Text("\(pagesRead)")
                             .font(Theme.Typography.headline)
-                            .foregroundStyle(Theme.Colors.primary)
+                            .foregroundStyle(themeColor.color)
                     }
                 }
 
@@ -141,7 +142,7 @@ struct LogReadingSessionView: View {
                         VStack(spacing: Theme.Spacing.md) {
                             Text(session.isPaused ? "Paused" : "Reading...")
                                 .font(Theme.Typography.headline)
-                                .foregroundStyle(session.isPaused ? .orange : Theme.Colors.primary)
+                                .foregroundStyle(session.isPaused ? .orange : themeColor.color)
 
                             Text("Started on \(session.sourceDevice)")
                                 .font(.caption)
@@ -172,13 +173,13 @@ struct LogReadingSessionView: View {
                                     }
                                 }
                                 .buttonStyle(.bordered)
-                                .tint(Theme.Colors.primary)
+                                .tint(themeColor.color)
 
                                 Button("Finish Session") {
                                     finishActiveSession(session)
                                 }
                                 .buttonStyle(.borderedProminent)
-                                .tint(Theme.Colors.primary)
+                                .tint(themeColor.color)
                             }
                         }
                         .frame(maxWidth: .infinity)
@@ -188,7 +189,7 @@ struct LogReadingSessionView: View {
                             VStack(spacing: Theme.Spacing.md) {
                                 Text(isPaused ? "Paused" : "Reading...")
                                     .font(Theme.Typography.headline)
-                                    .foregroundStyle(isPaused ? .orange : Theme.Colors.primary)
+                                    .foregroundStyle(isPaused ? .orange : themeColor.color)
 
                                 TimerView(startTime: startTime, isPaused: isPaused, pausedElapsedTime: pausedElapsedTime)
 
@@ -201,13 +202,13 @@ struct LogReadingSessionView: View {
                                         }
                                     }
                                     .buttonStyle(.bordered)
-                                    .tint(Theme.Colors.primary)
+                                    .tint(themeColor.color)
 
                                     Button("Finish Session") {
                                         finishSession()
                                     }
                                     .buttonStyle(.borderedProminent)
-                                    .tint(Theme.Colors.primary)
+                                    .tint(themeColor.color)
                                 }
                             }
                             .frame(maxWidth: .infinity)
@@ -562,6 +563,7 @@ struct LogReadingSessionView: View {
 }
 
 struct ActiveSessionTimerView: View {
+    @Environment(\.themeColor) private var themeColor
     @Bindable var activeSession: ActiveReadingSession
 
     private func formattedTime(at date: Date) -> String {
@@ -582,12 +584,13 @@ struct ActiveSessionTimerView: View {
             Text(formattedTime(at: context.date))
                 .font(.system(size: 48, weight: .bold, design: .rounded))
                 .monospacedDigit()
-                .foregroundStyle(activeSession.isPaused ? .orange : Theme.Colors.primary)
+                .foregroundStyle(activeSession.isPaused ? .orange : themeColor.color)
         }
     }
 }
 
 struct TimerView: View {
+    @Environment(\.themeColor) private var themeColor
     let startTime: Date
     let isPaused: Bool
     let pausedElapsedTime: TimeInterval
@@ -620,7 +623,7 @@ struct TimerView: View {
         Text(formattedTime)
             .font(.system(size: 48, weight: .bold, design: .rounded))
             .monospacedDigit()
-            .foregroundStyle(isPaused ? .orange : Theme.Colors.primary)
+            .foregroundStyle(isPaused ? .orange : themeColor.color)
             .onReceive(timer) { _ in
                 if !isPaused {
                     currentTime = Date()

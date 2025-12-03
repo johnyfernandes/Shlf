@@ -289,6 +289,7 @@ struct UpgradeView: View {
 }
 
 struct FeatureRow: View {
+    @Environment(\.themeColor) private var themeColor
     let icon: String
     let text: String
 
@@ -296,7 +297,7 @@ struct FeatureRow: View {
         HStack(spacing: Theme.Spacing.sm) {
             Image(systemName: icon)
                 .font(.title3)
-                .foregroundStyle(Theme.Colors.primary)
+                .foregroundStyle(themeColor.color)
                 .frame(width: 30)
 
             Text(text)
@@ -309,12 +310,13 @@ struct FeatureRow: View {
 }
 
 struct AboutView: View {
+    @Environment(\.themeColor) private var themeColor
     var body: some View {
         ScrollView {
             VStack(spacing: Theme.Spacing.lg) {
                 Image(systemName: "books.vertical.fill")
                     .font(.system(size: 80))
-                    .foregroundStyle(Theme.Colors.primary)
+                    .foregroundStyle(themeColor.color)
 
                 VStack(spacing: Theme.Spacing.xs) {
                     Text("Shlf")
