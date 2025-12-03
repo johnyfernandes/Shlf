@@ -22,6 +22,8 @@ struct BookDetailView: View {
     @State private var showDeleteAlert = false
     @State private var showConfetti = false
     @State private var showAddQuote = false
+    @State private var showResumeAlert = false
+    @State private var pendingResumePosition: BookPosition?
 
     private var profile: UserProfile? {
         profiles.first
@@ -173,6 +175,21 @@ struct BookDetailView: View {
         } message: {
             Text("This will permanently delete \(book.title) and all reading sessions.")
         }
+        .alert("Resume to Earlier Page?", isPresented: $showResumeAlert) {
+            Button("Resume Anyway", role: .destructive) {
+                if let position = pendingResumePosition {
+                    book.currentPage = position.pageNumber
+                }
+                pendingResumePosition = nil
+            }
+            Button("Cancel", role: .cancel) {
+                pendingResumePosition = nil
+            }
+        } message: {
+            if let position = pendingResumePosition {
+                Text("You're currently on page \(book.currentPage). Resuming will go back to page \(position.pageNumber).")
+            }
+        }
     }
 
     private var activeSessionBanner: some View {
@@ -306,7 +323,12 @@ struct BookDetailView: View {
                 Spacer()
 
                 Button {
-                    book.currentPage = lastPos.pageNumber
+                    if book.currentPage > lastPos.pageNumber {
+                        pendingResumePosition = lastPos
+                        showResumeAlert = true
+                    } else {
+                        book.currentPage = lastPos.pageNumber
+                    }
                 } label: {
                     Label("Resume", systemImage: "arrow.forward.circle.fill")
                         .font(.caption)
