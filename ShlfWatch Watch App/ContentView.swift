@@ -31,6 +31,10 @@ struct ContentView: View {
         return new
     }
 
+    private var currentThemeColor: ThemeColor {
+        profile.themeColor
+    }
+
     var body: some View {
         NavigationStack {
             // Active session indicator at the top
@@ -118,6 +122,8 @@ struct ContentView: View {
                 .toolbar { settingsToolbar }
             }
         }
+        .tint(currentThemeColor.color)
+        .environment(\.themeColor, currentThemeColor)
     }
 
     @ToolbarContentBuilder
@@ -126,7 +132,7 @@ struct ContentView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink(destination: SettingsWatchView()) {
                     Image(systemName: "gearshape.fill")
-                        .foregroundStyle(.cyan)
+                        .foregroundStyle(currentThemeColor.color)
                 }
             }
         }
@@ -134,6 +140,7 @@ struct ContentView: View {
 }
 
 struct BookRowWatch: View {
+    @Environment(\.themeColor) private var themeColor
     let book: Book
 
     var body: some View {
@@ -151,10 +158,10 @@ struct BookRowWatch: View {
                 HStack(spacing: 4) {
                     Text("\(book.currentPage)/\(totalPages)")
                         .font(.caption2)
-                        .foregroundStyle(.cyan)
+                        .foregroundStyle(themeColor.color)
 
                     ProgressView(value: Double(book.currentPage), total: Double(totalPages))
-                        .tint(.cyan)
+                        .tint(themeColor.color)
                 }
             }
         }

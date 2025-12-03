@@ -19,6 +19,10 @@ struct ContentView: View {
         profiles.first?.hasCompletedOnboarding == false || profiles.isEmpty
     }
 
+    private var currentThemeColor: ThemeColor {
+        profiles.first?.themeColor ?? .blue
+    }
+
     var body: some View {
         TabView(selection: $selectedTab) {
             HomeView(selectedTab: $selectedTab)
@@ -45,7 +49,8 @@ struct ContentView: View {
                 }
                 .tag(3)
         }
-        .tint(Theme.Colors.primary)
+        .tint(currentThemeColor.color)
+        .environment(\.themeColor, currentThemeColor)
         .fullScreenCover(isPresented: $showOnboarding) {
             OnboardingView(isPresented: $showOnboarding)
         }

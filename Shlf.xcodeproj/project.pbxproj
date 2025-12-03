@@ -78,6 +78,8 @@
 				Services/ReadingSessionActivityManager.swift,
 				Shared/ActiveReadingSession.swift,
 				Shared/ConnectivityTransfers.swift,
+				Shared/ThemeColor.swift,
+				Shared/ThemeColorEnvironment.swift,
 				Shared/XPCalculator.swift,
 			);
 			target = 5223B0172ED918DB00BE0C75 /* ShlfWatch Watch App */;
@@ -100,6 +102,7 @@
 				Shared/ConnectivityTransfers.swift,
 				Shared/DesignSystem/Theme.swift,
 				Shared/SwiftDataConfig.swift,
+				Shared/ThemeColor.swift,
 				Shared/XPCalculator.swift,
 			);
 			target = 527604FC2ED8FDBA00F08D36 /* ReadingSessionWidgetExtension */;

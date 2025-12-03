@@ -34,6 +34,16 @@ struct SettingsView: View {
 
                 Section("Customization") {
                     NavigationLink {
+                        ThemeColorSettingsView(profile: profile)
+                    } label: {
+                        HStack {
+                            Image(systemName: "paintbrush.fill")
+                                .foregroundStyle(profile.themeColor.gradient)
+                            Text("Theme Color")
+                        }
+                    }
+
+                    NavigationLink {
                         HomeCardSettingsView(profile: profile)
                     } label: {
                         Label("Home Screen", systemImage: "square.grid.3x3")

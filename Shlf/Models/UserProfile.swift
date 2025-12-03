@@ -19,6 +19,7 @@ final class UserProfile {
     var hasCompletedOnboarding: Bool = false
     var isProUser: Bool = false
     var cloudSyncEnabled: Bool = false
+    var themeColorRawValue: String = ThemeColor.blue.rawValue
 
     // Book Detail Display Preferences
     var showDescription: Bool = true
@@ -142,6 +143,16 @@ final class UserProfile {
 
     func moveHomeCard(from source: IndexSet, to destination: Int) {
         homeCardOrder.move(fromOffsets: source, toOffset: destination)
+    }
+
+    // Theme color computed property
+    var themeColor: ThemeColor {
+        get {
+            ThemeColor(rawValue: themeColorRawValue) ?? .blue
+        }
+        set {
+            themeColorRawValue = newValue.rawValue
+        }
     }
 
     var currentLevel: Int {

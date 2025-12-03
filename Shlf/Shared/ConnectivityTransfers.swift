@@ -43,17 +43,20 @@ struct ProfileSettingsTransfer: Codable, Sendable {
     let hideAutoSessionsWatch: Bool
     let showSettingsOnWatch: Bool
     let useCircularProgressWatch: Bool
+    let themeColorRawValue: String
 
     init(
         hideAutoSessionsIPhone: Bool,
         hideAutoSessionsWatch: Bool,
         showSettingsOnWatch: Bool = true,
-        useCircularProgressWatch: Bool = false
+        useCircularProgressWatch: Bool = false,
+        themeColorRawValue: String = ThemeColor.blue.rawValue
     ) {
         self.hideAutoSessionsIPhone = hideAutoSessionsIPhone
         self.hideAutoSessionsWatch = hideAutoSessionsWatch
         self.showSettingsOnWatch = showSettingsOnWatch
         self.useCircularProgressWatch = useCircularProgressWatch
+        self.themeColorRawValue = themeColorRawValue
     }
 
     init(from decoder: Decoder) throws {
@@ -62,11 +65,13 @@ struct ProfileSettingsTransfer: Codable, Sendable {
         let hideWatch = try container.decode(Bool.self, forKey: .hideAutoSessionsWatch)
         let showSettings = try container.decodeIfPresent(Bool.self, forKey: .showSettingsOnWatch) ?? true
         let useCircular = try container.decodeIfPresent(Bool.self, forKey: .useCircularProgressWatch) ?? false
+        let themeColor = try container.decodeIfPresent(String.self, forKey: .themeColorRawValue) ?? ThemeColor.blue.rawValue
         self.init(
             hideAutoSessionsIPhone: hideIPhone,
             hideAutoSessionsWatch: hideWatch,
             showSettingsOnWatch: showSettings,
-            useCircularProgressWatch: useCircular
+            useCircularProgressWatch: useCircular,
+            themeColorRawValue: themeColor
         )
     }
 }
