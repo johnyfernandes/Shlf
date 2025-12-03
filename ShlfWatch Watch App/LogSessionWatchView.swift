@@ -60,12 +60,12 @@ struct LogSessionWatchView: View {
                 VStack(spacing: 4) {
                     Text(timeString)
                         .font(.system(size: 48, weight: .bold, design: .rounded))
-                        .foregroundStyle(.cyan)
+                        .foregroundStyle(isPaused ? .orange : .cyan)
                         .monospacedDigit()
 
                     Text(isActive ? (isPaused ? "Paused" : "Reading...") : "Ready")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(isPaused ? .orange : .secondary)
                 }
                 .padding(.vertical)
 
@@ -401,19 +401,46 @@ struct LogSessionWatchView: View {
     private func pauseSession() {
         isPaused = true
 
+        // Update active session in database
+        if let activeSession = activeSessions.first {
+            activeSession.isPaused = true
+            activeSession.pausedAt = Date()
+            activeSession.lastUpdated = Date()
+            try? modelContext.save()
+
+            // Send updated session to iPhone
+            WatchConnectivityManager.shared.sendActiveSessionToPhone(activeSession)
+        }
+
         // Sync pause to iPhone Live Activity
         WatchConnectivityManager.shared.sendLiveActivityPause()
 
-        WatchConnectivityManager.logger.info("Paused reading session")
+        WatchConnectivityManager.logger.info("⏸️ Paused reading session and synced to iPhone")
     }
 
     private func resumeSession() {
         isPaused = false
 
+        // Update active session in database
+        if let activeSession = activeSessions.first {
+            // Calculate paused duration and add to total
+            if let pausedAt = activeSession.pausedAt {
+                let pauseDuration = Date().timeIntervalSince(pausedAt)
+                activeSession.totalPausedDuration += pauseDuration
+            }
+            activeSession.isPaused = false
+            activeSession.pausedAt = nil
+            activeSession.lastUpdated = Date()
+            try? modelContext.save()
+
+            // Send updated session to iPhone
+            WatchConnectivityManager.shared.sendActiveSessionToPhone(activeSession)
+        }
+
         // Sync resume to iPhone Live Activity
         WatchConnectivityManager.shared.sendLiveActivityResume()
 
-        WatchConnectivityManager.logger.info("Resumed reading session")
+        WatchConnectivityManager.logger.info("▶️ Resumed reading session and synced to iPhone")
     }
 
     private func stopSession() {
