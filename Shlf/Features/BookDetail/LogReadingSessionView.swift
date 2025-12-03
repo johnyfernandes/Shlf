@@ -111,6 +111,12 @@ struct LogReadingSessionView: View {
                                 .keyboardType(.numberPad)
                                 .multilineTextAlignment(.trailing)
                                 .frame(width: 80)
+                                .onChange(of: endPage) { oldValue, newValue in
+                                    // Clamp to max pages
+                                    if let maxPages = book.totalPages, newValue > maxPages {
+                                        endPage = maxPages
+                                    }
+                                }
                         }
                     }
 
@@ -445,7 +451,9 @@ struct LogReadingSessionView: View {
         }
         book.readingSessions?.append(session)
 
-        book.currentPage = activeSession.currentPage
+        // Clamp to max pages
+        let maxPages = book.totalPages ?? Int.max
+        book.currentPage = min(maxPages, activeSession.currentPage)
 
         if book.readingStatus == .wantToRead {
             book.readingStatus = .currentlyReading
@@ -517,9 +525,11 @@ struct LogReadingSessionView: View {
         }
         book.readingSessions?.append(session)
 
-        // Update page and send to Watch
-        let pageDelta = endPage - book.currentPage
-        book.currentPage = endPage
+        // Update page and send to Watch (clamp to max pages)
+        let maxPages = book.totalPages ?? Int.max
+        let clampedEndPage = min(maxPages, endPage)
+        let pageDelta = clampedEndPage - book.currentPage
+        book.currentPage = clampedEndPage
         WatchConnectivityManager.shared.sendPageDeltaToWatch(bookUUID: book.id, delta: pageDelta)
 
         if book.readingStatus == .wantToRead {

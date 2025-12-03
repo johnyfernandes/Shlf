@@ -1063,7 +1063,9 @@ extension WatchConnectivityManager: WCSessionDelegate {
                     sourceDevice: transfer.sourceDevice
                 )
                 modelContext.insert(activeSession)
-                book.currentPage = transfer.currentPage
+                // Clamp to max pages
+                let maxPages = book.totalPages ?? ReadingConstants.defaultMaxPages
+                book.currentPage = min(maxPages, transfer.currentPage)
                 Self.logger.info("✅ Created session from Watch: \(transfer.pagesRead) pages")
             }
 
