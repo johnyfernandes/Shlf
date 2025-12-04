@@ -39,13 +39,26 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                proSection
+            ZStack(alignment: .top) {
+                // Dynamic gradient background
+                LinearGradient(
+                    colors: [
+                        profile.themeColor.color.opacity(0.08),
+                        profile.themeColor.color.opacity(0.02),
+                        Theme.Colors.background
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
 
-                Section("Customization") {
-                    NavigationLink {
-                        ThemeColorSettingsView(profile: profile)
-                    } label: {
+                Form {
+                    proSection
+
+                    Section("Customization") {
+                        NavigationLink {
+                            ThemeColorSettingsView(profile: profile)
+                        } label: {
                         Label {
                             Text("Theme Color")
                         } icon: {
@@ -134,6 +147,8 @@ struct SettingsView: View {
                             .foregroundStyle(Theme.Colors.secondaryText)
                     }
                 }
+            }
+            .scrollContentBackground(.hidden)
             }
             .navigationTitle("Settings")
             .sheet(isPresented: $showUpgradeSheet) {
