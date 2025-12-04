@@ -148,25 +148,29 @@ struct StatsView: View {
                 StatCard(
                     title: "Books Read",
                     value: "\(totalBooksRead)",
-                    icon: "books.vertical.fill"
+                    icon: "books.vertical.fill",
+                    gradient: Theme.Colors.successGradient
                 )
 
                 StatCard(
                     title: "Pages Read",
                     value: "\(totalPagesRead)",
-                    icon: "doc.text.fill"
+                    icon: "doc.text.fill",
+                    gradient: Theme.Colors.xpGradient
                 )
 
                 StatCard(
                     title: "This Year",
                     value: "\(booksThisYear) books",
-                    icon: "calendar"
+                    icon: "calendar",
+                    gradient: Theme.Colors.successGradient
                 )
 
                 StatCard(
                     title: "This Month",
                     value: "\(booksThisMonth) books",
-                    icon: "calendar.circle"
+                    icon: "calendar.circle",
+                    gradient: Theme.Colors.successGradient
                 )
             }
         }

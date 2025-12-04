@@ -20,17 +20,13 @@ struct StatCard: View {
     private var primaryColor: Color {
         // Default colors based on common gradients
         if let gradient = gradient {
-            // Check if it's a streak gradient (orange/red)
+            // Keep streak gradient (orange/red)
             if icon.contains("flame") {
                 return Color.orange
             }
-            // Check if it's XP gradient - use theme color!
-            else if icon == "star.fill" || icon == "bolt.fill" {
+            // Everything else with gradient uses theme color
+            else {
                 return themeColor.color
-            }
-            // Check if it's success gradient (green)
-            else if icon == "books.vertical.fill" {
-                return Color.green
             }
         }
         return Theme.Colors.accent
@@ -60,9 +56,10 @@ struct StatCard: View {
                     if let gradient {
                         Circle()
                             .fill(
-                                // Use theme color gradient for Level/XP, otherwise use passed gradient
-                                (icon == "star.fill" || icon == "bolt.fill")
-                                    ? LinearGradient(
+                                // Keep flame icons with original gradient, everything else uses theme color
+                                icon.contains("flame")
+                                    ? gradient
+                                    : LinearGradient(
                                         colors: [
                                             themeColor.color,
                                             themeColor.color.opacity(0.7)
@@ -70,7 +67,6 @@ struct StatCard: View {
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     )
-                                    : gradient
                             )
                             .frame(width: 44, height: 44)
                             .shadow(
