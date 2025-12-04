@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import PhotosUI
 
 struct ManualBookEntryView: View {
     @Environment(\.dismiss) private var dismiss
@@ -17,6 +18,8 @@ struct ManualBookEntryView: View {
 
     @FocusState private var focusedField: Field?
     @State private var showDiscardAlert = false
+    @State private var selectedPhoto: PhotosPickerItem?
+    @State private var coverImage: UIImage?
 
     // Book properties
     @State private var title = ""
@@ -140,30 +143,58 @@ struct ManualBookEntryView: View {
 
     private var heroSection: some View {
         VStack(spacing: 20) {
-            ZStack {
-                LinearGradient(
-                    colors: [
-                        themeColor.color.opacity(0.3),
-                        themeColor.color.opacity(0.15)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+            PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                ZStack {
+                    if let coverImage {
+                        Image(uiImage: coverImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 140, height: 210)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    } else {
+                        LinearGradient(
+                            colors: [
+                                themeColor.color.opacity(0.3),
+                                themeColor.color.opacity(0.15)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
 
-                VStack(spacing: 8) {
-                    Image(systemName: "book.closed.fill")
-                        .font(.system(size: 40))
-                        .foregroundStyle(themeColor.color.opacity(0.6))
+                        VStack(spacing: 8) {
+                            Image(systemName: "book.closed.fill")
+                                .font(.system(size: 40))
+                                .foregroundStyle(themeColor.color.opacity(0.6))
 
-                    Text("No Cover")
-                        .font(.caption2)
-                        .foregroundStyle(themeColor.color.opacity(0.6))
+                            Text("Add Cover")
+                                .font(.caption2)
+                                .foregroundStyle(themeColor.color.opacity(0.6))
+                        }
+                    }
+                }
+                .frame(width: 140, height: 210)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .shadow(color: .black.opacity(0.15), radius: 20, x: 0, y: 10)
+                .overlay(alignment: .bottomTrailing) {
+                    Image(systemName: "camera.fill")
+                        .font(.caption)
+                        .foregroundStyle(.white)
+                        .padding(8)
+                        .background(.ultraThinMaterial, in: Circle())
+                        .offset(x: 6, y: 6)
                 }
             }
-            .frame(width: 140, height: 210)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .shadow(color: .black.opacity(0.15), radius: 20, x: 0, y: 10)
+            .buttonStyle(.plain)
             .padding(.top, 24)
+            .onChange(of: selectedPhoto) { _, newValue in
+                Task {
+                    if let newValue,
+                       let data = try? await newValue.loadTransferable(type: Data.self),
+                       let uiImage = UIImage(data: data) {
+                        coverImage = uiImage
+                    }
+                }
+            }
         }
         .frame(maxWidth: .infinity)
     }
@@ -525,6 +556,19 @@ struct ManualBookEntryView: View {
         book.language = language.isEmpty ? nil : language
         book.bookDescription = bookDescription.isEmpty ? nil : bookDescription
         book.notes = notes
+
+        // Save cover image to documents directory if available
+        if let coverImage {
+            if let imageData = coverImage.jpegData(compressionQuality: 0.8) {
+                let fileManager = FileManager.default
+                if let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first {
+                    let fileName = "\(UUID().uuidString).jpg"
+                    let fileURL = documentsURL.appendingPathComponent(fileName)
+                    try? imageData.write(to: fileURL)
+                    book.coverImageURL = fileURL
+                }
+            }
+        }
 
         modelContext.insert(book)
         try? modelContext.save()

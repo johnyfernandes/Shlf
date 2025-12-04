@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import PhotosUI
 
 struct EditBookView: View {
     @Environment(\.dismiss) private var dismiss
@@ -15,7 +16,8 @@ struct EditBookView: View {
     @Bindable var book: Book
 
     @FocusState private var focusedField: Field?
-    @State private var showingImagePicker = false
+    @State private var selectedPhoto: PhotosPickerItem?
+    @State private var coverImage: UIImage?
     @State private var hasUnsavedChanges = false
     @State private var showDiscardAlert = false
 
@@ -116,11 +118,15 @@ struct EditBookView: View {
     private var heroSectionContent: some View {
         VStack(spacing: 20) {
             // Cover Image
-            Button {
-                showingImagePicker = true
-            } label: {
+            PhotosPicker(selection: $selectedPhoto, matching: .images) {
                 ZStack {
-                    if let coverURL = book.coverImageURL {
+                    if let coverImage {
+                        Image(uiImage: coverImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 140, height: 210)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    } else if let coverURL = book.coverImageURL {
                         AsyncImage(url: coverURL) { image in
                             image
                                 .resizable()
@@ -146,6 +152,16 @@ struct EditBookView: View {
             }
             .buttonStyle(.plain)
             .padding(.top, 24)
+            .onChange(of: selectedPhoto) { _, newValue in
+                Task {
+                    if let newValue,
+                       let data = try? await newValue.loadTransferable(type: Data.self),
+                       let uiImage = UIImage(data: data) {
+                        coverImage = uiImage
+                        hasUnsavedChanges = true
+                    }
+                }
+            }
         }
         .frame(maxWidth: .infinity)
     }
@@ -498,6 +514,25 @@ struct EditBookView: View {
     // MARK: - Actions
 
     private func saveAndDismiss() {
+        // Save cover image if a new one was selected
+        if let coverImage {
+            if let imageData = coverImage.jpegData(compressionQuality: 0.8) {
+                let fileManager = FileManager.default
+                if let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first {
+                    // Delete old cover if it exists and is a local file
+                    if let oldURL = book.coverImageURL,
+                       oldURL.isFileURL {
+                        try? fileManager.removeItem(at: oldURL)
+                    }
+
+                    let fileName = "\(UUID().uuidString).jpg"
+                    let fileURL = documentsURL.appendingPathComponent(fileName)
+                    try? imageData.write(to: fileURL)
+                    book.coverImageURL = fileURL
+                }
+            }
+        }
+
         try? modelContext.save()
         dismiss()
     }
