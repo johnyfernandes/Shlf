@@ -450,12 +450,26 @@ struct ReadingActivityChart: View {
                 }
             }
             .chartXSelection(value: $selectedDate)
-            .frame(height: 160)
-            .onChange(of: selectedDate) { _, newValue in
-                if newValue != nil {
-                    // selectedDate is set, it will trigger the sheet
-                }
+            .chartGesture { chart in
+                DragGesture(minimumDistance: 0)
+                    .onEnded { value in
+                        if let date: Date = chart.value(atX: value.location.x) {
+                            // Only show sheet if there are pages read on that day
+                            let calendar = Calendar.current
+                            let dayStart = calendar.startOfDay(for: date)
+                            let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart)!
+
+                            let pagesOnDay = sessions
+                                .filter { $0.startDate >= dayStart && $0.startDate < dayEnd }
+                                .reduce(0) { $0 + $1.pagesRead }
+
+                            if pagesOnDay > 0 {
+                                selectedDate = date
+                            }
+                        }
+                    }
             }
+            .frame(height: 160)
         }
         .sheet(item: Binding(
             get: { selectedDate.map { IdentifiableDate(date: $0) } },
