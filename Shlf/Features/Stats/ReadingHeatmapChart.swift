@@ -12,6 +12,9 @@ struct ReadingHeatmapChart: View {
     let sessions: [ReadingSession]
     let period: HeatmapPeriod
 
+    @State private var selectedDate: Date?
+    @State private var showDayDetail = false
+
     private let columns = 7 // Days of week
     private let cellSize: CGFloat = 18
     private let cellSpacing: CGFloat = 4
@@ -213,16 +216,24 @@ struct ReadingHeatmapChart: View {
                                 ForEach(Array(week.enumerated()), id: \.offset) { dayIndex, date in
                                     let pages = periodData[date] ?? 0
 
-                                    RoundedRectangle(cornerRadius: 3, style: .continuous)
-                                        .fill(intensityColor(for: pages))
-                                        .frame(width: cellSize, height: cellSize)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 3, style: .continuous)
-                                                .strokeBorder(
-                                                    pages > 0 ? themeColor.color.opacity(0.2) : .clear,
-                                                    lineWidth: 0.5
-                                                )
-                                        )
+                                    Button {
+                                        if pages > 0 {
+                                            selectedDate = date
+                                            showDayDetail = true
+                                        }
+                                    } label: {
+                                        RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                            .fill(intensityColor(for: pages))
+                                            .frame(width: cellSize, height: cellSize)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                                    .strokeBorder(
+                                                        pages > 0 ? themeColor.color.opacity(0.2) : .clear,
+                                                        lineWidth: 0.5
+                                                    )
+                                            )
+                                    }
+                                    .buttonStyle(.plain)
                                 }
                             }
                         }
@@ -250,6 +261,189 @@ struct ReadingHeatmapChart: View {
                     .foregroundStyle(Theme.Colors.tertiaryText)
 
                 Spacer()
+            }
+        }
+        .sheet(isPresented: $showDayDetail) {
+            if let selectedDate = selectedDate {
+                DayDetailView(date: selectedDate, sessions: sessions)
+            }
+        }
+    }
+}
+
+struct BookReadingData: Identifiable {
+    let id: UUID
+    let book: Book?
+    let pages: Int
+}
+
+struct DayDetailView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.themeColor) private var themeColor
+    let date: Date
+    let sessions: [ReadingSession]
+
+    private var daySessions: [ReadingSession] {
+        let calendar = Calendar.current
+        let dayStart = calendar.startOfDay(for: date)
+        let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart)!
+
+        return sessions.filter { $0.startDate >= dayStart && $0.startDate < dayEnd }
+    }
+
+    private var booksRead: [BookReadingData] {
+        var bookMap: [UUID: (Book?, Int)] = [:]
+
+        for session in daySessions {
+            if let book = session.book {
+                if let existing = bookMap[book.id] {
+                    bookMap[book.id] = (book, existing.1 + session.pagesRead)
+                } else {
+                    bookMap[book.id] = (book, session.pagesRead)
+                }
+            }
+        }
+
+        return bookMap.map { BookReadingData(id: $0.key, book: $0.value.0, pages: $0.value.1) }
+            .sorted { $0.pages > $1.pages }
+    }
+
+    private var totalPages: Int {
+        daySessions.reduce(0) { $0 + $1.pagesRead }
+    }
+
+    private var dateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .long
+        return formatter
+    }
+
+    var body: some View {
+        NavigationStack {
+            ZStack(alignment: .top) {
+                // Dynamic gradient background
+                LinearGradient(
+                    colors: [
+                        themeColor.color.opacity(0.12),
+                        themeColor.color.opacity(0.04),
+                        Theme.Colors.background
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
+
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Summary Card
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "book.pages")
+                                    .font(.caption)
+                                    .foregroundStyle(themeColor.color)
+                                    .frame(width: 16)
+
+                                Text("Reading Summary")
+                                    .font(.headline)
+                            }
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Image(systemName: "doc.text.fill")
+                                        .foregroundStyle(themeColor.color)
+
+                                    Text("\(totalPages) pages")
+                                        .font(.title2)
+                                        .fontWeight(.bold)
+
+                                    Spacer()
+
+                                    Image(systemName: "books.vertical.fill")
+                                        .foregroundStyle(themeColor.color)
+
+                                    Text("\(booksRead.count) \(booksRead.count == 1 ? "book" : "books")")
+                                        .font(.title2)
+                                        .fontWeight(.bold)
+                                }
+                            }
+                            .padding(12)
+                            .background(themeColor.color.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        }
+                        .padding(16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+                        // Books List
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "books.vertical.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(themeColor.color)
+                                    .frame(width: 16)
+
+                                Text("Books Read")
+                                    .font(.headline)
+                            }
+
+                            VStack(spacing: 12) {
+                                ForEach(booksRead) { bookData in
+                                    if let book = bookData.book {
+                                        HStack(spacing: 12) {
+                                            BookCoverView(
+                                                imageURL: book.coverImageURL,
+                                                title: book.title,
+                                                width: 50,
+                                                height: 75
+                                            )
+                                            .shadow(color: Theme.Shadow.medium, radius: 6, y: 3)
+
+                                            VStack(alignment: .leading, spacing: 4) {
+                                                Text(book.title)
+                                                    .font(.subheadline)
+                                                    .fontWeight(.semibold)
+                                                    .foregroundStyle(Theme.Colors.text)
+                                                    .lineLimit(2)
+
+                                                Text(book.author)
+                                                    .font(.caption)
+                                                    .foregroundStyle(Theme.Colors.secondaryText)
+                                                    .lineLimit(1)
+
+                                                HStack(spacing: 4) {
+                                                    Image(systemName: "book.pages")
+                                                        .font(.caption2)
+                                                    Text("\(bookData.pages) pages")
+                                                        .font(.caption)
+                                                }
+                                                .foregroundStyle(themeColor.color)
+                                            }
+
+                                            Spacer()
+                                        }
+                                        .padding(12)
+                                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                    }
+                                }
+                            }
+                        }
+                        .padding(16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 20)
+                    .padding(.bottom, 40)
+                }
+            }
+            .navigationTitle(dateFormatter.string(from: date))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .foregroundStyle(themeColor.color)
+                }
             }
         }
     }
