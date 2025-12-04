@@ -12,8 +12,7 @@ struct ReadingHeatmapChart: View {
     let sessions: [ReadingSession]
     let period: HeatmapPeriod
 
-    @State private var selectedDate: Date?
-    @State private var showDayDetail = false
+    @State private var selectedDate: IdentifiableDate?
 
     private let columns = 7 // Days of week
     private let cellSize: CGFloat = 18
@@ -218,8 +217,7 @@ struct ReadingHeatmapChart: View {
 
                                     Button {
                                         if pages > 0 {
-                                            selectedDate = date
-                                            showDayDetail = true
+                                            selectedDate = IdentifiableDate(date: date)
                                         }
                                     } label: {
                                         RoundedRectangle(cornerRadius: 3, style: .continuous)
@@ -263,12 +261,16 @@ struct ReadingHeatmapChart: View {
                 Spacer()
             }
         }
-        .sheet(isPresented: $showDayDetail) {
-            if let selectedDate = selectedDate {
-                DayDetailView(date: selectedDate, sessions: sessions)
-            }
+        .sheet(item: $selectedDate) { identifiableDate in
+            DayDetailView(date: identifiableDate.date, sessions: sessions)
+                .presentationDetents([.medium, .large])
         }
     }
+}
+
+struct IdentifiableDate: Identifiable {
+    let id = UUID()
+    let date: Date
 }
 
 struct BookReadingData: Identifiable {

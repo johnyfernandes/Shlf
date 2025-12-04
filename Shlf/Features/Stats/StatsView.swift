@@ -336,6 +336,8 @@ struct ReadingActivityChart: View {
     @Environment(\.themeColor) private var themeColor
     let sessions: [ReadingSession]
 
+    @State private var selectedDate: Date?
+
     private var last7DaysData: [(Date, Int)] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
@@ -401,53 +403,63 @@ struct ReadingActivityChart: View {
                 Spacer()
             }
 
-            // Chart
-            Chart(last7DaysData, id: \.0) { date, pages in
-                BarMark(
-                    x: .value("Day", date, unit: .day),
-                    y: .value("Pages", pages)
-                )
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [
-                            themeColor.color,
-                            themeColor.color.opacity(0.6)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
+            // Chart with tap gesture overlay
+            ZStack {
+                Chart(last7DaysData, id: \.0) { date, pages in
+                    BarMark(
+                        x: .value("Day", date, unit: .day),
+                        y: .value("Pages", pages)
                     )
-                )
-                .cornerRadius(6)
-            }
-            .chartXAxis {
-                AxisMarks(values: .stride(by: .day)) { value in
-                    if let date = value.as(Date.self) {
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [
+                                themeColor.color,
+                                themeColor.color.opacity(0.6)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .cornerRadius(6)
+                }
+                .chartXAxis {
+                    AxisMarks(values: .stride(by: .day)) { value in
+                        if let date = value.as(Date.self) {
+                            AxisValueLabel {
+                                Text(date, format: .dateTime.weekday(.narrow))
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(Theme.Colors.secondaryText)
+                            }
+                        }
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                            .foregroundStyle(Theme.Colors.tertiaryText.opacity(0.2))
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(position: .leading) { value in
                         AxisValueLabel {
-                            Text(date, format: .dateTime.weekday(.narrow))
-                                .font(.caption)
-                                .fontWeight(.medium)
-                                .foregroundStyle(Theme.Colors.secondaryText)
+                            if let pages = value.as(Int.self) {
+                                Text("\(pages)")
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(Theme.Colors.secondaryText)
+                            }
                         }
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 2]))
+                            .foregroundStyle(Theme.Colors.tertiaryText.opacity(0.2))
                     }
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                        .foregroundStyle(Theme.Colors.tertiaryText.opacity(0.2))
                 }
+                .chartAngleSelection(value: $selectedDate)
+                .frame(height: 160)
             }
-            .chartYAxis {
-                AxisMarks(position: .leading) { value in
-                    AxisValueLabel {
-                        if let pages = value.as(Int.self) {
-                            Text("\(pages)")
-                                .font(.caption)
-                                .fontWeight(.medium)
-                                .foregroundStyle(Theme.Colors.secondaryText)
-                        }
-                    }
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 2]))
-                        .foregroundStyle(Theme.Colors.tertiaryText.opacity(0.2))
-                }
-            }
-            .frame(height: 160)
+        }
+        .sheet(item: Binding(
+            get: { selectedDate.map { IdentifiableDate(date: $0) } },
+            set: { selectedDate = $0?.date }
+        )) { identifiableDate in
+            DayDetailView(date: identifiableDate.date, sessions: sessions)
+                .presentationDetents([.medium, .large])
         }
     }
 }
