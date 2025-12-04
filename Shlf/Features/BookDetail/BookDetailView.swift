@@ -22,8 +22,6 @@ struct BookDetailView: View {
     @State private var showDeleteAlert = false
     @State private var showConfetti = false
     @State private var showAddQuote = false
-    @State private var showResumeAlert = false
-    @State private var pendingResumePosition: BookPosition?
     @State private var showStatusChangeAlert = false
     @State private var pendingStatus: ReadingStatus?
     @State private var savedProgress: Int?
@@ -192,21 +190,6 @@ struct BookDetailView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This will permanently delete \(book.title) and all reading sessions.")
-        }
-        .alert("Resume to Earlier Page?", isPresented: $showResumeAlert) {
-            Button("Resume Anyway", role: .destructive) {
-                if let position = pendingResumePosition {
-                    book.currentPage = position.pageNumber
-                }
-                pendingResumePosition = nil
-            }
-            Button("Cancel", role: .cancel) {
-                pendingResumePosition = nil
-            }
-        } message: {
-            if let position = pendingResumePosition {
-                Text("You're currently on page \(book.currentPage). Resuming will go back to page \(position.pageNumber).")
-            }
         }
         .alert("Change Reading Status?", isPresented: $showStatusChangeAlert) {
             Button("Change Status", role: .destructive) {
@@ -413,38 +396,14 @@ struct BookDetailView: View {
 
     private func lastPositionSection(_ lastPos: BookPosition) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                HStack(spacing: 6) {
-                    Image(systemName: "bookmark.fill")
-                        .font(.caption)
-                        .foregroundStyle(themeColor.color)
-                        .frame(width: 16)
-
-                    Text("Last Position")
-                        .font(.headline)
-                }
-
-                Spacer()
-
-                Button {
-                    if book.currentPage > lastPos.pageNumber {
-                        pendingResumePosition = lastPos
-                        showResumeAlert = true
-                    } else {
-                        book.currentPage = lastPos.pageNumber
-                    }
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "arrow.forward.circle.fill")
-                            .font(.caption)
-                        Text("Resume")
-                            .font(.caption.weight(.semibold))
-                    }
+            HStack(spacing: 6) {
+                Image(systemName: "bookmark.fill")
+                    .font(.caption)
                     .foregroundStyle(themeColor.color)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(themeColor.color.opacity(0.15), in: Capsule())
-                }
+                    .frame(width: 16)
+
+                Text("Last Position")
+                    .font(.headline)
             }
 
             VStack(alignment: .leading, spacing: 6) {
