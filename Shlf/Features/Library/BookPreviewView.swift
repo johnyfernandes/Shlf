@@ -41,240 +41,251 @@ struct BookPreviewView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: Theme.Spacing.xl) {
-                // Book Cover & Info
-                VStack(spacing: Theme.Spacing.lg) {
-                    BookCoverView(
-                        imageURL: displayInfo.coverImageURL,
-                        title: displayInfo.title,
-                        width: 160,
-                        height: 240
-                    )
-                    .shadow(color: Theme.Shadow.large, radius: 20, y: 10)
+        ZStack(alignment: .top) {
+            // Dynamic gradient background
+            LinearGradient(
+                colors: [
+                    themeColor.color.opacity(0.12),
+                    themeColor.color.opacity(0.04),
+                    Theme.Colors.background
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
-                    VStack(spacing: Theme.Spacing.xs) {
-                        Text(displayInfo.title)
-                            .font(Theme.Typography.title2)
-                            .foregroundStyle(Theme.Colors.text)
-                            .multilineTextAlignment(.center)
-                            .lineLimit(3)
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Hero Section - Cover & Title
+                    VStack(spacing: 20) {
+                        BookCoverView(
+                            imageURL: displayInfo.coverImageURL,
+                            title: displayInfo.title,
+                            width: 140,
+                            height: 210
+                        )
+                        .shadow(color: .black.opacity(0.25), radius: 30, x: 0, y: 15)
+                        .padding(.top, 20)
 
-                        Text(displayInfo.author)
-                            .font(Theme.Typography.headline)
-                            .foregroundStyle(Theme.Colors.secondaryText)
-                            .multilineTextAlignment(.center)
-                    }
-                    .padding(.horizontal, Theme.Spacing.lg)
-                }
-                .padding(.top, Theme.Spacing.xl)
+                        VStack(spacing: 6) {
+                            Text(displayInfo.title)
+                                .font(.title2.weight(.semibold))
+                                .foregroundStyle(.primary)
+                                .multilineTextAlignment(.center)
+                                .lineLimit(3)
 
-                // Description
-                if let description = displayInfo.description {
-                    VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                        Text("Description")
-                            .font(Theme.Typography.subheadline)
-                            .foregroundStyle(Theme.Colors.secondaryText)
-
-                        Text(description)
-                            .font(Theme.Typography.body)
-                            .foregroundStyle(Theme.Colors.text)
-                    }
-                    .padding(.horizontal, Theme.Spacing.md)
-                    .padding(Theme.Spacing.md)
-                    .padding(16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .padding(.horizontal, Theme.Spacing.md)
-                    .transition(.opacity)
-                }
-
-                // Details Section
-                VStack(spacing: Theme.Spacing.md) {
-                    // ISBN & Pages
-                    if displayInfo.isbn != nil || displayInfo.totalPages != nil {
-                        HStack(spacing: Theme.Spacing.md) {
-                            if let isbn = displayInfo.isbn {
-                                VStack(spacing: 4) {
-                                    Image(systemName: "barcode")
-                                        .font(.system(size: 18))
-                                        .foregroundStyle(Theme.Colors.tertiaryText)
-                                        .frame(height: 18)
-
-                                    Text(isbn)
-                                        .font(Theme.Typography.caption)
-                                        .foregroundStyle(Theme.Colors.secondaryText)
-                                        .lineLimit(1)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 10)
-                                .padding(.horizontal, Theme.Spacing.sm)
-                                .padding(16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                            }
-
-                            if let totalPages = displayInfo.totalPages {
-                                VStack(spacing: 4) {
-                                    Image(systemName: "book.pages")
-                                        .font(.system(size: 18))
-                                        .foregroundStyle(Theme.Colors.tertiaryText)
-                                        .frame(height: 18)
-
-                                    Text("\(totalPages) pages")
-                                        .font(Theme.Typography.caption)
-                                        .foregroundStyle(Theme.Colors.secondaryText)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 10)
-                                .padding(.horizontal, Theme.Spacing.sm)
-                                .padding(16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                            }
+                            Text(displayInfo.author)
+                                .font(.headline)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
                         }
-                        .padding(.horizontal, Theme.Spacing.md)
-                        .transition(.opacity)
+                        .padding(.horizontal, 20)
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding(.bottom, 8)
 
-                    // Subjects
-                    if let subjects = displayInfo.subjects, !subjects.isEmpty {
-                        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                            Text("Subjects")
-                                .font(Theme.Typography.subheadline)
-                                .foregroundStyle(Theme.Colors.secondaryText)
-
-                            FlowLayout(spacing: Theme.Spacing.xs) {
-                                ForEach(subjects.prefix(10), id: \.self) { subject in
-                                    Text(subject)
-                                        .font(Theme.Typography.caption)
-                                        .foregroundStyle(themeColor.color)
-                                        .padding(.horizontal, Theme.Spacing.sm)
-                                        .padding(.vertical, Theme.Spacing.xxs)
-                                        .background(themeColor.color.opacity(0.1))
-                                        .clipShape(Capsule())
-                                }
-                            }
-                        }
-                        .padding(Theme.Spacing.md)
-                        .padding(16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                        .padding(.horizontal, Theme.Spacing.md)
-                        .transition(.opacity)
-                    }
-
-                    // Settings Card
-                    VStack(spacing: 0) {
-                        // Book Type
-                        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                            Text("Book Type")
-                                .font(Theme.Typography.caption)
-                                .foregroundStyle(Theme.Colors.tertiaryText)
-                                .textCase(.uppercase)
-
-                            Picker("Type", selection: $bookType) {
-                                ForEach(BookType.allCases, id: \.self) { type in
-                                    Label(type.rawValue, systemImage: type.icon)
-                                        .tag(type)
-                                }
-                            }
-                            .pickerStyle(.segmented)
-                        }
-                        .padding(Theme.Spacing.md)
-
-                        Divider()
-                            .padding(.leading, Theme.Spacing.md)
-
-                        // Reading Status
-                        Menu {
-                            Picker("Status", selection: $readingStatus) {
-                                ForEach(ReadingStatus.allCases, id: \.self) { status in
-                                    Label(status.rawValue, systemImage: status.icon)
-                                        .tag(status)
-                                }
-                            }
-                        } label: {
-                            HStack(spacing: Theme.Spacing.sm) {
-                                Text("Reading Status")
-                                    .font(Theme.Typography.body)
-                                    .foregroundStyle(Theme.Colors.text)
-
-                                Spacer()
-
+                    // Content Sections
+                    VStack(spacing: 16) {
+                        // Description
+                        if let description = displayInfo.description {
+                            VStack(alignment: .leading, spacing: 12) {
                                 HStack(spacing: 6) {
-                                    Image(systemName: readingStatus.icon)
-                                        .font(.subheadline)
-                                        .foregroundStyle(Theme.Colors.secondaryText)
-
-                                    Text(readingStatus.shortName)
-                                        .font(Theme.Typography.subheadline)
-                                        .foregroundStyle(Theme.Colors.secondaryText)
-
-                                    Image(systemName: "chevron.right")
+                                    Image(systemName: "text.alignleft")
                                         .font(.caption)
-                                        .fontWeight(.semibold)
-                                        .foregroundStyle(Theme.Colors.tertiaryText)
+                                        .foregroundStyle(themeColor.color)
+                                        .frame(width: 16)
+
+                                    Text("About")
+                                        .font(.headline)
+                                }
+
+                                Text(description)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(6)
+                            }
+                            .padding(16)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        }
+
+                        // Compact Info Pills
+                        if displayInfo.isbn != nil || displayInfo.totalPages != nil {
+                            HStack(spacing: 12) {
+                                if let isbn = displayInfo.isbn {
+                                    VStack(spacing: 6) {
+                                        Image(systemName: "barcode")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+
+                                        Text(isbn)
+                                            .font(.caption2)
+                                            .foregroundStyle(.tertiary)
+                                            .lineLimit(1)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                }
+
+                                if let totalPages = displayInfo.totalPages {
+                                    VStack(spacing: 6) {
+                                        Image(systemName: "book.pages")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+
+                                        Text("\(totalPages)")
+                                            .font(.caption2)
+                                            .foregroundStyle(.tertiary)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                                 }
                             }
-                            .padding(Theme.Spacing.md)
-                            .contentShape(Rectangle())
                         }
-                    }
-                    .background(Theme.Colors.secondaryBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: Theme.CornerRadius.lg, style: .continuous))
-                    .padding(.horizontal, Theme.Spacing.md)
 
-                    // Current Progress (if reading)
-                    if readingStatus == .currentlyReading, let totalPages = displayInfo.totalPages {
-                        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                            Text("Current Progress")
-                                .font(Theme.Typography.subheadline)
-                                .foregroundStyle(Theme.Colors.secondaryText)
-                                .padding(.horizontal, Theme.Spacing.md)
+                        // Subjects
+                        if let subjects = displayInfo.subjects, !subjects.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "tag.fill")
+                                        .font(.caption)
+                                        .foregroundStyle(themeColor.color)
+                                        .frame(width: 16)
 
-                            HStack {
-                                TextField("Current Page", value: $currentPage, format: .number)
-                                    .keyboardType(.numberPad)
-                                    .font(Theme.Typography.body)
-                                    .foregroundStyle(Theme.Colors.text)
+                                    Text("Subjects")
+                                        .font(.headline)
+                                }
 
-                                Text("/ \(totalPages)")
-                                    .font(Theme.Typography.body)
-                                    .foregroundStyle(Theme.Colors.secondaryText)
+                                FlowLayout(spacing: 8) {
+                                    ForEach(subjects.prefix(8), id: \.self) { subject in
+                                        Text(subject)
+                                            .font(.caption)
+                                            .padding(.horizontal, 10)
+                                            .padding(.vertical, 6)
+                                            .background(themeColor.color.opacity(0.1), in: Capsule())
+                                            .foregroundStyle(themeColor.color)
+                                    }
+                                }
                             }
-                            .padding(Theme.Spacing.md)
                             .padding(16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                            .padding(.horizontal, Theme.Spacing.md)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                         }
-                    }
 
-                    // Add Button
-                    Button {
-                        addBookToLibrary()
-                    } label: {
-                        HStack {
-                            if isLoading {
-                                ProgressView()
-                                    .progressViewStyle(.circular)
-                                    .tint(.white)
-                            } else {
-                                Image(systemName: "plus.circle.fill")
+                        // Book Settings
+                        VStack(spacing: 0) {
+                            // Book Type
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Book Type")
+                                    .font(.caption.weight(.medium))
+                                    .foregroundStyle(.secondary)
+                                    .textCase(.uppercase)
+
+                                Picker("Type", selection: $bookType) {
+                                    ForEach(BookType.allCases, id: \.self) { type in
+                                        Label(type.rawValue, systemImage: type.icon)
+                                            .tag(type)
+                                    }
+                                }
+                                .pickerStyle(.segmented)
                             }
-                            Text("Add to Library")
+                            .padding(16)
+
+                            Divider()
+                                .padding(.leading, 16)
+
+                            // Reading Status
+                            Menu {
+                                Picker("Status", selection: $readingStatus) {
+                                    ForEach(ReadingStatus.allCases, id: \.self) { status in
+                                        Label(status.rawValue, systemImage: status.icon)
+                                            .tag(status)
+                                    }
+                                }
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Text("Reading Status")
+                                        .font(.body)
+                                        .foregroundStyle(.primary)
+
+                                    Spacer()
+
+                                    HStack(spacing: 6) {
+                                        Image(systemName: readingStatus.icon)
+                                            .font(.subheadline)
+
+                                        Text(readingStatus.shortName)
+                                            .font(.subheadline)
+
+                                        Image(systemName: "chevron.right")
+                                            .font(.caption2.weight(.semibold))
+                                    }
+                                    .foregroundStyle(.secondary)
+                                }
+                                .padding(16)
+                                .contentShape(Rectangle())
+                            }
+
+                            // Current Progress (if reading)
+                            if readingStatus == .currentlyReading, let totalPages = displayInfo.totalPages {
+                                Divider()
+                                    .padding(.leading, 16)
+
+                                HStack {
+                                    Text("Current Page")
+                                        .font(.body)
+                                        .foregroundStyle(.primary)
+
+                                    Spacer()
+
+                                    HStack(spacing: 4) {
+                                        TextField("0", value: $currentPage, format: .number)
+                                            .keyboardType(.numberPad)
+                                            .font(.body.weight(.medium))
+                                            .foregroundStyle(themeColor.color)
+                                            .multilineTextAlignment(.trailing)
+                                            .frame(width: 60)
+
+                                        Text("/ \(totalPages)")
+                                            .font(.body)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                                .padding(16)
+                            }
                         }
-                        .primaryButton(fullWidth: true, color: themeColor.color)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+                        // Add to Library Button
+                        Button {
+                            addBookToLibrary()
+                        } label: {
+                            HStack(spacing: 8) {
+                                if isLoading {
+                                    ProgressView()
+                                        .tint(.white)
+                                } else {
+                                    Image(systemName: "plus.circle.fill")
+                                    Text("Add to Library")
+                                }
+                            }
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(themeColor.color.gradient, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        }
+                        .disabled(isLoading)
+                        .padding(.top, 8)
                     }
-                    .disabled(isLoading)
-                    .padding(.horizontal, Theme.Spacing.md)
-                    .padding(.top, Theme.Spacing.md)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 40)
                 }
             }
-            .padding(.bottom, Theme.Spacing.xxl)
-            .animation(.easeInOut(duration: 0.3), value: displayInfo.description)
-            .animation(.easeInOut(duration: 0.3), value: displayInfo.subjects)
-            .animation(.easeInOut(duration: 0.3), value: displayInfo.isbn)
-            .animation(.easeInOut(duration: 0.3), value: displayInfo.totalPages)
+            .scrollIndicators(.hidden)
         }
-        .background(Theme.Colors.background)
-        .navigationTitle("Book Details")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
@@ -283,19 +294,17 @@ struct BookPreviewView: View {
                 } label: {
                     if isLoading {
                         ProgressView()
-                            .progressViewStyle(.circular)
                     } else {
                         Image(systemName: "checkmark")
                             .fontWeight(.semibold)
+                            .foregroundStyle(themeColor.color)
                     }
                 }
                 .disabled(isLoading)
             }
         }
         .alert("Upgrade Required", isPresented: $showUpgradeAlert) {
-            Button("Upgrade to Pro") {
-                // Navigate to upgrade screen
-            }
+            Button("Upgrade to Pro") {}
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("You've reached the limit of 5 books. Upgrade to Pro for unlimited books.")
@@ -314,17 +323,14 @@ struct BookPreviewView: View {
             defer { isLoading = false }
 
             do {
-                // Step 1: Find the best edition if we have a work ID
                 var bestOLID = bookInfo.olid
 
                 if let workID = bookInfo.workID {
-                    // Try to find a better edition than the default cover_edition_key
                     if let foundBestOLID = try await bookAPI.findBestEdition(workID: workID, originalTitle: bookInfo.title) {
                         bestOLID = foundBestOLID
                     }
                 }
 
-                // Step 2: Fetch full details using the best edition OLID
                 if let olid = bestOLID {
                     fullBookInfo = try await bookAPI.fetchBookByOLID(olid: olid)
                 }
@@ -340,7 +346,6 @@ struct BookPreviewView: View {
             return
         }
 
-        // Check for duplicates using centralized service
         do {
             let duplicateCheck = try BookLibraryService.checkForDuplicate(
                 title: displayInfo.title,
@@ -351,13 +356,11 @@ struct BookPreviewView: View {
 
             switch duplicateCheck {
             case .duplicate(let existing):
-                // Show duplicate alert
                 existingBook = existing
                 showDuplicateAlert = true
                 return
 
             case .noDuplicate:
-                // Proceed with adding the book
                 let book = Book(
                     title: displayInfo.title,
                     author: displayInfo.author,
@@ -376,29 +379,24 @@ struct BookPreviewView: View {
 
                 modelContext.insert(book)
 
-                // Update profile stats if exists
                 if let profile = profiles.first {
                     let engine = GamificationEngine(modelContext: modelContext)
                     engine.checkAchievements(for: profile)
                 }
 
-                // Refresh widget with new book data
                 WidgetDataExporter.exportSnapshot(modelContext: modelContext)
 
-                // Sync to Watch if currently reading
                 if readingStatus == .currentlyReading {
                     Task {
                         await WatchConnectivityManager.shared.syncBooksToWatch()
                     }
                 }
 
-                // Switch to Library tab and dismiss
                 selectedTab = 1
                 onDismiss()
             }
         } catch {
             print("Error checking for duplicates: \(error)")
-            // On error, show alert to be safe
             showDuplicateAlert = true
         }
     }
@@ -429,4 +427,3 @@ struct BookPreviewView: View {
     }
     .modelContainer(for: [Book.self, UserProfile.self], inMemory: true)
 }
-
