@@ -16,251 +16,185 @@ struct BookDetailCustomizationView: View {
     @State private var saveErrorMessage = ""
     @State private var editMode: EditMode = .inactive
 
-    private var activeSections: [BookDetailSection] {
-        profile.bookDetailSections.filter { profile.isBookDetailSectionVisible($0) }
-    }
-
-    private var availableSections: [BookDetailSection] {
-        BookDetailSection.allCases.filter { section in
-            !profile.bookDetailSections.contains(section) || !profile.isBookDetailSectionVisible(section)
-        }
+    private var activeSectionCount: Int {
+        let count = profile.bookDetailSections.filter { section in
+            profile.isBookDetailSectionVisible(section)
+        }.count
+        return count
     }
 
     var body: some View {
         ZStack(alignment: .top) {
-            // Dynamic gradient background
-            LinearGradient(
-                colors: [
-                    themeColor.color.opacity(0.12),
-                    themeColor.color.opacity(0.04),
-                    Theme.Colors.background
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
-
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Description
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "doc.text.fill")
-                                .font(.caption)
-                                .foregroundStyle(themeColor.color)
-                                .frame(width: 16)
-
-                            Text("About")
-                                .font(.headline)
-                        }
-
-                        Text("Customize which sections appear on book detail pages and their order. Drag to reorder sections.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(16)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-
-                    // Active Sections
-                    if !activeSections.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "list.bullet")
-                                        .font(.caption)
-                                        .foregroundStyle(themeColor.color)
-                                        .frame(width: 16)
-
-                                    Text("Active Sections")
-                                        .font(.headline)
-                                }
-
-                                Spacer()
-
-                                Text("\(activeSections.count)/\(BookDetailSection.allCases.count)")
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(.secondary)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
-                                    .background(themeColor.color.opacity(0.1), in: Capsule())
-                            }
-
-                            VStack(spacing: 10) {
-                                ForEach(activeSections) { section in
-                                    HStack(spacing: 12) {
-                                        // Drag handle
-                                        if editMode == .active {
-                                            Image(systemName: "line.3.horizontal")
-                                                .font(.caption)
-                                                .foregroundStyle(.tertiary)
-                                        }
-
-                                        Image(systemName: section.icon)
-                                            .font(.title3)
-                                            .foregroundStyle(themeColor.color)
-                                            .frame(width: 28)
-
-                                        VStack(alignment: .leading, spacing: 2) {
-                                            Text(section.displayName)
-                                                .font(.subheadline.weight(.medium))
-
-                                            Text(section.description)
-                                                .font(.caption)
-                                                .foregroundStyle(.secondary)
-                                        }
-
-                                        Spacer()
-
-                                        // Toggle for optional sections
-                                        Toggle("", isOn: toggleBinding(for: section))
-                                            .labelsHidden()
-                                            .tint(themeColor.color)
-                                    }
-                                    .padding(12)
-                                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                                    .overlay(alignment: .topTrailing) {
-                                        if editMode == .active && canRemoveSection(section) {
-                                            Button {
-                                                withAnimation {
-                                                    disableSection(section)
-                                                    do {
-                                                        try modelContext.save()
-                                                    } catch {
-                                                        saveErrorMessage = "Failed to update: \(error.localizedDescription)"
-                                                        showSaveError = true
-                                                    }
-                                                }
-                                            } label: {
-                                                Image(systemName: "xmark.circle.fill")
-                                                    .font(.title3)
-                                                    .foregroundStyle(.white, .red)
-                                                    .symbolRenderingMode(.palette)
-                                            }
-                                            .offset(x: 8, y: -8)
-                                        }
-                                    }
-                                }
-                                .onMove { from, to in
-                                    profile.moveBookDetailSection(from: from, to: to)
-                                    do {
-                                        try modelContext.save()
-                                    } catch {
-                                        saveErrorMessage = "Failed to reorder: \(error.localizedDescription)"
-                                        showSaveError = true
-                                    }
-                                }
-                            }
-                        }
-                        .padding(16)
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    }
-
-                    // Available Sections
-                    if !availableSections.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack(spacing: 6) {
-                                Image(systemName: "plus.circle.fill")
-                                    .font(.caption)
-                                    .foregroundStyle(themeColor.color)
-                                    .frame(width: 16)
-
-                                Text("Hidden Sections")
-                                    .font(.headline)
-                            }
-
-                            VStack(spacing: 10) {
-                                ForEach(availableSections) { section in
-                                    Button {
-                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                            enableSection(section)
-                                            do {
-                                                try modelContext.save()
-                                            } catch {
-                                                saveErrorMessage = "Failed to add section: \(error.localizedDescription)"
-                                                showSaveError = true
-                                            }
-                                        }
-                                    } label: {
-                                        HStack(spacing: 12) {
-                                            Image(systemName: section.icon)
-                                                .font(.title3)
-                                                .foregroundStyle(.tertiary)
-                                                .frame(width: 28)
-
-                                            VStack(alignment: .leading, spacing: 2) {
-                                                Text(section.displayName)
-                                                    .font(.subheadline.weight(.medium))
-                                                    .foregroundStyle(.primary)
-
-                                                Text(section.description)
-                                                    .font(.caption)
-                                                    .foregroundStyle(.secondary)
-                                            }
-
-                                            Spacer()
-
-                                            Image(systemName: "plus.circle.fill")
-                                                .font(.title3)
-                                                .foregroundStyle(themeColor.color)
-                                        }
-                                        .padding(12)
-                                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                                        .opacity(0.7)
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                            }
-                        }
-                        .padding(16)
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    }
-
-                    // Reset Button
-                    Button {
-                        resetToDefault()
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "arrow.counterclockwise")
-                            Text("Reset to Default")
-                        }
-                        .font(.headline)
-                        .foregroundStyle(themeColor.color)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .strokeBorder(themeColor.color.opacity(0.3), lineWidth: 1)
-                        )
-                    }
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
-                .padding(.bottom, 40)
-            }
-            .scrollIndicators(.hidden)
+            backgroundGradient
+            contentView
         }
         .navigationTitle("Book Details")
         .navigationBarTitleDisplayMode(.inline)
         .environment(\.editMode, $editMode)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button {
-                    withAnimation {
-                        editMode = editMode == .active ? .inactive : .active
-                    }
-                } label: {
-                    Text(editMode == .active ? "Done" : "Edit")
-                        .fontWeight(.semibold)
-                        .foregroundStyle(themeColor.color)
-                }
+                editButton
             }
         }
         .alert("Save Error", isPresented: $showSaveError) {
             Button("OK") {}
         } message: {
             Text(saveErrorMessage)
+        }
+    }
+
+    private var backgroundGradient: some View {
+        LinearGradient(
+            colors: [
+                themeColor.color.opacity(0.12),
+                themeColor.color.opacity(0.04),
+                Theme.Colors.background
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .ignoresSafeArea()
+    }
+
+    private var contentView: some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                aboutSection
+                sectionsListView
+                resetButton
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 20)
+            .padding(.bottom, 40)
+        }
+        .scrollIndicators(.hidden)
+    }
+
+    private var aboutSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 6) {
+                Image(systemName: "doc.text.fill")
+                    .font(.caption)
+                    .foregroundStyle(themeColor.color)
+                    .frame(width: 16)
+
+                Text("About")
+                    .font(.headline)
+            }
+
+            Text("Customize which sections appear on book detail pages and their order. Drag to reorder sections.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private var sectionsListView: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                HStack(spacing: 6) {
+                    Image(systemName: "list.bullet")
+                        .font(.caption)
+                        .foregroundStyle(themeColor.color)
+                        .frame(width: 16)
+
+                    Text("Sections")
+                        .font(.headline)
+                }
+
+                Spacer()
+
+                Text("\(activeSectionCount)/\(BookDetailSection.allCases.count)")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(themeColor.color.opacity(0.1), in: Capsule())
+            }
+
+            VStack(spacing: 10) {
+                ForEach(profile.bookDetailSections) { section in
+                    sectionRow(section)
+                }
+                .onMove { from, to in
+                    withAnimation {
+                        profile.moveBookDetailSection(from: from, to: to)
+                        try? modelContext.save()
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func sectionRow(_ section: BookDetailSection) -> some View {
+        let isVisible = profile.isBookDetailSectionVisible(section)
+
+        return HStack(spacing: 12) {
+            if editMode == .active {
+                Image(systemName: "line.3.horizontal")
+                    .font(.caption)
+                    .foregroundStyle(Theme.Colors.tertiaryText)
+            }
+
+            Image(systemName: section.icon)
+                .font(.title3)
+                .foregroundStyle(isVisible ? themeColor.color : Theme.Colors.tertiaryText)
+                .frame(width: 28)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(section.displayName)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(isVisible ? Theme.Colors.text : Theme.Colors.secondaryText)
+
+                Text(section.description)
+                    .font(.caption)
+                    .foregroundStyle(Theme.Colors.secondaryText)
+            }
+
+            Spacer()
+
+            Toggle("", isOn: toggleBinding(for: section))
+                .labelsHidden()
+                .tint(themeColor.color)
+        }
+        .padding(12)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .opacity(isVisible ? 1.0 : 0.5)
+    }
+
+    private var resetButton: some View {
+        Button {
+            resetToDefault()
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.counterclockwise")
+                Text("Reset to Default")
+            }
+            .font(.headline)
+            .foregroundStyle(themeColor.color)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(themeColor.color.opacity(0.3), lineWidth: 1)
+            )
+        }
+    }
+
+    private var editButton: some View {
+        Button {
+            withAnimation {
+                editMode = editMode == .active ? .inactive : .active
+            }
+        } label: {
+            Text(editMode == .active ? "Done" : "Edit")
+                .fontWeight(.semibold)
+                .foregroundStyle(themeColor.color)
         }
     }
 
