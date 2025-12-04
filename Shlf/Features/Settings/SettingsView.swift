@@ -247,7 +247,8 @@ struct UpgradeView: View {
                     FeatureRow(icon: "cloud.fill", text: "Priority iCloud sync")
                 }
                 .padding(Theme.Spacing.lg)
-                .cardStyle()
+                .padding(16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
 
                 Spacer()
 

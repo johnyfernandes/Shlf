@@ -82,7 +82,8 @@ struct BookPreviewView: View {
                     }
                     .padding(.horizontal, Theme.Spacing.md)
                     .padding(Theme.Spacing.md)
-                    .cardStyle()
+                    .padding(16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                     .padding(.horizontal, Theme.Spacing.md)
                     .transition(.opacity)
                 }
@@ -107,7 +108,8 @@ struct BookPreviewView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 10)
                                 .padding(.horizontal, Theme.Spacing.sm)
-                                .cardStyle()
+                                .padding(16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                             }
 
                             if let totalPages = displayInfo.totalPages {
@@ -124,7 +126,8 @@ struct BookPreviewView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 10)
                                 .padding(.horizontal, Theme.Spacing.sm)
-                                .cardStyle()
+                                .padding(16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                             }
                         }
                         .padding(.horizontal, Theme.Spacing.md)
@@ -151,7 +154,8 @@ struct BookPreviewView: View {
                             }
                         }
                         .padding(Theme.Spacing.md)
-                        .cardStyle()
+                        .padding(16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                         .padding(.horizontal, Theme.Spacing.md)
                         .transition(.opacity)
                     }
@@ -236,7 +240,8 @@ struct BookPreviewView: View {
                                     .foregroundStyle(Theme.Colors.secondaryText)
                             }
                             .padding(Theme.Spacing.md)
-                            .cardStyle()
+                            .padding(16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                             .padding(.horizontal, Theme.Spacing.md)
                         }
                     }

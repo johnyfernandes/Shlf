@@ -168,7 +168,8 @@ struct StatsView: View {
             if !allSessions.isEmpty {
                 ReadingActivityChart(sessions: allSessions)
                     .padding(Theme.Spacing.md)
-                    .cardStyle()
+                    .padding(16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                     .frame(height: 250)
             } else if totalPagesRead > 0 {
                 // Show simple progress indicator if we have page progress but no sessions
@@ -188,7 +189,8 @@ struct StatsView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(Theme.Spacing.xl)
-                .cardStyle()
+                .padding(16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             } else {
                 EmptyStateView(
                     icon: "chart.bar",
@@ -496,7 +498,8 @@ struct GoalCard: View {
             }
         }
         .padding(Theme.Spacing.md)
-        .cardStyle()
+        .padding(16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 

@@ -140,7 +140,8 @@ struct AddBookView: View {
                                 .foregroundStyle(Theme.Colors.tertiaryText)
                         }
                         .padding(Theme.Spacing.md)
-                        .cardStyle()
+                        .padding(16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
                     .buttonStyle(.plain)
 
@@ -178,7 +179,8 @@ struct AddBookView: View {
                                 .foregroundStyle(Theme.Colors.tertiaryText)
                         }
                         .padding(Theme.Spacing.md)
-                        .cardStyle()
+                        .padding(16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
                     .buttonStyle(.plain)
                 }

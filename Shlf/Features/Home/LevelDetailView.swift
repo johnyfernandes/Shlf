@@ -96,7 +96,8 @@ struct LevelDetailView: View {
                             }
                         }
                         .padding(Theme.Spacing.md)
-                        .cardStyle()
+                        .padding(16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
 
                     // How to earn XP
@@ -176,7 +177,8 @@ struct XPSourceRow: View {
             Spacer()
         }
         .padding(Theme.Spacing.sm)
-        .cardStyle()
+        .padding(16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 
