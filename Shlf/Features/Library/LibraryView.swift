@@ -37,21 +37,34 @@ struct LibraryView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: Theme.Spacing.xl) {
-                    // Filter section
-                    filterSection
+            ZStack(alignment: .top) {
+                // Dynamic gradient background
+                LinearGradient(
+                    colors: [
+                        themeColor.color.opacity(0.08),
+                        themeColor.color.opacity(0.02),
+                        Theme.Colors.background
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
 
-                    // Books grid
-                    if filteredBooks.isEmpty {
-                        emptyState
-                    } else {
-                        booksSection
+                ScrollView {
+                    VStack(spacing: Theme.Spacing.xl) {
+                        // Filter section
+                        filterSection
+
+                        // Books grid
+                        if filteredBooks.isEmpty {
+                            emptyState
+                        } else {
+                            booksSection
+                        }
                     }
+                    .padding(.horizontal, Theme.Spacing.lg)
                 }
-                .padding(.horizontal, Theme.Spacing.lg)
             }
-            .background(Theme.Colors.background)
             .navigationDestination(for: Book.self) { book in
                 BookDetailView(book: book)
             }
