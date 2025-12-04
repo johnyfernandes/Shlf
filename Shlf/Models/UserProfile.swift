@@ -58,6 +58,17 @@ final class UserProfile {
         StatCardType.booksRead.rawValue
     ]
 
+    // Book Detail Section Order
+    var bookDetailSectionOrder: [String] = [
+        BookDetailSection.description.rawValue,
+        BookDetailSection.lastPosition.rawValue,
+        BookDetailSection.quotes.rawValue,
+        BookDetailSection.notes.rawValue,
+        BookDetailSection.subjects.rawValue,
+        BookDetailSection.metadata.rawValue,
+        BookDetailSection.readingHistory.rawValue
+    ]
+
     @Relationship(deleteRule: .cascade, inverse: \ReadingGoal.profile)
     var readingGoals: [ReadingGoal]?
 
@@ -146,6 +157,39 @@ final class UserProfile {
 
     func moveHomeCard(from source: IndexSet, to destination: Int) {
         homeCardOrder.move(fromOffsets: source, toOffset: destination)
+    }
+
+    // Helper computed property to get BookDetailSection array from strings
+    var bookDetailSections: [BookDetailSection] {
+        bookDetailSectionOrder.compactMap { BookDetailSection(rawValue: $0) }
+    }
+
+    // Helper methods for managing book detail sections
+    func addBookDetailSection(_ section: BookDetailSection) {
+        if !bookDetailSectionOrder.contains(section.rawValue) {
+            bookDetailSectionOrder.append(section.rawValue)
+        }
+    }
+
+    func removeBookDetailSection(_ section: BookDetailSection) {
+        bookDetailSectionOrder.removeAll { $0 == section.rawValue }
+    }
+
+    func moveBookDetailSection(from source: IndexSet, to destination: Int) {
+        bookDetailSectionOrder.move(fromOffsets: source, toOffset: destination)
+    }
+
+    // Helper to check if a section is visible
+    func isBookDetailSectionVisible(_ section: BookDetailSection) -> Bool {
+        switch section {
+        case .description: return showDescription
+        case .lastPosition: return true // Always show if exists
+        case .quotes: return true // Always show if exists
+        case .notes: return showNotes
+        case .subjects: return showSubjects
+        case .metadata: return showMetadata
+        case .readingHistory: return showReadingHistory
+        }
     }
 
     // Theme color computed property

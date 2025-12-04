@@ -69,6 +69,7 @@
 			membershipExceptions = (
 				Models/Achievement.swift,
 				Models/Book.swift,
+				Models/BookDetailSection.swift,
 				Models/BookPosition.swift,
 				Models/Quote.swift,
 				Models/ReadingGoal.swift,
@@ -91,6 +92,7 @@
 			membershipExceptions = (
 				Models/Achievement.swift,
 				Models/Book.swift,
+				Models/BookDetailSection.swift,
 				Models/BookPosition.swift,
 				Models/Quote.swift,
 				Models/ReadingGoal.swift,
