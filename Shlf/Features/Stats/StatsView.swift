@@ -75,16 +75,29 @@ struct StatsView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: Theme.Spacing.lg) {
-                    overviewSection
-                    readingChartSection
-                    achievementsSection
-                    goalsSection
+            ZStack(alignment: .top) {
+                // Dynamic gradient background
+                LinearGradient(
+                    colors: [
+                        themeColor.color.opacity(0.08),
+                        themeColor.color.opacity(0.02),
+                        Theme.Colors.background
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
+
+                ScrollView {
+                    VStack(spacing: Theme.Spacing.lg) {
+                        overviewSection
+                        readingChartSection
+                        achievementsSection
+                        goalsSection
+                    }
+                    .padding(Theme.Spacing.md)
                 }
-                .padding(Theme.Spacing.md)
             }
-            .background(Theme.Colors.background)
             .navigationTitle("Stats")
             .id(refreshTrigger) // Force view refresh
             .onReceive(NotificationCenter.default.publisher(for: .watchSessionReceived)) { _ in
