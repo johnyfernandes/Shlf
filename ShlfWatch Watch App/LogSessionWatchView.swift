@@ -531,10 +531,6 @@ struct LogSessionWatchView: View {
         // Update book progress
         book.currentPage = currentPage
 
-        // Send page delta to iPhone
-        let delta = PageDelta(bookUUID: book.id, delta: pagesRead)
-        WatchConnectivityManager.shared.sendPageDelta(delta)
-
         // Update goals locally for Watch UI
         let currentProfile = profile
         let tracker = GoalTracker(modelContext: modelContext)
