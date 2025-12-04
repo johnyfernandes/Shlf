@@ -378,68 +378,9 @@ struct BookDetailView: View {
     // MARK: - Stats Overview
 
     private var statsOverview: some View {
-        HStack(spacing: 12) {
-            if let totalPages = book.totalPages {
-                // Progress stat
-                VStack(spacing: 4) {
-                    Text("\(Int(book.progressPercentage))%")
-                        .font(.title2.weight(.bold))
-                        .foregroundStyle(themeColor.color)
-
-                    Text("Complete")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-
-                    ProgressView(value: book.progressPercentage, total: 100)
-                        .tint(themeColor.color)
-                        .scaleEffect(x: 1, y: 0.5)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-
-                // Pages stat
-                VStack(spacing: 4) {
-                    Text("\(book.currentPage)")
-                        .font(.title2.weight(.bold))
-                        .foregroundStyle(.primary)
-
-                    Text("of \(totalPages)")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-
-                // Pages left stat
-                if totalPages > book.currentPage {
-                    VStack(spacing: 4) {
-                        Text("\(totalPages - book.currentPage)")
-                            .font(.title2.weight(.bold))
-                            .foregroundStyle(.primary)
-
-                        Text("left")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                }
-            } else {
-                VStack(spacing: 8) {
-                    Image(systemName: "book.pages")
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
-
-                    Text("No page count")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        Group {
+            if book.totalPages != nil {
+                EmptyView()
             }
         }
     }

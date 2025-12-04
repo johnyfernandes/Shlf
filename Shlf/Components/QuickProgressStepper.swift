@@ -73,9 +73,21 @@ struct QuickProgressStepper: View {
                     .animation(.spring(response: 0.3, dampingFraction: 0.7), value: pendingPages)
 
                     if let total = book.totalPages {
-                        Text("of \(total)")
-                            .font(Theme.Typography.subheadline)
-                            .foregroundStyle(Theme.Colors.tertiaryText)
+                        HStack(spacing: 4) {
+                            Text("of \(total)")
+                                .font(Theme.Typography.subheadline)
+                                .foregroundStyle(Theme.Colors.tertiaryText)
+
+                            if total > book.currentPage {
+                                Text("•")
+                                    .font(Theme.Typography.subheadline)
+                                    .foregroundStyle(Theme.Colors.tertiaryText)
+
+                                Text("\(total - book.currentPage) left")
+                                    .font(Theme.Typography.subheadline)
+                                    .foregroundStyle(Theme.Colors.tertiaryText)
+                            }
+                        }
                     }
                 }
 
