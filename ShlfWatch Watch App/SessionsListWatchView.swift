@@ -165,7 +165,7 @@ struct SessionRowWatch: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text("\(session.endPage - session.startPage) pages")
+                Text(session.displayName)
                     .font(.headline)
                 Spacer()
                 Text("\(session.xpEarned) XP")
@@ -174,6 +174,13 @@ struct SessionRowWatch: View {
             }
 
             HStack {
+                Text(session.pagesRead >= 0 ? "+\(session.pagesRead)" : "\(session.pagesRead)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Text("•")
+                    .foregroundStyle(.secondary)
+
                 Text("\(session.durationMinutes) min")
                     .font(.caption)
                     .foregroundStyle(.secondary)

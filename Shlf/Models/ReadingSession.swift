@@ -69,6 +69,15 @@ final class ReadingSession {
         endDate == nil
     }
 
+    /// Display name for the session showing page range
+    var displayName: String {
+        if isActive {
+            return "Started at page \(startPage)"
+        } else {
+            return "From page \(startPage) to page \(endPage)"
+        }
+    }
+
     /// Validates page numbers are within reasonable limits
     var hasValidPages: Bool {
         let maxReasonablePage = 100_000 // Books longer than this are rare

@@ -321,7 +321,7 @@ struct BookDetailView: View {
                         Text("Active Session")
                             .font(.subheadline.weight(.semibold))
 
-                        Text("\(activeSession.sourceDevice) • \(activeSession.pagesRead) pages")
+                        Text("\(activeSession.sourceDevice) • Started at page \(activeSession.currentPage)")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -743,6 +743,7 @@ struct BookDetailView: View {
 
     private func handleProgressSave(pagesRead: Int) {
         let session = ReadingSession(
+            endDate: Date(),
             startPage: book.currentPage - pagesRead,
             endPage: book.currentPage,
             durationMinutes: pagesRead * 2,
@@ -809,11 +810,19 @@ struct ReadingSessionRow: View {
     var body: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(session.startDate, style: .date)
+                Text(session.displayName)
                     .font(.subheadline.weight(.medium))
 
                 HStack(spacing: 4) {
-                    Text("\(session.pagesRead) pages")
+                    Text(session.pagesRead >= 0 ? "+\(session.pagesRead)" : "\(session.pagesRead)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Text("•")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+
+                    Text(session.startDate, style: .date)
                         .font(.caption)
                         .foregroundStyle(.secondary)
 

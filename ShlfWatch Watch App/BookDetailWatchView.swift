@@ -256,6 +256,7 @@ struct BookDetailWatchView: View {
             let currentProfile = profile
             let engine = GamificationEngine(modelContext: modelContext)
             let session = ReadingSession(
+                endDate: Date(),
                 startPage: oldPage,
                 endPage: book.currentPage,
                 durationMinutes: pagesRead * ReadingConstants.estimatedMinutesPerPage,
