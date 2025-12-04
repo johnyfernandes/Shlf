@@ -361,79 +361,250 @@ struct AboutView: View {
 
 struct ReadingPreferencesView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.themeColor) private var themeColor
     @Bindable var profile: UserProfile
     @State private var showSaveError = false
     @State private var saveErrorMessage = ""
 
     var body: some View {
-        Form {
-            Section {
-                Text("Customize how you track your reading progress")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(Theme.Colors.secondaryText)
-            }
+        ZStack(alignment: .top) {
+            // Dynamic gradient background
+            LinearGradient(
+                colors: [
+                    themeColor.color.opacity(0.12),
+                    themeColor.color.opacity(0.04),
+                    Theme.Colors.background
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
-            Section("Progress Tracking Mode") {
-                Picker("Tracking Style", selection: $profile.useProgressSlider) {
-                    Label("Stepper", systemImage: "plus.forwardslash.minus")
-                        .tag(false)
-                    Label("Slider", systemImage: "slider.horizontal.3")
-                        .tag(true)
-                }
-                .pickerStyle(.inline)
-                .onChange(of: profile.useProgressSlider) { oldValue, newValue in
-                    do {
-                        try modelContext.save()
-                    } catch {
-                        saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
-                        showSaveError = true
-                        profile.useProgressSlider = oldValue
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Description
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "gauge.with.dots.needle.bottom.50percent")
+                                .font(.caption)
+                                .foregroundStyle(themeColor.color)
+                                .frame(width: 16)
+
+                            Text("About")
+                                .font(.headline)
+                        }
+
+                        Text("Customize how you track your reading progress")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
-                }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
 
-                Text(profile.useProgressSlider ?
-                    "Drag the slider to quickly jump to any page" :
-                    "Use +/- buttons to increment page by page")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(Theme.Colors.secondaryText)
-            }
+                    // Progress Tracking Mode
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(spacing: 6) {
+                            Image(systemName: profile.useProgressSlider ? "slider.horizontal.3" : "plus.forwardslash.minus")
+                                .font(.caption)
+                                .foregroundStyle(themeColor.color)
+                                .frame(width: 16)
 
-            if profile.useProgressSlider {
-                Section("Slider Options") {
-                    Toggle(isOn: $profile.showSliderButtons) {
-                        Label("Show +/- Buttons", systemImage: "plus.forwardslash.minus")
-                    }
-                    .onChange(of: profile.showSliderButtons) { oldValue, newValue in
-                        do {
-                            try modelContext.save()
-                        } catch {
-                            saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
-                            showSaveError = true
-                            profile.showSliderButtons = oldValue
+                            Text("Tracking Style")
+                                .font(.headline)
+                        }
+
+                        VStack(spacing: 12) {
+                            // Stepper Option
+                            Button {
+                                withAnimation {
+                                    profile.useProgressSlider = false
+                                    do {
+                                        try modelContext.save()
+                                    } catch {
+                                        saveErrorMessage = "Failed to save: \(error.localizedDescription)"
+                                        showSaveError = true
+                                    }
+                                }
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "plus.forwardslash.minus")
+                                        .font(.title3)
+                                        .foregroundStyle(themeColor.color)
+                                        .frame(width: 28)
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Stepper")
+                                            .font(.subheadline.weight(.medium))
+                                            .foregroundStyle(.primary)
+
+                                        Text("Use +/- buttons to increment page by page")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+
+                                    Spacer()
+
+                                    if !profile.useProgressSlider {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .font(.title3)
+                                            .foregroundStyle(themeColor.color)
+                                    }
+                                }
+                                .padding(12)
+                                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .strokeBorder(profile.useProgressSlider ? .clear : themeColor.color, lineWidth: 2)
+                                )
+                            }
+                            .buttonStyle(.plain)
+
+                            // Slider Option
+                            Button {
+                                withAnimation {
+                                    profile.useProgressSlider = true
+                                    do {
+                                        try modelContext.save()
+                                    } catch {
+                                        saveErrorMessage = "Failed to save: \(error.localizedDescription)"
+                                        showSaveError = true
+                                    }
+                                }
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "slider.horizontal.3")
+                                        .font(.title3)
+                                        .foregroundStyle(themeColor.color)
+                                        .frame(width: 28)
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Slider")
+                                            .font(.subheadline.weight(.medium))
+                                            .foregroundStyle(.primary)
+
+                                        Text("Drag the slider to quickly jump to any page")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+
+                                    Spacer()
+
+                                    if profile.useProgressSlider {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .font(.title3)
+                                            .foregroundStyle(themeColor.color)
+                                    }
+                                }
+                                .padding(12)
+                                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .strokeBorder(profile.useProgressSlider ? themeColor.color : .clear, lineWidth: 2)
+                                )
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
+                    .padding(16)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
 
-                    Text("Add increment/decrement buttons alongside the slider for quick adjustments")
-                        .font(Theme.Typography.caption)
-                        .foregroundStyle(Theme.Colors.secondaryText)
-                }
-            }
+                    // Slider Options
+                    if profile.useProgressSlider {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "gearshape.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(themeColor.color)
+                                    .frame(width: 16)
 
-            if !profile.useProgressSlider || profile.showSliderButtons {
-                Section("Quick Progress Increment") {
-                    Picker("Pages per tap", selection: $profile.pageIncrementAmount) {
-                        Text("1 page").tag(1)
-                        Text("5 pages").tag(5)
-                        Text("10 pages").tag(10)
-                        Text("25 pages").tag(25)
+                                Text("Slider Options")
+                                    .font(.headline)
+                            }
+
+                            Toggle(isOn: $profile.showSliderButtons) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Show +/- Buttons")
+                                        .font(.subheadline.weight(.medium))
+
+                                    Text("Add increment/decrement buttons alongside the slider")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            .tint(themeColor.color)
+                            .onChange(of: profile.showSliderButtons) { oldValue, newValue in
+                                do {
+                                    try modelContext.save()
+                                } catch {
+                                    saveErrorMessage = "Failed to save: \(error.localizedDescription)"
+                                    showSaveError = true
+                                    profile.showSliderButtons = oldValue
+                                }
+                            }
+                        }
+                        .padding(16)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
-                    .pickerStyle(.inline)
 
-                    Text("When using +/- buttons, this is how many pages to add or remove with each tap")
-                        .font(Theme.Typography.caption)
-                        .foregroundStyle(Theme.Colors.secondaryText)
+                    // Quick Progress Increment
+                    if !profile.useProgressSlider || profile.showSliderButtons {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "number.circle.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(themeColor.color)
+                                    .frame(width: 16)
+
+                                Text("Pages per Tap")
+                                    .font(.headline)
+                            }
+
+                            Text("When using +/- buttons, this is how many pages to add or remove with each tap")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+
+                            VStack(spacing: 10) {
+                                ForEach([1, 5, 10, 25], id: \.self) { amount in
+                                    Button {
+                                        withAnimation {
+                                            profile.pageIncrementAmount = amount
+                                            try? modelContext.save()
+                                        }
+                                    } label: {
+                                        HStack {
+                                            Text("\(amount) page\(amount > 1 ? "s" : "")")
+                                                .font(.subheadline.weight(.medium))
+                                                .foregroundStyle(.primary)
+
+                                            Spacer()
+
+                                            if profile.pageIncrementAmount == amount {
+                                                Image(systemName: "checkmark.circle.fill")
+                                                    .font(.title3)
+                                                    .foregroundStyle(themeColor.color)
+                                            }
+                                        }
+                                        .padding(12)
+                                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                                .strokeBorder(profile.pageIncrementAmount == amount ? themeColor.color : .clear, lineWidth: 2)
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        }
+                        .padding(16)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
                 }
+                .padding(.horizontal, 20)
+                .padding(.top, 20)
+                .padding(.bottom, 40)
             }
+            .scrollIndicators(.hidden)
         }
         .navigationTitle("Reading Progress")
         .navigationBarTitleDisplayMode(.inline)
