@@ -96,145 +96,183 @@ struct AddBookView: View {
     // MARK: - Search Options View
 
     private var searchOptionsView: some View {
-        ScrollView {
-            VStack(spacing: Theme.Spacing.xl) {
-                // Hero Section
-                VStack(spacing: Theme.Spacing.md) {
-                    Image(systemName: "books.vertical.fill")
-                        .font(.system(size: 64))
-                        .foregroundStyle(themeColor.color.gradient)
-                        .padding(.top, Theme.Spacing.xl)
+        ZStack(alignment: .top) {
+            // Dynamic gradient background
+            LinearGradient(
+                colors: [
+                    themeColor.color.opacity(0.12),
+                    themeColor.color.opacity(0.04),
+                    Theme.Colors.background
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
-                    Text("Add a Book")
-                        .font(Theme.Typography.title2)
-                        .foregroundStyle(Theme.Colors.text)
+            ScrollView {
+                VStack(spacing: 32) {
+                    // Hero Section
+                    VStack(spacing: 16) {
+                        Image(systemName: "books.vertical.fill")
+                            .font(.system(size: 72))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [
+                                        themeColor.color,
+                                        themeColor.color.opacity(0.7)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .padding(.top, 24)
 
-                    Text("Search or scan to get started")
-                        .font(Theme.Typography.callout)
-                        .foregroundStyle(Theme.Colors.secondaryText)
+                        VStack(spacing: 8) {
+                            Text("Add a Book")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundStyle(Theme.Colors.text)
+
+                            Text("Choose how you'd like to add your book")
+                                .font(.subheadline)
+                                .foregroundStyle(Theme.Colors.secondaryText)
+                                .multilineTextAlignment(.center)
+                        }
+                    }
+
+                    // Quick Actions
+                    VStack(spacing: 16) {
+                        Button {
+                            viewModel.showSearch = true
+                        } label: {
+                            HStack(spacing: 16) {
+                                ZStack {
+                                    Circle()
+                                        .fill(themeColor.color.opacity(0.15))
+                                        .frame(width: 60, height: 60)
+
+                                    Image(systemName: "magnifyingglass")
+                                        .font(.title2)
+                                        .fontWeight(.semibold)
+                                        .foregroundStyle(themeColor.color)
+                                }
+
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Search for a Book")
+                                        .font(.headline)
+                                        .foregroundStyle(Theme.Colors.text)
+
+                                    Text("Find by title, author, or ISBN")
+                                        .font(.subheadline)
+                                        .foregroundStyle(Theme.Colors.secondaryText)
+                                }
+
+                                Spacer()
+
+                                Image(systemName: "chevron.right")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(Theme.Colors.tertiaryText)
+                            }
+                            .padding(20)
+                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                    .strokeBorder(themeColor.color.opacity(0.1), lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(.plain)
+
+                        Button {
+                            Task {
+                                await viewModel.scanBarcode()
+                            }
+                        } label: {
+                            HStack(spacing: 16) {
+                                ZStack {
+                                    Circle()
+                                        .fill(Theme.Colors.accent.opacity(0.15))
+                                        .frame(width: 60, height: 60)
+
+                                    Image(systemName: "barcode.viewfinder")
+                                        .font(.title2)
+                                        .fontWeight(.semibold)
+                                        .foregroundStyle(Theme.Colors.accent)
+                                }
+
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Scan Barcode")
+                                        .font(.headline)
+                                        .foregroundStyle(Theme.Colors.text)
+
+                                    Text("Use your camera to scan ISBN")
+                                        .font(.subheadline)
+                                        .foregroundStyle(Theme.Colors.secondaryText)
+                                }
+
+                                Spacer()
+
+                                Image(systemName: "chevron.right")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(Theme.Colors.tertiaryText)
+                            }
+                            .padding(20)
+                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                    .strokeBorder(Theme.Colors.accent.opacity(0.1), lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(.plain)
+
+                        Button {
+                            showManualEntry = true
+                        } label: {
+                            HStack(spacing: 16) {
+                                ZStack {
+                                    Circle()
+                                        .fill(Theme.Colors.secondary.opacity(0.15))
+                                        .frame(width: 60, height: 60)
+
+                                    Image(systemName: "square.and.pencil")
+                                        .font(.title2)
+                                        .fontWeight(.semibold)
+                                        .foregroundStyle(Theme.Colors.secondary)
+                                }
+
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Manual Entry")
+                                        .font(.headline)
+                                        .foregroundStyle(Theme.Colors.text)
+
+                                    Text("Enter book details yourself")
+                                        .font(.subheadline)
+                                        .foregroundStyle(Theme.Colors.secondaryText)
+                                }
+
+                                Spacer()
+
+                                Image(systemName: "chevron.right")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(Theme.Colors.tertiaryText)
+                            }
+                            .padding(20)
+                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                    .strokeBorder(Theme.Colors.secondary.opacity(0.1), lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 20)
                 }
-                .padding(.bottom, Theme.Spacing.md)
-
-                // Quick Actions
-                VStack(spacing: Theme.Spacing.md) {
-                    Button {
-                        viewModel.showSearch = true
-                    } label: {
-                        HStack(spacing: Theme.Spacing.md) {
-                            ZStack {
-                                Circle()
-                                    .fill(themeColor.color.opacity(0.12))
-                                    .frame(width: 56, height: 56)
-
-                                Image(systemName: "magnifyingglass")
-                                    .font(.title2)
-                                    .foregroundStyle(themeColor.color)
-                            }
-
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Search for a Book")
-                                    .font(Theme.Typography.headline)
-                                    .foregroundStyle(Theme.Colors.text)
-
-                                Text("Find by title, author, or ISBN")
-                                    .font(Theme.Typography.subheadline)
-                                    .foregroundStyle(Theme.Colors.secondaryText)
-                            }
-
-                            Spacer()
-
-                            Image(systemName: "chevron.right")
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(Theme.Colors.tertiaryText)
-                        }
-                        .padding(Theme.Spacing.md)
-                        .padding(16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    }
-                    .buttonStyle(.plain)
-
-                    Button {
-                        Task {
-                            await viewModel.scanBarcode()
-                        }
-                    } label: {
-                        HStack(spacing: Theme.Spacing.md) {
-                            ZStack {
-                                Circle()
-                                    .fill(Theme.Colors.accent.opacity(0.12))
-                                    .frame(width: 56, height: 56)
-
-                                Image(systemName: "barcode.viewfinder")
-                                    .font(.title2)
-                                    .foregroundStyle(Theme.Colors.accent)
-                            }
-
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Scan Barcode")
-                                    .font(Theme.Typography.headline)
-                                    .foregroundStyle(Theme.Colors.text)
-
-                                Text("Use your camera to scan ISBN")
-                                    .font(Theme.Typography.subheadline)
-                                    .foregroundStyle(Theme.Colors.secondaryText)
-                            }
-
-                            Spacer()
-
-                            Image(systemName: "chevron.right")
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(Theme.Colors.tertiaryText)
-                        }
-                        .padding(Theme.Spacing.md)
-                        .padding(16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    }
-                    .buttonStyle(.plain)
-
-                    Button {
-                        showManualEntry = true
-                    } label: {
-                        HStack(spacing: Theme.Spacing.md) {
-                            ZStack {
-                                Circle()
-                                    .fill(Theme.Colors.secondary.opacity(0.12))
-                                    .frame(width: 56, height: 56)
-
-                                Image(systemName: "square.and.pencil")
-                                    .font(.title2)
-                                    .foregroundStyle(Theme.Colors.secondary)
-                            }
-
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Manual Entry")
-                                    .font(Theme.Typography.headline)
-                                    .foregroundStyle(Theme.Colors.text)
-
-                                Text("Enter book details yourself")
-                                    .font(Theme.Typography.subheadline)
-                                    .foregroundStyle(Theme.Colors.secondaryText)
-                            }
-
-                            Spacer()
-
-                            Image(systemName: "chevron.right")
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(Theme.Colors.tertiaryText)
-                        }
-                        .padding(Theme.Spacing.md)
-                        .padding(16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(.horizontal, Theme.Spacing.md)
+                .padding(.vertical, 20)
+                .padding(.bottom, 40)
             }
-            .padding(.vertical, Theme.Spacing.lg)
         }
-        .background(Theme.Colors.background)
     }
 
     // MARK: - Book Preview View
