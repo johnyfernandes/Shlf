@@ -133,7 +133,16 @@ struct LevelDetailView: View {
                                 HStack(spacing: 12) {
                                     ZStack {
                                         Circle()
-                                            .fill(Theme.Colors.xpGradient)
+                                            .fill(
+                                                LinearGradient(
+                                                    colors: [
+                                                        themeColor.color,
+                                                        themeColor.color.opacity(0.7)
+                                                    ],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                )
+                                            )
                                             .frame(width: 44, height: 44)
 
                                         Image(systemName: "star.fill")
@@ -141,7 +150,7 @@ struct LevelDetailView: View {
                                             .fontWeight(.semibold)
                                             .foregroundStyle(.white)
                                     }
-                                    .shadow(color: Theme.Shadow.medium, radius: 6, y: 3)
+                                    .shadow(color: themeColor.color.opacity(0.3), radius: 6, y: 3)
 
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("Current Level")
@@ -172,7 +181,16 @@ struct LevelDetailView: View {
                                 HStack(spacing: 12) {
                                     ZStack {
                                         Circle()
-                                            .fill(Theme.Colors.xpGradient)
+                                            .fill(
+                                                LinearGradient(
+                                                    colors: [
+                                                        themeColor.color,
+                                                        themeColor.color.opacity(0.7)
+                                                    ],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                )
+                                            )
                                             .frame(width: 44, height: 44)
 
                                         Image(systemName: "arrow.up.forward")
@@ -180,7 +198,7 @@ struct LevelDetailView: View {
                                             .fontWeight(.semibold)
                                             .foregroundStyle(.white)
                                     }
-                                    .shadow(color: Theme.Shadow.medium, radius: 6, y: 3)
+                                    .shadow(color: themeColor.color.opacity(0.3), radius: 6, y: 3)
 
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("Next Level")
@@ -229,7 +247,16 @@ struct LevelDetailView: View {
                                 HStack(spacing: 12) {
                                     ZStack {
                                         Circle()
-                                            .fill(Theme.Colors.xpGradient)
+                                            .fill(
+                                                LinearGradient(
+                                                    colors: [
+                                                        themeColor.color,
+                                                        themeColor.color.opacity(0.7)
+                                                    ],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                )
+                                            )
                                             .frame(width: 44, height: 44)
 
                                         Image(systemName: "book.pages.fill")
@@ -237,7 +264,7 @@ struct LevelDetailView: View {
                                             .fontWeight(.semibold)
                                             .foregroundStyle(.white)
                                     }
-                                    .shadow(color: Theme.Shadow.medium, radius: 6, y: 3)
+                                    .shadow(color: themeColor.color.opacity(0.3), radius: 6, y: 3)
 
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("Reading Pages")
@@ -268,7 +295,16 @@ struct LevelDetailView: View {
                                 HStack(spacing: 12) {
                                     ZStack {
                                         Circle()
-                                            .fill(Theme.Colors.successGradient)
+                                            .fill(
+                                                LinearGradient(
+                                                    colors: [
+                                                        themeColor.color,
+                                                        themeColor.color.opacity(0.7)
+                                                    ],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                )
+                                            )
                                             .frame(width: 44, height: 44)
 
                                         Image(systemName: "checkmark.circle.fill")
@@ -276,7 +312,7 @@ struct LevelDetailView: View {
                                             .fontWeight(.semibold)
                                             .foregroundStyle(.white)
                                     }
-                                    .shadow(color: Theme.Shadow.medium, radius: 6, y: 3)
+                                    .shadow(color: themeColor.color.opacity(0.3), radius: 6, y: 3)
 
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("Finishing Books")
@@ -307,7 +343,16 @@ struct LevelDetailView: View {
                                 HStack(spacing: 12) {
                                     ZStack {
                                         Circle()
-                                            .fill(Theme.Colors.streakGradient)
+                                            .fill(
+                                                LinearGradient(
+                                                    colors: [
+                                                        themeColor.color,
+                                                        themeColor.color.opacity(0.7)
+                                                    ],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                )
+                                            )
                                             .frame(width: 44, height: 44)
 
                                         Image(systemName: "flame.fill")
@@ -315,7 +360,7 @@ struct LevelDetailView: View {
                                             .fontWeight(.semibold)
                                             .foregroundStyle(.white)
                                     }
-                                    .shadow(color: Theme.Shadow.medium, radius: 6, y: 3)
+                                    .shadow(color: themeColor.color.opacity(0.3), radius: 6, y: 3)
 
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("Daily Streaks")
