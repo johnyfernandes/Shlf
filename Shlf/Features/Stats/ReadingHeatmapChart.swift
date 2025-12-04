@@ -21,6 +21,7 @@ struct ReadingHeatmapChart: View {
     @State private var totalPages: Int = 0
     @State private var totalDaysActive: Int = 0
     @State private var periodTitle: String = ""
+    @State private var shouldScrollToEnd = false
 
     private let columns = 7 // Days of week
     private let cellSize: CGFloat = 18
@@ -106,6 +107,9 @@ struct ReadingHeatmapChart: View {
             let daysSinceStart = calendar.dateComponents([.day], from: startOfYear, to: todayDate).day! + 1
             periodTitle = "\(formatter.string(from: todayDate)) (\(daysSinceStart) days)"
         }
+
+        // Trigger scroll to end after data is ready
+        shouldScrollToEnd = true
     }
 
     private func intensityColor(for pages: Int) -> Color {
@@ -163,49 +167,68 @@ struct ReadingHeatmapChart: View {
             }
 
             // Heatmap
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(alignment: .top, spacing: 8) {
-                    // Day labels (fixed on left)
-                    VStack(alignment: .trailing, spacing: cellSpacing) {
-                        ForEach(["S", "M", "T", "W", "T", "F", "S"], id: \.self) { day in
-                            Text(day)
-                                .font(.system(size: 8, weight: .medium))
-                                .foregroundStyle(Theme.Colors.tertiaryText)
-                                .frame(width: 12, height: cellSize)
+            ZStack(alignment: .topLeading) {
+                ScrollViewReader { proxy in
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(alignment: .top, spacing: 8) {
+                            // Spacer for day labels
+                            Color.clear
+                                .frame(width: 20)
+
+                            // Heatmap grid
+                            HStack(alignment: .top, spacing: cellSpacing) {
+                                ForEach(Array(weeklyData.enumerated()), id: \.offset) { weekIndex, week in
+                                    VStack(spacing: cellSpacing) {
+                                        ForEach(Array(week.enumerated()), id: \.offset) { dayIndex, date in
+                                            let pages = periodData[date] ?? 0
+
+                                            Button {
+                                                if pages > 0 {
+                                                    selectedDate = IdentifiableDate(date: date)
+                                                }
+                                            } label: {
+                                                RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                                    .fill(intensityColor(for: pages))
+                                                    .frame(width: cellSize, height: cellSize)
+                                                    .overlay(
+                                                        RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                                            .strokeBorder(
+                                                                pages > 0 ? themeColor.color.opacity(0.2) : .clear,
+                                                                lineWidth: 0.5
+                                                            )
+                                                    )
+                                            }
+                                            .buttonStyle(.plain)
+                                        }
+                                    }
+                                    .id(weekIndex)
+                                }
+                            }
+                            .padding(.top, 4)
                         }
                     }
-                    .padding(.top, 4)
-
-                    // Heatmap grid
-                    HStack(alignment: .top, spacing: cellSpacing) {
-                        ForEach(Array(weeklyData.enumerated()), id: \.offset) { weekIndex, week in
-                            VStack(spacing: cellSpacing) {
-                                ForEach(Array(week.enumerated()), id: \.offset) { dayIndex, date in
-                                    let pages = periodData[date] ?? 0
-
-                                    Button {
-                                        if pages > 0 {
-                                            selectedDate = IdentifiableDate(date: date)
-                                        }
-                                    } label: {
-                                        RoundedRectangle(cornerRadius: 3, style: .continuous)
-                                            .fill(intensityColor(for: pages))
-                                            .frame(width: cellSize, height: cellSize)
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 3, style: .continuous)
-                                                    .strokeBorder(
-                                                        pages > 0 ? themeColor.color.opacity(0.2) : .clear,
-                                                        lineWidth: 0.5
-                                                    )
-                                            )
-                                    }
-                                    .buttonStyle(.plain)
+                    .onChange(of: shouldScrollToEnd) { _, newValue in
+                        if newValue && !weeklyData.isEmpty {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                withAnimation {
+                                    proxy.scrollTo(weeklyData.count - 1, anchor: .trailing)
                                 }
+                                shouldScrollToEnd = false
                             }
                         }
                     }
-                    .padding(.top, 4)
                 }
+
+                // Sticky day labels
+                VStack(alignment: .trailing, spacing: cellSpacing) {
+                    ForEach(["S", "M", "T", "W", "T", "F", "S"], id: \.self) { day in
+                        Text(day)
+                            .font(.system(size: 8, weight: .medium))
+                            .foregroundStyle(Theme.Colors.tertiaryText)
+                            .frame(width: 12, height: cellSize)
+                    }
+                }
+                .padding(.top, 4)
             }
 
             // Legend
