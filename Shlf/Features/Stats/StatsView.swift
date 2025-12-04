@@ -403,55 +403,58 @@ struct ReadingActivityChart: View {
                 Spacer()
             }
 
-            // Chart with tap gesture overlay
-            ZStack {
-                Chart(last7DaysData, id: \.0) { date, pages in
-                    BarMark(
-                        x: .value("Day", date, unit: .day),
-                        y: .value("Pages", pages)
+            // Chart
+            Chart(last7DaysData, id: \.0) { date, pages in
+                BarMark(
+                    x: .value("Day", date, unit: .day),
+                    y: .value("Pages", pages)
+                )
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [
+                            themeColor.color,
+                            themeColor.color.opacity(0.6)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
                     )
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [
-                                themeColor.color,
-                                themeColor.color.opacity(0.6)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .cornerRadius(6)
-                }
-                .chartXAxis {
-                    AxisMarks(values: .stride(by: .day)) { value in
-                        if let date = value.as(Date.self) {
-                            AxisValueLabel {
-                                Text(date, format: .dateTime.weekday(.narrow))
-                                    .font(.caption)
-                                    .fontWeight(.medium)
-                                    .foregroundStyle(Theme.Colors.secondaryText)
-                            }
-                        }
-                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                            .foregroundStyle(Theme.Colors.tertiaryText.opacity(0.2))
-                    }
-                }
-                .chartYAxis {
-                    AxisMarks(position: .leading) { value in
+                )
+                .cornerRadius(6)
+            }
+            .chartXAxis {
+                AxisMarks(values: .stride(by: .day)) { value in
+                    if let date = value.as(Date.self) {
                         AxisValueLabel {
-                            if let pages = value.as(Int.self) {
-                                Text("\(pages)")
-                                    .font(.caption)
-                                    .fontWeight(.medium)
-                                    .foregroundStyle(Theme.Colors.secondaryText)
-                            }
+                            Text(date, format: .dateTime.weekday(.narrow))
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundStyle(Theme.Colors.secondaryText)
                         }
-                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 2]))
-                            .foregroundStyle(Theme.Colors.tertiaryText.opacity(0.2))
                     }
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                        .foregroundStyle(Theme.Colors.tertiaryText.opacity(0.2))
                 }
-                .chartAngleSelection(value: $selectedDate)
-                .frame(height: 160)
+            }
+            .chartYAxis {
+                AxisMarks(position: .leading) { value in
+                    AxisValueLabel {
+                        if let pages = value.as(Int.self) {
+                            Text("\(pages)")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundStyle(Theme.Colors.secondaryText)
+                        }
+                    }
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 2]))
+                        .foregroundStyle(Theme.Colors.tertiaryText.opacity(0.2))
+                }
+            }
+            .chartXSelection(value: $selectedDate)
+            .frame(height: 160)
+            .onChange(of: selectedDate) { _, newValue in
+                if newValue != nil {
+                    // selectedDate is set, it will trigger the sheet
+                }
             }
         }
         .sheet(item: Binding(
