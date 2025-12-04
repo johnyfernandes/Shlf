@@ -180,10 +180,40 @@ struct StatsView: View {
 
             if !allSessions.isEmpty {
                 ReadingActivityChart(sessions: allSessions)
-                    .padding(Theme.Spacing.md)
-                    .padding(16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .frame(height: 250)
+                    .padding(20)
+                    .background(
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                .fill(.ultraThinMaterial)
+
+                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            themeColor.color.opacity(0.05),
+                                            .clear
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                        }
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        themeColor.color.opacity(0.15),
+                                        .clear
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
+                    )
+                    .frame(height: 260)
             } else if totalPagesRead > 0 {
                 // Show simple progress indicator if we have page progress but no sessions
                 VStack(spacing: Theme.Spacing.md) {
@@ -319,40 +349,98 @@ struct ReadingActivityChart: View {
         .reversed()
     }
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("Last 7 Days")
-                .font(Theme.Typography.callout)
-                .foregroundStyle(Theme.Colors.secondaryText)
+    private var totalPages: Int {
+        last7DaysData.reduce(0) { $0 + $1.1 }
+    }
 
+    private var averagePages: Double {
+        let total = last7DaysData.reduce(0) { $0 + $1.1 }
+        return Double(total) / 7.0
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Header with stats
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Last 7 Days")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Theme.Colors.text)
+
+                    HStack(spacing: 12) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "book.pages")
+                                .font(.caption2)
+                            Text("\(totalPages) total")
+                                .font(.caption)
+                        }
+                        .foregroundStyle(Theme.Colors.secondaryText)
+
+                        Text("•")
+                            .font(.caption2)
+                            .foregroundStyle(Theme.Colors.tertiaryText)
+
+                        HStack(spacing: 4) {
+                            Image(systemName: "chart.bar")
+                                .font(.caption2)
+                            Text("\(Int(averagePages)) avg")
+                                .font(.caption)
+                        }
+                        .foregroundStyle(Theme.Colors.secondaryText)
+                    }
+                }
+
+                Spacer()
+            }
+
+            // Chart
             Chart(last7DaysData, id: \.0) { date, pages in
                 BarMark(
                     x: .value("Day", date, unit: .day),
                     y: .value("Pages", pages)
                 )
-                .foregroundStyle(themeColor.color.gradient)
-                .cornerRadius(4)
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [
+                            themeColor.color,
+                            themeColor.color.opacity(0.6)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .cornerRadius(6)
             }
             .chartXAxis {
                 AxisMarks(values: .stride(by: .day)) { value in
                     if let date = value.as(Date.self) {
                         AxisValueLabel {
                             Text(date, format: .dateTime.weekday(.narrow))
-                                .font(Theme.Typography.caption)
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundStyle(Theme.Colors.secondaryText)
                         }
                     }
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                        .foregroundStyle(Theme.Colors.tertiaryText.opacity(0.2))
                 }
             }
             .chartYAxis {
-                AxisMarks { value in
+                AxisMarks(position: .leading) { value in
                     AxisValueLabel {
                         if let pages = value.as(Int.self) {
                             Text("\(pages)")
-                                .font(Theme.Typography.caption)
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundStyle(Theme.Colors.secondaryText)
                         }
                     }
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 2]))
+                        .foregroundStyle(Theme.Colors.tertiaryText.opacity(0.2))
                 }
             }
+            .frame(height: 160)
         }
     }
 }
