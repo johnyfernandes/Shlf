@@ -179,41 +179,48 @@ struct StatsView: View {
                 .foregroundStyle(Theme.Colors.text)
 
             if !allSessions.isEmpty {
-                ReadingActivityChart(sessions: allSessions)
-                    .padding(20)
-                    .background(
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                .fill(.ultraThinMaterial)
-
-                            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            themeColor.color.opacity(0.05),
-                                            .clear
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                        }
-                    )
-                    .overlay(
+                Group {
+                    switch profile.chartType {
+                    case .bar:
+                        ReadingActivityChart(sessions: allSessions)
+                            .frame(height: 260)
+                    case .heatmap:
+                        ReadingHeatmapChart(sessions: allSessions)
+                    }
+                }
+                .padding(20)
+                .background(
+                    ZStack {
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .strokeBorder(
+                            .fill(.ultraThinMaterial)
+
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(
                                 LinearGradient(
                                     colors: [
-                                        themeColor.color.opacity(0.15),
+                                        themeColor.color.opacity(0.05),
                                         .clear
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1
+                                )
                             )
-                    )
-                    .frame(height: 260)
+                    }
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [
+                                    themeColor.color.opacity(0.15),
+                                    .clear
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
             } else if totalPagesRead > 0 {
                 // Show simple progress indicator if we have page progress but no sessions
                 VStack(spacing: Theme.Spacing.md) {

@@ -9,18 +9,21 @@ import Foundation
 import SwiftData
 import SwiftUI
 
-enum ChartType: String, Codable, CaseIterable {
+enum ChartType: String, Codable, CaseIterable, Hashable {
     case bar = "Bar Chart"
+    case heatmap = "Activity Heatmap"
 
     var icon: String {
         switch self {
         case .bar: return "chart.bar.fill"
+        case .heatmap: return "square.grid.3x3.fill"
         }
     }
 
     var description: String {
         switch self {
         case .bar: return "Display reading activity as vertical bars"
+        case .heatmap: return "GitHub-style activity heatmap showing 12 weeks"
         }
     }
 }

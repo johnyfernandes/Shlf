@@ -68,52 +68,54 @@ struct StatsSettingsView: View {
                             }
 
                             VStack(spacing: 10) {
-                                Button {
-                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                        profile.chartType = .bar
-                                        do {
-                                            try modelContext.save()
-                                        } catch {
-                                            saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
-                                            showSaveError = true
+                                ForEach(ChartType.allCases, id: \.self) { chartType in
+                                    Button {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                            profile.chartType = chartType
+                                            do {
+                                                try modelContext.save()
+                                            } catch {
+                                                saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
+                                                showSaveError = true
+                                            }
                                         }
-                                    }
-                                } label: {
-                                    HStack(spacing: 12) {
-                                        Image(systemName: ChartType.bar.icon)
-                                            .font(.title3)
-                                            .foregroundStyle(profile.themeColor.color)
-                                            .frame(width: 28)
-
-                                        VStack(alignment: .leading, spacing: 2) {
-                                            Text(ChartType.bar.rawValue)
-                                                .font(.subheadline.weight(.medium))
-                                                .foregroundStyle(.primary)
-
-                                            Text(ChartType.bar.description)
-                                                .font(.caption)
-                                                .foregroundStyle(.secondary)
-                                        }
-
-                                        Spacer()
-
-                                        if profile.chartType == .bar {
-                                            Image(systemName: "checkmark.circle.fill")
+                                    } label: {
+                                        HStack(spacing: 12) {
+                                            Image(systemName: chartType.icon)
                                                 .font(.title3)
                                                 .foregroundStyle(profile.themeColor.color)
+                                                .frame(width: 28)
+
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text(chartType.rawValue)
+                                                    .font(.subheadline.weight(.medium))
+                                                    .foregroundStyle(.primary)
+
+                                                Text(chartType.description)
+                                                    .font(.caption)
+                                                    .foregroundStyle(.secondary)
+                                            }
+
+                                            Spacer()
+
+                                            if profile.chartType == chartType {
+                                                Image(systemName: "checkmark.circle.fill")
+                                                    .font(.title3)
+                                                    .foregroundStyle(profile.themeColor.color)
+                                            }
                                         }
+                                        .padding(12)
+                                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                                .strokeBorder(
+                                                    profile.chartType == chartType ? profile.themeColor.color : .clear,
+                                                    lineWidth: 2
+                                                )
+                                        )
                                     }
-                                    .padding(12)
-                                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                            .strokeBorder(
-                                                profile.chartType == .bar ? profile.themeColor.color : .clear,
-                                                lineWidth: 2
-                                            )
-                                    )
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
                         .padding(16)
