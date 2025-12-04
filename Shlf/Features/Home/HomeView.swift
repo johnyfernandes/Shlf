@@ -83,23 +83,36 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: Theme.Spacing.xl) {
-                    heroSection
+            ZStack(alignment: .top) {
+                // Dynamic gradient background
+                LinearGradient(
+                    colors: [
+                        themeColor.color.opacity(0.08),
+                        themeColor.color.opacity(0.02),
+                        Theme.Colors.background
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
 
-                    if !profile.homeCards.isEmpty {
-                        statsSection
-                    }
+                ScrollView {
+                    VStack(spacing: Theme.Spacing.xl) {
+                        heroSection
 
-                    if currentlyReading.isEmpty {
-                        emptyCurrentlyReading
-                    } else {
-                        currentlyReadingSection
+                        if !profile.homeCards.isEmpty {
+                            statsSection
+                        }
+
+                        if currentlyReading.isEmpty {
+                            emptyCurrentlyReading
+                        } else {
+                            currentlyReadingSection
+                        }
                     }
+                    .padding(.horizontal, Theme.Spacing.lg)
                 }
-                .padding(.horizontal, Theme.Spacing.lg)
             }
-            .background(Theme.Colors.background)
             .navigationTitle("Shlf")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
