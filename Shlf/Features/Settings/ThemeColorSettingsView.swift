@@ -19,18 +19,15 @@ struct ThemeColorSettingsView: View {
     /// Update Live Activity with new theme color by restarting it
     /// Seamlessly restarts the Live Activity preserving all state except color
     private func updateLiveActivityThemeColor(newThemeColor: ThemeColor) async {
-        // Check if Live Activity is currently active
         guard ReadingSessionActivityManager.shared.isActive else {
-            return // No Live Activity running, nothing to update
+            return
         }
 
-        // Get current Live Activity state (including XP)
         guard let currentPage = ReadingSessionActivityManager.shared.getCurrentPage(),
               let currentXP = ReadingSessionActivityManager.shared.getCurrentXP() else {
             return
         }
 
-        // Find the active session to get book and timing info
         let descriptor = FetchDescriptor<ActiveReadingSession>()
         guard let activeSessions = try? modelContext.fetch(descriptor),
               let activeSession = activeSessions.first,
@@ -38,13 +35,9 @@ struct ThemeColorSettingsView: View {
             return
         }
 
-        // Get pause state from Live Activity
         let isPaused = activeSession.isPaused
-
-        // Restart Live Activity with new theme color
-        // This preserves: pages, XP, time, pause state
-        // Only updates: theme color
         let newThemeHex = newThemeColor.color.toHex() ?? "#00CED1"
+
         await ReadingSessionActivityManager.shared.startActivity(
             book: book,
             currentPage: currentPage,
@@ -53,53 +46,81 @@ struct ThemeColorSettingsView: View {
             themeColorHex: newThemeHex
         )
 
-        // Restore pause state if needed
         if isPaused {
             await ReadingSessionActivityManager.shared.pauseActivity()
         }
     }
 
     var body: some View {
-        Form {
-            Section {
-                Text("Choose your preferred accent color. It will be applied throughout the app and synced to your Apple Watch.")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(Theme.Colors.secondaryText)
-            }
+        ZStack(alignment: .top) {
+            // Dynamic gradient background
+            LinearGradient(
+                colors: [
+                    profile.themeColor.color.opacity(0.12),
+                    profile.themeColor.color.opacity(0.04),
+                    Theme.Colors.background
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
-            Section {
-                LazyVGrid(columns: columns, spacing: 16) {
-                    ForEach(ThemeColor.allCases) { themeColor in
-                        ColorOption(
-                            themeColor: themeColor,
-                            isSelected: profile.themeColor == themeColor,
-                            onSelect: {
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                    profile.themeColor = themeColor
-                                    try? modelContext.save()
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Description
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "paintbrush.fill")
+                                .font(.caption)
+                                .foregroundStyle(profile.themeColor.color)
+                                .frame(width: 16)
 
-                                    // Sync to Watch immediately
-                                    WatchConnectivityManager.shared.sendProfileSettingsToWatch(profile)
+                            Text("About")
+                                .font(.headline)
+                        }
 
-                                    // CRITICAL: Update Live Activity with new theme color
-                                    // Since themeColor is in ActivityAttributes (immutable),
-                                    // we must restart the Live Activity
-                                    Task {
-                                        await updateLiveActivityThemeColor(newThemeColor: themeColor)
-                                    }
-
-                                    // Update widgets with new theme color
-                                    WidgetDataExporter.exportSnapshot(modelContext: modelContext)
-
-                                    // Give haptic feedback
-                                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                                }
-                            }
-                        )
+                        Text("Choose your preferred accent color. It will be applied throughout the app and synced to your Apple Watch.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+                    // Color Grid
+                    VStack(alignment: .leading, spacing: 16) {
+                        LazyVGrid(columns: columns, spacing: 20) {
+                            ForEach(ThemeColor.allCases) { themeColor in
+                                ColorOption(
+                                    themeColor: themeColor,
+                                    isSelected: profile.themeColor == themeColor,
+                                    onSelect: {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                            profile.themeColor = themeColor
+                                            try? modelContext.save()
+
+                                            WatchConnectivityManager.shared.sendProfileSettingsToWatch(profile)
+
+                                            Task {
+                                                await updateLiveActivityThemeColor(newThemeColor: themeColor)
+                                            }
+
+                                            WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+                                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    .padding(20)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                 }
-                .padding(.vertical, Theme.Spacing.sm)
+                .padding(.horizontal, 20)
+                .padding(.top, 20)
+                .padding(.bottom, 40)
             }
+            .scrollIndicators(.hidden)
         }
         .navigationTitle("Theme Color")
         .navigationBarTitleDisplayMode(.inline)
@@ -115,11 +136,11 @@ struct ColorOption: View {
         Button {
             onSelect()
         } label: {
-            VStack(spacing: Theme.Spacing.xs) {
+            VStack(spacing: 8) {
                 ZStack {
                     Circle()
                         .fill(themeColor.gradient)
-                        .frame(width: 60, height: 60)
+                        .frame(width: 64, height: 64)
                         .overlay(
                             Circle()
                                 .strokeBorder(
@@ -128,23 +149,25 @@ struct ColorOption: View {
                                 )
                         )
                         .shadow(
-                            color: isSelected ? themeColor.color.opacity(0.5) : Color.clear,
-                            radius: isSelected ? 12 : 0,
-                            y: isSelected ? 4 : 0
+                            color: isSelected ? themeColor.color.opacity(0.4) : .black.opacity(0.1),
+                            radius: isSelected ? 16 : 4,
+                            y: isSelected ? 6 : 2
                         )
 
                     if isSelected {
-                        Image(systemName: "checkmark")
+                        Image(systemName: "checkmark.circle.fill")
                             .font(.title2)
-                            .fontWeight(.bold)
+                            .fontWeight(.semibold)
                             .foregroundStyle(.white)
+                            .symbolRenderingMode(.hierarchical)
                     }
                 }
-                .scaleEffect(isSelected ? 1.1 : 1.0)
+                .scaleEffect(isSelected ? 1.05 : 1.0)
+                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
 
                 Text(themeColor.displayName)
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(isSelected ? themeColor.color : Theme.Colors.text)
+                    .font(.caption)
+                    .foregroundStyle(isSelected ? themeColor.color : .primary)
                     .fontWeight(isSelected ? .semibold : .regular)
             }
         }
