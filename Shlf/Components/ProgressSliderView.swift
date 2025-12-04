@@ -35,96 +35,91 @@ struct ProgressSliderView: View {
     }
 
     var body: some View {
-        VStack(spacing: Theme.Spacing.lg) {
-            // Page display with optional buttons
-            if showButtons {
-                HStack(spacing: Theme.Spacing.md) {
+        VStack(spacing: 16) {
+            // Compact page display
+            HStack(spacing: 12) {
+                if showButtons {
                     // Decrement button
                     Button {
                         decrementPage()
                     } label: {
                         Image(systemName: "minus.circle.fill")
-                            .font(.system(size: 40))
+                            .font(.system(size: 36))
                             .foregroundStyle(
                                 sliderValue > 0 ? Theme.Colors.tertiaryText : Theme.Colors.tertiaryText.opacity(0.3),
                                 Theme.Colors.secondaryBackground
                             )
                     }
                     .disabled(sliderValue <= 0)
-
-                    VStack(spacing: Theme.Spacing.xs) {
-                        HStack(spacing: Theme.Spacing.sm) {
-                            Text("\(currentPage)")
-                                .font(.system(size: 44, weight: .bold, design: .rounded))
-                                .foregroundStyle(isDragging ? themeColor.color : Theme.Colors.text)
-                                .monospacedDigit()
-                                .contentTransition(.numericText())
-
-                            if let total = book.totalPages {
-                                Text("/ \(total)")
-                                    .font(Theme.Typography.title3)
-                                    .foregroundStyle(Theme.Colors.tertiaryText)
-                            }
-                        }
-                        .animation(.snappy(duration: 0.2), value: currentPage)
-
-                        if book.totalPages != nil {
-                            Text("\(Int(progressPercentage))% complete")
-                                .font(Theme.Typography.caption)
-                                .foregroundStyle(Theme.Colors.secondaryText)
-                                .contentTransition(.numericText())
-                        }
-                    }
-
-                    // Increment button
-                    Button {
-                        incrementPage()
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.system(size: 40))
-                            .symbolRenderingMode(.palette)
-                            .foregroundStyle(.white, themeColor.color)
-                    }
-                    .disabled(book.totalPages != nil && sliderValue >= Double(book.totalPages!))
-                    .opacity(book.totalPages != nil && sliderValue >= Double(book.totalPages!) ? 0.3 : 1.0)
                 }
-            } else {
-                VStack(spacing: Theme.Spacing.xs) {
-                    HStack(spacing: Theme.Spacing.sm) {
+
+                Spacer()
+
+                // Page display with info
+                VStack(spacing: 4) {
+                    HStack(spacing: 6) {
                         Text("\(currentPage)")
-                            .font(.system(size: 48, weight: .bold, design: .rounded))
+                            .font(.system(size: 42, weight: .bold, design: .rounded))
                             .foregroundStyle(isDragging ? themeColor.color : Theme.Colors.text)
                             .monospacedDigit()
                             .contentTransition(.numericText())
 
                         if let total = book.totalPages {
                             Text("/ \(total)")
-                                .font(Theme.Typography.title2)
+                                .font(.title3)
                                 .foregroundStyle(Theme.Colors.tertiaryText)
                         }
                     }
                     .animation(.snappy(duration: 0.2), value: currentPage)
 
-                    if book.totalPages != nil {
-                        Text("\(Int(progressPercentage))% complete")
-                            .font(Theme.Typography.subheadline)
-                            .foregroundStyle(Theme.Colors.secondaryText)
-                            .contentTransition(.numericText())
+                    if let total = book.totalPages {
+                        HStack(spacing: 4) {
+                            Text("\(Int(progressPercentage))%")
+                                .font(.caption.weight(.medium))
+                                .foregroundStyle(themeColor.color)
+                                .contentTransition(.numericText())
+
+                            if total > currentPage {
+                                Text("•")
+                                    .font(.caption)
+                                    .foregroundStyle(Theme.Colors.tertiaryText)
+
+                                Text("\(total - currentPage) left")
+                                    .font(.caption)
+                                    .foregroundStyle(Theme.Colors.tertiaryText)
+                            }
+                        }
                     }
+                }
+
+                Spacer()
+
+                if showButtons {
+                    // Increment button
+                    Button {
+                        incrementPage()
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 36))
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(.white, themeColor.color)
+                    }
+                    .disabled(book.totalPages != nil && sliderValue >= Double(book.totalPages!))
+                    .opacity(book.totalPages != nil && sliderValue >= Double(book.totalPages!) ? 0.3 : 1.0)
                 }
             }
 
-            // Beautiful slider
-            VStack(spacing: Theme.Spacing.sm) {
+            // Beautiful compact slider
+            VStack(spacing: 8) {
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
                         // Background track
-                        RoundedRectangle(cornerRadius: Theme.CornerRadius.full, style: .continuous)
+                        Capsule()
                             .fill(Theme.Colors.tertiaryBackground)
-                            .frame(height: 8)
+                            .frame(height: 6)
 
-                        // Progress fill
-                        RoundedRectangle(cornerRadius: Theme.CornerRadius.full, style: .continuous)
+                        // Progress fill with gradient
+                        Capsule()
                             .fill(
                                 LinearGradient(
                                     colors: [
@@ -135,19 +130,19 @@ struct ProgressSliderView: View {
                                     endPoint: .trailing
                                 )
                             )
-                            .frame(width: geometry.size.width * (sliderValue / Double(book.totalPages ?? 1)), height: 8)
+                            .frame(width: geometry.size.width * (sliderValue / Double(book.totalPages ?? 1)), height: 6)
                             .animation(.spring(response: 0.3, dampingFraction: 0.8), value: sliderValue)
 
                         // Thumb
                         Circle()
                             .fill(.white)
-                            .frame(width: isDragging ? 32 : 24, height: isDragging ? 32 : 24)
-                            .shadow(color: Theme.Shadow.large, radius: isDragging ? 12 : 8, y: isDragging ? 6 : 4)
+                            .frame(width: isDragging ? 28 : 22, height: isDragging ? 28 : 22)
+                            .shadow(color: .black.opacity(0.2), radius: isDragging ? 10 : 6, y: isDragging ? 4 : 2)
                             .overlay(
                                 Circle()
                                     .strokeBorder(themeColor.color, lineWidth: isDragging ? 3 : 2)
                             )
-                            .offset(x: geometry.size.width * (sliderValue / Double(book.totalPages ?? 1)) - (isDragging ? 16 : 12))
+                            .offset(x: geometry.size.width * (sliderValue / Double(book.totalPages ?? 1)) - (isDragging ? 14 : 11))
                             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isDragging)
                             .gesture(
                                 DragGesture(minimumDistance: 0)
@@ -160,22 +155,7 @@ struct ProgressSliderView: View {
                             )
                     }
                 }
-                .frame(height: 32)
-
-                // Page markers
-                if let total = book.totalPages {
-                    HStack {
-                        Text("0")
-                            .font(Theme.Typography.caption)
-                            .foregroundStyle(Theme.Colors.tertiaryText)
-
-                        Spacer()
-
-                        Text("\(total)")
-                            .font(Theme.Typography.caption)
-                            .foregroundStyle(Theme.Colors.tertiaryText)
-                    }
-                }
+                .frame(height: 28)
             }
 
             // Save button
@@ -183,7 +163,7 @@ struct ProgressSliderView: View {
                 Button {
                     saveProgress()
                 } label: {
-                    HStack(spacing: Theme.Spacing.xs) {
+                    HStack(spacing: 6) {
                         if currentPage > book.currentPage {
                             Text("Save +\(currentPage - book.currentPage) pages")
                         } else if currentPage < book.currentPage {
@@ -193,7 +173,7 @@ struct ProgressSliderView: View {
                         }
                         Image(systemName: "checkmark")
                     }
-                    .font(Theme.Typography.headline)
+                    .font(.headline)
                     .frame(maxWidth: .infinity)
                     .primaryButton(color: themeColor.color)
                 }
@@ -201,13 +181,12 @@ struct ProgressSliderView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .padding(Theme.Spacing.md)
+        .padding(16)
         .cardStyle()
         .onAppear {
             sliderValue = Double(book.currentPage)
         }
         .onChange(of: book.currentPage) { oldValue, newValue in
-            // Sync slider with book's current page when it changes externally (e.g., from LogSession)
             if !isDragging && !showSaveButton {
                 sliderValue = Double(newValue)
             }
@@ -228,7 +207,6 @@ struct ProgressSliderView: View {
                     showSaveButton = false
                 }
 
-                // Delay confetti slightly for smoother transition
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                     showConfetti = true
                 }
@@ -276,7 +254,6 @@ struct ProgressSliderView: View {
     private func saveProgress() {
         UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
 
-        // Check if user reached the last page
         if let totalPages = book.totalPages, currentPage >= totalPages && book.readingStatus == .currentlyReading {
             showFinishAlert = true
         } else {
@@ -298,7 +275,6 @@ struct ProgressSliderView: View {
             showSaveButton = false
         }
 
-        // Send to Watch
         WatchConnectivityManager.shared.sendPageDeltaToWatch(bookUUID: book.id, delta: pagesRead)
 
         onSave(pagesRead)
