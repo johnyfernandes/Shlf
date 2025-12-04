@@ -104,7 +104,8 @@ struct TodaysSummaryCard: View {
     let sessions: [ReadingSession]
 
     private var totalPages: Int {
-        sessions.reduce(0) { $0 + ($1.endPage - $1.startPage) }
+        // CRITICAL: Clamp to non-negative (user can go backwards)
+        max(0, sessions.reduce(0) { $0 + ($1.endPage - $1.startPage) })
     }
 
     private var totalMinutes: Int {

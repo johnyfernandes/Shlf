@@ -27,9 +27,17 @@ struct BookDetailWatchView: View {
         if let existing = profiles.first {
             return existing
         }
-        // Auto-create profile if it doesn't exist
+
+        // CRITICAL: Check again after fetching to prevent race condition
+        let descriptor = FetchDescriptor<UserProfile>()
+        if let existingAfterFetch = try? modelContext.fetch(descriptor).first {
+            return existingAfterFetch
+        }
+
+        // Now safe to create
         let new = UserProfile()
         modelContext.insert(new)
+        try? modelContext.save() // Save immediately to prevent other threads from creating
         WatchConnectivityManager.logger.info("Created new UserProfile on Watch")
         return new
     }
@@ -176,6 +184,12 @@ struct BookDetailWatchView: View {
 
                         Button {
                             book.currentPage = lastPos.pageNumber
+                            // CRITICAL: Save so resume persists
+                            try? modelContext.save()
+
+                            // Send delta to iPhone
+                            let delta = PageDelta(bookUUID: book.id, delta: 0) // No pages read, just position change
+                            WatchConnectivityManager.shared.sendPageDelta(delta)
                         } label: {
                             Label("Resume Here", systemImage: "arrow.forward.circle")
                                 .font(.caption)
@@ -250,6 +264,10 @@ struct BookDetailWatchView: View {
                 book: book
             )
             session.xpEarned = engine.calculateXP(for: session)
+
+            // CRITICAL: Mark as awarded so iPhone doesn't double-count
+            session.xpAwarded = true
+
             modelContext.insert(session)
 
             // Update goals locally for Watch UI
@@ -290,8 +308,17 @@ struct AddPagesWatchView: View {
         if let existing = profiles.first {
             return existing
         }
+
+        // CRITICAL: Check again after fetching to prevent race condition
+        let descriptor = FetchDescriptor<UserProfile>()
+        if let existingAfterFetch = try? modelContext.fetch(descriptor).first {
+            return existingAfterFetch
+        }
+
+        // Now safe to create
         let new = UserProfile()
         modelContext.insert(new)
+        try? modelContext.save() // Save immediately to prevent other threads from creating
         return new
     }
 
@@ -375,6 +402,10 @@ struct AddPagesWatchView: View {
                 book: book
             )
             session.xpEarned = engine.calculateXP(for: session)
+
+            // CRITICAL: Mark as awarded so iPhone doesn't double-count
+            session.xpAwarded = true
+
             modelContext.insert(session)
 
             let tracker = GoalTracker(modelContext: modelContext)

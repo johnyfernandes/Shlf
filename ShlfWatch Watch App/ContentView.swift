@@ -26,8 +26,17 @@ struct ContentView: View {
         if let existing = profiles.first {
             return existing
         }
+
+        // CRITICAL: Check again after fetching to prevent race condition
+        let descriptor = FetchDescriptor<UserProfile>()
+        if let existingAfterFetch = try? modelContext.fetch(descriptor).first {
+            return existingAfterFetch
+        }
+
+        // Now safe to create
         let new = UserProfile()
         modelContext.insert(new)
+        try? modelContext.save() // Save immediately to prevent other threads from creating
         return new
     }
 

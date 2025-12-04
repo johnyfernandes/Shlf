@@ -28,9 +28,17 @@ struct LogSessionWatchView: View {
         if let existing = profiles.first {
             return existing
         }
-        // Auto-create profile if it doesn't exist
+
+        // CRITICAL: Check again after fetching to prevent race condition
+        let descriptor = FetchDescriptor<UserProfile>()
+        if let existingAfterFetch = try? modelContext.fetch(descriptor).first {
+            return existingAfterFetch
+        }
+
+        // Now safe to create
         let new = UserProfile()
         modelContext.insert(new)
+        try? modelContext.save() // Save immediately to prevent other threads from creating
         WatchConnectivityManager.logger.info("Created new UserProfile on Watch")
         return new
     }

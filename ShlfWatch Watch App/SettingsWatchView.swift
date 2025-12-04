@@ -12,6 +12,8 @@ struct SettingsWatchView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
     @Query private var profiles: [UserProfile]
+    @State private var showSaveError = false
+    @State private var saveErrorMessage = ""
 
     private var profile: UserProfile? {
         profiles.first
@@ -26,9 +28,15 @@ struct SettingsWatchView: View {
                             get: { profile.hideAutoSessionsWatch },
                             set: { newValue in
                                 profile.hideAutoSessionsWatch = newValue
-                                try? modelContext.save()
-                                // Send to iPhone immediately
-                                WatchConnectivityManager.shared.sendProfileSettingsToPhone(profile)
+                                do {
+                                    try modelContext.save()
+                                    // Send to iPhone immediately
+                                    WatchConnectivityManager.shared.sendProfileSettingsToPhone(profile)
+                                } catch {
+                                    saveErrorMessage = "Failed to save: \(error.localizedDescription)"
+                                    showSaveError = true
+                                    profile.hideAutoSessionsWatch = !newValue // Revert on failure
+                                }
                             }
                         )) {
                             VStack(alignment: .leading, spacing: 4) {
@@ -45,8 +53,14 @@ struct SettingsWatchView: View {
                             get: { profile.useCircularProgressWatch },
                             set: { newValue in
                                 profile.useCircularProgressWatch = newValue
-                                try? modelContext.save()
-                                WatchConnectivityManager.shared.sendProfileSettingsToPhone(profile)
+                                do {
+                                    try modelContext.save()
+                                    WatchConnectivityManager.shared.sendProfileSettingsToPhone(profile)
+                                } catch {
+                                    saveErrorMessage = "Failed to save: \(error.localizedDescription)"
+                                    showSaveError = true
+                                    profile.useCircularProgressWatch = !newValue // Revert on failure
+                                }
                             }
                         )) {
                             VStack(alignment: .leading, spacing: 4) {
@@ -63,8 +77,14 @@ struct SettingsWatchView: View {
                             get: { profile.enableWatchPositionMarking },
                             set: { newValue in
                                 profile.enableWatchPositionMarking = newValue
-                                try? modelContext.save()
-                                WatchConnectivityManager.shared.sendProfileSettingsToPhone(profile)
+                                do {
+                                    try modelContext.save()
+                                    WatchConnectivityManager.shared.sendProfileSettingsToPhone(profile)
+                                } catch {
+                                    saveErrorMessage = "Failed to save: \(error.localizedDescription)"
+                                    showSaveError = true
+                                    profile.enableWatchPositionMarking = !newValue // Revert on failure
+                                }
                             }
                         )) {
                             VStack(alignment: .leading, spacing: 4) {
@@ -96,6 +116,11 @@ struct SettingsWatchView: View {
         }
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Save Error", isPresented: $showSaveError) {
+            Button("OK") {}
+        } message: {
+            Text(saveErrorMessage)
+        }
     }
 }
 
