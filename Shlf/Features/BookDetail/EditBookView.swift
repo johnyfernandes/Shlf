@@ -127,7 +127,7 @@ struct EditBookView: View {
                             .frame(width: 140, height: 210)
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     } else if let coverURL = book.coverImageURL {
-                        AsyncImage(url: coverURL) { image in
+                        CachedAsyncImage(url: coverURL) { image in
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
