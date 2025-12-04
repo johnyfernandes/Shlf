@@ -14,32 +14,37 @@ struct ReadingHeatmapChart: View {
 
     @State private var selectedDate: IdentifiableDate?
 
+    // PERFORMANCE: Cache expensive computed properties as @State
+    @State private var periodData: [Date: Int] = [:]
+    @State private var weeklyData: [[Date]] = []
+    @State private var maxPages: Int = 1
+    @State private var totalPages: Int = 0
+    @State private var totalDaysActive: Int = 0
+    @State private var periodTitle: String = ""
+
     private let columns = 7 // Days of week
     private let cellSize: CGFloat = 18
     private let cellSpacing: CGFloat = 4
 
-    // Get data for the selected period
-    private var periodData: [Date: Int] {
-        let calendar = Calendar.current
+    // PERFORMANCE: Reuse calendar instance
+    private let calendar = Calendar.current
+
+    // PERFORMANCE: Calculate all data once when view appears or period changes
+    private func calculateData() {
         let today = calendar.startOfDay(for: Date())
         var data: [Date: Int] = [:]
 
         let startDate: Date
         switch period {
         case .last12Weeks:
-            // Last 84 days
             startDate = calendar.date(byAdding: .day, value: -83, to: today)!
-
         case .currentMonth:
-            // First day of current month
             startDate = calendar.date(from: calendar.dateComponents([.year, .month], from: today))!
-
         case .currentYear:
-            // First day of current year (January 1st)
             startDate = calendar.date(from: calendar.dateComponents([.year], from: today))!
         }
 
-        // Iterate from start date to today
+        // Build periodData dictionary
         var currentDate = startDate
         while currentDate <= today {
             let dayStart = calendar.startOfDay(for: currentDate)
@@ -50,66 +55,57 @@ struct ReadingHeatmapChart: View {
                 .reduce(0) { $0 + $1.pagesRead }
 
             data[dayStart] = max(0, pagesRead)
-
             currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate)!
         }
 
-        return data
-    }
+        periodData = data
 
-    // Organize data into weeks (columns)
-    private var weeklyData: [[Date]] {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
+        // Build weeklyData array
         var weeks: [[Date]] = []
-
-        var startDate: Date
-        switch period {
-        case .last12Weeks:
-            // Last 84 days
-            startDate = calendar.date(byAdding: .day, value: -83, to: today)!
-
-        case .currentMonth:
-            // First day of current month
-            startDate = calendar.date(from: calendar.dateComponents([.year, .month], from: today))!
-
-        case .currentYear:
-            // First day of current year
-            startDate = calendar.date(from: calendar.dateComponents([.year], from: today))!
-        }
-
-        // Find the first Sunday before or on startDate
         var gridStartDate = startDate
         while calendar.component(.weekday, from: gridStartDate) != 1 {
             gridStartDate = calendar.date(byAdding: .day, value: -1, to: gridStartDate)!
         }
 
         var currentWeek: [Date] = []
-        var currentDate = gridStartDate
+        currentDate = gridStartDate
 
-        // Build weeks until we pass today
         while currentDate <= today {
             currentWeek.append(currentDate)
-
-            if calendar.component(.weekday, from: currentDate) == 7 { // Saturday
+            if calendar.component(.weekday, from: currentDate) == 7 {
                 weeks.append(currentWeek)
                 currentWeek = []
             }
-
             currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate)!
         }
 
-        // Add remaining days if any
         if !currentWeek.isEmpty {
             weeks.append(currentWeek)
         }
 
-        return weeks
-    }
+        weeklyData = weeks
 
-    private var maxPages: Int {
-        guard let max = periodData.values.max(), max > 0 else { return 1 }
-        return max
+        // Calculate aggregate values
+        maxPages = data.values.max() ?? 1
+        totalPages = data.values.reduce(0, +)
+        totalDaysActive = data.values.filter { $0 > 0 }.count
+
+        // Calculate period title
+        let todayDate = Date()
+        switch period {
+        case .last12Weeks:
+            periodTitle = "Last 12 Weeks"
+        case .currentMonth:
+            let formatter = DateFormatter()
+            formatter.dateFormat = "MMMM yyyy"
+            periodTitle = formatter.string(from: todayDate)
+        case .currentYear:
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy"
+            let startOfYear = calendar.date(from: calendar.dateComponents([.year], from: todayDate))!
+            let daysSinceStart = calendar.dateComponents([.day], from: startOfYear, to: todayDate).day! + 1
+            periodTitle = "\(formatter.string(from: todayDate)) (\(daysSinceStart) days)"
+        }
     }
 
     private func intensityColor(for pages: Int) -> Color {
@@ -127,34 +123,6 @@ struct ReadingHeatmapChart: View {
             return themeColor.color.opacity(0.7)
         } else {
             return themeColor.color
-        }
-    }
-
-    private var totalPages: Int {
-        periodData.values.reduce(0, +)
-    }
-
-    private var totalDaysActive: Int {
-        periodData.values.filter { $0 > 0 }.count
-    }
-
-    private var periodTitle: String {
-        let calendar = Calendar.current
-        let today = Date()
-
-        switch period {
-        case .last12Weeks:
-            return "Last 12 Weeks"
-        case .currentMonth:
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMMM yyyy"
-            return formatter.string(from: today)
-        case .currentYear:
-            let formatter = DateFormatter()
-            formatter.dateFormat = "yyyy"
-            let startOfYear = calendar.date(from: calendar.dateComponents([.year], from: today))!
-            let daysSinceStart = calendar.dateComponents([.day], from: startOfYear, to: today).day! + 1
-            return "\(formatter.string(from: today)) (\(daysSinceStart) days)"
         }
     }
 
@@ -262,8 +230,17 @@ struct ReadingHeatmapChart: View {
             }
         }
         .sheet(item: $selectedDate) { identifiableDate in
-            DayDetailView(date: identifiableDate.date, sessions: sessions)
+            LazyView(DayDetailView(date: identifiableDate.date, sessions: sessions))
                 .presentationDetents([.medium, .large])
+        }
+        .onAppear {
+            calculateData()
+        }
+        .onChange(of: period) { _, _ in
+            calculateData()
+        }
+        .onChange(of: sessions.count) { _, _ in
+            calculateData()
         }
     }
 }
@@ -285,17 +262,26 @@ struct DayDetailView: View {
     let date: Date
     let sessions: [ReadingSession]
 
-    private var daySessions: [ReadingSession] {
-        let calendar = Calendar.current
+    // PERFORMANCE: Cache calculations on init
+    @State private var daySessions: [ReadingSession] = []
+    @State private var booksRead: [BookReadingData] = []
+    @State private var totalPages: Int = 0
+
+    // PERFORMANCE: Reuse calendar and formatter
+    private let calendar = Calendar.current
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .long
+        return formatter
+    }()
+
+    private func calculateData() {
         let dayStart = calendar.startOfDay(for: date)
         let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart)!
 
-        return sessions.filter { $0.startDate >= dayStart && $0.startDate < dayEnd }
-    }
+        daySessions = sessions.filter { $0.startDate >= dayStart && $0.startDate < dayEnd }
 
-    private var booksRead: [BookReadingData] {
         var bookMap: [UUID: (Book?, Int)] = [:]
-
         for session in daySessions {
             if let book = session.book {
                 if let existing = bookMap[book.id] {
@@ -306,18 +292,10 @@ struct DayDetailView: View {
             }
         }
 
-        return bookMap.map { BookReadingData(id: $0.key, book: $0.value.0, pages: $0.value.1) }
+        booksRead = bookMap.map { BookReadingData(id: $0.key, book: $0.value.0, pages: $0.value.1) }
             .sorted { $0.pages > $1.pages }
-    }
 
-    private var totalPages: Int {
-        daySessions.reduce(0) { $0 + $1.pagesRead }
-    }
-
-    private var dateFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .long
-        return formatter
+        totalPages = daySessions.reduce(0) { $0 + $1.pagesRead }
     }
 
     var body: some View {
@@ -437,7 +415,7 @@ struct DayDetailView: View {
                     .padding(.bottom, 40)
                 }
             }
-            .navigationTitle(dateFormatter.string(from: date))
+            .navigationTitle(Self.dateFormatter.string(from: date))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -446,6 +424,9 @@ struct DayDetailView: View {
                     }
                     .foregroundStyle(themeColor.color)
                 }
+            }
+            .onAppear {
+                calculateData()
             }
         }
     }

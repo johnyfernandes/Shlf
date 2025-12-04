@@ -475,7 +475,7 @@ struct ReadingActivityChart: View {
             get: { selectedDate.map { IdentifiableDate(date: $0) } },
             set: { selectedDate = $0?.date }
         )) { identifiableDate in
-            DayDetailView(date: identifiableDate.date, sessions: sessions)
+            LazyView(DayDetailView(date: identifiableDate.date, sessions: sessions))
                 .presentationDetents([.medium, .large])
         }
     }
