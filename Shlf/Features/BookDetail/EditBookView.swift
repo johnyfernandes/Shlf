@@ -6,109 +6,613 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct EditBookView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.themeColor) private var themeColor
     @Bindable var book: Book
+
+    @FocusState private var focusedField: Field?
+    @State private var showingImagePicker = false
+    @State private var hasUnsavedChanges = false
+    @State private var showDiscardAlert = false
+
+    enum Field: Hashable {
+        case title, author, isbn, totalPages, currentPage
+        case publisher, publishedDate, language, description, notes
+    }
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Book Information") {
-                    TextField("Title", text: $book.title)
-                    TextField("Author", text: $book.author)
-                    TextField("ISBN", text: Binding(
-                        get: { book.isbn ?? "" },
-                        set: { book.isbn = $0.isEmpty ? nil : $0 }
-                    ))
-                }
+            ScrollView {
+                VStack(spacing: 0) {
+                    // Hero Section - Cover & Title
+                    heroSection
 
-                Section("Reading Progress") {
-                    TextField("Total Pages", value: $book.totalPages, format: .number)
-                        .keyboardType(.numberPad)
-
-                    TextField("Current Page", value: $book.currentPage, format: .number)
-                        .keyboardType(.numberPad)
-                }
-
-                Section("Publishing Details") {
-                    TextField("Publisher", text: Binding(
-                        get: { book.publisher ?? "" },
-                        set: { book.publisher = $0.isEmpty ? nil : $0 }
-                    ))
-
-                    TextField("Published Date", text: Binding(
-                        get: { book.publishedDate ?? "" },
-                        set: { book.publishedDate = $0.isEmpty ? nil : $0 }
-                    ))
-
-                    TextField("Language", text: Binding(
-                        get: { book.language ?? "" },
-                        set: { book.language = $0.isEmpty ? nil : $0 }
-                    ))
-                }
-
-                Section("Description") {
-                    TextEditor(text: Binding(
-                        get: { book.bookDescription ?? "" },
-                        set: { book.bookDescription = $0.isEmpty ? nil : $0 }
-                    ))
-                    .frame(minHeight: 100)
-                }
-
-                Section("Type & Status") {
-                    Picker("Book Type", selection: $book.bookType) {
-                        ForEach(BookType.allCases, id: \.self) { type in
-                            Label(type.rawValue, systemImage: type.icon)
-                                .tag(type)
-                        }
+                    // Content Sections
+                    VStack(spacing: 24) {
+                        essentialInfoSection
+                        progressSection
+                        typeStatusSection
+                        ratingSection
+                        publishingDetailsSection
+                        descriptionSection
+                        notesSection
                     }
-
-                    Picker("Reading Status", selection: $book.readingStatus) {
-                        ForEach(ReadingStatus.allCases, id: \.self) { status in
-                            Text(status.rawValue)
-                                .tag(status)
-                        }
-                    }
-                }
-
-                Section("Rating") {
-                    Picker("Rating", selection: Binding(
-                        get: { book.rating ?? 0 },
-                        set: { book.rating = $0 == 0 ? nil : $0 }
-                    )) {
-                        Text("None").tag(0)
-                        ForEach(1...5, id: \.self) { rating in
-                            HStack {
-                                ForEach(0..<rating, id: \.self) { _ in
-                                    Image(systemName: "star.fill")
-                                }
-                            }
-                            .tag(rating)
-                        }
-                    }
-                }
-
-                Section("Notes") {
-                    TextEditor(text: $book.notes)
-                        .frame(minHeight: 100)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 32)
+                    .padding(.bottom, 40)
                 }
             }
-            .navigationTitle("Edit Book")
+            .background(Theme.Colors.background)
+            .scrollDismissesKeyboard(.interactively)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
+                    Button {
+                        if hasUnsavedChanges {
+                            showDiscardAlert = true
+                        } else {
+                            dismiss()
+                        }
+                    } label: {
+                        Text("Cancel")
+                            .fontWeight(.medium)
                     }
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        dismiss()
+                    Button {
+                        saveAndDismiss()
+                    } label: {
+                        Text("Save")
+                            .fontWeight(.semibold)
+                    }
+                    .tint(themeColor.color)
+                }
+
+                ToolbarItem(placement: .keyboard) {
+                    HStack {
+                        Spacer()
+                        Button {
+                            focusedField = nil
+                        } label: {
+                            Image(systemName: "keyboard.chevron.compact.down")
+                                .font(.body.weight(.medium))
+                                .foregroundStyle(themeColor.color)
+                        }
                     }
                 }
             }
+            .alert("Discard Changes?", isPresented: $showDiscardAlert) {
+                Button("Discard", role: .destructive) {
+                    dismiss()
+                }
+                Button("Keep Editing", role: .cancel) {}
+            } message: {
+                Text("You have unsaved changes. Are you sure you want to discard them?")
+            }
+        }
+    }
+
+    // MARK: - Hero Section
+
+    private var heroSection: some View {
+        VStack(spacing: 20) {
+            // Cover Image
+            Button {
+                showingImagePicker = true
+            } label: {
+                ZStack {
+                    if let coverURL = book.coverImageURL {
+                        AsyncImage(url: coverURL) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } placeholder: {
+                            coverPlaceholder
+                        }
+                    } else {
+                        coverPlaceholder
+                    }
+                }
+                .frame(width: 140, height: 210)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .shadow(color: .black.opacity(0.15), radius: 20, x: 0, y: 10)
+                .overlay(alignment: .bottomTrailing) {
+                    Image(systemName: "camera.fill")
+                        .font(.caption)
+                        .foregroundStyle(.white)
+                        .padding(8)
+                        .background(.ultraThinMaterial, in: Circle())
+                        .offset(x: 6, y: 6)
+                }
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 24)
+        }
+        .frame(maxWidth: .infinity)
+        .background(
+            LinearGradient(
+                colors: [
+                    themeColor.color.opacity(0.08),
+                    Theme.Colors.background
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
+    }
+
+    private var coverPlaceholder: some View {
+        ZStack {
+            LinearGradient(
+                colors: [
+                    themeColor.color.opacity(0.3),
+                    themeColor.color.opacity(0.15)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+
+            VStack(spacing: 8) {
+                Image(systemName: "book.closed.fill")
+                    .font(.system(size: 40))
+                    .foregroundStyle(themeColor.color.opacity(0.6))
+
+                Text("Add Cover")
+                    .font(.caption2)
+                    .foregroundStyle(themeColor.color.opacity(0.6))
+            }
+        }
+    }
+
+    // MARK: - Essential Info Section
+
+    private var essentialInfoSection: some View {
+        VStack(spacing: 16) {
+            ModernTextField(
+                title: "Title",
+                text: $book.title,
+                icon: "text.alignleft",
+                placeholder: "Enter book title",
+                focused: $focusedField,
+                field: .title
+            )
+            .onChange(of: book.title) { _, _ in hasUnsavedChanges = true }
+
+            ModernTextField(
+                title: "Author",
+                text: $book.author,
+                icon: "person.fill",
+                placeholder: "Enter author name",
+                focused: $focusedField,
+                field: .author
+            )
+            .onChange(of: book.author) { _, _ in hasUnsavedChanges = true }
+
+            ModernTextField(
+                title: "ISBN",
+                text: Binding(
+                    get: { book.isbn ?? "" },
+                    set: { book.isbn = $0.isEmpty ? nil : $0 }
+                ),
+                icon: "barcode",
+                placeholder: "Optional",
+                focused: $focusedField,
+                field: .isbn
+            )
+            .onChange(of: book.isbn) { _, _ in hasUnsavedChanges = true }
+        }
+    }
+
+    // MARK: - Progress Section
+
+    private var progressSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(themeColor.color)
+                    .frame(width: 20)
+
+                Text("Reading Progress")
+                    .font(Theme.Typography.headline)
+                    .foregroundStyle(Theme.Colors.text)
+            }
+            .padding(.leading, 4)
+
+            HStack(spacing: 12) {
+                ModernNumberField(
+                    title: "Total Pages",
+                    value: Binding(
+                        get: { book.totalPages ?? 0 },
+                        set: { book.totalPages = $0 == 0 ? nil : $0 }
+                    ),
+                    icon: "book.pages",
+                    focused: $focusedField,
+                    field: .totalPages
+                )
+
+                ModernNumberField(
+                    title: "Current Page",
+                    value: $book.currentPage,
+                    icon: "bookmark.fill",
+                    focused: $focusedField,
+                    field: .currentPage
+                )
+            }
+
+            if let total = book.totalPages, total > 0 {
+                VStack(spacing: 8) {
+                    HStack {
+                        Text("\(Int(book.progressPercentage))% Complete")
+                            .font(.caption)
+                            .foregroundStyle(Theme.Colors.secondaryText)
+
+                        Spacer()
+
+                        Text("\(max(0, total - book.currentPage)) pages left")
+                            .font(.caption)
+                            .foregroundStyle(Theme.Colors.tertiaryText)
+                    }
+
+                    ProgressView(value: book.progressPercentage, total: 100)
+                        .tint(themeColor.color)
+                }
+                .padding(12)
+                .background(themeColor.color.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+        }
+    }
+
+    // MARK: - Type & Status Section
+
+    private var typeStatusSection: some View {
+        VStack(spacing: 16) {
+            ModernPicker(
+                title: "Book Type",
+                icon: "books.vertical.fill",
+                selection: $book.bookType
+            ) {
+                ForEach(BookType.allCases, id: \.self) { type in
+                    Label(type.rawValue, systemImage: type.icon)
+                        .tag(type)
+                }
+            }
+            .onChange(of: book.bookType) { _, _ in hasUnsavedChanges = true }
+
+            ModernPicker(
+                title: "Reading Status",
+                icon: "book.fill",
+                selection: $book.readingStatus
+            ) {
+                ForEach(ReadingStatus.allCases, id: \.self) { status in
+                    Label(status.rawValue, systemImage: status.icon)
+                        .tag(status)
+                }
+            }
+            .onChange(of: book.readingStatus) { _, _ in hasUnsavedChanges = true }
+        }
+    }
+
+    // MARK: - Rating Section
+
+    private var ratingSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "star.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(themeColor.color)
+                    .frame(width: 20)
+
+                Text("Rating")
+                    .font(Theme.Typography.headline)
+                    .foregroundStyle(Theme.Colors.text)
+            }
+            .padding(.leading, 4)
+
+            HStack(spacing: 12) {
+                ForEach(1...5, id: \.self) { rating in
+                    Button {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            if book.rating == rating {
+                                book.rating = nil // Tap again to clear
+                            } else {
+                                book.rating = rating
+                            }
+                            hasUnsavedChanges = true
+                        }
+                    } label: {
+                        Image(systemName: (book.rating ?? 0) >= rating ? "star.fill" : "star")
+                            .font(.title2)
+                            .foregroundStyle((book.rating ?? 0) >= rating ? themeColor.color : Theme.Colors.tertiaryText)
+                            .symbolEffect(.bounce, value: book.rating)
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                if book.rating != nil {
+                    Spacer()
+
+                    Button {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            book.rating = nil
+                            hasUnsavedChanges = true
+                        }
+                    } label: {
+                        Text("Clear")
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(Theme.Colors.tertiaryText)
+                    }
+                }
+            }
+            .padding(16)
+            .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+    }
+
+    // MARK: - Publishing Details Section
+
+    private var publishingDetailsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "info.circle.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(themeColor.color)
+                    .frame(width: 20)
+
+                Text("Publishing Details")
+                    .font(Theme.Typography.headline)
+                    .foregroundStyle(Theme.Colors.text)
+            }
+            .padding(.leading, 4)
+
+            VStack(spacing: 12) {
+                ModernTextField(
+                    title: "Publisher",
+                    text: Binding(
+                        get: { book.publisher ?? "" },
+                        set: { book.publisher = $0.isEmpty ? nil : $0 }
+                    ),
+                    icon: "building.2.fill",
+                    placeholder: "Optional",
+                    focused: $focusedField,
+                    field: .publisher
+                )
+
+                ModernTextField(
+                    title: "Published Date",
+                    text: Binding(
+                        get: { book.publishedDate ?? "" },
+                        set: { book.publishedDate = $0.isEmpty ? nil : $0 }
+                    ),
+                    icon: "calendar",
+                    placeholder: "e.g., 2024",
+                    focused: $focusedField,
+                    field: .publishedDate
+                )
+
+                ModernTextField(
+                    title: "Language",
+                    text: Binding(
+                        get: { book.language ?? "" },
+                        set: { book.language = $0.isEmpty ? nil : $0 }
+                    ),
+                    icon: "globe",
+                    placeholder: "e.g., English",
+                    focused: $focusedField,
+                    field: .language
+                )
+            }
+        }
+    }
+
+    // MARK: - Description Section
+
+    private var descriptionSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "text.alignleft")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(themeColor.color)
+                    .frame(width: 20)
+
+                Text("Description")
+                    .font(Theme.Typography.headline)
+                    .foregroundStyle(Theme.Colors.text)
+            }
+            .padding(.leading, 4)
+
+            ZStack(alignment: .topLeading) {
+                if (book.bookDescription ?? "").isEmpty && focusedField != .description {
+                    Text("Add a brief description of the book...")
+                        .font(Theme.Typography.body)
+                        .foregroundStyle(Theme.Colors.tertiaryText)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                }
+
+                TextEditor(text: Binding(
+                    get: { book.bookDescription ?? "" },
+                    set: { book.bookDescription = $0.isEmpty ? nil : $0 }
+                ))
+                .font(Theme.Typography.body)
+                .foregroundStyle(Theme.Colors.text)
+                .scrollContentBackground(.hidden)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .frame(minHeight: 120)
+                .focused($focusedField, equals: .description)
+                .onChange(of: book.bookDescription) { _, _ in hasUnsavedChanges = true }
+            }
+            .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+    }
+
+    // MARK: - Notes Section
+
+    private var notesSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "note.text")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(themeColor.color)
+                    .frame(width: 20)
+
+                Text("Personal Notes")
+                    .font(Theme.Typography.headline)
+                    .foregroundStyle(Theme.Colors.text)
+            }
+            .padding(.leading, 4)
+
+            ZStack(alignment: .topLeading) {
+                if book.notes.isEmpty && focusedField != .notes {
+                    Text("Add your personal thoughts and notes...")
+                        .font(Theme.Typography.body)
+                        .foregroundStyle(Theme.Colors.tertiaryText)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                }
+
+                TextEditor(text: $book.notes)
+                    .font(Theme.Typography.body)
+                    .foregroundStyle(Theme.Colors.text)
+                    .scrollContentBackground(.hidden)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .frame(minHeight: 120)
+                    .focused($focusedField, equals: .notes)
+                    .onChange(of: book.notes) { _, _ in hasUnsavedChanges = true }
+            }
+            .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+    }
+
+    // MARK: - Actions
+
+    private func saveAndDismiss() {
+        try? modelContext.save()
+        dismiss()
+    }
+}
+
+// MARK: - Modern Text Field
+
+struct ModernTextField<Field: Hashable>: View {
+    let title: String
+    @Binding var text: String
+    let icon: String
+    let placeholder: String
+    @FocusState.Binding var focused: Field?
+    let field: Field
+    @Environment(\.themeColor) private var themeColor
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.caption)
+                    .foregroundStyle(themeColor.color)
+                    .frame(width: 16)
+
+                Text(title)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(Theme.Colors.secondaryText)
+            }
+            .padding(.leading, 4)
+
+            TextField(placeholder, text: $text)
+                .font(Theme.Typography.body)
+                .foregroundStyle(Theme.Colors.text)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(focused == field ? themeColor.color : .clear, lineWidth: 2)
+                )
+                .focused($focused, equals: field)
+        }
+    }
+}
+
+// MARK: - Modern Number Field
+
+struct ModernNumberField<Field: Hashable>: View {
+    let title: String
+    @Binding var value: Int
+    let icon: String
+    @FocusState.Binding var focused: Field?
+    let field: Field
+    @Environment(\.themeColor) private var themeColor
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.caption2)
+                    .foregroundStyle(themeColor.color)
+                    .frame(width: 14)
+
+                Text(title)
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(Theme.Colors.secondaryText)
+            }
+            .padding(.leading, 4)
+
+            TextField("0", value: $value, format: .number)
+                .font(Theme.Typography.title3)
+                .fontWeight(.semibold)
+                .foregroundStyle(Theme.Colors.text)
+                .keyboardType(.numberPad)
+                .multilineTextAlignment(.center)
+                .padding(.vertical, 16)
+                .frame(maxWidth: .infinity)
+                .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(focused == field ? themeColor.color : .clear, lineWidth: 2)
+                )
+                .focused($focused, equals: field)
+        }
+    }
+}
+
+// MARK: - Modern Picker
+
+struct ModernPicker<Selection: Hashable, Content: View>: View {
+    let title: String
+    let icon: String
+    @Binding var selection: Selection
+    @ViewBuilder let content: () -> Content
+    @Environment(\.themeColor) private var themeColor
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.caption)
+                    .foregroundStyle(themeColor.color)
+                    .frame(width: 16)
+
+                Text(title)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(Theme.Colors.secondaryText)
+            }
+            .padding(.leading, 4)
+
+            Picker(title, selection: $selection) {
+                content()
+            }
+            .pickerStyle(.menu)
+            .labelsHidden()
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
     }
 }
@@ -116,6 +620,9 @@ struct EditBookView: View {
 #Preview {
     EditBookView(book: Book(
         title: "The Great Gatsby",
-        author: "F. Scott Fitzgerald"
+        author: "F. Scott Fitzgerald",
+        totalPages: 218,
+        currentPage: 45
     ))
+    .modelContainer(for: [Book.self], inMemory: true)
 }
