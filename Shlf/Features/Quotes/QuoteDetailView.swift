@@ -46,18 +46,60 @@ struct QuoteDetailView: View {
                 .cardStyle()
 
                 // Metadata
-                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                     if let page = quote.pageNumber {
-                        MetadataRow(label: "Page", value: "\(page)", icon: "book.pages")
+                        HStack(spacing: 12) {
+                            Image(systemName: "book.pages")
+                                .font(.caption)
+                                .foregroundStyle(themeColor.color)
+                                .frame(width: 20)
+
+                            Text("Page")
+                                .font(.caption)
+                                .foregroundStyle(Theme.Colors.secondaryText)
+
+                            Spacer()
+
+                            Text("\(page)")
+                                .font(.caption.weight(.medium))
+                                .foregroundStyle(Theme.Colors.text)
+                        }
                     }
 
-                    MetadataRow(
-                        label: "Added",
-                        value: quote.dateAdded.formatted(date: .long, time: .shortened),
-                        icon: "calendar"
-                    )
+                    HStack(spacing: 12) {
+                        Image(systemName: "calendar")
+                            .font(.caption)
+                            .foregroundStyle(themeColor.color)
+                            .frame(width: 20)
 
-                    MetadataRow(label: "Book", value: book.title, icon: "book.closed")
+                        Text("Added")
+                            .font(.caption)
+                            .foregroundStyle(Theme.Colors.secondaryText)
+
+                        Spacer()
+
+                        Text(quote.dateAdded.formatted(date: .long, time: .shortened))
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(Theme.Colors.text)
+                    }
+
+                    HStack(spacing: 12) {
+                        Image(systemName: "book.closed")
+                            .font(.caption)
+                            .foregroundStyle(themeColor.color)
+                            .frame(width: 20)
+
+                        Text("Book")
+                            .font(.caption)
+                            .foregroundStyle(Theme.Colors.secondaryText)
+
+                        Spacer()
+
+                        Text(book.title)
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(Theme.Colors.text)
+                            .lineLimit(1)
+                    }
                 }
                 .padding(Theme.Spacing.md)
                 .cardStyle()
