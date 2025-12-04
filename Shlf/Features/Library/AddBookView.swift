@@ -18,6 +18,7 @@ struct AddBookView: View {
 
     @State private var viewModel: AddBookViewModel
     @State private var navigationPath = NavigationPath()
+    @State private var showManualEntry = false
 
     init(selectedTab: Binding<Int>) {
         _selectedTab = selectedTab
@@ -72,6 +73,14 @@ struct AddBookView: View {
                         }
                     )
                 }
+            }
+            .sheet(isPresented: $showManualEntry) {
+                ManualBookEntryView(
+                    selectedTab: $selectedTab,
+                    onDismissAll: {
+                        dismiss()
+                    }
+                )
             }
             .alert("Upgrade Required", isPresented: $viewModel.showUpgradeAlert) {
                 Button("Upgrade to Pro") {
@@ -167,6 +176,43 @@ struct AddBookView: View {
                                     .foregroundStyle(Theme.Colors.text)
 
                                 Text("Use your camera to scan ISBN")
+                                    .font(Theme.Typography.subheadline)
+                                    .foregroundStyle(Theme.Colors.secondaryText)
+                            }
+
+                            Spacer()
+
+                            Image(systemName: "chevron.right")
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(Theme.Colors.tertiaryText)
+                        }
+                        .padding(Theme.Spacing.md)
+                        .padding(16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        showManualEntry = true
+                    } label: {
+                        HStack(spacing: Theme.Spacing.md) {
+                            ZStack {
+                                Circle()
+                                    .fill(Theme.Colors.secondary.opacity(0.12))
+                                    .frame(width: 56, height: 56)
+
+                                Image(systemName: "square.and.pencil")
+                                    .font(.title2)
+                                    .foregroundStyle(Theme.Colors.secondary)
+                            }
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Manual Entry")
+                                    .font(Theme.Typography.headline)
+                                    .foregroundStyle(Theme.Colors.text)
+
+                                Text("Enter book details yourself")
                                     .font(Theme.Typography.subheadline)
                                     .foregroundStyle(Theme.Colors.secondaryText)
                             }
