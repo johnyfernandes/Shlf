@@ -10,20 +10,20 @@ import SwiftData
 
 struct HomeCardSettingsView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.themeColor) private var themeColor
     @Bindable var profile: UserProfile
     @State private var showSaveError = false
     @State private var saveErrorMessage = ""
+    @State private var editMode: EditMode = .inactive
 
     private var engine: GamificationEngine {
         GamificationEngine(modelContext: modelContext)
     }
 
-    // Available cards not currently in home
     private var availableCards: [StatCardType] {
         StatCardType.allCases.filter { !profile.homeCards.contains($0) }
     }
 
-    // Helper function to get value for each card type
     private func getValue(for cardType: StatCardType) -> String {
         switch cardType {
         case .currentStreak:
@@ -46,136 +46,234 @@ struct HomeCardSettingsView: View {
     }
 
     var body: some View {
-        Form {
-            Section {
-                Text("Customize which stats appear on your home page. You can show up to 3 cards.")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(Theme.Colors.secondaryText)
-            }
+        ZStack(alignment: .top) {
+            // Dynamic gradient background
+            LinearGradient(
+                colors: [
+                    themeColor.color.opacity(0.12),
+                    themeColor.color.opacity(0.04),
+                    Theme.Colors.background
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
-            if !profile.homeCards.isEmpty {
-                Section("Active Cards (\(profile.homeCards.count)/3)") {
-                    ForEach(profile.homeCards) { cardType in
-                        HStack(spacing: Theme.Spacing.sm) {
-                            Image(systemName: cardType.icon)
-                                .font(.title3)
-                                .foregroundStyle(cardType.gradient ?? LinearGradient(colors: [profile.themeColor.color], startPoint: .leading, endPoint: .trailing))
-                                .frame(width: 32)
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Description
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "square.grid.3x3.fill")
+                                .font(.caption)
+                                .foregroundStyle(themeColor.color)
+                                .frame(width: 16)
 
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(cardType.displayName)
-                                    .font(Theme.Typography.body)
-                                    .foregroundStyle(Theme.Colors.text)
-
-                                Text(cardType.description)
-                                    .font(Theme.Typography.caption)
-                                    .foregroundStyle(Theme.Colors.secondaryText)
-                            }
-
-                            Spacer()
-
-                            Text(getValue(for: cardType))
-                                .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                .foregroundStyle(profile.themeColor.color)
+                            Text("About")
+                                .font(.headline)
                         }
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            Button(role: .destructive) {
-                                withAnimation {
-                                    profile.removeHomeCard(cardType)
-                                    do {
-                                        try modelContext.save()
-                                    } catch {
-                                        saveErrorMessage = "Failed to remove card: \(error.localizedDescription)"
-                                        showSaveError = true
-                                    }
-                                }
-                            } label: {
-                                Label("Remove", systemImage: "trash")
-                            }
-                        }
+
+                        Text("Customize which stats appear on your home page. You can show up to 3 cards.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
-                    .onMove { from, to in
-                        profile.moveHomeCard(from: from, to: to)
-                        do {
-                            try modelContext.save()
-                        } catch {
-                            saveErrorMessage = "Failed to reorder cards: \(error.localizedDescription)"
-                            showSaveError = true
-                        }
-                    }
-                }
-            }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
 
-            if !availableCards.isEmpty {
-                Section("Available Cards") {
-                    ForEach(availableCards) { cardType in
-                        Button {
-                            if profile.homeCards.count < 3 {
-                                withAnimation {
-                                    profile.addHomeCard(cardType)
-                                    do {
-                                        try modelContext.save()
-                                    } catch {
-                                        saveErrorMessage = "Failed to add card: \(error.localizedDescription)"
-                                        showSaveError = true
-                                    }
-                                }
-                            }
-                        } label: {
-                            HStack(spacing: Theme.Spacing.sm) {
-                                Image(systemName: cardType.icon)
-                                    .font(.title3)
-                                    .foregroundStyle(cardType.gradient ?? LinearGradient(colors: [profile.themeColor.color], startPoint: .leading, endPoint: .trailing))
-                                    .frame(width: 32)
+                    // Active Cards
+                    if !profile.homeCards.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "star.fill")
+                                        .font(.caption)
+                                        .foregroundStyle(themeColor.color)
+                                        .frame(width: 16)
 
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(cardType.displayName)
-                                        .font(Theme.Typography.body)
-                                        .foregroundStyle(Theme.Colors.text)
-
-                                    Text(cardType.description)
-                                        .font(Theme.Typography.caption)
-                                        .foregroundStyle(Theme.Colors.secondaryText)
+                                    Text("Active Cards")
+                                        .font(.headline)
                                 }
 
                                 Spacer()
 
-                                if profile.homeCards.count >= 3 {
-                                    Text("Max 3")
-                                        .font(Theme.Typography.caption)
-                                        .foregroundStyle(Theme.Colors.tertiaryText)
-                                } else {
-                                    Image(systemName: "plus.circle.fill")
-                                        .foregroundStyle(profile.themeColor.color)
+                                Text("\(profile.homeCards.count)/3")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.secondary)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(themeColor.color.opacity(0.1), in: Capsule())
+                            }
+
+                            VStack(spacing: 10) {
+                                ForEach(profile.homeCards) { cardType in
+                                    HStack(spacing: 12) {
+                                        Image(systemName: cardType.icon)
+                                            .font(.title3)
+                                            .foregroundStyle(cardType.gradient ?? LinearGradient(colors: [themeColor.color], startPoint: .leading, endPoint: .trailing))
+                                            .frame(width: 28)
+
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(cardType.displayName)
+                                                .font(.subheadline.weight(.medium))
+
+                                            Text(cardType.description)
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                        }
+
+                                        Spacer()
+
+                                        Text(getValue(for: cardType))
+                                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                            .foregroundStyle(themeColor.color)
+                                    }
+                                    .padding(12)
+                                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                    .overlay(alignment: .topTrailing) {
+                                        if editMode == .active {
+                                            Button {
+                                                withAnimation {
+                                                    profile.removeHomeCard(cardType)
+                                                    do {
+                                                        try modelContext.save()
+                                                    } catch {
+                                                        saveErrorMessage = "Failed to remove card: \(error.localizedDescription)"
+                                                        showSaveError = true
+                                                    }
+                                                }
+                                            } label: {
+                                                Image(systemName: "xmark.circle.fill")
+                                                    .font(.title3)
+                                                    .foregroundStyle(.white, .red)
+                                                    .symbolRenderingMode(.palette)
+                                            }
+                                            .offset(x: 8, y: -8)
+                                        }
+                                    }
                                 }
                             }
                         }
-                        .disabled(profile.homeCards.count >= 3)
+                        .padding(16)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
-                }
-            }
 
-            if !profile.homeCards.isEmpty {
-                Section {
-                    Button("Remove All Cards", role: .destructive) {
-                        withAnimation {
-                            profile.homeCardOrder.removeAll()
-                            do {
-                                try modelContext.save()
-                            } catch {
-                                saveErrorMessage = "Failed to remove all cards: \(error.localizedDescription)"
-                                showSaveError = true
+                    // Available Cards
+                    if !availableCards.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(themeColor.color)
+                                    .frame(width: 16)
+
+                                Text("Available Cards")
+                                    .font(.headline)
                             }
+
+                            VStack(spacing: 10) {
+                                ForEach(availableCards) { cardType in
+                                    Button {
+                                        if profile.homeCards.count < 3 {
+                                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                                profile.addHomeCard(cardType)
+                                                do {
+                                                    try modelContext.save()
+                                                } catch {
+                                                    saveErrorMessage = "Failed to add card: \(error.localizedDescription)"
+                                                    showSaveError = true
+                                                }
+                                            }
+                                        }
+                                    } label: {
+                                        HStack(spacing: 12) {
+                                            Image(systemName: cardType.icon)
+                                                .font(.title3)
+                                                .foregroundStyle(cardType.gradient ?? LinearGradient(colors: [themeColor.color], startPoint: .leading, endPoint: .trailing))
+                                                .frame(width: 28)
+
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text(cardType.displayName)
+                                                    .font(.subheadline.weight(.medium))
+                                                    .foregroundStyle(.primary)
+
+                                                Text(cardType.description)
+                                                    .font(.caption)
+                                                    .foregroundStyle(.secondary)
+                                            }
+
+                                            Spacer()
+
+                                            if profile.homeCards.count >= 3 {
+                                                Text("Max 3")
+                                                    .font(.caption)
+                                                    .foregroundStyle(.tertiary)
+                                            } else {
+                                                Image(systemName: "plus.circle.fill")
+                                                    .font(.title3)
+                                                    .foregroundStyle(themeColor.color)
+                                            }
+                                        }
+                                        .padding(12)
+                                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                        .opacity(profile.homeCards.count >= 3 ? 0.5 : 1.0)
+                                    }
+                                    .disabled(profile.homeCards.count >= 3)
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        }
+                        .padding(16)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+
+                    // Remove All Button
+                    if !profile.homeCards.isEmpty {
+                        Button {
+                            withAnimation {
+                                profile.homeCardOrder.removeAll()
+                                do {
+                                    try modelContext.save()
+                                } catch {
+                                    saveErrorMessage = "Failed to remove all cards: \(error.localizedDescription)"
+                                    showSaveError = true
+                                }
+                            }
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "trash")
+                                Text("Remove All Cards")
+                            }
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(.red.gradient, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                         }
                     }
                 }
+                .padding(.horizontal, 20)
+                .padding(.top, 20)
+                .padding(.bottom, 40)
             }
+            .scrollIndicators(.hidden)
         }
         .navigationTitle("Home Screen")
         .navigationBarTitleDisplayMode(.inline)
+        .environment(\.editMode, $editMode)
         .toolbar {
             if !profile.homeCards.isEmpty {
-                EditButton()
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        withAnimation {
+                            editMode = editMode == .active ? .inactive : .active
+                        }
+                    } label: {
+                        Text(editMode == .active ? "Done" : "Edit")
+                            .fontWeight(.semibold)
+                            .foregroundStyle(themeColor.color)
+                    }
+                }
             }
         }
         .alert("Save Error", isPresented: $showSaveError) {
