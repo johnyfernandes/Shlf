@@ -26,28 +26,42 @@ struct EditBookView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 0) {
-                    // Hero Section - Cover & Title
-                    heroSection
+            ZStack(alignment: .top) {
+                // Background gradient that extends under the toolbar
+                LinearGradient(
+                    colors: [
+                        themeColor.color.opacity(0.08),
+                        Theme.Colors.background
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: 400)
+                .ignoresSafeArea(edges: .top)
 
-                    // Content Sections
-                    VStack(spacing: 24) {
-                        essentialInfoSection
-                        progressSection
-                        typeStatusSection
-                        ratingSection
-                        publishingDetailsSection
-                        descriptionSection
-                        notesSection
+                ScrollView {
+                    VStack(spacing: 0) {
+                        // Hero Section - Cover & Title
+                        heroSectionContent
+
+                        // Content Sections
+                        VStack(spacing: 24) {
+                            essentialInfoSection
+                            progressSection
+                            typeStatusSection
+                            ratingSection
+                            publishingDetailsSection
+                            descriptionSection
+                            notesSection
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 32)
+                        .padding(.bottom, 40)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 32)
-                    .padding(.bottom, 40)
                 }
+                .scrollDismissesKeyboard(.interactively)
             }
             .background(Theme.Colors.background)
-            .scrollDismissesKeyboard(.interactively)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -99,7 +113,7 @@ struct EditBookView: View {
 
     // MARK: - Hero Section
 
-    private var heroSection: some View {
+    private var heroSectionContent: some View {
         VStack(spacing: 20) {
             // Cover Image
             Button {
@@ -134,16 +148,6 @@ struct EditBookView: View {
             .padding(.top, 24)
         }
         .frame(maxWidth: .infinity)
-        .background(
-            LinearGradient(
-                colors: [
-                    themeColor.color.opacity(0.08),
-                    Theme.Colors.background
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
     }
 
     private var coverPlaceholder: some View {
