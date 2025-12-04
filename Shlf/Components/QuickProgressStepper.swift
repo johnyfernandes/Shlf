@@ -129,8 +129,8 @@ struct QuickProgressStepper: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .padding(Theme.Spacing.md)
-        .cardStyle()
+        .padding(16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .onChange(of: pendingPages) { oldValue, newValue in
             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                 showSaveButton = newValue != 0

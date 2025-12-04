@@ -182,7 +182,7 @@ struct ProgressSliderView: View {
             }
         }
         .padding(16)
-        .cardStyle()
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .onAppear {
             sliderValue = Double(book.currentPage)
         }
