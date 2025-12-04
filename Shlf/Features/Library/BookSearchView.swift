@@ -9,6 +9,7 @@ import SwiftUI
 
 struct BookSearchView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.themeColor) private var themeColor
     @Binding var selectedTab: Int
     let onDismissAll: () -> Void
 
@@ -53,71 +54,92 @@ struct BookSearchView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if searchResults.isEmpty && !isSearching && !searchText.isEmpty {
-                    ContentUnavailableView {
-                        Label("No Results", systemImage: "magnifyingglass")
-                    } description: {
-                        Text("Try searching with a different title, author, or ISBN")
-                    }
-                } else if searchResults.isEmpty && !isSearching {
-                    ContentUnavailableView {
-                        Label("Search for Books", systemImage: "books.vertical")
-                    } description: {
-                        Text("Find books by title, author, or ISBN")
-                    }
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: Theme.Spacing.md) {
-                            ForEach(searchResults, id: \.olid) { bookInfo in
-                                NavigationLink {
-                                    BookPreviewView(
-                                        bookInfo: bookInfo,
-                                        selectedTab: $selectedTab,
-                                        onDismiss: onDismissAll
-                                    )
-                                } label: {
-                                    BookSearchResultRow(bookInfo: bookInfo)
-                                }
-                                .buttonStyle(.plain)
+            ZStack(alignment: .top) {
+                // Dynamic gradient background
+                LinearGradient(
+                    colors: [
+                        themeColor.color.opacity(0.08),
+                        themeColor.color.opacity(0.02),
+                        Theme.Colors.background
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
+
+                Group {
+                    if searchResults.isEmpty && !isSearching && !searchText.isEmpty {
+                        VStack {
+                            Spacer()
+                            ContentUnavailableView {
+                                Label("No Results", systemImage: "magnifyingglass")
+                            } description: {
+                                Text("Try searching with a different title, author, or ISBN")
                             }
+                            Spacer()
                         }
-                        .padding(.horizontal, Theme.Spacing.md)
-                        .padding(.top, Theme.Spacing.sm)
-                        .padding(.bottom, Theme.Spacing.xl)
+                    } else if searchResults.isEmpty && !isSearching {
+                        VStack {
+                            Spacer()
+                            ContentUnavailableView {
+                                Label("Search for Books", systemImage: "books.vertical")
+                            } description: {
+                                Text("Find books by title, author, or ISBN")
+                            }
+                            Spacer()
+                        }
+                    } else {
+                        ScrollView {
+                            LazyVStack(spacing: 12) {
+                                ForEach(searchResults, id: \.olid) { bookInfo in
+                                    NavigationLink {
+                                        BookPreviewView(
+                                            bookInfo: bookInfo,
+                                            selectedTab: $selectedTab,
+                                            onDismiss: onDismissAll
+                                        )
+                                    } label: {
+                                        BookSearchResultRow(bookInfo: bookInfo)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.top, 8)
+                            .padding(.bottom, 40)
+                        }
                     }
                 }
-            }
-            .navigationTitle("Search Books")
-            .navigationBarTitleDisplayMode(.large)
-            .searchable(text: $searchText, prompt: "Title, author, or ISBN")
-            .searchFocused($isSearchFocused)
-            .onAppear {
-                isSearchFocused = true
-            }
-            .onChange(of: searchText) { oldValue, newValue in
-                searchTask?.cancel()
-                searchTask = Task {
-                    await performSearch(query: newValue)
+                .navigationTitle("Search Books")
+                .navigationBarTitleDisplayMode(.large)
+                .searchable(text: $searchText, prompt: "Title, author, or ISBN")
+                .searchFocused($isSearchFocused)
+                .onAppear {
+                    isSearchFocused = true
                 }
-            }
-            .overlay {
-                if isSearching {
-                    VStack {
-                        Spacer()
-                        ProgressView()
-                            .scaleEffect(1.5)
-                            .padding()
-                            .background(.ultraThinMaterial)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                        Spacer()
+                .onChange(of: searchText) { oldValue, newValue in
+                    searchTask?.cancel()
+                    searchTask = Task {
+                        await performSearch(query: newValue)
                     }
                 }
-            }
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
+                .overlay {
+                    if isSearching {
+                        VStack {
+                            Spacer()
+                            ProgressView()
+                                .scaleEffect(1.5)
+                                .padding(24)
+                                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            Spacer()
+                        }
+                    }
+                }
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            dismiss()
+                        }
                     }
                 }
             }
@@ -185,6 +207,7 @@ struct BookSearchView: View {
 }
 
 struct BookSearchResultRow: View {
+    @Environment(\.themeColor) private var themeColor
     let bookInfo: BookInfo
 
     private var yearPublished: String? {
@@ -200,18 +223,18 @@ struct BookSearchResultRow: View {
     }
 
     var body: some View {
-        HStack(spacing: Theme.Spacing.md) {
+        HStack(spacing: 12) {
             // Book cover with shadow
             BookCoverView(
                 imageURL: bookInfo.coverImageURL,
                 title: bookInfo.title,
-                width: 64,
-                height: 96
+                width: 70,
+                height: 105
             )
             .shadow(color: Theme.Shadow.medium, radius: 8, y: 4)
 
             // Content
-            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            VStack(alignment: .leading, spacing: 6) {
                 // Title
                 Text(bookInfo.title)
                     .font(Theme.Typography.headline)
@@ -228,7 +251,7 @@ struct BookSearchResultRow: View {
                 Spacer()
 
                 // Metadata
-                HStack(spacing: Theme.Spacing.xs) {
+                HStack(spacing: 6) {
                     if let pages = bookInfo.totalPages {
                         HStack(spacing: 3) {
                             Image(systemName: "book.pages")
@@ -265,11 +288,9 @@ struct BookSearchResultRow: View {
                 .fontWeight(.semibold)
                 .foregroundStyle(Theme.Colors.tertiaryText)
         }
-        .padding(Theme.Spacing.md)
-        .frame(minHeight: 112)
-        .background(Theme.Colors.secondaryBackground)
-        .clipShape(RoundedRectangle(cornerRadius: Theme.CornerRadius.lg, style: .continuous))
-        .shadow(color: Theme.Shadow.small, radius: Theme.Elevation.level2, y: 2)
+        .padding(16)
+        .frame(minHeight: 120)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 
