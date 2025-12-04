@@ -14,171 +14,332 @@ struct LevelDetailView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: Theme.Spacing.xl) {
-                    // Large progress ring
-                    VStack(spacing: Theme.Spacing.lg) {
-                        ProgressRing(
-                            progress: profile.xpProgressPercentage / 100,
-                            lineWidth: 12,
-                            gradient: Theme.Colors.xpGradient,
-                            size: 160
-                        )
-                        .overlay {
-                            VStack(spacing: 4) {
+            ZStack(alignment: .top) {
+                // Dynamic gradient background
+                LinearGradient(
+                    colors: [
+                        themeColor.color.opacity(0.12),
+                        themeColor.color.opacity(0.04),
+                        Theme.Colors.background
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
+
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Progress Card
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack(spacing: 6) {
                                 Image(systemName: "star.fill")
-                                    .font(.system(size: 32))
-                                    .foregroundStyle(Theme.Colors.xpGradient)
-
-                                Text("\(Int(profile.xpProgressPercentage))%")
-                                    .font(.system(size: 24, weight: .bold, design: .rounded))
-                                    .foregroundStyle(Theme.Colors.text)
-                            }
-                        }
-
-                        VStack(spacing: Theme.Spacing.xs) {
-                            Text("Level \(profile.currentLevel)")
-                                .font(Theme.Typography.title)
-                                .foregroundStyle(Theme.Colors.text)
-
-                            HStack(spacing: Theme.Spacing.xs) {
-                                Text("\(profile.totalXP)")
-                                    .font(Theme.Typography.headline)
-                                    .foregroundStyle(Theme.Colors.text)
-
-                                Text("/ \(profile.xpForNextLevel) XP")
-                                    .font(Theme.Typography.callout)
-                                    .foregroundStyle(Theme.Colors.tertiaryText)
-                            }
-                        }
-                    }
-
-                    // XP breakdown
-                    VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-                        Text("Progress")
-                            .sectionHeader()
-
-                        VStack(spacing: Theme.Spacing.sm) {
-                            HStack {
-                                Text("Current Level")
-                                    .font(Theme.Typography.body)
-                                    .foregroundStyle(Theme.Colors.secondaryText)
-
-                                Spacer()
-
-                                Text("Level \(profile.currentLevel)")
-                                    .font(Theme.Typography.headline)
-                                    .foregroundStyle(Theme.Colors.text)
-                            }
-
-                            HStack {
-                                Text("Total XP")
-                                    .font(Theme.Typography.body)
-                                    .foregroundStyle(Theme.Colors.secondaryText)
-
-                                Spacer()
-
-                                Text("\(profile.totalXP) XP")
-                                    .font(Theme.Typography.headline)
-                                    .foregroundStyle(Theme.Colors.text)
-                            }
-
-                            HStack {
-                                Text("XP to Next Level")
-                                    .font(Theme.Typography.body)
-                                    .foregroundStyle(Theme.Colors.secondaryText)
-
-                                Spacer()
-
-                                Text("\(profile.xpForNextLevel - profile.totalXP) XP")
-                                    .font(Theme.Typography.headline)
+                                    .font(.caption)
                                     .foregroundStyle(themeColor.color)
+                                    .frame(width: 16)
+
+                                Text("Your Progress")
+                                    .font(.headline)
+                            }
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                // Progress Ring
+                                HStack {
+                                    Spacer()
+
+                                    ProgressRing(
+                                        progress: profile.xpProgressPercentage / 100,
+                                        lineWidth: 12,
+                                        gradient: Theme.Colors.xpGradient,
+                                        size: 140
+                                    )
+                                    .overlay {
+                                        VStack(spacing: 4) {
+                                            Image(systemName: "star.fill")
+                                                .font(.system(size: 28))
+                                                .foregroundStyle(Theme.Colors.xpGradient)
+
+                                            Text("\(Int(profile.xpProgressPercentage))%")
+                                                .font(.system(size: 20, weight: .bold, design: .rounded))
+                                                .foregroundStyle(Theme.Colors.text)
+                                        }
+                                    }
+
+                                    Spacer()
+                                }
+                                .padding(.vertical, 8)
+
+                                HStack {
+                                    Image(systemName: "star.circle.fill")
+                                        .foregroundStyle(themeColor.color)
+
+                                    Text("Level \(profile.currentLevel)")
+                                        .font(.title2)
+                                        .fontWeight(.bold)
+
+                                    Spacer()
+
+                                    Image(systemName: "bolt.fill")
+                                        .foregroundStyle(themeColor.color)
+
+                                    Text("\(profile.totalXP) XP")
+                                        .font(.title2)
+                                        .fontWeight(.bold)
+                                }
+                            }
+                            .padding(12)
+                            .background(themeColor.color.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        }
+                        .padding(16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+                        // XP Breakdown Card
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "chart.line.uptrend.xyaxis")
+                                    .font(.caption)
+                                    .foregroundStyle(themeColor.color)
+                                    .frame(width: 16)
+
+                                Text("XP Breakdown")
+                                    .font(.headline)
+                            }
+
+                            VStack(spacing: 12) {
+                                HStack(spacing: 12) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Theme.Colors.xpGradient)
+                                            .frame(width: 44, height: 44)
+
+                                        Image(systemName: "star.fill")
+                                            .font(.system(size: 18))
+                                            .fontWeight(.semibold)
+                                            .foregroundStyle(.white)
+                                    }
+                                    .shadow(color: Theme.Shadow.medium, radius: 6, y: 3)
+
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Current Level")
+                                            .font(.subheadline)
+                                            .fontWeight(.semibold)
+                                            .foregroundStyle(Theme.Colors.text)
+                                            .lineLimit(2)
+
+                                        Text("Level \(profile.currentLevel)")
+                                            .font(.caption)
+                                            .foregroundStyle(Theme.Colors.secondaryText)
+                                            .lineLimit(1)
+
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "bolt.fill")
+                                                .font(.caption2)
+                                            Text("\(profile.totalXP) total XP")
+                                                .font(.caption)
+                                        }
+                                        .foregroundStyle(themeColor.color)
+                                    }
+
+                                    Spacer()
+                                }
+                                .padding(12)
+                                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+                                HStack(spacing: 12) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Theme.Colors.xpGradient)
+                                            .frame(width: 44, height: 44)
+
+                                        Image(systemName: "arrow.up.forward")
+                                            .font(.system(size: 18))
+                                            .fontWeight(.semibold)
+                                            .foregroundStyle(.white)
+                                    }
+                                    .shadow(color: Theme.Shadow.medium, radius: 6, y: 3)
+
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Next Level")
+                                            .font(.subheadline)
+                                            .fontWeight(.semibold)
+                                            .foregroundStyle(Theme.Colors.text)
+                                            .lineLimit(2)
+
+                                        Text("Level \(profile.currentLevel + 1)")
+                                            .font(.caption)
+                                            .foregroundStyle(Theme.Colors.secondaryText)
+                                            .lineLimit(1)
+
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "bolt.fill")
+                                                .font(.caption2)
+                                            Text("\(profile.xpForNextLevel - profile.totalXP) XP needed")
+                                                .font(.caption)
+                                        }
+                                        .foregroundStyle(themeColor.color)
+                                    }
+
+                                    Spacer()
+                                }
+                                .padding(12)
+                                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                             }
                         }
-                        .padding(Theme.Spacing.md)
                         .padding(16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
 
-                    // How to earn XP
-                    VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-                        Text("Earn XP By")
-                            .sectionHeader()
+                        // How to Earn XP Card
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "sparkles")
+                                    .font(.caption)
+                                    .foregroundStyle(themeColor.color)
+                                    .frame(width: 16)
 
-                        VStack(spacing: Theme.Spacing.sm) {
-                            XPSourceRow(
-                                icon: "book.pages.fill",
-                                title: "Reading Pages",
-                                description: "1 XP per page read",
-                                gradient: Theme.Colors.xpGradient
-                            )
+                                Text("Earn XP By")
+                                    .font(.headline)
+                            }
 
-                            XPSourceRow(
-                                icon: "checkmark.circle.fill",
-                                title: "Finishing Books",
-                                description: "50 XP bonus",
-                                gradient: Theme.Colors.successGradient
-                            )
+                            VStack(spacing: 12) {
+                                HStack(spacing: 12) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Theme.Colors.xpGradient)
+                                            .frame(width: 44, height: 44)
 
-                            XPSourceRow(
-                                icon: "flame.fill",
-                                title: "Daily Streaks",
-                                description: "10 XP per day",
-                                gradient: Theme.Colors.streakGradient
-                            )
+                                        Image(systemName: "book.pages.fill")
+                                            .font(.system(size: 18))
+                                            .fontWeight(.semibold)
+                                            .foregroundStyle(.white)
+                                    }
+                                    .shadow(color: Theme.Shadow.medium, radius: 6, y: 3)
+
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Reading Pages")
+                                            .font(.subheadline)
+                                            .fontWeight(.semibold)
+                                            .foregroundStyle(Theme.Colors.text)
+                                            .lineLimit(2)
+
+                                        Text("Earn 1 XP per page")
+                                            .font(.caption)
+                                            .foregroundStyle(Theme.Colors.secondaryText)
+                                            .lineLimit(1)
+
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "book.pages")
+                                                .font(.caption2)
+                                            Text("1 XP per page read")
+                                                .font(.caption)
+                                        }
+                                        .foregroundStyle(themeColor.color)
+                                    }
+
+                                    Spacer()
+                                }
+                                .padding(12)
+                                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+                                HStack(spacing: 12) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Theme.Colors.successGradient)
+                                            .frame(width: 44, height: 44)
+
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .font(.system(size: 18))
+                                            .fontWeight(.semibold)
+                                            .foregroundStyle(.white)
+                                    }
+                                    .shadow(color: Theme.Shadow.medium, radius: 6, y: 3)
+
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Finishing Books")
+                                            .font(.subheadline)
+                                            .fontWeight(.semibold)
+                                            .foregroundStyle(Theme.Colors.text)
+                                            .lineLimit(2)
+
+                                        Text("Complete a book")
+                                            .font(.caption)
+                                            .foregroundStyle(Theme.Colors.secondaryText)
+                                            .lineLimit(1)
+
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "book.pages")
+                                                .font(.caption2)
+                                            Text("50 XP bonus")
+                                                .font(.caption)
+                                        }
+                                        .foregroundStyle(themeColor.color)
+                                    }
+
+                                    Spacer()
+                                }
+                                .padding(12)
+                                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+                                HStack(spacing: 12) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Theme.Colors.streakGradient)
+                                            .frame(width: 44, height: 44)
+
+                                        Image(systemName: "flame.fill")
+                                            .font(.system(size: 18))
+                                            .fontWeight(.semibold)
+                                            .foregroundStyle(.white)
+                                    }
+                                    .shadow(color: Theme.Shadow.medium, radius: 6, y: 3)
+
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Daily Streaks")
+                                            .font(.subheadline)
+                                            .fontWeight(.semibold)
+                                            .foregroundStyle(Theme.Colors.text)
+                                            .lineLimit(2)
+
+                                        Text("Read every day")
+                                            .font(.caption)
+                                            .foregroundStyle(Theme.Colors.secondaryText)
+                                            .lineLimit(1)
+
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "book.pages")
+                                                .font(.caption2)
+                                            Text("10 XP per day")
+                                                .font(.caption)
+                                        }
+                                        .foregroundStyle(themeColor.color)
+                                    }
+
+                                    Spacer()
+                                }
+                                .padding(12)
+                                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            }
                         }
+                        .padding(16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 20)
+                    .padding(.bottom, 40)
                 }
-                .padding(Theme.Spacing.lg)
             }
-            .background(Theme.Colors.background)
             .navigationTitle("Your Level")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
+                ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
                         dismiss()
                     }
+                    .foregroundStyle(themeColor.color)
                 }
             }
         }
-    }
-}
-
-struct XPSourceRow: View {
-    let icon: String
-    let title: String
-    let description: String
-    let gradient: LinearGradient
-
-    var body: some View {
-        HStack(spacing: Theme.Spacing.md) {
-            ZStack {
-                Circle()
-                    .fill(gradient)
-                    .frame(width: 44, height: 44)
-
-                Image(systemName: icon)
-                    .font(.system(size: 18))
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.white)
-            }
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(Theme.Typography.headline)
-                    .foregroundStyle(Theme.Colors.text)
-
-                Text(description)
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(Theme.Colors.secondaryText)
-            }
-
-            Spacer()
-        }
-        .padding(Theme.Spacing.sm)
-        .padding(16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 

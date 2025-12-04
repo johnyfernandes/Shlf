@@ -161,6 +161,7 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showLevelDetail) {
                 LevelDetailView(profile: profile)
+                    .presentationDetents([.medium, .large])
             }
         }
     }
