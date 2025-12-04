@@ -49,14 +49,38 @@ struct LevelDetailView: View {
                                     ProgressRing(
                                         progress: profile.xpProgressPercentage / 100,
                                         lineWidth: 12,
-                                        gradient: Theme.Colors.xpGradient,
+                                        gradient: LinearGradient(
+                                            colors: [
+                                                themeColor.color,
+                                                themeColor.color.opacity(0.7)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        ),
                                         size: 140
                                     )
                                     .overlay {
                                         VStack(spacing: 4) {
-                                            Image(systemName: "star.fill")
-                                                .font(.system(size: 28))
-                                                .foregroundStyle(Theme.Colors.xpGradient)
+                                            ZStack {
+                                                Image(systemName: "star.fill")
+                                                    .font(.system(size: 28))
+                                                    .foregroundStyle(themeColor.color)
+                                                    .blur(radius: 8)
+                                                    .opacity(0.6)
+
+                                                Image(systemName: "star.fill")
+                                                    .font(.system(size: 28))
+                                                    .foregroundStyle(
+                                                        LinearGradient(
+                                                            colors: [
+                                                                themeColor.color,
+                                                                themeColor.color.opacity(0.8)
+                                                            ],
+                                                            startPoint: .top,
+                                                            endPoint: .bottom
+                                                        )
+                                                    )
+                                            }
 
                                             Text("\(Int(profile.xpProgressPercentage))%")
                                                 .font(.system(size: 20, weight: .bold, design: .rounded))
