@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct StatCard: View {
+    @Environment(\.themeColor) private var themeColor
     let title: String
     let value: String
     let icon: String
@@ -23,9 +24,9 @@ struct StatCard: View {
             if icon.contains("flame") {
                 return Color.orange
             }
-            // Check if it's XP gradient (purple/blue)
+            // Check if it's XP gradient - use theme color!
             else if icon == "star.fill" || icon == "bolt.fill" {
-                return Color.purple
+                return themeColor.color
             }
             // Check if it's success gradient (green)
             else if icon == "books.vertical.fill" {
@@ -58,7 +59,19 @@ struct StatCard: View {
                 ZStack {
                     if let gradient {
                         Circle()
-                            .fill(gradient)
+                            .fill(
+                                // Use theme color gradient for Level/XP, otherwise use passed gradient
+                                (icon == "star.fill" || icon == "bolt.fill")
+                                    ? LinearGradient(
+                                        colors: [
+                                            themeColor.color,
+                                            themeColor.color.opacity(0.7)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                    : gradient
+                            )
                             .frame(width: 44, height: 44)
                             .shadow(
                                 color: primaryColor.opacity(0.3),
