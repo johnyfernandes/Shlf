@@ -10,21 +10,37 @@ import SwiftUI
 struct ReadingHeatmapChart: View {
     @Environment(\.themeColor) private var themeColor
     let sessions: [ReadingSession]
+    let period: HeatmapPeriod
 
     private let columns = 7 // Days of week
-    private let cellSize: CGFloat = 12
-    private let cellSpacing: CGFloat = 3
+    private let cellSize: CGFloat = 18
+    private let cellSpacing: CGFloat = 4
 
-    // Get last 12 weeks of data (84 days)
-    private var last12WeeksData: [Date: Int] {
+    // Get data for the selected period
+    private var periodData: [Date: Int] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         var data: [Date: Int] = [:]
 
-        // Go back 84 days (12 weeks)
-        for daysAgo in 0..<84 {
-            guard let date = calendar.date(byAdding: .day, value: -daysAgo, to: today) else { continue }
-            let dayStart = calendar.startOfDay(for: date)
+        let startDate: Date
+        switch period {
+        case .last12Weeks:
+            // Last 84 days
+            startDate = calendar.date(byAdding: .day, value: -83, to: today)!
+
+        case .currentMonth:
+            // First day of current month
+            startDate = calendar.date(from: calendar.dateComponents([.year, .month], from: today))!
+
+        case .currentYear:
+            // First day of current year (January 1st)
+            startDate = calendar.date(from: calendar.dateComponents([.year], from: today))!
+        }
+
+        // Iterate from start date to today
+        var currentDate = startDate
+        while currentDate <= today {
+            let dayStart = calendar.startOfDay(for: currentDate)
             let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart)!
 
             let pagesRead = sessions
@@ -32,6 +48,8 @@ struct ReadingHeatmapChart: View {
                 .reduce(0) { $0 + $1.pagesRead }
 
             data[dayStart] = max(0, pagesRead)
+
+            currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate)!
         }
 
         return data
@@ -43,19 +61,32 @@ struct ReadingHeatmapChart: View {
         let today = calendar.startOfDay(for: Date())
         var weeks: [[Date]] = []
 
-        // Start from 84 days ago and go forward
-        guard let startDate = calendar.date(byAdding: .day, value: -83, to: today) else { return [] }
+        var startDate: Date
+        switch period {
+        case .last12Weeks:
+            // Last 84 days
+            startDate = calendar.date(byAdding: .day, value: -83, to: today)!
 
-        var currentWeek: [Date] = []
-        var currentDate = startDate
+        case .currentMonth:
+            // First day of current month
+            startDate = calendar.date(from: calendar.dateComponents([.year, .month], from: today))!
 
-        // Find the first Sunday (or your week start day)
-        while calendar.component(.weekday, from: currentDate) != 1 { // 1 = Sunday
-            currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate)!
+        case .currentYear:
+            // First day of current year
+            startDate = calendar.date(from: calendar.dateComponents([.year], from: today))!
         }
 
-        // Build weeks
-        for _ in 0..<84 {
+        // Find the first Sunday before or on startDate
+        var gridStartDate = startDate
+        while calendar.component(.weekday, from: gridStartDate) != 1 {
+            gridStartDate = calendar.date(byAdding: .day, value: -1, to: gridStartDate)!
+        }
+
+        var currentWeek: [Date] = []
+        var currentDate = gridStartDate
+
+        // Build weeks until we pass today
+        while currentDate <= today {
             currentWeek.append(currentDate)
 
             if calendar.component(.weekday, from: currentDate) == 7 { // Saturday
@@ -75,7 +106,7 @@ struct ReadingHeatmapChart: View {
     }
 
     private var maxPages: Int {
-        guard let max = last12WeeksData.values.max(), max > 0 else { return 1 }
+        guard let max = periodData.values.max(), max > 0 else { return 1 }
         return max
     }
 
@@ -98,11 +129,31 @@ struct ReadingHeatmapChart: View {
     }
 
     private var totalPages: Int {
-        last12WeeksData.values.reduce(0, +)
+        periodData.values.reduce(0, +)
     }
 
     private var totalDaysActive: Int {
-        last12WeeksData.values.filter { $0 > 0 }.count
+        periodData.values.filter { $0 > 0 }.count
+    }
+
+    private var periodTitle: String {
+        let calendar = Calendar.current
+        let today = Date()
+
+        switch period {
+        case .last12Weeks:
+            return "Last 12 Weeks"
+        case .currentMonth:
+            let formatter = DateFormatter()
+            formatter.dateFormat = "MMMM yyyy"
+            return formatter.string(from: today)
+        case .currentYear:
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy"
+            let startOfYear = calendar.date(from: calendar.dateComponents([.year], from: today))!
+            let daysSinceStart = calendar.dateComponents([.day], from: startOfYear, to: today).day! + 1
+            return "\(formatter.string(from: today)) (\(daysSinceStart) days)"
+        }
     }
 
     var body: some View {
@@ -110,7 +161,7 @@ struct ReadingHeatmapChart: View {
             // Header with stats
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Last 12 Weeks")
+                    Text(periodTitle)
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundStyle(Theme.Colors.text)
@@ -160,7 +211,7 @@ struct ReadingHeatmapChart: View {
                         ForEach(Array(weeklyData.enumerated()), id: \.offset) { weekIndex, week in
                             VStack(spacing: cellSpacing) {
                                 ForEach(Array(week.enumerated()), id: \.offset) { dayIndex, date in
-                                    let pages = last12WeeksData[date] ?? 0
+                                    let pages = periodData[date] ?? 0
 
                                     RoundedRectangle(cornerRadius: 3, style: .continuous)
                                         .fill(intensityColor(for: pages))
@@ -205,6 +256,6 @@ struct ReadingHeatmapChart: View {
 }
 
 #Preview {
-    ReadingHeatmapChart(sessions: [])
+    ReadingHeatmapChart(sessions: [], period: .last12Weeks)
         .padding()
 }

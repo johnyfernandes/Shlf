@@ -185,7 +185,7 @@ struct StatsView: View {
                         ReadingActivityChart(sessions: allSessions)
                             .frame(height: 260)
                     case .heatmap:
-                        ReadingHeatmapChart(sessions: allSessions)
+                        ReadingHeatmapChart(sessions: allSessions, period: profile.heatmapPeriod)
                     }
                 }
                 .padding(20)

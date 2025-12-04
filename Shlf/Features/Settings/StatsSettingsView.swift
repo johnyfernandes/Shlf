@@ -121,6 +121,75 @@ struct StatsSettingsView: View {
                         .padding(16)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+                        // Heatmap Period Section (only show if heatmap is selected)
+                        if profile.chartType == .heatmap {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "clock.fill")
+                                        .font(.caption)
+                                        .foregroundStyle(profile.themeColor.color)
+                                        .frame(width: 16)
+
+                                    Text("Time Period")
+                                        .font(.headline)
+                                }
+
+                                VStack(spacing: 10) {
+                                    ForEach(HeatmapPeriod.allCases, id: \.self) { period in
+                                        Button {
+                                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                                profile.heatmapPeriod = period
+                                                do {
+                                                    try modelContext.save()
+                                                } catch {
+                                                    saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
+                                                    showSaveError = true
+                                                }
+                                            }
+                                        } label: {
+                                            HStack(spacing: 12) {
+                                                Image(systemName: period.icon)
+                                                    .font(.title3)
+                                                    .foregroundStyle(profile.themeColor.color)
+                                                    .frame(width: 28)
+
+                                                VStack(alignment: .leading, spacing: 2) {
+                                                    Text(period.rawValue)
+                                                        .font(.subheadline.weight(.medium))
+                                                        .foregroundStyle(.primary)
+
+                                                    Text(period.description)
+                                                        .font(.caption)
+                                                        .foregroundStyle(.secondary)
+                                                }
+
+                                                Spacer()
+
+                                                if profile.heatmapPeriod == period {
+                                                    Image(systemName: "checkmark.circle.fill")
+                                                        .font(.title3)
+                                                        .foregroundStyle(profile.themeColor.color)
+                                                }
+                                            }
+                                            .padding(12)
+                                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                                    .strokeBorder(
+                                                        profile.heatmapPeriod == period ? profile.themeColor.color : .clear,
+                                                        lineWidth: 2
+                                                    )
+                                            )
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                            }
+                            .padding(16)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        }
                     }
                 }
                 .padding(.horizontal, 20)

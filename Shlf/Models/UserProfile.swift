@@ -23,7 +23,29 @@ enum ChartType: String, Codable, CaseIterable, Hashable {
     var description: String {
         switch self {
         case .bar: return "Display reading activity as vertical bars"
-        case .heatmap: return "GitHub-style activity heatmap showing 12 weeks"
+        case .heatmap: return "GitHub-style activity heatmap showing reading days"
+        }
+    }
+}
+
+enum HeatmapPeriod: String, Codable, CaseIterable, Hashable {
+    case last12Weeks = "Last 12 Weeks"
+    case currentMonth = "Current Month"
+    case currentYear = "Current Year"
+
+    var icon: String {
+        switch self {
+        case .last12Weeks: return "calendar"
+        case .currentMonth: return "calendar.circle"
+        case .currentYear: return "calendar.badge.clock"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .last12Weeks: return "Show activity for the past 12 weeks"
+        case .currentMonth: return "Show activity for the current month"
+        case .currentYear: return "Show activity for the entire year"
         }
     }
 }
@@ -72,6 +94,7 @@ final class UserProfile {
 
     // Stats Display Preferences
     var chartTypeRawValue: String = "Bar Chart"
+    var heatmapPeriodRawValue: String = "Last 12 Weeks"
 
     // Home Card Preferences
     var homeCardOrder: [String] = [
@@ -166,6 +189,16 @@ final class UserProfile {
         }
         set {
             chartTypeRawValue = newValue.rawValue
+        }
+    }
+
+    // Helper computed property for heatmap period
+    var heatmapPeriod: HeatmapPeriod {
+        get {
+            HeatmapPeriod(rawValue: heatmapPeriodRawValue) ?? .last12Weeks
+        }
+        set {
+            heatmapPeriodRawValue = newValue.rawValue
         }
     }
 
