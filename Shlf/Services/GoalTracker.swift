@@ -30,7 +30,8 @@ class GoalTracker {
             }
 
             let newValue = calculateProgress(for: goal, profile: profile)
-            goal.currentValue = newValue
+            // CRITICAL: Clamp to target to prevent >100% progress
+            goal.currentValue = min(newValue, goal.targetValue)
 
             // Auto-complete if target reached
             if newValue >= goal.targetValue {
@@ -73,7 +74,9 @@ class GoalTracker {
 
             // Calculate days elapsed, capping at goal end date if goal has ended
             let endPoint = min(Date(), goal.endDate)
-            let daysElapsed = max(1, calendar.dateComponents([.day], from: goal.startDate, to: endPoint).day ?? 1)
+            let daysDiff = calendar.dateComponents([.day], from: goal.startDate, to: endPoint).day ?? 0
+            // CRITICAL: Add 1 to include start day (same-day goals = 1 day, not 0)
+            let daysElapsed = max(1, daysDiff + 1)
 
             return totalPages / daysElapsed
 
@@ -91,7 +94,9 @@ class GoalTracker {
 
             // Calculate days elapsed, capping at goal end date if goal has ended
             let endPoint = min(Date(), goal.endDate)
-            let daysElapsed = max(1, calendar.dateComponents([.day], from: goal.startDate, to: endPoint).day ?? 1)
+            let daysDiff = calendar.dateComponents([.day], from: goal.startDate, to: endPoint).day ?? 0
+            // CRITICAL: Add 1 to include start day (same-day goals = 1 day, not 0)
+            let daysElapsed = max(1, daysDiff + 1)
 
             return totalMinutes / daysElapsed
 

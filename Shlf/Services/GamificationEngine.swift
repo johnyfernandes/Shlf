@@ -305,6 +305,9 @@ final class GamificationEngine {
         }
         profile.achievements?.append(achievement)
         modelContext.insert(achievement)
+
+        // CRITICAL: Save immediately so achievement persists
+        try? modelContext.save()
     }
 
     // MARK: - Stats Calculation

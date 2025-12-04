@@ -121,6 +121,9 @@ struct AddGoalView: View {
         profile.readingGoals?.append(newGoal)
         modelContext.insert(newGoal)
 
+        // CRITICAL: Save so goal persists
+        try? modelContext.save()
+
         dismiss()
     }
 }

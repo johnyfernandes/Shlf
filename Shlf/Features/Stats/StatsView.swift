@@ -22,8 +22,17 @@ struct StatsView: View {
         if let existing = profiles.first {
             return existing
         }
+
+        // CRITICAL: Check again after fetching to prevent race condition
+        let descriptor = FetchDescriptor<UserProfile>()
+        if let existingAfterFetch = try? modelContext.fetch(descriptor).first {
+            return existingAfterFetch
+        }
+
+        // Now safe to create
         let new = UserProfile()
         modelContext.insert(new)
+        try? modelContext.save() // Save immediately to prevent other threads from creating
         return new
     }
 
@@ -161,18 +170,18 @@ struct StatsView: View {
                     .padding(Theme.Spacing.md)
                     .cardStyle()
                     .frame(height: 250)
-            } else if allBooks.contains(where: { $0.currentPage > 0 }) {
-                // Show simple progress indicator if no sessions but books have progress
+            } else if totalPagesRead > 0 {
+                // Show simple progress indicator if we have page progress but no sessions
                 VStack(spacing: Theme.Spacing.md) {
                     Image(systemName: "chart.bar.fill")
                         .font(.system(size: 48))
                         .foregroundStyle(themeColor.color.opacity(0.3))
 
-                    Text("You've read \(engine.totalPagesRead()) pages!")
+                    Text("You've read \(totalPagesRead) pages!")
                         .font(Theme.Typography.headline)
                         .foregroundStyle(Theme.Colors.text)
 
-                    Text("Log reading sessions to see detailed activity charts")
+                    Text("Use the reading timer to track detailed reading sessions")
                         .font(Theme.Typography.caption)
                         .foregroundStyle(Theme.Colors.secondaryText)
                         .multilineTextAlignment(.center)
@@ -213,7 +222,12 @@ struct StatsView: View {
                         onView: {
                             if let achievement = unlockedAchievement, achievement.isNew {
                                 achievement.isNew = false
-                                try? modelContext.save()
+                                do {
+                                    try modelContext.save()
+                                } catch {
+                                    // Log but don't show error to user (non-critical UX state)
+                                    print("Failed to mark achievement as viewed: \(error.localizedDescription)")
+                                }
                             }
                         }
                     )
@@ -274,6 +288,7 @@ struct ReadingActivityChart: View {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
 
+        // Get last 7 days INCLUDING today (0=today, 1=yesterday, ..., 6=6 days ago)
         return (0..<7).map { daysAgo in
             let date = calendar.date(byAdding: .day, value: -daysAgo, to: today)!
             let dayStart = calendar.startOfDay(for: date)
@@ -283,7 +298,8 @@ struct ReadingActivityChart: View {
                 .filter { $0.startDate >= dayStart && $0.startDate < dayEnd }
                 .reduce(0) { $0 + $1.pagesRead }
 
-            return (date, pagesRead)
+            // CRITICAL: Clamp to non-negative (chart can't display negative bars correctly)
+            return (date, max(0, pagesRead))
         }
         .reversed()
     }
@@ -467,9 +483,15 @@ struct GoalCard: View {
                 Spacer()
 
                 if let daysLeft = Calendar.current.dateComponents([.day], from: Date(), to: goal.endDate).day {
-                    Text("\(daysLeft) days left")
-                        .font(Theme.Typography.caption)
-                        .foregroundStyle(Theme.Colors.tertiaryText)
+                    if daysLeft >= 0 {
+                        Text("\(daysLeft) days left")
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(Theme.Colors.tertiaryText)
+                    } else {
+                        Text("Expired")
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(Theme.Colors.error)
+                    }
                 }
             }
         }

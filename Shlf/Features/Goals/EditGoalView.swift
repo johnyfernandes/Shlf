@@ -101,6 +101,8 @@ struct EditGoalView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
+                        // CRITICAL: Save all changes before dismissing
+                        try? modelContext.save()
                         dismiss()
                     }
                 }
@@ -121,6 +123,10 @@ struct EditGoalView: View {
             profile.readingGoals?.remove(at: index)
         }
         modelContext.delete(goal)
+
+        // CRITICAL: Save so deletion persists
+        try? modelContext.save()
+
         dismiss()
     }
 }
