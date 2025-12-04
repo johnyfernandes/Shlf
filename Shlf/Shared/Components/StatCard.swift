@@ -107,7 +107,7 @@ struct StatCard: View {
                         .textCase(.uppercase)
                         .tracking(0.4)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.8)
+                        .minimumScaleFactor(0.6)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 

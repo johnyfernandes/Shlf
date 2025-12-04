@@ -21,14 +21,14 @@ enum StatCardType: String, Codable, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .currentStreak: return "Day Streak"
-        case .longestStreak: return "Longest"
+        case .currentStreak: return "Streak"
+        case .longestStreak: return "Best"
         case .level: return "Level"
-        case .totalXP: return "Total XP"
-        case .booksRead: return "Finished"
+        case .totalXP: return "XP"
+        case .booksRead: return "Done"
         case .pagesRead: return "Pages"
-        case .thisYear: return "This Year"
-        case .thisMonth: return "This Month"
+        case .thisYear: return "Year"
+        case .thisMonth: return "Month"
         }
     }
 
