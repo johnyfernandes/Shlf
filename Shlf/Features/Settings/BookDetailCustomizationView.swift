@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import UniformTypeIdentifiers
 
 struct BookDetailCustomizationView: View {
     @Environment(\.modelContext) private var modelContext
@@ -15,6 +16,7 @@ struct BookDetailCustomizationView: View {
     @State private var showSaveError = false
     @State private var saveErrorMessage = ""
     @State private var editMode: EditMode = .inactive
+    @State private var draggedSection: BookDetailSection?
 
     private var activeSectionCount: Int {
         let count = profile.bookDetailSections.filter { section in
@@ -117,12 +119,16 @@ struct BookDetailCustomizationView: View {
             VStack(spacing: 10) {
                 ForEach(profile.bookDetailSections) { section in
                     sectionRow(section)
-                }
-                .onMove { from, to in
-                    withAnimation {
-                        profile.moveBookDetailSection(from: from, to: to)
-                        try? modelContext.save()
-                    }
+                        .onDrag {
+                            self.draggedSection = section
+                            return NSItemProvider(object: section.rawValue as NSString)
+                        }
+                        .onDrop(of: [UTType.text], delegate: SectionDropDelegate(
+                            section: section,
+                            sections: $profile.bookDetailSectionOrder,
+                            draggedSection: $draggedSection,
+                            modelContext: modelContext
+                        ))
                 }
             }
         }
@@ -301,6 +307,32 @@ struct BookDetailCustomizationView: View {
             } catch {
                 saveErrorMessage = "Failed to reset: \(error.localizedDescription)"
                 showSaveError = true
+            }
+        }
+    }
+}
+
+struct SectionDropDelegate: DropDelegate {
+    let section: BookDetailSection
+    @Binding var sections: [String]
+    @Binding var draggedSection: BookDetailSection?
+    let modelContext: ModelContext
+
+    func performDrop(info: DropInfo) -> Bool {
+        return true
+    }
+
+    func dropEntered(info: DropInfo) {
+        guard let draggedSection = self.draggedSection else {
+            return
+        }
+
+        if draggedSection != section {
+            let from = sections.firstIndex(of: draggedSection.rawValue)!
+            let to = sections.firstIndex(of: section.rawValue)!
+            withAnimation(.default) {
+                sections.move(fromOffsets: IndexSet(integer: from), toOffset: to > from ? to + 1 : to)
+                try? modelContext.save()
             }
         }
     }
