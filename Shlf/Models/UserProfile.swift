@@ -9,6 +9,22 @@ import Foundation
 import SwiftData
 import SwiftUI
 
+enum ChartType: String, Codable, CaseIterable {
+    case bar = "Bar Chart"
+
+    var icon: String {
+        switch self {
+        case .bar: return "chart.bar.fill"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .bar: return "Display reading activity as vertical bars"
+        }
+    }
+}
+
 @Model
 final class UserProfile {
     var id: UUID = UUID()
@@ -50,6 +66,9 @@ final class UserProfile {
     // Active Session Management
     var autoEndSessionEnabled: Bool = true // Auto-end sessions after inactivity
     var autoEndSessionHours: Int = 24 // Hours of inactivity before auto-end (default 24h)
+
+    // Stats Display Preferences
+    var chartTypeRawValue: String = "Bar Chart"
 
     // Home Card Preferences
     var homeCardOrder: [String] = [
@@ -135,6 +154,16 @@ final class UserProfile {
         self.homeCardOrder = homeCardOrder
         self.readingGoals = nil
         self.achievements = nil
+    }
+
+    // Helper computed property for chart type
+    var chartType: ChartType {
+        get {
+            ChartType(rawValue: chartTypeRawValue) ?? .bar
+        }
+        set {
+            chartTypeRawValue = newValue.rawValue
+        }
     }
 
     // Helper computed property to get StatCardType array from strings

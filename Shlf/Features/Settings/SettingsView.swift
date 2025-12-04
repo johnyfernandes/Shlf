@@ -90,6 +90,12 @@ struct SettingsView: View {
                     } label: {
                         Label("Book Details", systemImage: "slider.horizontal.3")
                     }
+
+                    NavigationLink {
+                        StatsSettingsView()
+                    } label: {
+                        Label("Stats", systemImage: "chart.xyaxis.line")
+                    }
                 }
 
                 Section("Apple Watch") {
