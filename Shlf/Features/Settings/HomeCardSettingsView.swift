@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import UniformTypeIdentifiers
 
 struct HomeCardSettingsView: View {
     @Environment(\.modelContext) private var modelContext
@@ -15,6 +16,7 @@ struct HomeCardSettingsView: View {
     @State private var showSaveError = false
     @State private var saveErrorMessage = ""
     @State private var editMode: EditMode = .inactive
+    @State private var draggedCard: StatCardType?
 
     private var engine: GamificationEngine {
         GamificationEngine(modelContext: modelContext)
@@ -151,6 +153,16 @@ struct HomeCardSettingsView: View {
                                             .offset(x: 8, y: -8)
                                         }
                                     }
+                                    .onDrag {
+                                        self.draggedCard = cardType
+                                        return NSItemProvider(object: cardType.rawValue as NSString)
+                                    }
+                                    .onDrop(of: [UTType.text], delegate: CardDropDelegate(
+                                        card: cardType,
+                                        cards: $profile.homeCardOrder,
+                                        draggedCard: $draggedCard,
+                                        modelContext: modelContext
+                                    ))
                                 }
                             }
                         }
@@ -280,6 +292,32 @@ struct HomeCardSettingsView: View {
             Button("OK") {}
         } message: {
             Text(saveErrorMessage)
+        }
+    }
+}
+
+struct CardDropDelegate: DropDelegate {
+    let card: StatCardType
+    @Binding var cards: [String]
+    @Binding var draggedCard: StatCardType?
+    let modelContext: ModelContext
+
+    func performDrop(info: DropInfo) -> Bool {
+        return true
+    }
+
+    func dropEntered(info: DropInfo) {
+        guard let draggedCard = self.draggedCard else {
+            return
+        }
+
+        if draggedCard != card {
+            let from = cards.firstIndex(of: draggedCard.rawValue)!
+            let to = cards.firstIndex(of: card.rawValue)!
+            withAnimation(.default) {
+                cards.move(fromOffsets: IndexSet(integer: from), toOffset: to > from ? to + 1 : to)
+                try? modelContext.save()
+            }
         }
     }
 }
