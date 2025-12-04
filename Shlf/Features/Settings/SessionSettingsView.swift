@@ -10,6 +10,7 @@ import SwiftData
 
 struct SessionSettingsView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.themeColor) private var themeColor
     @Bindable var profile: UserProfile
     @State private var showCustomHoursInput = false
     @State private var customHours: String = ""
@@ -24,96 +25,241 @@ struct SessionSettingsView: View {
     ]
 
     var body: some View {
-        Form {
-            Section {
-                Toggle("Auto-End Inactive Sessions", isOn: $profile.autoEndSessionEnabled)
-                    .tint(profile.themeColor.color)
-            } footer: {
-                Text("Automatically end reading sessions after a period of inactivity")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(Theme.Colors.secondaryText)
-            }
+        ZStack(alignment: .top) {
+            // Dynamic gradient background
+            LinearGradient(
+                colors: [
+                    themeColor.color.opacity(0.12),
+                    themeColor.color.opacity(0.04),
+                    Theme.Colors.background
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
-            if profile.autoEndSessionEnabled {
-                Section("Auto-End After") {
-                    ForEach(presetHours, id: \.hours) { preset in
-                        Button {
-                            profile.autoEndSessionHours = preset.hours
-                        } label: {
-                            HStack {
-                                Text(preset.label)
-                                    .foregroundStyle(Theme.Colors.text)
-                                Spacer()
-                                if profile.autoEndSessionHours == preset.hours {
-                                    Image(systemName: "checkmark")
-                                        .foregroundStyle(profile.themeColor.color)
+            ScrollView {
+                VStack(spacing: 20) {
+                    // About Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "timer")
+                                .font(.caption)
+                                .foregroundStyle(themeColor.color)
+                                .frame(width: 16)
+
+                            Text("About")
+                                .font(.headline)
+                        }
+
+                        Text("Configure how reading sessions are managed and displayed across your devices.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+                    // Auto-End Sessions Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "clock.arrow.2.circlepath")
+                                .font(.caption)
+                                .foregroundStyle(themeColor.color)
+                                .frame(width: 16)
+
+                            Text("Auto-End Sessions")
+                                .font(.headline)
+                        }
+
+                        VStack(spacing: 12) {
+                            // Toggle
+                            Toggle("Auto-End Inactive Sessions", isOn: $profile.autoEndSessionEnabled)
+                                .tint(themeColor.color)
+                                .padding(12)
+                                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+                            Text("Automatically end reading sessions after a period of inactivity")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+                    // Auto-End Duration Section (only when enabled)
+                    if profile.autoEndSessionEnabled {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "clock.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(themeColor.color)
+                                    .frame(width: 16)
+
+                                Text("Auto-End After")
+                                    .font(.headline)
+                            }
+
+                            VStack(spacing: 10) {
+                                // Preset options
+                                ForEach(presetHours, id: \.hours) { preset in
+                                    Button {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                            profile.autoEndSessionHours = preset.hours
+                                            do {
+                                                try modelContext.save()
+                                            } catch {
+                                                saveErrorMessage = "Failed to save: \(error.localizedDescription)"
+                                                showSaveError = true
+                                            }
+                                        }
+                                    } label: {
+                                        HStack(spacing: 12) {
+                                            Text(preset.label)
+                                                .font(.subheadline)
+                                                .foregroundStyle(.primary)
+
+                                            Spacer()
+
+                                            if profile.autoEndSessionHours == preset.hours {
+                                                Image(systemName: "checkmark.circle.fill")
+                                                    .font(.title3)
+                                                    .foregroundStyle(themeColor.color)
+                                            }
+                                        }
+                                        .padding(12)
+                                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                                .strokeBorder(
+                                                    profile.autoEndSessionHours == preset.hours ? themeColor.color : .clear,
+                                                    lineWidth: 2
+                                                )
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+
+                                // Custom option
+                                Button {
+                                    showCustomHoursInput = true
+                                    customHours = "\(profile.autoEndSessionHours)"
+                                } label: {
+                                    HStack(spacing: 12) {
+                                        Text("Custom")
+                                            .font(.subheadline)
+                                            .foregroundStyle(.primary)
+
+                                        Spacer()
+
+                                        if !presetHours.contains(where: { $0.hours == profile.autoEndSessionHours }) {
+                                            Text("\(profile.autoEndSessionHours) hours")
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .font(.title3)
+                                                .foregroundStyle(themeColor.color)
+                                        } else {
+                                            Image(systemName: "ellipsis.circle")
+                                                .font(.title3)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                    }
+                                    .padding(12)
+                                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                            .strokeBorder(
+                                                !presetHours.contains(where: { $0.hours == profile.autoEndSessionHours }) ? themeColor.color : .clear,
+                                                lineWidth: 2
+                                            )
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .top).combined(with: .opacity),
+                            removal: .move(edge: .top).combined(with: .opacity)
+                        ))
+                    }
+
+                    // Session Display Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "eye")
+                                .font(.caption)
+                                .foregroundStyle(themeColor.color)
+                                .frame(width: 16)
+
+                            Text("Session Display")
+                                .font(.headline)
+                        }
+
+                        VStack(spacing: 12) {
+                            Toggle(isOn: $profile.hideAutoSessionsIPhone) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Hide Quick Sessions on iPhone")
+                                        .font(.subheadline)
+                                    Text("Only show timer-based sessions in reading history")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
                                 }
                             }
-                        }
-                    }
-
-                    Button {
-                        showCustomHoursInput = true
-                        customHours = "\(profile.autoEndSessionHours)"
-                    } label: {
-                        HStack {
-                            Text("Custom")
-                                .foregroundStyle(Theme.Colors.text)
-                            Spacer()
-                            if !presetHours.contains(where: { $0.hours == profile.autoEndSessionHours }) {
-                                Text("\(profile.autoEndSessionHours) hours")
-                                    .foregroundStyle(profile.themeColor.color)
-                                Image(systemName: "checkmark")
-                                    .foregroundStyle(profile.themeColor.color)
+                            .onChange(of: profile.hideAutoSessionsIPhone) { oldValue, newValue in
+                                do {
+                                    try modelContext.save()
+                                } catch {
+                                    saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
+                                    showSaveError = true
+                                    profile.hideAutoSessionsIPhone = oldValue
+                                }
                             }
+                            .tint(themeColor.color)
+                            .padding(12)
+                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+                            Text("Quick sessions are created when you tap +1, +5, etc. Timer sessions are created using the reading timer. To control Apple Watch sessions, go to Watch Settings.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
                     }
-                }
-            }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
 
-            Section {
-                Toggle(isOn: $profile.hideAutoSessionsIPhone) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Hide Quick Sessions on iPhone")
-                        Text("Only show timer-based sessions in reading history")
-                            .font(Theme.Typography.caption)
-                            .foregroundStyle(Theme.Colors.secondaryText)
-                    }
-                }
-                .onChange(of: profile.hideAutoSessionsIPhone) { oldValue, newValue in
-                    do {
-                        try modelContext.save()
-                    } catch {
-                        saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
-                        showSaveError = true
-                        // Revert on failure
-                        profile.hideAutoSessionsIPhone = oldValue
-                    }
-                }
-                .tint(profile.themeColor.color)
-            } header: {
-                Text("Session Display")
-            } footer: {
-                Text("Quick sessions are created when you tap +1, +5, etc. Timer sessions are created using the reading timer. To control Apple Watch sessions, go to Watch Settings.")
-                    .font(Theme.Typography.caption)
-            }
+                    // How It Works Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "info.circle.fill")
+                                .font(.caption)
+                                .foregroundStyle(themeColor.color)
+                                .frame(width: 16)
 
-            Section {
-                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                    HStack {
-                        Image(systemName: "info.circle")
-                            .foregroundStyle(Theme.Colors.accent)
-                        Text("How It Works")
-                            .font(Theme.Typography.headline)
-                            .foregroundStyle(Theme.Colors.text)
-                    }
+                            Text("How It Works")
+                                .font(.headline)
+                        }
 
-                    Text("Active sessions sync between your iPhone and Apple Watch. If a session is inactive for the specified duration, it will automatically end and save your progress.")
-                        .font(Theme.Typography.caption)
-                        .foregroundStyle(Theme.Colors.secondaryText)
+                        Text("Active sessions sync between your iPhone and Apple Watch. If a session is inactive for the specified duration, it will automatically end and save your progress.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                 }
-                .padding(.vertical, Theme.Spacing.xs)
+                .padding(.horizontal, 20)
+                .padding(.top, 20)
+                .padding(.bottom, 40)
             }
+            .scrollIndicators(.hidden)
         }
         .navigationTitle("Sessions")
         .navigationBarTitleDisplayMode(.inline)
@@ -123,7 +269,9 @@ struct SessionSettingsView: View {
             Button("Cancel", role: .cancel) {}
             Button("Set") {
                 if let hours = Int(customHours), hours > 0 && hours <= 168 {
-                    profile.autoEndSessionHours = hours
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        profile.autoEndSessionHours = hours
+                    }
                     do {
                         try modelContext.save()
                     } catch {
@@ -147,4 +295,5 @@ struct SessionSettingsView: View {
     NavigationStack {
         SessionSettingsView(profile: UserProfile())
     }
+    .modelContainer(for: [UserProfile.self], inMemory: true)
 }
