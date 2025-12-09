@@ -788,8 +788,8 @@ struct BookDetailView: View {
             WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
         }
 
-        // Send the specific book delta instead of syncing all books
-        WatchConnectivityManager.shared.sendPageDeltaToWatch(bookUUID: book.id, delta: pagesRead)
+        // NOTE: Page delta already sent by QuickProgressStepper/ProgressSliderView
+        // Don't send it again here to avoid double application on Watch
     }
 
     private func deleteBook() {
