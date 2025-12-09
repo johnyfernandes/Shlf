@@ -111,6 +111,12 @@ struct BookDetailView: View {
 
                         Button {
                             book.readingStatus = .didNotFinish
+                            book.dateFinished = Date()
+
+                            // Sync status change to Watch
+                            Task { @MainActor in
+                                await WatchConnectivityManager.shared.syncBooksToWatch()
+                            }
                         } label: {
                             Label("Mark as DNF", systemImage: "xmark.circle")
                         }
@@ -702,6 +708,11 @@ struct BookDetailView: View {
             book.currentPage = totalPages
         }
         showConfetti = true
+
+        // Sync status change to Watch
+        Task { @MainActor in
+            await WatchConnectivityManager.shared.syncBooksToWatch()
+        }
     }
 
     private func handleStatusChange(to status: ReadingStatus) {
@@ -738,6 +749,11 @@ struct BookDetailView: View {
             case .wantToRead:
                 break
             }
+        }
+
+        // Sync status change to Watch
+        Task { @MainActor in
+            await WatchConnectivityManager.shared.syncBooksToWatch()
         }
     }
 

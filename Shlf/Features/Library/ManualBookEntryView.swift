@@ -573,6 +573,13 @@ struct ManualBookEntryView: View {
         modelContext.insert(book)
         try? modelContext.save()
 
+        // Sync to Watch if book is "Currently Reading"
+        if readingStatus == .currentlyReading {
+            Task { @MainActor in
+                await WatchConnectivityManager.shared.syncBooksToWatch()
+            }
+        }
+
         onDismissAll()
     }
 }
