@@ -767,12 +767,13 @@ struct BookDetailView: View {
 
         WidgetDataExporter.exportSnapshot(modelContext: modelContext)
 
-        Task {
-            await WatchConnectivityManager.shared.syncBooksToWatch()
-            if let profile = profiles.first {
-                WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
-            }
+        // Send targeted updates to Watch instead of full sync
+        if let profile = profiles.first {
+            WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
         }
+
+        // Send the specific book delta instead of syncing all books
+        WatchConnectivityManager.shared.sendPageDeltaToWatch(bookUUID: book.id, delta: pagesRead)
     }
 
     private func deleteBook() {

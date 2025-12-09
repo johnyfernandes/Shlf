@@ -509,10 +509,7 @@ struct LogReadingSessionView: View {
         session.xpEarned = xp
 
         modelContext.insert(session)
-        if book.readingSessions == nil {
-            book.readingSessions = []
-        }
-        book.readingSessions?.append(session)
+        // SwiftData manages relationships automatically
 
         // Save position if requested
         if shouldSavePosition {
@@ -542,22 +539,28 @@ struct LogReadingSessionView: View {
             }
             engine.updateStreak(for: profile, sessionDate: activeSession.startDate)
             engine.checkAchievements(for: profile)
+        }
 
-            // ✅ ATOMIC: Send consolidated session completion (replaces 3 separate messages)
-            // This guarantees the Watch receives: activeSessionEnd + session + liveActivityEnd
-            // in a single atomic transfer with guaranteed delivery and correct ordering
+        // Delete active session locally
+        modelContext.delete(activeSession)
+
+        WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+
+        // SAVE FIRST before any async operations
+        try? modelContext.save()
+
+        // Now send updates AFTER save
+        if let profile = profiles.first {
             WatchConnectivityManager.shared.sendSessionCompletionToWatch(
                 activeSessionId: activeSession.id,
                 completedSession: session
             )
+            WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
 
             Task {
                 await ReadingSessionActivityManager.shared.endActivity()
-                await WatchConnectivityManager.shared.syncBooksToWatch()
-                WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
             }
         } else {
-            // No profile - still need to end session on Watch
             WatchConnectivityManager.shared.sendSessionCompletionToWatch(
                 activeSessionId: activeSession.id,
                 completedSession: session
@@ -567,12 +570,6 @@ struct LogReadingSessionView: View {
             }
         }
 
-        // Delete active session locally
-        modelContext.delete(activeSession)
-
-        WidgetDataExporter.exportSnapshot(modelContext: modelContext)
-
-        try? modelContext.save()
         dismiss()
     }
 
@@ -598,10 +595,7 @@ struct LogReadingSessionView: View {
         session.xpEarned = xp
 
         modelContext.insert(session)
-        if book.readingSessions == nil {
-            book.readingSessions = []
-        }
-        book.readingSessions?.append(session)
+        // SwiftData manages relationships automatically
 
         // Save position if requested
         if shouldSavePosition {
