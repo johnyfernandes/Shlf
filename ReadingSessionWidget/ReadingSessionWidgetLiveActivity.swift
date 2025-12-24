@@ -232,11 +232,10 @@ struct ReadingSessionLockScreenView: View {
 
                 Button(intent: TogglePauseIntent()) {
                     Image(systemName: context.state.isPaused ? "play.circle.fill" : "pause.circle.fill")
-                        .font(.title2)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
+                        .font(.title3)
+                        .frame(width: 44, height: 44)
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.bordered)
                 .tint(context.state.isPaused ? context.attributes.themeColor : .orange)
 
                 Button(intent: IncrementPageIntent()) {
