@@ -69,15 +69,14 @@ final class SessionManager {
         logger.info("🗑️ Deleting session: \(sessionId)")
 
         do {
+            let book = session.book
+            let wasSyncedToSessions = wasBookSyncedToLatestSession(book)
+            let previousPage = book?.currentPage
+
             // Get profile before deleting
             let profileDescriptor = FetchDescriptor<UserProfile>()
             let profiles = try modelContext.fetch(profileDescriptor)
-            guard let profile = profiles.first else {
-                // No profile, just delete
-                modelContext.delete(session)
-                logger.warning("⚠️ Deleted session without profile")
-                return
-            }
+            let profile = profiles.first
 
             // Delete the session
             modelContext.delete(session)
@@ -91,14 +90,28 @@ final class SessionManager {
                 throw error
             }
 
+            if let book, wasSyncedToSessions {
+                let newPage = latestSessionEndPage(for: book, in: modelContext) ?? 0
+                let clampedPage = clampPage(newPage, totalPages: book.totalPages)
+                if clampedPage != book.currentPage {
+                    book.currentPage = clampedPage
+                    if let total = book.totalPages,
+                       book.readingStatus == .finished,
+                       clampedPage < total {
+                        book.readingStatus = .currentlyReading
+                        book.dateFinished = nil
+                    }
+                    try? modelContext.save()
+                }
+            }
+
             // Recalculate stats from remaining sessions
-            do {
+            if let profile {
                 let engine = GamificationEngine(modelContext: modelContext)
                 engine.recalculateStats(for: profile)
                 logger.info("📊 Stats recalculated")
-            } catch {
-                logger.error("❌ Failed to recalculate stats: \(error.localizedDescription)")
-                // Don't throw - deletion already saved, just log error
+            } else {
+                logger.warning("⚠️ Deleted session without profile")
             }
 
             // Save updated stats
@@ -113,8 +126,17 @@ final class SessionManager {
             WatchConnectivityManager.shared.sendSessionDeletionToWatch(sessionIds: [sessionId])
 
             // Sync updated stats to Watch
-            Task {
-                await WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
+            if let profile {
+                Task {
+                    await WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
+                }
+            }
+
+            if let book,
+               let previousPage,
+               previousPage != book.currentPage {
+                let delta = book.currentPage - previousPage
+                WatchConnectivityManager.shared.sendPageDeltaToWatch(bookUUID: book.id, delta: delta)
             }
 
             // Update widget (debounced for performance)
@@ -136,22 +158,20 @@ final class SessionManager {
         logger.info("🗑️ Deleting \(sessions.count) sessions using iOS 26 batch delete")
 
         do {
+            let booksById = Dictionary(grouping: sessions.compactMap { $0.book }) { $0.id }
+            let books = booksById.values.compactMap { $0.first }
+            let bookStates = books.map { book in
+                (
+                    book: book,
+                    wasSynced: wasBookSyncedToLatestSession(book),
+                    previousPage: book.currentPage
+                )
+            }
+
             // Get profile before deleting
             let profileDescriptor = FetchDescriptor<UserProfile>()
             let profiles = try modelContext.fetch(profileDescriptor)
-            guard let profile = profiles.first else {
-                // No profile, use batch delete anyway
-                let sessionIds = sessions.map { $0.id }
-                try modelContext.delete(
-                    model: ReadingSession.self,
-                    where: #Predicate { session in
-                        sessionIds.contains(session.id)
-                    }
-                )
-                try modelContext.save()
-                logger.warning("⚠️ Batch deleted sessions without profile")
-                return
-            }
+            let profile = profiles.first
 
             // Store session IDs before deletion
             let sessionIds = sessions.map { $0.id }
@@ -173,23 +193,45 @@ final class SessionManager {
                 throw error
             }
 
+            for state in bookStates where state.wasSynced {
+                let newPage = latestSessionEndPage(for: state.book, in: modelContext) ?? 0
+                let clampedPage = clampPage(newPage, totalPages: state.book.totalPages)
+                if clampedPage != state.book.currentPage {
+                    state.book.currentPage = clampedPage
+                    if let total = state.book.totalPages,
+                       state.book.readingStatus == .finished,
+                       clampedPage < total {
+                        state.book.readingStatus = .currentlyReading
+                        state.book.dateFinished = nil
+                    }
+                }
+            }
+
             // Recalculate stats once from remaining sessions
-            do {
+            if let profile {
                 let engine = GamificationEngine(modelContext: modelContext)
                 engine.recalculateStats(for: profile)
                 try modelContext.save()
                 logger.info("📊 Stats recalculated and saved")
-            } catch {
-                logger.error("❌ Failed to recalculate stats: \(error.localizedDescription)")
-                // Don't throw - deletions already saved
+            } else {
+                logger.warning("⚠️ Batch deleted sessions without profile")
             }
 
             // Sync deletions to Watch (CRITICAL - batch deletion)
             WatchConnectivityManager.shared.sendSessionDeletionToWatch(sessionIds: sessionIds)
 
             // Sync updated stats to Watch
-            Task {
-                await WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
+            if let profile {
+                Task {
+                    await WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
+                }
+            }
+
+            for state in bookStates {
+                if state.previousPage != state.book.currentPage {
+                    let delta = state.book.currentPage - state.previousPage
+                    WatchConnectivityManager.shared.sendPageDeltaToWatch(bookUUID: state.book.id, delta: delta)
+                }
             }
 
             // Update widget (debounced for performance)
@@ -199,5 +241,38 @@ final class SessionManager {
             logger.error("❌ Fatal error deleting sessions: \(error.localizedDescription)")
             throw error
         }
+    }
+
+    private static func wasBookSyncedToLatestSession(_ book: Book?) -> Bool {
+        guard let book else { return false }
+        let sessions = book.readingSessions ?? []
+        guard let latest = latestSession(from: sessions) else { return false }
+        return book.currentPage == latest.endPage
+    }
+
+    private static func latestSessionEndPage(for book: Book, in modelContext: ModelContext) -> Int? {
+        let bookId = book.id
+        let descriptor = FetchDescriptor<ReadingSession>(
+            predicate: #Predicate<ReadingSession> { session in
+                session.book?.id == bookId
+            }
+        )
+        guard let sessions = try? modelContext.fetch(descriptor),
+              let latest = latestSession(from: sessions) else { return nil }
+        return latest.endPage
+    }
+
+    private static func latestSession(from sessions: [ReadingSession]) -> ReadingSession? {
+        sessions.max { sessionDate($0) < sessionDate($1) }
+    }
+
+    private static func sessionDate(_ session: ReadingSession) -> Date {
+        session.endDate ?? session.startDate
+    }
+
+    private static func clampPage(_ value: Int, totalPages: Int?) -> Int {
+        let minPage = 0
+        let maxPage = totalPages ?? Int.max
+        return min(maxPage, max(minPage, value))
     }
 }

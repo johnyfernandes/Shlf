@@ -26,6 +26,8 @@ struct BookDetailView: View {
     @State private var showStatusChangeAlert = false
     @State private var pendingStatus: ReadingStatus?
     @State private var savedProgress: Int?
+    @State private var sessionToDelete: ReadingSession?
+    @State private var showDeleteSessionAlert = false
 
     private var profile: UserProfile? {
         profiles.first
@@ -189,6 +191,19 @@ struct BookDetailView: View {
             if let status = pendingStatus {
                 Text("You're on page \(book.currentPage). Your progress will be saved and automatically restored when you return to \"Currently Reading\".")
             }
+        }
+        .alert("Delete Session?", isPresented: $showDeleteSessionAlert) {
+            Button("Delete", role: .destructive) {
+                if let session = sessionToDelete {
+                    deleteSession(session)
+                }
+                sessionToDelete = nil
+            }
+            Button("Cancel", role: .cancel) {
+                sessionToDelete = nil
+            }
+        } message: {
+            Text("This removes the session and updates stats. If it was your latest session, your current page will roll back to the previous one.")
         }
     }
 
@@ -559,6 +574,14 @@ struct BookDetailView: View {
                     } label: {
                         ReadingSessionRow(session: session)
                     }
+                    .contextMenu {
+                        Button(role: .destructive) {
+                            sessionToDelete = session
+                            showDeleteSessionAlert = true
+                        } label: {
+                            Label("Delete Session", systemImage: "trash")
+                        }
+                    }
                     .buttonStyle(.plain)
 
                     if session.id != displayedSessions.last?.id {
@@ -878,6 +901,14 @@ struct BookDetailView: View {
 
         WidgetDataExporter.exportSnapshot(modelContext: modelContext)
         dismiss()
+    }
+
+    private func deleteSession(_ session: ReadingSession) {
+        do {
+            try SessionManager.deleteSession(session, in: modelContext)
+        } catch {
+            print("Failed to delete session: \(error.localizedDescription)")
+        }
     }
 }
 

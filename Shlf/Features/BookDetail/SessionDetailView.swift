@@ -9,10 +9,14 @@ import SwiftUI
 import SwiftData
 
 struct SessionDetailView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @Environment(\.themeColor) private var themeColor
 
     let session: ReadingSession
     let book: Book
+
+    @State private var showDeleteAlert = false
 
     private var pagesRead: Int {
         session.pagesRead
@@ -102,6 +106,23 @@ struct SessionDetailView: View {
         }
         .navigationTitle("Session Details")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button(role: .destructive) {
+                    showDeleteAlert = true
+                } label: {
+                    Image(systemName: "trash")
+                }
+            }
+        }
+        .alert("Delete Session?", isPresented: $showDeleteAlert) {
+            Button("Delete", role: .destructive) {
+                deleteSession()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This removes the session and updates stats. If it was your latest session, your current page will roll back to the previous one.")
+        }
     }
 
     private var heroCard: some View {
@@ -275,6 +296,15 @@ struct SessionDetailView: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func deleteSession() {
+        do {
+            try SessionManager.deleteSession(session, in: modelContext)
+            dismiss()
+        } catch {
+            print("Failed to delete session: \(error.localizedDescription)")
+        }
     }
 }
 
