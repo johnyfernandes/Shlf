@@ -52,7 +52,7 @@ struct ProgressSliderView: View {
 
     private var pageDisplayText: String {
         if isEditingPage {
-            return pageText.isEmpty ? "\(currentPage)" : pageText
+            return pageText.isEmpty ? "0" : pageText
         }
         return "\(currentPage)"
     }

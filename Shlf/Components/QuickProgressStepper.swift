@@ -30,7 +30,7 @@ struct QuickProgressStepper: View {
 
     private var pageDisplayText: String {
         if isEditingPage {
-            return pageText.isEmpty ? "\(totalPendingPages)" : pageText
+            return pageText.isEmpty ? "0" : pageText
         }
         return "\(book.currentPage)"
     }
