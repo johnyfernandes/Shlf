@@ -90,6 +90,10 @@ struct ProgressSliderView: View {
                                     if filtered != newValue {
                                         pageText = filtered
                                     }
+                                    guard let total = book.totalPages,
+                                          let value = Int(filtered),
+                                          value > total else { return }
+                                    pageText = "\(total)"
                                 }
                                 .onChange(of: isPageFieldFocused) { _, newValue in
                                     if !newValue {

@@ -64,4 +64,3 @@ struct ContentView: View {
     ContentView()
         .modelContainer(for: [UserProfile.self, Book.self], inMemory: true)
 }
-x
