@@ -622,6 +622,7 @@ private struct StatSelectorView<Stat: Hashable & Identifiable>: View {
     let accentColor: Color
 
     private let maxSelection = 4
+    private let rowHeight: CGFloat = 56
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
@@ -643,23 +644,30 @@ private struct StatSelectorView<Stat: Hashable & Identifiable>: View {
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
 
-            Text("Order")
-                .font(Theme.Typography.caption)
-                .foregroundStyle(Theme.Colors.secondaryText)
-
-            VStack(spacing: Theme.Spacing.xs) {
+            List {
                 ForEach(selected, id: \.self) { option in
                     let metadata = options.first { $0.option == option }
                     StatRowView(
                         title: metadata?.title ?? "Stat",
                         icon: metadata?.icon ?? "circle",
-                        accentColor: accentColor,
-                        moveUpEnabled: canMoveUp(option),
-                        moveDownEnabled: canMoveDown(option),
-                        onMoveUp: { move(option, by: -1) },
-                        onMoveDown: { move(option, by: 1) }
+                        accentColor: accentColor
                     )
+                    .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
                 }
+                .onMove(perform: move)
+            }
+            .listStyle(.plain)
+            .scrollDisabled(true)
+            .scrollContentBackground(.hidden)
+            .environment(\.editMode, .constant(.active))
+            .frame(height: rowHeight * CGFloat(max(selected.count, 1)) + 8)
+
+            if selected.isEmpty {
+                Text("No stats selected.")
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(Theme.Colors.secondaryText)
             }
 
             Divider()
@@ -717,21 +725,8 @@ private struct StatSelectorView<Stat: Hashable & Identifiable>: View {
         selected.append(option)
     }
 
-    private func canMoveUp(_ option: Stat) -> Bool {
-        guard let index = selected.firstIndex(of: option) else { return false }
-        return index > 0
-    }
-
-    private func canMoveDown(_ option: Stat) -> Bool {
-        guard let index = selected.firstIndex(of: option) else { return false }
-        return index < selected.count - 1
-    }
-
-    private func move(_ option: Stat, by offset: Int) {
-        guard let index = selected.firstIndex(of: option) else { return }
-        let newIndex = index + offset
-        guard selected.indices.contains(newIndex) else { return }
-        selected.move(fromOffsets: IndexSet(integer: index), toOffset: newIndex > index ? newIndex + 1 : newIndex)
+    private func move(from source: IndexSet, to destination: Int) {
+        selected.move(fromOffsets: source, toOffset: destination)
     }
 }
 
@@ -739,10 +734,6 @@ private struct StatRowView: View {
     let title: String
     let icon: String
     let accentColor: Color
-    let moveUpEnabled: Bool
-    let moveDownEnabled: Bool
-    let onMoveUp: () -> Void
-    let onMoveDown: () -> Void
 
     var body: some View {
         HStack {
@@ -754,20 +745,6 @@ private struct StatRowView: View {
                 .foregroundStyle(Theme.Colors.text)
 
             Spacer()
-
-            Button(action: onMoveUp) {
-                Image(systemName: "chevron.up")
-                    .foregroundStyle(moveUpEnabled ? Theme.Colors.text : Theme.Colors.tertiaryText)
-            }
-            .buttonStyle(.plain)
-            .disabled(!moveUpEnabled)
-
-            Button(action: onMoveDown) {
-                Image(systemName: "chevron.down")
-                    .foregroundStyle(moveDownEnabled ? Theme.Colors.text : Theme.Colors.tertiaryText)
-            }
-            .buttonStyle(.plain)
-            .disabled(!moveDownEnabled)
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 10)
@@ -782,40 +759,33 @@ private struct ContentOrderView: View {
     @Binding var order: [ShareContentBlock]
     let enabledBlocks: Set<ShareContentBlock>
     let accentColor: Color
+    private let rowHeight: CGFloat = 60
 
     var body: some View {
-        VStack(spacing: Theme.Spacing.xs) {
+        List {
             ForEach(order) { block in
                 let isEnabled = enabledBlocks.contains(block)
                 ContentOrderRow(
                     title: block.title,
                     icon: block.icon,
                     accentColor: accentColor,
-                    isEnabled: isEnabled,
-                    moveUpEnabled: canMoveUp(block),
-                    moveDownEnabled: canMoveDown(block),
-                    onMoveUp: { move(block, by: -1) },
-                    onMoveDown: { move(block, by: 1) }
+                    isEnabled: isEnabled
                 )
+                .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 6, trailing: 0))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
             }
+            .onMove(perform: move)
         }
+        .listStyle(.plain)
+        .scrollDisabled(true)
+        .scrollContentBackground(.hidden)
+        .environment(\.editMode, .constant(.active))
+        .frame(height: rowHeight * CGFloat(order.count) + 12)
     }
 
-    private func canMoveUp(_ block: ShareContentBlock) -> Bool {
-        guard let index = order.firstIndex(of: block) else { return false }
-        return index > 0
-    }
-
-    private func canMoveDown(_ block: ShareContentBlock) -> Bool {
-        guard let index = order.firstIndex(of: block) else { return false }
-        return index < order.count - 1
-    }
-
-    private func move(_ block: ShareContentBlock, by offset: Int) {
-        guard let index = order.firstIndex(of: block) else { return }
-        let newIndex = index + offset
-        guard order.indices.contains(newIndex) else { return }
-        order.move(fromOffsets: IndexSet(integer: index), toOffset: newIndex > index ? newIndex + 1 : newIndex)
+    private func move(from source: IndexSet, to destination: Int) {
+        order.move(fromOffsets: source, toOffset: destination)
     }
 }
 
@@ -824,10 +794,6 @@ private struct ContentOrderRow: View {
     let icon: String
     let accentColor: Color
     let isEnabled: Bool
-    let moveUpEnabled: Bool
-    let moveDownEnabled: Bool
-    let onMoveUp: () -> Void
-    let onMoveDown: () -> Void
 
     var body: some View {
         HStack {
@@ -845,20 +811,6 @@ private struct ContentOrderRow: View {
             }
 
             Spacer()
-
-            Button(action: onMoveUp) {
-                Image(systemName: "chevron.up")
-                    .foregroundStyle(moveUpEnabled ? Theme.Colors.text : Theme.Colors.tertiaryText)
-            }
-            .buttonStyle(.plain)
-            .disabled(!moveUpEnabled)
-
-            Button(action: onMoveDown) {
-                Image(systemName: "chevron.down")
-                    .foregroundStyle(moveDownEnabled ? Theme.Colors.text : Theme.Colors.tertiaryText)
-            }
-            .buttonStyle(.plain)
-            .disabled(!moveDownEnabled)
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 10)
