@@ -6,12 +6,14 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct BookCoverView: View {
     let imageURL: URL?
     let title: String
     let width: CGFloat
     let height: CGFloat
+    @State private var loadedImage: UIImage?
 
     init(
         imageURL: URL?,
@@ -28,14 +30,21 @@ struct BookCoverView: View {
     var body: some View {
         Group {
             if let imageURL {
-                CachedAsyncImage(url: imageURL) { image in
+                CachedAsyncImage(
+                    url: imageURL,
+                    content: { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                         .transition(.opacity.combined(with: .scale(scale: 0.98)))
-                } placeholder: {
+                    },
+                    placeholder: {
                     loadingPlaceholder
-                }
+                    },
+                    onImageLoaded: { image in
+                        loadedImage = image
+                    }
+                )
             } else {
                 placeholderView
             }
@@ -44,6 +53,43 @@ struct BookCoverView: View {
         .clipShape(RoundedRectangle(cornerRadius: Theme.CornerRadius.sm))
         .shadow(color: Theme.Shadow.medium, radius: 8, y: 4)
         .animation(.easeInOut(duration: 0.3), value: imageURL)
+        .contextMenu {
+            if imageURL != nil {
+                Button {
+                    withImage { image in
+                        UIPasteboard.general.image = image
+                    }
+                } label: {
+                    Label("Copy Image", systemImage: "doc.on.doc")
+                }
+
+                Button {
+                    withImage { image in
+                        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+                    }
+                } label: {
+                    Label("Save Image", systemImage: "square.and.arrow.down")
+                }
+            }
+        }
+    }
+
+    private func withImage(_ action: @escaping (UIImage) -> Void) {
+        if let loadedImage {
+            action(loadedImage)
+            return
+        }
+
+        guard let imageURL else { return }
+
+        Task {
+            if let image = await ImageCacheManager.shared.getImage(for: imageURL) {
+                await MainActor.run {
+                    loadedImage = image
+                    action(image)
+                }
+            }
+        }
     }
 
     private var loadingPlaceholder: some View {

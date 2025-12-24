@@ -166,6 +166,7 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
     let url: URL?
     let content: (Image) -> Content
     let placeholder: () -> Placeholder
+    let onImageLoaded: ((UIImage) -> Void)?
 
     @State private var image: UIImage?
     @State private var isLoading = false
@@ -174,11 +175,13 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
     init(
         url: URL?,
         @ViewBuilder content: @escaping (Image) -> Content,
-        @ViewBuilder placeholder: @escaping () -> Placeholder
+        @ViewBuilder placeholder: @escaping () -> Placeholder,
+        onImageLoaded: ((UIImage) -> Void)? = nil
     ) {
         self.url = url
         self.content = content
         self.placeholder = placeholder
+        self.onImageLoaded = onImageLoaded
     }
 
     var body: some View {
@@ -214,6 +217,7 @@ struct CachedAsyncImage<Content: View, Placeholder: View>: View {
 
         if let cachedImage = await ImageCacheManager.shared.getImage(for: url) {
             image = cachedImage
+            onImageLoaded?(cachedImage)
         }
     }
 }
