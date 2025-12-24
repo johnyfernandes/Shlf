@@ -23,6 +23,9 @@ struct ShareSheetView: View {
     @State private var selectedTemplate: ShareTemplate
     @State private var selectedPeriod: SharePeriod = .last30
     @State private var selectedBackground: ShareBackgroundStyle = .paper
+    @State private var showGraph = true
+    @State private var selectedGraphMetric: ShareGraphMetric = .pages
+    @State private var showCover = true
     @State private var includeImportedSessions = false
     @State private var coverImage: UIImage?
     @State private var showInstagramAlert = false
@@ -75,7 +78,16 @@ struct ShareSheetView: View {
     }
 
     private var coverLoadKey: String {
-        "\(selectedTemplate.rawValue)-\(book?.coverImageURL?.absoluteString ?? "none")"
+        "\(selectedTemplate.rawValue)-\(showCover)-\(book?.coverImageURL?.absoluteString ?? "none")"
+    }
+
+    private var availableGraphMetrics: [ShareGraphMetric] {
+        switch selectedTemplate {
+        case .book:
+            return [.pages, .minutes]
+        case .wrap, .streak:
+            return ShareGraphMetric.allCases
+        }
     }
 
     var body: some View {
@@ -100,6 +112,10 @@ struct ShareSheetView: View {
         }
         .task(id: coverLoadKey) {
             await loadCoverImageIfNeeded()
+        }
+        .onChange(of: selectedTemplate) { _, _ in
+            guard !availableGraphMetrics.contains(selectedGraphMetric) else { return }
+            selectedGraphMetric = availableGraphMetrics.first ?? .pages
         }
         .alert("Instagram Not Available", isPresented: $showInstagramAlert) {
             Button("OK", role: .cancel) {}
@@ -152,6 +168,23 @@ struct ShareSheetView: View {
             }
             .pickerStyle(.segmented)
 
+            if selectedTemplate == .book {
+                Toggle("Show cover", isOn: $showCover)
+                    .tint(themeColor.color)
+            }
+
+            Toggle("Show graph", isOn: $showGraph)
+                .tint(themeColor.color)
+
+            if showGraph {
+                Picker("Graph metric", selection: $selectedGraphMetric) {
+                    ForEach(availableGraphMetrics) { metric in
+                        Text(metric.title).tag(metric)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
+
             Toggle("Include imported sessions", isOn: $includeImportedSessions)
                 .tint(themeColor.color)
 
@@ -203,6 +236,7 @@ struct ShareSheetView: View {
 
     private func loadCoverImageIfNeeded() async {
         guard selectedTemplate == .book,
+              showCover,
               let url = book?.coverImageURL else {
             await MainActor.run {
                 coverImage = nil
@@ -380,6 +414,7 @@ private extension ShareSheetView {
                 coverImage: nil,
                 progress: nil,
                 progressText: nil,
+                graph: nil,
                 stats: [],
                 footer: "Shared with Shlf"
             )
@@ -399,6 +434,8 @@ private extension ShareSheetView {
         let dateLabel = book.isFinished ? "Finished" : "Started"
         let dateValue = date.map(formatDate) ?? "N/A"
         let period = date.map { "\(dateLabel) \(formatDate($0))" }
+
+        let graph = showGraph ? bookGraph(for: sessions, totalPages: totalPages) : nil
 
         let stats = [
             ShareStatItem(
@@ -428,9 +465,10 @@ private extension ShareSheetView {
             subtitle: book.author,
             badge: book.readingStatus.shortName,
             period: period,
-            coverImage: coverImage,
+            coverImage: showCover ? coverImage : nil,
             progress: progress,
             progressText: progressText,
+            graph: graph,
             stats: stats,
             footer: "Shared with Shlf"
         )
@@ -444,6 +482,8 @@ private extension ShareSheetView {
         let pagesRead = sessionsInRange.reduce(0) { $0 + $1.pagesRead }
         let minutesRead = sessionsInRange.reduce(0) { $0 + $1.durationMinutes }
         let sessionCount = sessionsInRange.count
+
+        let graph = showGraph ? wrapGraph(for: sessionsInRange, range: range) : nil
 
         let booksFinished = books.filter { book in
             guard book.readingStatus == .finished,
@@ -482,6 +522,7 @@ private extension ShareSheetView {
             coverImage: nil,
             progress: nil,
             progressText: nil,
+            graph: graph,
             stats: stats,
             footer: "Shared with Shlf"
         )
@@ -502,6 +543,8 @@ private extension ShareSheetView {
         let progressText = bestStreak > 0
             ? "\(formatNumber(profile.currentStreak)) / \(formatNumber(bestStreak)) days"
             : nil
+
+        let graph = showGraph ? streakGraph(for: filteredSessions) : nil
 
         let stats = [
             ShareStatItem(
@@ -534,8 +577,133 @@ private extension ShareSheetView {
             coverImage: nil,
             progress: progress,
             progressText: progressText,
+            graph: graph,
             stats: stats,
             footer: "Shared with Shlf"
         )
+    }
+}
+
+private extension ShareSheetView {
+    func wrapGraph(for sessions: [ReadingSession], range: (start: Date, end: Date)) -> ShareGraph {
+        let bucketed = shouldBucketWeekly(range: range)
+        let values = graphValues(for: sessions, range: range, metric: selectedGraphMetric)
+        let subtitle = graphSubtitle(for: range, bucketed: bucketed)
+        return ShareGraph(title: "\(selectedGraphMetric.title) Over Time", subtitle: subtitle, values: values)
+    }
+
+    func streakGraph(for sessions: [ReadingSession]) -> ShareGraph {
+        let calendar = Calendar.current
+        let end = Date()
+        let start = calendar.date(byAdding: .day, value: -6, to: calendar.startOfDay(for: end)) ?? end
+        let range = (start: start, end: end)
+        let values = graphValues(for: sessions, range: range, metric: selectedGraphMetric)
+        return ShareGraph(title: "Last 7 Days", subtitle: selectedGraphMetric.title, values: values)
+    }
+
+    func bookGraph(for sessions: [ReadingSession], totalPages: Int) -> ShareGraph? {
+        guard !sessions.isEmpty else { return nil }
+
+        let sorted = sessions.sorted { $0.startDate < $1.startDate }
+        let recent = sorted.suffix(10)
+        let values: [Double] = recent.map { session in
+            switch selectedGraphMetric {
+            case .pages:
+                return Double(max(0, session.pagesRead))
+            case .minutes:
+                return Double(max(0, session.durationMinutes))
+            case .sessions:
+                return 1
+            }
+        }
+
+        let title = "Recent Sessions"
+        let subtitle = selectedGraphMetric.title
+        return ShareGraph(title: title, subtitle: subtitle, values: values)
+    }
+
+    func graphValues(
+        for sessions: [ReadingSession],
+        range: (start: Date, end: Date),
+        metric: ShareGraphMetric
+    ) -> [Double] {
+        let calendar = Calendar.current
+        let startDay = calendar.startOfDay(for: range.start)
+        let endDay = calendar.startOfDay(for: range.end)
+        let dayCount = calendar.dateComponents([.day], from: startDay, to: endDay).day ?? 0
+
+        let totalsByDay = dailyTotalsByDay(for: sessions, metric: metric)
+
+        if dayCount > 90 {
+            return weeklyTotals(from: startDay, to: endDay, totalsByDay: totalsByDay)
+        }
+
+        return dailyTotals(from: startDay, to: endDay, totalsByDay: totalsByDay)
+    }
+
+    func dailyTotalsByDay(for sessions: [ReadingSession], metric: ShareGraphMetric) -> [Date: Double] {
+        let calendar = Calendar.current
+        var totals: [Date: Double] = [:]
+
+        for session in sessions {
+            let day = calendar.startOfDay(for: session.startDate)
+            let value: Double
+            switch metric {
+            case .pages:
+                value = Double(max(0, session.pagesRead))
+            case .minutes:
+                value = Double(max(0, session.durationMinutes))
+            case .sessions:
+                value = 1
+            }
+            totals[day, default: 0] += value
+        }
+
+        return totals
+    }
+
+    func dailyTotals(from start: Date, to end: Date, totalsByDay: [Date: Double]) -> [Double] {
+        let calendar = Calendar.current
+        var values: [Double] = []
+        var day = start
+
+        while day <= end {
+            values.append(totalsByDay[day, default: 0])
+            day = calendar.date(byAdding: .day, value: 1, to: day) ?? end.addingTimeInterval(86400)
+        }
+
+        return values
+    }
+
+    func weeklyTotals(from start: Date, to end: Date, totalsByDay: [Date: Double]) -> [Double] {
+        let calendar = Calendar.current
+        var values: [Double] = []
+        var current = start
+
+        while current <= end {
+            var weekTotal: Double = 0
+            for offset in 0..<7 {
+                let day = calendar.date(byAdding: .day, value: offset, to: current) ?? current
+                if day > end { break }
+                weekTotal += totalsByDay[day, default: 0]
+            }
+            values.append(weekTotal)
+            current = calendar.date(byAdding: .day, value: 7, to: current) ?? end.addingTimeInterval(86400)
+        }
+
+        return values
+    }
+
+    func graphSubtitle(for range: (start: Date, end: Date), bucketed: Bool) -> String {
+        let base = bucketed ? "Weekly totals" : "Daily totals"
+        return "\(base) - \(formatDateRange(start: range.start, end: range.end))"
+    }
+
+    func shouldBucketWeekly(range: (start: Date, end: Date)) -> Bool {
+        let calendar = Calendar.current
+        let startDay = calendar.startOfDay(for: range.start)
+        let endDay = calendar.startOfDay(for: range.end)
+        let dayCount = calendar.dateComponents([.day], from: startDay, to: endDay).day ?? 0
+        return dayCount > 90
     }
 }

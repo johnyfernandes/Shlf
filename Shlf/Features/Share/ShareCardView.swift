@@ -68,6 +68,18 @@ struct ShareCardView: View {
                         scale: scale
                     )
 
+                    if let graph = content.graph {
+                        ShareGraphView(
+                            graph: graph,
+                            accentColor: style.accentColor,
+                            primaryText: primaryText,
+                            secondaryText: tertiaryText,
+                            fillColor: statFill,
+                            strokeColor: statStroke,
+                            scale: scale
+                        )
+                    }
+
                     ShareStatsGrid(
                         stats: content.stats,
                         primaryText: primaryText,
@@ -136,8 +148,8 @@ private struct ShareHeroView: View {
 
     var body: some View {
         if coverImage != nil || progress != nil {
-            HStack(alignment: .top, spacing: 16 * scale) {
-                if let coverImage {
+            if let coverImage {
+                HStack(alignment: .top, spacing: 16 * scale) {
                     Image(uiImage: coverImage)
                         .resizable()
                         .scaledToFill()
@@ -148,27 +160,44 @@ private struct ShareHeroView: View {
                                 .stroke(Color.white.opacity(0.2), lineWidth: 1)
                         )
                         .shadow(color: shadowColor, radius: 16 * scale, y: 8 * scale)
-                }
 
-                if let progress {
-                    VStack(alignment: .leading, spacing: 10 * scale) {
-                        ShareProgressRing(
-                            progress: progress,
-                            color: accentColor,
-                            trackColor: primaryText.opacity(0.2),
-                            size: 76 * scale,
-                            lineWidth: 10 * scale
-                        )
+                    if let progress {
+                        VStack(alignment: .leading, spacing: 10 * scale) {
+                            ShareProgressRing(
+                                progress: progress,
+                                color: accentColor,
+                                trackColor: primaryText.opacity(0.2),
+                                size: 76 * scale,
+                                lineWidth: 10 * scale
+                            )
 
-                        if let progressText {
-                            Text(progressText)
-                                .font(.system(size: 14 * scale, weight: .semibold, design: .rounded))
-                                .foregroundStyle(primaryText.opacity(0.85))
+                            if let progressText {
+                                Text(progressText)
+                                    .font(.system(size: 14 * scale, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(primaryText.opacity(0.85))
+                            }
                         }
                     }
-                }
 
-                Spacer(minLength: 0)
+                    Spacer(minLength: 0)
+                }
+            } else if let progress {
+                VStack(spacing: 10 * scale) {
+                    ShareProgressRing(
+                        progress: progress,
+                        color: accentColor,
+                        trackColor: primaryText.opacity(0.2),
+                        size: 88 * scale,
+                        lineWidth: 12 * scale
+                    )
+
+                    if let progressText {
+                        Text(progressText)
+                            .font(.system(size: 15 * scale, weight: .semibold, design: .rounded))
+                            .foregroundStyle(primaryText.opacity(0.85))
+                    }
+                }
+                .frame(maxWidth: .infinity)
             }
         }
     }
@@ -271,6 +300,99 @@ private struct ShareProgressRing: View {
                 .rotationEffect(.degrees(-90))
         }
         .frame(width: size, height: size)
+    }
+}
+
+private struct ShareGraphView: View {
+    let graph: ShareGraph
+    let accentColor: Color
+    let primaryText: Color
+    let secondaryText: Color
+    let fillColor: Color
+    let strokeColor: Color
+    let scale: CGFloat
+
+    private var normalizedValues: [Double] {
+        let maxValue = graph.values.max() ?? 0
+        guard maxValue > 0 else {
+            return graph.values.map { _ in 0 }
+        }
+        return graph.values.map { min(max($0 / maxValue, 0), 1) }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8 * scale) {
+            Text(graph.title)
+                .font(.system(size: 15 * scale, weight: .semibold, design: .rounded))
+                .foregroundStyle(primaryText)
+
+            if let subtitle = graph.subtitle {
+                Text(subtitle)
+                    .font(.system(size: 12 * scale, weight: .medium, design: .rounded))
+                    .foregroundStyle(secondaryText)
+            }
+
+            GeometryReader { proxy in
+                let size = proxy.size
+                let points = normalizedValues.enumerated().map { index, value -> CGPoint in
+                    let x = size.width * CGFloat(index) / CGFloat(max(normalizedValues.count - 1, 1))
+                    let y = size.height * (1 - CGFloat(value))
+                    return CGPoint(x: x, y: y)
+                }
+
+                ZStack {
+                    if points.count > 1 {
+                        Path { path in
+                            path.move(to: points[0])
+                            for point in points.dropFirst() {
+                                path.addLine(to: point)
+                            }
+                        }
+                        .stroke(accentColor, style: StrokeStyle(lineWidth: 2.5 * scale, lineCap: .round, lineJoin: .round))
+
+                        Path { path in
+                            path.move(to: CGPoint(x: points[0].x, y: size.height))
+                            path.addLine(to: points[0])
+                            for point in points.dropFirst() {
+                                path.addLine(to: point)
+                            }
+                            path.addLine(to: CGPoint(x: points.last?.x ?? 0, y: size.height))
+                            path.closeSubpath()
+                        }
+                        .fill(
+                            LinearGradient(
+                                colors: [accentColor.opacity(0.35), accentColor.opacity(0.05)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+
+                        if let last = points.last {
+                            Circle()
+                                .fill(accentColor)
+                                .frame(width: 8 * scale, height: 8 * scale)
+                                .position(last)
+                        }
+                    } else {
+                        RoundedRectangle(cornerRadius: 8 * scale, style: .continuous)
+                            .fill(accentColor.opacity(0.12))
+                    }
+                }
+            }
+            .frame(height: 90 * scale)
+            .padding(.top, 4 * scale)
+        }
+        .padding(.vertical, 10 * scale)
+        .padding(.horizontal, 12 * scale)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 18 * scale, style: .continuous)
+                .fill(fillColor)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18 * scale, style: .continuous)
+                .stroke(strokeColor, lineWidth: 1)
+        )
     }
 }
 

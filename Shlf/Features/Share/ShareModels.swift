@@ -77,6 +77,28 @@ struct ShareStatItem: Identifiable {
     let value: String
 }
 
+enum ShareGraphMetric: String, CaseIterable, Identifiable {
+    case pages
+    case minutes
+    case sessions
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .pages: return "Pages"
+        case .minutes: return "Minutes"
+        case .sessions: return "Sessions"
+        }
+    }
+}
+
+struct ShareGraph {
+    let title: String
+    let subtitle: String?
+    let values: [Double]
+}
+
 struct ShareCardContent {
     let title: String
     let subtitle: String?
@@ -85,6 +107,7 @@ struct ShareCardContent {
     let coverImage: UIImage?
     let progress: Double?
     let progressText: String?
+    let graph: ShareGraph?
     let stats: [ShareStatItem]
     let footer: String
 }
