@@ -45,8 +45,20 @@ final class BookAPIService {
     private let retryPolicy: RetryPolicy
 
     init(urlSession: URLSession = .shared) {
-        self.urlSession = urlSession
-        self.rateLimiter = RateLimiter(maxRequestsPerSecond: 5)
+        // iOS 26: Configure URLSession with timeout + aggressive caching
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 15  // 15s timeout per request
+        config.timeoutIntervalForResource = 30 // 30s total timeout
+        config.requestCachePolicy = .returnCacheDataElseLoad
+
+        // Configure URLCache for API response caching
+        config.urlCache = URLCache(
+            memoryCapacity: 20 * 1024 * 1024,  // 20MB memory
+            diskCapacity: 100 * 1024 * 1024     // 100MB disk
+        )
+
+        self.urlSession = URLSession(configuration: config)
+        self.rateLimiter = RateLimiter(maxRequestsPerSecond: 10) // Increased from 5 to 10 (still 2x under OpenLibrary limit)
         self.retryPolicy = RetryPolicy(maxRetries: 3, baseDelay: 1.0)
     }
 

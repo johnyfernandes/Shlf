@@ -16,9 +16,9 @@ actor ImageCacheManager {
     private let maxCacheAge: TimeInterval = 7 * 24 * 60 * 60 // 7 days in seconds
 
     private init() {
-        // Configure memory cache
-        memoryCache.countLimit = 100 // Max 100 images in memory
-        memoryCache.totalCostLimit = 50 * 1024 * 1024 // 50 MB
+        // Configure memory cache (iOS 26 optimized limits)
+        memoryCache.countLimit = 200 // Max 200 images in memory (2x increase)
+        memoryCache.totalCostLimit = 100 * 1024 * 1024 // 100 MB (2x increase for iOS 26)
 
         // Setup disk cache directory
         let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]

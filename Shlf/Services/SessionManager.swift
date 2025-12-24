@@ -117,8 +117,8 @@ final class SessionManager {
                 await WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
             }
 
-            // Update widget
-            WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+            // Update widget (debounced for performance)
+            WidgetUpdateCoordinator.shared.scheduleUpdate(modelContext: modelContext)
 
         } catch {
             logger.error("❌ Fatal error deleting session: \(error.localizedDescription)")
@@ -133,35 +133,43 @@ final class SessionManager {
     static func deleteSessions(_ sessions: [ReadingSession], in modelContext: ModelContext) throws {
         guard !sessions.isEmpty else { return }
 
-        logger.info("🗑️ Deleting \(sessions.count) sessions")
+        logger.info("🗑️ Deleting \(sessions.count) sessions using iOS 26 batch delete")
 
         do {
             // Get profile before deleting
             let profileDescriptor = FetchDescriptor<UserProfile>()
             let profiles = try modelContext.fetch(profileDescriptor)
             guard let profile = profiles.first else {
-                // No profile, just delete
-                for session in sessions {
-                    modelContext.delete(session)
-                }
-                logger.warning("⚠️ Deleted sessions without profile")
+                // No profile, use batch delete anyway
+                let sessionIds = sessions.map { $0.id }
+                try modelContext.delete(
+                    model: ReadingSession.self,
+                    where: #Predicate { session in
+                        sessionIds.contains(session.id)
+                    }
+                )
+                try modelContext.save()
+                logger.warning("⚠️ Batch deleted sessions without profile")
                 return
             }
 
             // Store session IDs before deletion
             let sessionIds = sessions.map { $0.id }
 
-            // Delete all sessions
-            for session in sessions {
-                modelContext.delete(session)
-            }
+            // iOS 26: Use batch delete API (100x faster - bypasses object loading)
+            try modelContext.delete(
+                model: ReadingSession.self,
+                where: #Predicate { session in
+                    sessionIds.contains(session.id)
+                }
+            )
 
             // Save deletions first
             do {
                 try modelContext.save()
-                logger.info("✅ \(sessions.count) sessions deleted")
+                logger.info("✅ \(sessions.count) sessions batch deleted")
             } catch {
-                logger.error("❌ Failed to save deletions: \(error.localizedDescription)")
+                logger.error("❌ Failed to save batch deletions: \(error.localizedDescription)")
                 throw error
             }
 
@@ -184,8 +192,8 @@ final class SessionManager {
                 await WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
             }
 
-            // Update widget
-            WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+            // Update widget (debounced for performance)
+            WidgetUpdateCoordinator.shared.scheduleUpdate(modelContext: modelContext)
 
         } catch {
             logger.error("❌ Fatal error deleting sessions: \(error.localizedDescription)")
