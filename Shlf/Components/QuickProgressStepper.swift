@@ -21,10 +21,22 @@ struct QuickProgressStepper: View {
     @State private var showFinishAlert = false
     @State private var isEditingPage = false
     @State private var pageText = ""
+    @State private var pageFieldWidth: CGFloat = 0
     @FocusState private var isPageFieldFocused: Bool
 
     private var totalPendingPages: Int {
         book.currentPage + pendingPages
+    }
+
+    private var pageDisplayText: String {
+        if isEditingPage {
+            return pageText.isEmpty ? "\(totalPendingPages)" : pageText
+        }
+        return "\(book.currentPage)"
+    }
+
+    private var pageFieldWidthValue: CGFloat {
+        max(24, pageFieldWidth)
     }
 
     var body: some View {
@@ -57,42 +69,59 @@ struct QuickProgressStepper: View {
                 // Page display
                 VStack(spacing: 2) {
                     HStack(spacing: 6) {
-                        if isEditingPage {
-                            TextField("", text: $pageText)
+                        ZStack {
+                            Text(pageDisplayText)
                                 .font(.system(size: 36, weight: .bold, design: .rounded))
-                                .foregroundStyle(themeColor.color)
-                                .multilineTextAlignment(.center)
-                                .keyboardType(.numberPad)
-                                .focused($isPageFieldFocused)
-                                .frame(minWidth: 60)
-                                .textFieldStyle(.plain)
-                                .onSubmit {
-                                    commitPageEdit()
-                                }
-                                .onChange(of: pageText) { _, newValue in
-                                    let filtered = newValue.filter { $0.isNumber }
-                                    if filtered != newValue {
-                                        pageText = filtered
+                                .monospacedDigit()
+                                .background(
+                                    GeometryReader { proxy in
+                                        Color.clear.preference(key: PageFieldWidthKey.self, value: proxy.size.width)
                                     }
-                                    guard let total = book.totalPages,
-                                          let value = Int(filtered),
-                                          value > total else { return }
-                                    pageText = "\(total)"
-                                }
-                                .onChange(of: isPageFieldFocused) { _, newValue in
-                                    if !newValue {
+                                )
+                                .opacity(0)
+
+                            if isEditingPage {
+                                TextField("", text: $pageText)
+                                    .font(.system(size: 36, weight: .bold, design: .rounded))
+                                    .foregroundStyle(themeColor.color)
+                                    .multilineTextAlignment(.center)
+                                    .keyboardType(.numberPad)
+                                    .focused($isPageFieldFocused)
+                                    .frame(width: pageFieldWidthValue)
+                                    .textFieldStyle(.plain)
+                                    .onSubmit {
                                         commitPageEdit()
                                     }
-                                }
-                        } else {
-                            Text("\(book.currentPage)")
-                                .font(.system(size: 36, weight: .bold, design: .rounded))
-                                .foregroundStyle(Theme.Colors.text)
-                                .monospacedDigit()
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    startPageEditing()
-                                }
+                                    .onChange(of: pageText) { _, newValue in
+                                        let filtered = newValue.filter { $0.isNumber }
+                                        if filtered != newValue {
+                                            pageText = filtered
+                                        }
+                                        guard let total = book.totalPages,
+                                              let value = Int(filtered),
+                                              value > total else { return }
+                                        pageText = "\(total)"
+                                    }
+                                    .onChange(of: isPageFieldFocused) { _, newValue in
+                                        if !newValue {
+                                            commitPageEdit()
+                                        }
+                                    }
+                            } else {
+                                Text("\(book.currentPage)")
+                                    .font(.system(size: 36, weight: .bold, design: .rounded))
+                                    .foregroundStyle(Theme.Colors.text)
+                                    .monospacedDigit()
+                                    .contentShape(Rectangle())
+                                    .onTapGesture {
+                                        startPageEditing()
+                                    }
+                            }
+                        }
+                        .onPreferenceChange(PageFieldWidthKey.self) { width in
+                            if width > 0 {
+                                pageFieldWidth = width
+                            }
                         }
 
                         if pendingPages != 0 && !isEditingPage {
@@ -355,6 +384,17 @@ struct QuickProgressStepper: View {
         let minPage = 0
         let maxPage = book.totalPages ?? Int.max
         return min(maxPage, max(minPage, value))
+    }
+}
+
+private struct PageFieldWidthKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        let next = nextValue()
+        if next > 0 {
+            value = next
+        }
     }
 }
 
