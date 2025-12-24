@@ -27,6 +27,12 @@ struct SessionDetailView: View {
         return (Double(abs(pagesRead)) / Double(durationMinutes)) * 60
     }
 
+    private var minutesPerPage: Double? {
+        let pages = abs(pagesRead)
+        guard durationMinutes > 0, pages > 0 else { return nil }
+        return Double(durationMinutes) / Double(pages)
+    }
+
     private var startDateText: String {
         session.startDate.formatted(date: .abbreviated, time: .shortened)
     }
@@ -53,6 +59,11 @@ struct SessionDetailView: View {
     private var paceText: String {
         guard let pacePerHour else { return "—" }
         return String(format: "%.1f", pacePerHour)
+    }
+
+    private var timePerPageText: String {
+        guard let minutesPerPage else { return "—" }
+        return String(format: "%.1f", minutesPerPage)
     }
 
     var body: some View {
@@ -156,6 +167,13 @@ struct SessionDetailView: View {
                 title: "Pace (pph)",
                 value: paceText,
                 icon: "speedometer",
+                gradient: nil
+            )
+
+            StatCard(
+                title: "Min/Page",
+                value: timePerPageText,
+                icon: "hourglass",
                 gradient: nil
             )
         }
