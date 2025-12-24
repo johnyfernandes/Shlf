@@ -890,9 +890,13 @@ private struct LibraryShareBookCell: View {
     private var coverView: some View {
         ZStack {
             if let coverImage = book.coverImage {
+                RoundedRectangle(cornerRadius: 14 * metrics.scale, style: .continuous)
+                    .fill(primaryText.opacity(0.08))
+
                 Image(uiImage: coverImage)
                     .resizable()
-                    .scaledToFill()
+                    .scaledToFit()
+                    .padding(6 * metrics.scale)
             } else {
                 RoundedRectangle(cornerRadius: 14 * metrics.scale, style: .continuous)
                     .fill(primaryText.opacity(0.08))

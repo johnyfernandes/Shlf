@@ -73,21 +73,27 @@ struct LibraryView: View {
             .navigationBarTitleDisplayMode(.large)
             .searchable(text: $searchText, prompt: "Search by title or author")
             .toolbar {
-                ToolbarItemGroup(placement: .primaryAction) {
-                    Button {
-                        showLibraryShare = true
-                    } label: {
-                        Image(systemName: "square.and.arrow.up")
-                            .font(.title3)
-                            .foregroundStyle(themeColor.color)
-                    }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    HStack(spacing: Theme.Spacing.sm) {
+                        Menu {
+                            Button {
+                                showLibraryShare = true
+                            } label: {
+                                Label("Share Library", systemImage: "square.and.arrow.up")
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                                .font(.title2)
+                                .foregroundStyle(Theme.Colors.secondaryText)
+                        }
 
-                    Button {
-                        showAddBook = true
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(themeColor.color)
+                        Button {
+                            showAddBook = true
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title2)
+                                .foregroundStyle(themeColor.color)
+                        }
                     }
                 }
             }
