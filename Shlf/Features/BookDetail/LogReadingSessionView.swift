@@ -20,6 +20,7 @@ struct LogReadingSessionView: View {
 
     @State private var startPage: Int
     @State private var endPage: Int
+    @State private var endPageText = ""
     @State private var durationMinutes = 30
     @State private var sessionDate = Date()
     @State private var useTimer = true
@@ -29,6 +30,11 @@ struct LogReadingSessionView: View {
     @State private var showDiscardAlert = false
     @State private var showActiveSessionAlert = false
     @State private var pendingActiveSession: ActiveReadingSession?
+    @FocusState private var focusedField: FocusField?
+
+    enum FocusField: Hashable {
+        case endPage
+    }
 
     // Position tracking
     @State private var shouldSavePosition = false
@@ -44,6 +50,7 @@ struct LogReadingSessionView: View {
         _startPage = State(initialValue: book.currentPage)
         _endPage = State(initialValue: book.currentPage)
         _positionPage = State(initialValue: book.currentPage)
+        _endPageText = State(initialValue: "\(book.currentPage)")
     }
 
     // SINGLE SOURCE OF TRUTH - use active session if exists
@@ -96,39 +103,14 @@ struct LogReadingSessionView: View {
                     HStack {
                         Text("To Page")
                         Spacer()
-                        if let session = activeSession {
-                            TextField("End", value: Binding(
-                                get: { session.currentPage },
-                                set: { newValue in
-                                    session.currentPage = newValue
-                                    session.lastUpdated = Date()
-                                    try? modelContext.save()
-                                    WatchConnectivityManager.shared.sendActiveSessionToWatch(session)
-                                    WidgetDataExporter.exportSnapshot(modelContext: modelContext)
-                                    Task {
-                                        await ReadingSessionActivityManager.shared.updateActivity(
-                                            currentPage: newValue,
-                                            xpEarned: estimatedXP
-                                        )
-                                    }
-                                    WidgetDataExporter.exportSnapshot(modelContext: modelContext)
-                                }
-                            ), format: .number)
+                        TextField("End", text: $endPageText)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
                             .frame(width: 80)
-                        } else {
-                            TextField("End", value: $endPage, format: .number)
-                                .keyboardType(.numberPad)
-                                .multilineTextAlignment(.trailing)
-                                .frame(width: 80)
-                                .onChange(of: endPage) { oldValue, newValue in
-                                    // Clamp to max pages
-                                    if let maxPages = book.totalPages, newValue > maxPages {
-                                        endPage = maxPages
-                                    }
-                                }
-                        }
+                            .focused($focusedField, equals: .endPage)
+                            .onChange(of: endPageText) { _, newValue in
+                                handleEndPageInput(newValue)
+                            }
                     }
 
                     HStack {
@@ -311,6 +293,7 @@ struct LogReadingSessionView: View {
             .scrollDismissesKeyboard(.interactively)
             .onAppear {
                 syncWithLiveActivity()
+                syncEndPageText(with: actualEndPage)
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
                 syncWithLiveActivity()
@@ -324,6 +307,14 @@ struct LogReadingSessionView: View {
                             xpEarned: estimatedXP
                         )
                     }
+                }
+            }
+            .onChange(of: actualEndPage) { _, newValue in
+                syncEndPageText(with: newValue)
+            }
+            .onChange(of: focusedField) { _, newValue in
+                if newValue == nil {
+                    syncEndPageText(with: actualEndPage)
                 }
             }
             .navigationTitle("Log Session")
@@ -421,6 +412,58 @@ struct LogReadingSessionView: View {
         if timerStartTime != nil, let currentPage = ReadingSessionActivityManager.shared.getCurrentPage() {
             endPage = currentPage
             // Synced with Live Activity - this is expected behavior during active sessions
+        }
+    }
+
+    private func handleEndPageInput(_ input: String) {
+        let filtered = input.filter { $0.isNumber }
+        if filtered != input {
+            endPageText = filtered
+            return
+        }
+
+        guard !filtered.isEmpty else {
+            return
+        }
+
+        guard let newValue = Int(filtered) else { return }
+        let clampedValue = clampEndPage(newValue)
+
+        if clampedValue != newValue {
+            endPageText = "\(clampedValue)"
+        }
+
+        if let session = activeSession {
+            session.currentPage = clampedValue
+            session.lastUpdated = Date()
+            endPage = clampedValue
+            try? modelContext.save()
+            WatchConnectivityManager.shared.sendActiveSessionToWatch(session)
+            WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+            Task {
+                await ReadingSessionActivityManager.shared.updateActivity(
+                    currentPage: clampedValue,
+                    xpEarned: estimatedXP
+                )
+            }
+            WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+        } else {
+            endPage = clampedValue
+        }
+    }
+
+    private func clampEndPage(_ value: Int) -> Int {
+        if let maxPages = book.totalPages {
+            return min(value, maxPages)
+        }
+        return value
+    }
+
+    private func syncEndPageText(with value: Int) {
+        guard focusedField != .endPage else { return }
+        let textValue = "\(value)"
+        if endPageText != textValue {
+            endPageText = textValue
         }
     }
 
