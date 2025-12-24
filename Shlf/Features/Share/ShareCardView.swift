@@ -93,6 +93,146 @@ struct ShareCardView: View {
     }
 }
 
+struct LibraryShareCardView: View {
+    let content: LibraryShareContent
+    let style: ShareCardStyle
+
+    var body: some View {
+        GeometryReader { proxy in
+            let size = proxy.size
+            let scale = min(size.width / 390, size.height / 844)
+            let horizontalPadding = 28 * scale
+            let verticalPadding = 26 * scale
+            let verticalSpacing = 16 * scale
+            let isLightBackground = style.background == .paper
+            let isCentered = style.layout == .centered
+            let primaryText = isLightBackground ? Color.black.opacity(0.88) : Color.white
+            let secondaryText = isLightBackground ? Color.black.opacity(0.65) : Color.white.opacity(0.82)
+            let tertiaryText = isLightBackground ? Color.black.opacity(0.45) : Color.white.opacity(0.7)
+            let cardFill = isLightBackground ? Color.white.opacity(0.72) : Color.white.opacity(0.12)
+            let cardStroke = isLightBackground ? Color.black.opacity(0.08) : Color.white.opacity(0.16)
+            let shadowColor = isLightBackground ? Color.black.opacity(0.12) : Color.black.opacity(0.3)
+
+            let gridMetrics = gridMetrics(
+                size: size,
+                scale: scale,
+                horizontalPadding: horizontalPadding,
+                verticalPadding: verticalPadding,
+                verticalSpacing: verticalSpacing
+            )
+
+            ZStack {
+                ShareBackgroundView(style: style.background, accentColor: style.accentColor)
+
+                VStack(alignment: isCentered ? .center : .leading, spacing: verticalSpacing) {
+                    ShareHeaderView(
+                        badge: content.badge,
+                        accentColor: style.accentColor,
+                        textColor: primaryText,
+                        badgeFill: style.accentColor.opacity(isLightBackground ? 0.18 : 0.25),
+                        badgeStroke: isLightBackground ? Color.black.opacity(0.1) : Color.white.opacity(0.2),
+                        scale: scale
+                    )
+
+                    VStack(alignment: isCentered ? .center : .leading, spacing: 6 * scale) {
+                        Text(content.title)
+                            .font(.system(size: 30 * scale, weight: .bold, design: .rounded))
+                            .foregroundStyle(primaryText)
+                            .lineLimit(2)
+                            .frame(maxWidth: .infinity, alignment: isCentered ? .center : .leading)
+                            .multilineTextAlignment(isCentered ? .center : .leading)
+
+                        if let subtitle = content.subtitle {
+                            Text(subtitle)
+                                .font(.system(size: 15 * scale, weight: .semibold, design: .rounded))
+                                .foregroundStyle(secondaryText)
+                                .lineLimit(2)
+                                .frame(maxWidth: .infinity, alignment: isCentered ? .center : .leading)
+                                .multilineTextAlignment(isCentered ? .center : .leading)
+                        }
+                    }
+
+                    LibraryShareGridView(
+                        items: gridItems,
+                        metrics: gridMetrics,
+                        accentColor: style.accentColor,
+                        primaryText: primaryText,
+                        secondaryText: secondaryText,
+                        cardFill: cardFill,
+                        cardStroke: cardStroke,
+                        shadowColor: shadowColor,
+                        showTitles: content.showTitles,
+                        showStatus: content.showStatus
+                    )
+                    .frame(maxWidth: .infinity, alignment: isCentered ? .center : .leading)
+
+                    Spacer(minLength: 10 * scale)
+
+                    Text(content.footer)
+                        .font(.system(size: 13 * scale, weight: .semibold, design: .rounded))
+                        .foregroundStyle(tertiaryText)
+                        .frame(maxWidth: .infinity, alignment: isCentered ? .center : .leading)
+                }
+                .padding(.horizontal, horizontalPadding)
+                .padding(.vertical, verticalPadding)
+            }
+        }
+    }
+
+    private var gridItems: [LibraryShareGridItem] {
+        var items = content.books.map { LibraryShareGridItem.book($0) }
+        if content.showOverflow, content.overflowCount > 0 {
+            items.append(.overflow(content.overflowCount))
+        }
+        return items
+    }
+
+    private func gridMetrics(
+        size: CGSize,
+        scale: CGFloat,
+        horizontalPadding: CGFloat,
+        verticalPadding: CGFloat,
+        verticalSpacing: CGFloat
+    ) -> LibraryShareGridMetrics {
+        let gridStyle = content.gridStyle
+        let columns = gridStyle.columns
+        let rows = gridStyle.rows
+        let gridSpacing = 12 * scale
+        let gridWidth = size.width - horizontalPadding * 2
+        let columnWidth = max(20 * scale, (gridWidth - gridSpacing * CGFloat(columns - 1)) / CGFloat(columns))
+
+        let titleLineHeight = content.showTitles ? (gridStyle == .compact ? 11 * scale : 12 * scale) : 0
+        let titleLines = content.showTitles ? (gridStyle == .compact ? 1 : 2) : 0
+        let titleHeight = content.showTitles ? (titleLineHeight * CGFloat(titleLines) + 4 * scale) : 0
+
+        let headerHeight = 22 * scale
+        let titleBlockHeight = content.subtitle == nil ? 46 * scale : 64 * scale
+        let footerHeight = 18 * scale
+        let gridAvailableHeight = size.height
+            - (verticalPadding * 2)
+            - headerHeight
+            - titleBlockHeight
+            - footerHeight
+            - verticalSpacing * 3
+
+        let rowHeightLimit = max(0, (gridAvailableHeight - gridSpacing * CGFloat(max(rows - 1, 0))) / CGFloat(rows))
+        let coverHeightLimit = max(0, rowHeightLimit - titleHeight)
+        let coverHeight = min(columnWidth * 1.5, coverHeightLimit)
+        let rowHeight = coverHeight + titleHeight
+
+        return LibraryShareGridMetrics(
+            scale: scale,
+            columns: columns,
+            spacing: gridSpacing,
+            columnWidth: columnWidth,
+            rowHeight: rowHeight,
+            coverHeight: coverHeight,
+            titleHeight: titleHeight,
+            titleLines: titleLines
+        )
+    }
+}
+
 private struct ShareHeaderView: View {
     let badge: String?
     let accentColor: Color
@@ -637,5 +777,202 @@ private struct ShareBackgroundView: View {
                     .blendMode(.overlay)
             }
         }
+    }
+}
+
+private struct LibraryShareGridMetrics {
+    let scale: CGFloat
+    let columns: Int
+    let spacing: CGFloat
+    let columnWidth: CGFloat
+    let rowHeight: CGFloat
+    let coverHeight: CGFloat
+    let titleHeight: CGFloat
+    let titleLines: Int
+}
+
+private enum LibraryShareGridItem: Identifiable {
+    case book(LibraryShareBook)
+    case overflow(Int)
+
+    var id: String {
+        switch self {
+        case .book(let book): return book.id.uuidString
+        case .overflow(let count): return "overflow-\(count)"
+        }
+    }
+}
+
+private struct LibraryShareGridView: View {
+    let items: [LibraryShareGridItem]
+    let metrics: LibraryShareGridMetrics
+    let accentColor: Color
+    let primaryText: Color
+    let secondaryText: Color
+    let cardFill: Color
+    let cardStroke: Color
+    let shadowColor: Color
+    let showTitles: Bool
+    let showStatus: Bool
+
+    private var columns: [GridItem] {
+        Array(repeating: GridItem(.flexible(), spacing: metrics.spacing), count: metrics.columns)
+    }
+
+    var body: some View {
+        LazyVGrid(columns: columns, alignment: .leading, spacing: metrics.spacing) {
+            ForEach(items) { item in
+                switch item {
+                case .book(let book):
+                    LibraryShareBookCell(
+                        book: book,
+                        metrics: metrics,
+                        accentColor: accentColor,
+                        primaryText: primaryText,
+                        secondaryText: secondaryText,
+                        shadowColor: shadowColor,
+                        showTitles: showTitles,
+                        showStatus: showStatus
+                    )
+                case .overflow(let count):
+                    LibraryShareOverflowCell(
+                        count: count,
+                        metrics: metrics,
+                        primaryText: primaryText,
+                        secondaryText: secondaryText,
+                        fillColor: cardFill,
+                        strokeColor: cardStroke
+                    )
+                }
+            }
+        }
+    }
+}
+
+private struct LibraryShareBookCell: View {
+    let book: LibraryShareBook
+    let metrics: LibraryShareGridMetrics
+    let accentColor: Color
+    let primaryText: Color
+    let secondaryText: Color
+    let shadowColor: Color
+    let showTitles: Bool
+    let showStatus: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6 * metrics.scale) {
+            coverView
+                .overlay(alignment: .topTrailing) {
+                    if showStatus {
+                        Image(systemName: book.status.icon)
+                            .font(.system(size: 11 * metrics.scale, weight: .semibold))
+                            .foregroundStyle(Color.white)
+                            .padding(6 * metrics.scale)
+                            .background(statusColor.opacity(0.9))
+                            .clipShape(Circle())
+                            .shadow(color: shadowColor.opacity(0.4), radius: 4 * metrics.scale, y: 2 * metrics.scale)
+                            .padding(6 * metrics.scale)
+                    }
+                }
+
+            if showTitles {
+                Text(book.title)
+                    .font(.system(size: 12 * metrics.scale, weight: .semibold, design: .rounded))
+                    .foregroundStyle(primaryText)
+                    .lineLimit(max(1, metrics.titleLines))
+                    .minimumScaleFactor(0.85)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .frame(width: metrics.columnWidth, height: metrics.rowHeight, alignment: .top)
+    }
+
+    private var coverView: some View {
+        ZStack {
+            if let coverImage = book.coverImage {
+                Image(uiImage: coverImage)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                RoundedRectangle(cornerRadius: 14 * metrics.scale, style: .continuous)
+                    .fill(primaryText.opacity(0.08))
+                    .overlay(
+                        VStack(spacing: 6 * metrics.scale) {
+                            Image(systemName: "book.closed")
+                                .font(.system(size: 16 * metrics.scale, weight: .semibold))
+                                .foregroundStyle(secondaryText)
+
+                            Text(book.title)
+                                .font(.system(size: 10 * metrics.scale, weight: .semibold, design: .rounded))
+                                .foregroundStyle(secondaryText)
+                                .lineLimit(2)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 6 * metrics.scale)
+                        }
+                    )
+            }
+        }
+        .frame(width: metrics.columnWidth, height: metrics.coverHeight)
+        .clipped()
+        .clipShape(RoundedRectangle(cornerRadius: 14 * metrics.scale, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14 * metrics.scale, style: .continuous)
+                .stroke(Color.white.opacity(0.15), lineWidth: 1)
+        )
+        .shadow(color: shadowColor.opacity(0.35), radius: 8 * metrics.scale, y: 4 * metrics.scale)
+    }
+
+    private var statusColor: Color {
+        switch book.status {
+        case .wantToRead:
+            return Theme.Colors.secondary
+        case .currentlyReading:
+            return accentColor
+        case .finished:
+            return Theme.Colors.success
+        case .didNotFinish:
+            return Theme.Colors.tertiaryText
+        }
+    }
+}
+
+private struct LibraryShareOverflowCell: View {
+    let count: Int
+    let metrics: LibraryShareGridMetrics
+    let primaryText: Color
+    let secondaryText: Color
+    let fillColor: Color
+    let strokeColor: Color
+
+    var body: some View {
+        VStack(spacing: 6 * metrics.scale) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 14 * metrics.scale, style: .continuous)
+                    .fill(fillColor)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14 * metrics.scale, style: .continuous)
+                            .stroke(strokeColor, lineWidth: 1)
+                    )
+
+                VStack(spacing: 4) {
+                    Text("+\(count)")
+                        .font(.system(size: 18 * metrics.scale, weight: .bold, design: .rounded))
+                        .foregroundStyle(primaryText)
+
+                    Text("more")
+                        .font(.system(size: 11 * metrics.scale, weight: .semibold, design: .rounded))
+                        .foregroundStyle(secondaryText)
+                }
+            }
+            .frame(width: metrics.columnWidth, height: metrics.coverHeight)
+
+            if metrics.titleHeight > 0 {
+                Text("More books")
+                    .font(.system(size: 11 * metrics.scale, weight: .semibold, design: .rounded))
+                    .foregroundStyle(secondaryText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .frame(width: metrics.columnWidth, height: metrics.rowHeight, alignment: .top)
     }
 }

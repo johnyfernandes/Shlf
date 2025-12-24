@@ -17,6 +17,7 @@ struct LibraryView: View {
     @State private var selectedFilter: ReadingStatus?
     @State private var searchText = ""
     @State private var showAddBook = false
+    @State private var showLibraryShare = false
 
     private var filteredBooks: [Book] {
         var books = allBooks
@@ -72,7 +73,15 @@ struct LibraryView: View {
             .navigationBarTitleDisplayMode(.large)
             .searchable(text: $searchText, prompt: "Search by title or author")
             .toolbar {
-                ToolbarItem(placement: .primaryAction) {
+                ToolbarItemGroup(placement: .primaryAction) {
+                    Button {
+                        showLibraryShare = true
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.title3)
+                            .foregroundStyle(themeColor.color)
+                    }
+
                     Button {
                         showAddBook = true
                     } label: {
@@ -84,6 +93,9 @@ struct LibraryView: View {
             }
             .sheet(isPresented: $showAddBook) {
                 AddBookView(selectedTab: $selectedTab)
+            }
+            .sheet(isPresented: $showLibraryShare) {
+                LibraryShareSheetView()
             }
         }
     }

@@ -160,6 +160,121 @@ struct ShareQuote {
     let attribution: String?
 }
 
+enum LibraryShareFilter: String, CaseIterable, Identifiable {
+    case all
+    case finished
+    case currentlyReading
+    case wantToRead
+    case didNotFinish
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .all: return "All"
+        case .finished: return "Finished"
+        case .currentlyReading: return "Reading"
+        case .wantToRead: return "Want to Read"
+        case .didNotFinish: return "DNF"
+        }
+    }
+
+    var shareTitle: String {
+        switch self {
+        case .all: return "My Library"
+        case .finished: return "Finished Books"
+        case .currentlyReading: return "Reading Now"
+        case .wantToRead: return "Want to Read"
+        case .didNotFinish: return "Did Not Finish"
+        }
+    }
+
+    var status: ReadingStatus? {
+        switch self {
+        case .all: return nil
+        case .finished: return .finished
+        case .currentlyReading: return .currentlyReading
+        case .wantToRead: return .wantToRead
+        case .didNotFinish: return .didNotFinish
+        }
+    }
+}
+
+enum LibraryShareSort: String, CaseIterable, Identifiable {
+    case recentlyAdded
+    case title
+    case author
+    case progress
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .recentlyAdded: return "Recently Added"
+        case .title: return "Title"
+        case .author: return "Author"
+        case .progress: return "Progress"
+        }
+    }
+}
+
+enum LibraryShareGridStyle: String, CaseIterable, Identifiable {
+    case large
+    case medium
+    case compact
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .large: return "Large"
+        case .medium: return "Medium"
+        case .compact: return "Compact"
+        }
+    }
+
+    var columns: Int {
+        switch self {
+        case .large: return 2
+        case .medium: return 3
+        case .compact: return 4
+        }
+    }
+
+    var rows: Int {
+        switch self {
+        case .large: return 3
+        case .medium: return 4
+        case .compact: return 5
+        }
+    }
+
+    var maxItems: Int {
+        columns * rows
+    }
+}
+
+struct LibraryShareBook: Identifiable {
+    let id: UUID
+    let title: String
+    let author: String
+    let status: ReadingStatus
+    let coverImage: UIImage?
+}
+
+struct LibraryShareContent {
+    let title: String
+    let subtitle: String?
+    let badge: String?
+    let books: [LibraryShareBook]
+    let overflowCount: Int
+    let showOverflow: Bool
+    let gridStyle: LibraryShareGridStyle
+    let showTitles: Bool
+    let showStatus: Bool
+    let footer: String
+}
+
 struct ShareCardContent {
     let title: String
     let subtitle: String?

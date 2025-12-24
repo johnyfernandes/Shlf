@@ -1314,3 +1314,402 @@ private extension ShareSheetView {
         return streakContentOrder.filter { availability[$0] ?? false }
     }
 }
+
+struct LibraryShareSheetView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.themeColor) private var themeColor
+    @Query(sort: \Book.dateAdded, order: .reverse) private var allBooks: [Book]
+
+    @State private var selectedFilter: LibraryShareFilter = .all
+    @State private var selectedSort: LibraryShareSort = .recentlyAdded
+    @State private var selectedGrid: LibraryShareGridStyle = .medium
+    @State private var selectedBackground: ShareBackgroundStyle = .paper
+    @State private var selectedLayout: ShareLayoutStyle = .classic
+    @State private var showTitles = true
+    @State private var showStatus = true
+    @State private var showCountBadge = true
+    @State private var showOverflow = true
+    @State private var coverImages: [UUID: UIImage] = [:]
+    @State private var showInstagramAlert = false
+    @State private var showSaveConfirmation = false
+    @State private var saveResultMessage = "Saved to Photos."
+    @State private var isRendering = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                previewSection
+                librarySection
+                gridSection
+                appearanceSection
+                actionsSection
+            }
+            .tint(themeColor.color)
+            .navigationTitle("Share Library")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .task(id: coverLoadKey) {
+            await loadCoverImages()
+        }
+        .alert("Instagram Not Available", isPresented: $showInstagramAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Install Instagram to share directly to Stories, or use the Share Image button instead.")
+        }
+        .alert("Image Saved", isPresented: $showSaveConfirmation) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(saveResultMessage)
+        }
+    }
+
+    private var previewCard: some View {
+        LibraryShareCardView(content: shareContent, style: shareStyle)
+            .aspectRatio(9 / 16, contentMode: .fit)
+            .frame(maxWidth: .infinity)
+            .clipShape(RoundedRectangle(cornerRadius: Theme.CornerRadius.lg, style: .continuous))
+            .shadow(color: Theme.Shadow.medium, radius: 12, y: 6)
+    }
+
+    private var previewSection: some View {
+        Section("Preview") {
+            previewCard
+                .listRowInsets(EdgeInsets(top: Theme.Spacing.sm, leading: Theme.Spacing.md, bottom: Theme.Spacing.sm, trailing: Theme.Spacing.md))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+        }
+    }
+
+    private var librarySection: some View {
+        Section("Library") {
+            Picker("Filter", selection: $selectedFilter) {
+                ForEach(LibraryShareFilter.allCases) { filter in
+                    Text(filter.title).tag(filter)
+                }
+            }
+
+            Picker("Sort", selection: $selectedSort) {
+                ForEach(LibraryShareSort.allCases) { sort in
+                    Text(sort.title).tag(sort)
+                }
+            }
+
+            Toggle("Show count badge", isOn: $showCountBadge)
+        }
+    }
+
+    private var gridSection: some View {
+        Section(
+            header: Text("Grid"),
+            footer: Text("Use compact for dense shelves and large for hero covers.")
+        ) {
+            Picker("Grid size", selection: $selectedGrid) {
+                ForEach(LibraryShareGridStyle.allCases) { style in
+                    Text(style.title).tag(style)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            Toggle("Show titles", isOn: $showTitles)
+            Toggle("Show status icons", isOn: $showStatus)
+            Toggle("Show overflow count", isOn: $showOverflow)
+        }
+    }
+
+    private var appearanceSection: some View {
+        Section("Appearance") {
+            Picker("Background", selection: $selectedBackground) {
+                ForEach(ShareBackgroundStyle.allCases) { style in
+                    Text(style.title).tag(style)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            Picker("Layout", selection: $selectedLayout) {
+                ForEach(ShareLayoutStyle.allCases) { layout in
+                    Text(layout.title).tag(layout)
+                }
+            }
+            .pickerStyle(.segmented)
+        }
+    }
+
+    private var actionsSection: some View {
+        Section("Share") {
+            Button {
+                handleShare(.save)
+            } label: {
+                Label("Save Image", systemImage: "square.and.arrow.down")
+            }
+            .disabled(isRendering)
+
+            Button {
+                handleShare(.instagram)
+            } label: {
+                Label("Share to Instagram Story", systemImage: "camera.fill")
+            }
+            .disabled(isRendering)
+
+            Button {
+                handleShare(.shareSheet)
+            } label: {
+                Label("Share Image", systemImage: "square.and.arrow.up")
+            }
+            .disabled(isRendering)
+
+            if isRendering {
+                ProgressView("Preparing your share...")
+                    .foregroundStyle(Theme.Colors.secondaryText)
+            }
+        }
+        .tint(themeColor.color)
+    }
+
+    private var shareStyle: ShareCardStyle {
+        ShareCardStyle(background: selectedBackground, accentColor: themeColor.color, layout: selectedLayout)
+    }
+
+    private var shareContent: LibraryShareContent {
+        LibraryShareContent(
+            title: selectedFilter.shareTitle,
+            subtitle: subtitleText,
+            badge: badgeText,
+            books: libraryShareBooks,
+            overflowCount: overflowCount,
+            showOverflow: showOverflow,
+            gridStyle: selectedGrid,
+            showTitles: showTitles,
+            showStatus: showStatus,
+            footer: "Shared with Shlf"
+        )
+    }
+
+    private var subtitleText: String? {
+        let filterLabel = selectedFilter.title
+        let sortLabel = selectedSort.title
+        if filterLabel == "All" {
+            return sortLabel
+        }
+        return "\(filterLabel) • \(sortLabel)"
+    }
+
+    private var badgeText: String? {
+        guard showCountBadge else { return nil }
+        let count = filteredBooks.count
+        let countText = formatNumber(count)
+        let noun = count == 1 ? "Book" : "Books"
+        return "\(countText) \(noun)"
+    }
+
+    private var filteredBooks: [Book] {
+        guard let status = selectedFilter.status else {
+            return allBooks
+        }
+        return allBooks.filter { $0.readingStatus == status }
+    }
+
+    private var sortedBooks: [Book] {
+        switch selectedSort {
+        case .recentlyAdded:
+            return filteredBooks.sorted { $0.dateAdded > $1.dateAdded }
+        case .title:
+            return filteredBooks.sorted {
+                $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
+            }
+        case .author:
+            return filteredBooks.sorted {
+                let comparison = $0.author.localizedCaseInsensitiveCompare($1.author)
+                if comparison == .orderedSame {
+                    return $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
+                }
+                return comparison == .orderedAscending
+            }
+        case .progress:
+            return filteredBooks.sorted {
+                let lhs = $0.progressPercentage
+                let rhs = $1.progressPercentage
+                if lhs == rhs {
+                    return $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
+                }
+                return lhs > rhs
+            }
+        }
+    }
+
+    private var gridCapacity: Int {
+        max(1, selectedGrid.maxItems)
+    }
+
+    private var showsOverflowTile: Bool {
+        showOverflow && sortedBooks.count > gridCapacity && gridCapacity > 1
+    }
+
+    private var displayBooks: [Book] {
+        if showsOverflowTile {
+            return Array(sortedBooks.prefix(gridCapacity - 1))
+        }
+        return Array(sortedBooks.prefix(gridCapacity))
+    }
+
+    private var overflowCount: Int {
+        guard showsOverflowTile else { return 0 }
+        return max(0, sortedBooks.count - (gridCapacity - 1))
+    }
+
+    private var libraryShareBooks: [LibraryShareBook] {
+        displayBooks.map { book in
+            LibraryShareBook(
+                id: book.id,
+                title: book.title,
+                author: book.author,
+                status: book.readingStatus,
+                coverImage: coverImages[book.id]
+            )
+        }
+    }
+
+    private var coverLoadKey: String {
+        let ids = displayBooks.map { $0.id.uuidString }.joined(separator: "-")
+        return "\(selectedFilter.rawValue)-\(selectedSort.rawValue)-\(selectedGrid.rawValue)-\(ids)"
+    }
+
+    private func loadCoverImages() async {
+        let targets = displayBooks.compactMap { book -> (UUID, URL)? in
+            guard let url = book.coverImageURL else { return nil }
+            return (book.id, url)
+        }
+
+        guard !targets.isEmpty else { return }
+
+        var loaded: [UUID: UIImage] = [:]
+        for (id, url) in targets {
+            if let image = await ImageCacheManager.shared.getImage(for: url) {
+                loaded[id] = image
+            }
+        }
+
+        await MainActor.run {
+            var updated = coverImages
+            for (id, image) in loaded {
+                updated[id] = image
+            }
+            coverImages = updated
+        }
+    }
+
+    private enum LibraryShareAction {
+        case instagram
+        case shareSheet
+        case save
+    }
+
+    private func handleShare(_ action: LibraryShareAction) {
+        Task { @MainActor in
+            isRendering = true
+            let image = renderShareImage()
+            isRendering = false
+
+            guard let image else { return }
+
+            switch action {
+            case .instagram:
+                shareToInstagram(image)
+            case .shareSheet:
+                presentShareSheet(image)
+            case .save:
+                saveImage(image)
+            }
+        }
+    }
+
+    @MainActor
+    private func renderShareImage() -> UIImage? {
+        let size = CGSize(width: 1080, height: 1920)
+        let view = LibraryShareCardView(content: shareContent, style: shareStyle)
+            .frame(width: size.width, height: size.height)
+
+        let renderer = ImageRenderer(content: view)
+        renderer.scale = 1
+        return renderer.uiImage
+    }
+
+    private func shareToInstagram(_ image: UIImage) {
+        guard let url = URL(string: "instagram-stories://share") else { return }
+        guard UIApplication.shared.canOpenURL(url) else {
+            showInstagramAlert = true
+            return
+        }
+
+        guard let imageData = image.pngData() else { return }
+
+        let pasteboardItems: [[String: Any]] = [
+            ["com.instagram.sharedSticker.backgroundImage": imageData]
+        ]
+        UIPasteboard.general.setItems(
+            pasteboardItems,
+            options: [.expirationDate: Date().addingTimeInterval(300)]
+        )
+
+        UIApplication.shared.open(url)
+    }
+
+    private func presentShareSheet(_ image: UIImage) {
+        let activityVC = UIActivityViewController(
+            activityItems: [image],
+            applicationActivities: nil
+        )
+
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first,
+           let rootVC = window.rootViewController {
+            var topVC = rootVC
+            while let presented = topVC.presentedViewController {
+                topVC = presented
+            }
+            activityVC.popoverPresentationController?.sourceView = topVC.view
+            topVC.present(activityVC, animated: true)
+        }
+    }
+
+    private func saveImage(_ image: UIImage) {
+        PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+            guard status == .authorized || status == .limited else {
+                Task { @MainActor in
+                    saveResultMessage = "Allow Photos access to save images."
+                    showSaveConfirmation = true
+                }
+                return
+            }
+
+            PHPhotoLibrary.shared().performChanges({
+                PHAssetChangeRequest.creationRequestForAsset(from: image)
+            }) { success, error in
+                Task { @MainActor in
+                    if success {
+                        saveResultMessage = "Saved to Photos."
+                    } else {
+                        saveResultMessage = error?.localizedDescription ?? "Couldn't save the image."
+                    }
+                    showSaveConfirmation = true
+                }
+            }
+        }
+    }
+
+    private func formatNumber(_ value: Int) -> String {
+        LibraryShareSheetView.numberFormatter.string(from: NSNumber(value: value)) ?? "\(value)"
+    }
+
+    private static let numberFormatter: NumberFormatter = {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        return formatter
+    }()
+}
