@@ -32,6 +32,8 @@ final class Book {
     var publisher: String?
     var publishedDate: String?
     var language: String?
+    var openLibraryWorkID: String?
+    var openLibraryEditionID: String?
 
     @Relationship(deleteRule: .cascade, inverse: \ReadingSession.book)
     var readingSessions: [ReadingSession]?
@@ -71,7 +73,9 @@ final class Book {
         subjects: [String]? = nil,
         publisher: String? = nil,
         publishedDate: String? = nil,
-        language: String? = nil
+        language: String? = nil,
+        openLibraryWorkID: String? = nil,
+        openLibraryEditionID: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -92,6 +96,8 @@ final class Book {
         self.publisher = publisher
         self.publishedDate = publishedDate
         self.language = language
+        self.openLibraryWorkID = openLibraryWorkID
+        self.openLibraryEditionID = openLibraryEditionID
         self.readingSessions = nil
     }
 

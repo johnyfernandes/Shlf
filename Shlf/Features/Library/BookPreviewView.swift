@@ -333,7 +333,11 @@ struct BookPreviewView: View {
 
                 if let olid = bestOLID {
                     let fetchedInfo = try await bookAPI.fetchBookByOLID(olid: olid)
-                    fullBookInfo = mergedBookInfo(fetched: fetchedInfo, fallback: bookInfo)
+                    fullBookInfo = mergedBookInfo(
+                        fetched: fetchedInfo,
+                        fallback: bookInfo,
+                        preferredEditionID: olid
+                    )
                 }
             } catch {
                 print("Failed to fetch best edition: \(error)")
@@ -341,7 +345,11 @@ struct BookPreviewView: View {
         }
     }
 
-    private func mergedBookInfo(fetched: BookInfo, fallback: BookInfo) -> BookInfo {
+    private func mergedBookInfo(
+        fetched: BookInfo,
+        fallback: BookInfo,
+        preferredEditionID: String?
+    ) -> BookInfo {
         let resolvedTitle = fetched.title.isEmpty ? fallback.title : fetched.title
         let resolvedAuthor = fetched.author == "Unknown Author" ? fallback.author : fetched.author
         let resolvedSubjects = fetched.subjects?.isEmpty == false ? fetched.subjects : fallback.subjects
@@ -357,7 +365,7 @@ struct BookPreviewView: View {
             subjects: resolvedSubjects,
             publisher: fetched.publisher ?? fallback.publisher,
             language: fetched.language ?? fallback.language,
-            olid: fetched.olid ?? fallback.olid,
+            olid: fetched.olid ?? preferredEditionID ?? fallback.olid,
             workID: fetched.workID ?? fallback.workID
         )
     }
@@ -396,7 +404,9 @@ struct BookPreviewView: View {
                     subjects: displayInfo.subjects,
                     publisher: displayInfo.publisher,
                     publishedDate: displayInfo.publishedDate,
-                    language: displayInfo.language
+                    language: displayInfo.language,
+                    openLibraryWorkID: displayInfo.workID,
+                    openLibraryEditionID: displayInfo.olid
                 )
 
                 modelContext.insert(book)

@@ -32,6 +32,19 @@ struct BookInfo: Hashable {
     }
 }
 
+struct EditionInfo: Identifiable, Hashable {
+    let olid: String
+    let title: String
+    let publishDate: String?
+    let numberOfPages: Int?
+    let publishers: [String]?
+    let language: String?
+    let isbn: String?
+    let coverImageURL: URL?
+
+    var id: String { olid }
+}
+
 enum BookAPIError: Error {
     case networkError
     case invalidResponse
@@ -89,6 +102,75 @@ final class BookAPIService {
 
     func findBestEdition(workID: String, originalTitle: String) async throws -> String? {
         try await fetchBestEditionOLID(workID: workID, originalTitle: originalTitle)
+    }
+
+    func fetchEditions(workID: String) async throws -> [EditionInfo] {
+        try await fetchEditionsOLID(workID: workID)
+    }
+
+    func resolveWorkID(isbn: String) async throws -> String? {
+        let cleanISBN = sanitizeISBN(isbn)
+
+        guard cleanISBN.count == 10 || cleanISBN.count == 13 else {
+            throw BookAPIError.invalidISBN
+        }
+
+        var components = URLComponents()
+        components.scheme = "https"
+        components.host = "openlibrary.org"
+        components.path = "/api/books"
+        components.queryItems = [
+            URLQueryItem(name: "bibkeys", value: "ISBN:\(cleanISBN)"),
+            URLQueryItem(name: "format", value: "json"),
+            URLQueryItem(name: "jscmd", value: "data")
+        ]
+
+        guard let url = components.url else {
+            throw BookAPIError.invalidResponse
+        }
+
+        await rateLimiter.waitForToken()
+        let (data, response) = try await urlSession.data(from: url)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw BookAPIError.networkError
+        }
+
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let bookData = json["ISBN:\(cleanISBN)"] as? [String: Any] else {
+            return nil
+        }
+
+        return extractWorkID(from: bookData)
+    }
+
+    func resolveWorkID(editionID: String) async throws -> String? {
+        let trimmedID = editionID.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedID.isEmpty else { return nil }
+
+        var components = URLComponents()
+        components.scheme = "https"
+        components.host = "openlibrary.org"
+        components.path = "/books/\(trimmedID).json"
+
+        guard let url = components.url else {
+            throw BookAPIError.invalidResponse
+        }
+
+        await rateLimiter.waitForToken()
+        let (data, response) = try await urlSession.data(from: url)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw BookAPIError.networkError
+        }
+
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw BookAPIError.invalidResponse
+        }
+
+        return extractWorkID(from: json)
     }
 
     // MARK: - Open Library API
@@ -242,6 +324,14 @@ final class BookAPIService {
             olid = olidList.first
         }
 
+        let workID = extractWorkID(from: data) ?? {
+            if let details = record["details"] as? [String: Any],
+               let detailsData = details["details"] as? [String: Any] {
+                return extractWorkID(from: detailsData)
+            }
+            return nil
+        }()
+
         return BookInfo(
             title: title,
             author: author,
@@ -254,7 +344,7 @@ final class BookAPIService {
             publisher: publisher,
             language: language,
             olid: olid,
-            workID: nil // Volume API response doesn't include work ID
+            workID: workID
         )
     }
 
@@ -316,6 +406,7 @@ final class BookAPIService {
         let publisher = publishers?.first
 
         let language = extractLanguage(from: json)
+        let workID = extractWorkID(from: json)
 
         return BookInfo(
             title: title,
@@ -329,7 +420,7 @@ final class BookAPIService {
             publisher: publisher,
             language: language,
             olid: nil,
-            workID: nil
+            workID: workID
         )
     }
 
@@ -356,8 +447,10 @@ final class BookAPIService {
         let languageCodes = json["language"] as? [String]
         let language = languageCodes?.first.map { formatLanguageCode($0) }
 
-        // Get OLID from cover_edition_key
-        let olid = json["cover_edition_key"] as? String
+        // Get OLID from cover_edition_key (or edition_key fallback)
+        let coverEditionKey = json["cover_edition_key"] as? String
+        let editionKey = (json["edition_key"] as? [String])?.first
+        let olid = coverEditionKey ?? editionKey
 
         // Get Work ID from key field (e.g., "/works/OL1968368W" -> "OL1968368W")
         var workID: String?
@@ -411,6 +504,105 @@ final class BookAPIService {
 
         // Find the best edition
         return selectBestEdition(from: entries, matchingTitle: originalTitle)
+    }
+
+    private func fetchEditionsOLID(workID: String) async throws -> [EditionInfo] {
+        var components = URLComponents()
+        components.scheme = "https"
+        components.host = "openlibrary.org"
+        components.path = "/works/\(workID)/editions.json"
+        components.queryItems = [
+            URLQueryItem(name: "limit", value: "50")
+        ]
+
+        guard let url = components.url else {
+            throw BookAPIError.invalidResponse
+        }
+
+        await rateLimiter.waitForToken()
+        let (data, response) = try await urlSession.data(from: url)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw BookAPIError.networkError
+        }
+
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let entries = json["entries"] as? [[String: Any]] else {
+            throw BookAPIError.invalidResponse
+        }
+
+        let editions = entries.compactMap { parseEditionEntry($0) }
+        return sortEditions(editions)
+    }
+
+    private func parseEditionEntry(_ entry: [String: Any]) -> EditionInfo? {
+        guard let key = entry["key"] as? String else { return nil }
+        let olid = key.replacingOccurrences(of: "/books/", with: "")
+        guard !olid.isEmpty else { return nil }
+
+        let title = entry["title"] as? String ?? "Untitled"
+        let publishDate = entry["publish_date"] as? String
+        let pages = entry["number_of_pages"] as? Int
+        let publishers = entry["publishers"] as? [String]
+
+        let isbn13 = entry["isbn_13"] as? [String] ?? []
+        let isbn10 = entry["isbn_10"] as? [String] ?? []
+        let isbn = chooseISBN(isbn13 + isbn10)
+
+        var language: String?
+        if let languages = entry["languages"] as? [[String: Any]],
+           let firstLang = languages.first,
+           let key = firstLang["key"] as? String {
+            let code = key.replacingOccurrences(of: "/languages/", with: "")
+            language = formatLanguageCode(code)
+        }
+
+        var coverImageURL: URL?
+        if let covers = entry["covers"] as? [Any] {
+            coverImageURL = makeCoverURL(from: covers)
+        }
+
+        return EditionInfo(
+            olid: olid,
+            title: title,
+            publishDate: publishDate,
+            numberOfPages: pages,
+            publishers: publishers,
+            language: language,
+            isbn: isbn,
+            coverImageURL: coverImageURL
+        )
+    }
+
+    private func sortEditions(_ editions: [EditionInfo]) -> [EditionInfo] {
+        editions.sorted { first, second in
+            let score1 = scoreEdition(first)
+            let score2 = scoreEdition(second)
+            if score1 != score2 {
+                return score1 > score2
+            }
+            return first.title < second.title
+        }
+    }
+
+    private func scoreEdition(_ edition: EditionInfo) -> Int {
+        var score = 0
+        if edition.coverImageURL != nil {
+            score += 100
+        }
+        if edition.numberOfPages != nil {
+            score += 50
+        }
+        if edition.language == "English" {
+            score += 20
+        }
+        if let publishDate = edition.publishDate,
+           let year = extractYear(from: publishDate),
+           year >= 2000 {
+            score += 10
+        }
+        return score
     }
 
     private func selectBestEdition(from editions: [[String: Any]], matchingTitle: String) -> String? {
@@ -528,6 +720,19 @@ final class BookAPIService {
             let code = key.replacingOccurrences(of: "/languages/", with: "")
             return formatLanguageCode(code)
         }
+        return nil
+    }
+
+    private func extractWorkID(from json: [String: Any]) -> String? {
+        if let works = json["works"] as? [[String: Any]],
+           let key = works.first?["key"] as? String {
+            return key.replacingOccurrences(of: "/works/", with: "")
+        }
+
+        if let key = json["key"] as? String, key.hasPrefix("/works/") {
+            return key.replacingOccurrences(of: "/works/", with: "")
+        }
+
         return nil
     }
 

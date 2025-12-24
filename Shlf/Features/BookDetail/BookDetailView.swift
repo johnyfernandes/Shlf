@@ -22,6 +22,7 @@ struct BookDetailView: View {
     @State private var showDeleteAlert = false
     @State private var showConfetti = false
     @State private var showAddQuote = false
+    @State private var showChangeEdition = false
     @State private var showStatusChangeAlert = false
     @State private var pendingStatus: ReadingStatus?
     @State private var savedProgress: Int?
@@ -134,6 +135,14 @@ struct BookDetailView: View {
                         Label("Edit Book", systemImage: "pencil.line")
                     }
 
+                    if canChangeEdition {
+                        Button {
+                            showChangeEdition = true
+                        } label: {
+                            Label("Change Edition", systemImage: "books.vertical")
+                        }
+                    }
+
                     Button(role: .destructive) {
                         showDeleteAlert = true
                     } label: {
@@ -151,6 +160,9 @@ struct BookDetailView: View {
         }
         .sheet(isPresented: $showEditBook) {
             EditBookView(book: book)
+        }
+        .sheet(isPresented: $showChangeEdition) {
+            ChangeEditionView(book: book)
         }
         .sheet(isPresented: $showAddQuote) {
             AddQuoteView(book: book)
@@ -178,6 +190,15 @@ struct BookDetailView: View {
                 Text("You're on page \(book.currentPage). Your progress will be saved and automatically restored when you return to \"Currently Reading\".")
             }
         }
+    }
+
+    private var canChangeEdition: Bool {
+        if book.openLibraryWorkID != nil { return true }
+        if book.openLibraryEditionID != nil { return true }
+        if let isbn = book.isbn, !isbn.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return true
+        }
+        return false
     }
 
     // MARK: - Section Rendering

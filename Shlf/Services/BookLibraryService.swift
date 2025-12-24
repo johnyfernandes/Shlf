@@ -108,7 +108,9 @@ final class BookLibraryService {
                 subjects: bookInfo.subjects,
                 publisher: bookInfo.publisher,
                 publishedDate: bookInfo.publishedDate,
-                language: bookInfo.language
+                language: bookInfo.language,
+                openLibraryWorkID: bookInfo.workID,
+                openLibraryEditionID: bookInfo.olid
             )
 
             modelContext.insert(book)
