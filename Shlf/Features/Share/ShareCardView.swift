@@ -142,7 +142,9 @@ private struct ShareHeroView: View {
     var body: some View {
         if coverImage != nil || progress != nil {
             if let coverImage {
-                HStack(alignment: .top, spacing: 16 * scale) {
+                let shouldShowRing = (progress ?? 0) > 0 && (progress ?? 0) < 1
+
+                let heroContent = HStack(alignment: .top, spacing: 16 * scale) {
                     ZStack(alignment: .bottomTrailing) {
                         Image(uiImage: coverImage)
                             .resizable()
@@ -155,7 +157,7 @@ private struct ShareHeroView: View {
                             )
                             .shadow(color: shadowColor, radius: 16 * scale, y: 8 * scale)
 
-                        if let progress {
+                        if let progress, shouldShowRing {
                             ShareProgressRing(
                                 progress: progress,
                                 color: accentColor,
@@ -195,10 +197,18 @@ private struct ShareHeroView: View {
                         }
                         .padding(.top, 6 * scale)
                     }
-
-                    Spacer(minLength: 0)
                 }
-                .frame(maxWidth: .infinity, alignment: isCentered ? .center : .leading)
+
+                if isCentered {
+                    HStack {
+                        Spacer(minLength: 0)
+                        heroContent
+                        Spacer(minLength: 0)
+                    }
+                } else {
+                    heroContent
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
             } else if let progress {
                 VStack(spacing: 10 * scale) {
                     ShareProgressRing(
