@@ -20,6 +20,7 @@ struct StatsView: View {
     @State private var refreshTrigger = UUID() // Force refresh when Watch updates
     @State private var selectedAchievement: AchievementEntry?
     @State private var showAllAchievements = false
+    @State private var showShareSheet = false
 
     private var profile: UserProfile {
         if let existing = profiles.first {
@@ -138,6 +139,16 @@ struct StatsView: View {
                 }
             }
             .navigationTitle("Stats")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showShareSheet = true
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                            .foregroundStyle(themeColor.color)
+                    }
+                }
+            }
             .id(refreshTrigger) // Force view refresh
             .onAppear {
                 refreshGoals()
@@ -158,6 +169,9 @@ struct StatsView: View {
                     entries: achievementEntries,
                     onSelect: handleAchievementSelection
                 )
+            }
+            .sheet(isPresented: $showShareSheet) {
+                ShareSheetView()
             }
             .sheet(item: $selectedAchievement) { selection in
                 AchievementDetailView(

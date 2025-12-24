@@ -6,6 +6,10 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>instagram-stories</string>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>Shlf needs access to your camera to scan book barcodes.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

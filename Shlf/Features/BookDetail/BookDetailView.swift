@@ -31,6 +31,7 @@ struct BookDetailView: View {
     @State private var showDeleteSessionAlert = false
     @State private var showFinishOptions = false
     @State private var showFinishLog = false
+    @State private var showShareSheet = false
 
     private var profile: UserProfile? {
         profiles.first
@@ -139,6 +140,12 @@ struct BookDetailView: View {
                     }
 
                     Button {
+                        showShareSheet = true
+                    } label: {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                    }
+
+                    Button {
                         showEditBook = true
                     } label: {
                         Label("Edit Book", systemImage: "pencil.line")
@@ -175,6 +182,9 @@ struct BookDetailView: View {
         }
         .sheet(isPresented: $showAddQuote) {
             AddQuoteView(book: book)
+        }
+        .sheet(isPresented: $showShareSheet) {
+            ShareSheetView(book: book)
         }
         .alert("Delete Book?", isPresented: $showDeleteAlert) {
             Button("Delete", role: .destructive) {
