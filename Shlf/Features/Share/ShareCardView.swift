@@ -281,31 +281,20 @@ private struct ShareBackgroundView: View {
     var body: some View {
         ZStack {
             switch style {
-            case .aurora:
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.14, green: 0.12, blue: 0.35),
-                        Color(red: 0.1, green: 0.4, blue: 0.55),
-                        Color(red: 0.12, green: 0.55, blue: 0.45)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            case .sunrise:
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.93, green: 0.4, blue: 0.35),
-                        Color(red: 0.96, green: 0.65, blue: 0.35),
-                        Color(red: 0.98, green: 0.8, blue: 0.6)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
             case .paper:
                 LinearGradient(
                     colors: [
                         Color(red: 0.98, green: 0.97, blue: 0.95),
                         Color(red: 0.94, green: 0.92, blue: 0.9)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            case .paperDark:
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.12, green: 0.11, blue: 0.1),
+                        Color(red: 0.2, green: 0.18, blue: 0.16)
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing

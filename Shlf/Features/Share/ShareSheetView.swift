@@ -21,7 +21,7 @@ struct ShareSheetView: View {
 
     @State private var selectedTemplate: ShareTemplate
     @State private var selectedPeriod: SharePeriod = .last30
-    @State private var selectedBackground: ShareBackgroundStyle = .aurora
+    @State private var selectedBackground: ShareBackgroundStyle = .paper
     @State private var includeImportedSessions = false
     @State private var coverImage: UIImage?
     @State private var showInstagramAlert = false

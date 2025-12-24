@@ -57,17 +57,15 @@ enum SharePeriod: String, CaseIterable, Identifiable {
 }
 
 enum ShareBackgroundStyle: String, CaseIterable, Identifiable {
-    case aurora
-    case sunrise
     case paper
+    case paperDark
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .aurora: return "Aurora"
-        case .sunrise: return "Sunrise"
         case .paper: return "Paper"
+        case .paperDark: return "Paper Dark"
         }
     }
 }
