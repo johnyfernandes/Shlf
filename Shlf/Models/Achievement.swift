@@ -60,28 +60,32 @@ enum AchievementType: String, Codable, CaseIterable {
     case hundredPagesInDay = "100 Pages in a Day"
     case marathonReader = "Marathon Reader"
 
+    var name: String {
+        switch self {
+        case .firstBook: return "Chapter One"
+        case .tenBooks: return "Shelf Stacker"
+        case .fiftyBooks: return "Library Builder"
+        case .hundredBooks: return "Archive Legend"
+        case .hundredPages: return "Page Turner"
+        case .thousandPages: return "Page Voyager"
+        case .tenThousandPages: return "Page Titan"
+        case .sevenDayStreak: return "Weekly Flame"
+        case .thirtyDayStreak: return "Monthly Blaze"
+        case .hundredDayStreak: return "Iron Streak"
+        case .levelFive: return "Rising Reader"
+        case .levelTen: return "Seasoned Reader"
+        case .levelTwenty: return "Master Reader"
+        case .hundredPagesInDay: return "Century Sprint"
+        case .marathonReader: return "Long Haul"
+        }
+    }
+
     var title: String {
-        rawValue
+        name
     }
 
     var description: String {
-        switch self {
-        case .firstBook: return "Finished your first book"
-        case .tenBooks: return "Finished 10 books"
-        case .fiftyBooks: return "Finished 50 books"
-        case .hundredBooks: return "Finished 100 books"
-        case .hundredPages: return "Read 100 pages total"
-        case .thousandPages: return "Read 1,000 pages total"
-        case .tenThousandPages: return "Read 10,000 pages total"
-        case .sevenDayStreak: return "Read for 7 days in a row"
-        case .thirtyDayStreak: return "Read for 30 days in a row"
-        case .hundredDayStreak: return "Read for 100 days in a row"
-        case .levelFive: return "Reached level 5"
-        case .levelTen: return "Reached level 10"
-        case .levelTwenty: return "Reached level 20"
-        case .hundredPagesInDay: return "Read 100 pages in one day"
-        case .marathonReader: return "Read for 3+ hours in one session"
-        }
+        rawValue
     }
 
     var icon: String {

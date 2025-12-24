@@ -18,6 +18,7 @@ struct StatsView: View {
     @Query private var allBooks: [Book]
     @State private var showAddGoal = false
     @State private var refreshTrigger = UUID() // Force refresh when Watch updates
+    @State private var selectedAchievement: AchievementSelection?
 
     private var profile: UserProfile {
         if let existing = profiles.first {
@@ -56,6 +57,20 @@ struct StatsView: View {
 
     private var totalBooksRead: Int {
         allBooks.filter { $0.readingStatus == .finished }.count
+    }
+
+    private var todayTrackedSessions: [ReadingSession] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        return statSessions.filter { calendar.isDate($0.startDate, inSameDayAs: today) }
+    }
+
+    private var todayPagesRead: Int {
+        max(0, todayTrackedSessions.reduce(0) { $0 + $1.pagesRead })
+    }
+
+    private var todayMinutesRead: Int {
+        max(0, todayTrackedSessions.reduce(0) { $0 + $1.durationMinutes })
     }
 
     private var booksThisYear: Int {
@@ -118,6 +133,13 @@ struct StatsView: View {
             }
             .onReceive(NotificationCenter.default.publisher(for: .watchStatsUpdated)) { _ in
                 refreshTrigger = UUID()
+            }
+            .sheet(item: $selectedAchievement) { selection in
+                AchievementDetailView(
+                    type: selection.type,
+                    achievement: selection.achievement,
+                    progress: selection.progress
+                )
             }
         }
     }
@@ -290,10 +312,17 @@ struct StatsView: View {
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Spacing.sm) {
                 ForEach(AchievementType.allCases, id: \.self) { type in
                     let unlockedAchievement = (profile.achievements ?? []).first { $0.type == type }
+                    let progress = achievementProgress(for: type)
                     AchievementCard(
                         type: type,
                         achievement: unlockedAchievement,
+                        progress: progress,
                         onView: {
+                            selectedAchievement = AchievementSelection(
+                                type: type,
+                                achievement: unlockedAchievement,
+                                progress: progress
+                            )
                             if let achievement = unlockedAchievement, achievement.isNew {
                                 achievement.isNew = false
                                 do {
@@ -351,6 +380,53 @@ struct StatsView: View {
         .sheet(isPresented: $showAddGoal) {
             AddGoalView(profile: profile)
         }
+    }
+
+    private func achievementProgress(for type: AchievementType) -> AchievementProgress {
+        switch type {
+        case .firstBook:
+            return progress(current: totalBooksRead, target: 1, unit: "book")
+        case .tenBooks:
+            return progress(current: totalBooksRead, target: 10, unit: "books")
+        case .fiftyBooks:
+            return progress(current: totalBooksRead, target: 50, unit: "books")
+        case .hundredBooks:
+            return progress(current: totalBooksRead, target: 100, unit: "books")
+        case .hundredPages:
+            return progress(current: totalPagesRead, target: 100, unit: "pages")
+        case .thousandPages:
+            return progress(current: totalPagesRead, target: 1000, unit: "pages")
+        case .tenThousandPages:
+            return progress(current: totalPagesRead, target: 10000, unit: "pages")
+        case .sevenDayStreak:
+            return progress(current: profile.currentStreak, target: 7, unit: "days")
+        case .thirtyDayStreak:
+            return progress(current: profile.currentStreak, target: 30, unit: "days")
+        case .hundredDayStreak:
+            return progress(current: profile.currentStreak, target: 100, unit: "days")
+        case .levelFive:
+            return levelProgress(current: profile.currentLevel, target: 5)
+        case .levelTen:
+            return levelProgress(current: profile.currentLevel, target: 10)
+        case .levelTwenty:
+            return levelProgress(current: profile.currentLevel, target: 20)
+        case .hundredPagesInDay:
+            return progress(current: todayPagesRead, target: 100, unit: "pages today")
+        case .marathonReader:
+            return progress(current: todayMinutesRead, target: 180, unit: "min today")
+        }
+    }
+
+    private func progress(current: Int, target: Int, unit: String) -> AchievementProgress {
+        let clampedCurrent = max(0, current)
+        let text = "\(formatNumber(clampedCurrent))/\(formatNumber(target)) \(unit)"
+        return AchievementProgress(current: clampedCurrent, target: target, text: text)
+    }
+
+    private func levelProgress(current: Int, target: Int) -> AchievementProgress {
+        let clampedCurrent = max(0, current)
+        let text = "Level \(formatNumber(clampedCurrent))/\(formatNumber(target))"
+        return AchievementProgress(current: clampedCurrent, target: target, text: text)
     }
 }
 
@@ -501,12 +577,21 @@ struct ReadingActivityChart: View {
                 .presentationDetents([.medium, .large])
         }
     }
+
+}
+
+private struct AchievementSelection: Identifiable {
+    let id = UUID()
+    let type: AchievementType
+    let achievement: Achievement?
+    let progress: AchievementProgress
 }
 
 struct AchievementCard: View {
     @Environment(\.themeColor) private var themeColor
     let type: AchievementType
     let achievement: Achievement?
+    let progress: AchievementProgress
     let onView: () -> Void
 
     @State private var shimmerPhase: CGFloat = 0
@@ -564,6 +649,23 @@ struct AchievementCard: View {
                         .lineLimit(2)
                         .minimumScaleFactor(0.8)
 
+                    Text(type.description)
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundStyle(isUnlocked ? Theme.Colors.secondaryText : Theme.Colors.tertiaryText)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+
+                    ProgressView(value: progress.fraction)
+                        .tint(isUnlocked ? themeColor.color : Theme.Colors.tertiaryText)
+                        .progressViewStyle(.linear)
+                        .frame(height: 4)
+
+                    Text(progress.text)
+                        .font(.system(size: 9))
+                        .foregroundStyle(Theme.Colors.tertiaryText)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+
                     if let achievement = achievement, achievement.isNew {
                         Text("New!")
                             .font(.system(size: 9, weight: .bold))
@@ -610,6 +712,148 @@ struct AchievementCard: View {
             }
         }
     }
+}
+
+struct AchievementDetailView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.themeColor) private var themeColor
+    let type: AchievementType
+    let achievement: Achievement?
+    let progress: AchievementProgress
+
+    private var isUnlocked: Bool {
+        achievement != nil
+    }
+
+    private var statusText: String {
+        isUnlocked ? "Unlocked" : "Locked"
+    }
+
+    private var unlockedDateText: String? {
+        guard let unlockedAt = achievement?.unlockedAt else { return nil }
+        return unlockedAt.formatted(date: .abbreviated, time: .omitted)
+    }
+
+    var body: some View {
+        NavigationStack {
+            ZStack(alignment: .top) {
+                LinearGradient(
+                    colors: [
+                        themeColor.color.opacity(0.12),
+                        themeColor.color.opacity(0.04),
+                        Theme.Colors.background
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
+
+                ScrollView {
+                    VStack(spacing: 20) {
+                        VStack(spacing: 12) {
+                            ZStack {
+                                if isUnlocked {
+                                    Image(systemName: type.icon)
+                                        .font(.system(size: 52))
+                                        .foregroundStyle(themeColor.color)
+                                        .blur(radius: 10)
+                                        .opacity(0.5)
+                                }
+
+                                Image(systemName: type.icon)
+                                    .font(.system(size: 52))
+                                    .foregroundStyle(isUnlocked ? themeColor.color : Theme.Colors.tertiaryText)
+                            }
+
+                            Text(type.title)
+                                .font(.title2.weight(.semibold))
+                                .foregroundStyle(Theme.Colors.text)
+
+                            Text(type.description)
+                                .font(.subheadline)
+                                .foregroundStyle(Theme.Colors.secondaryText)
+                                .multilineTextAlignment(.center)
+                        }
+                        .padding(20)
+                        .frame(maxWidth: .infinity)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Status")
+                                .font(.headline)
+
+                            HStack {
+                                Text(statusText)
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(isUnlocked ? themeColor.color : Theme.Colors.tertiaryText)
+
+                                Spacer()
+
+                                if let unlockedDateText {
+                                    Text(unlockedDateText)
+                                        .font(.caption)
+                                        .foregroundStyle(Theme.Colors.secondaryText)
+                                }
+                            }
+                        }
+                        .padding(16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Progress")
+                                .font(.headline)
+
+                            ProgressView(value: progress.fraction)
+                                .tint(isUnlocked ? themeColor.color : Theme.Colors.tertiaryText)
+                                .progressViewStyle(.linear)
+
+                            Text(progress.text)
+                                .font(.caption)
+                                .foregroundStyle(Theme.Colors.secondaryText)
+                        }
+                        .padding(16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 20)
+                    .padding(.bottom, 40)
+                }
+            }
+            .navigationTitle("Achievement")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .foregroundStyle(themeColor.color)
+                }
+            }
+        }
+    }
+}
+
+struct AchievementProgress {
+    let current: Int
+    let target: Int
+    let text: String
+
+    var fraction: Double {
+        guard target > 0 else { return 0 }
+        return min(Double(current) / Double(target), 1)
+    }
+}
+
+private let achievementNumberFormatter: NumberFormatter = {
+    let formatter = NumberFormatter()
+    formatter.numberStyle = .decimal
+    return formatter
+}()
+
+private func formatNumber(_ value: Int) -> String {
+    achievementNumberFormatter.string(from: NSNumber(value: value)) ?? "\(value)"
 }
 
 struct GoalCard: View {
