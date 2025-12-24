@@ -104,4 +104,13 @@ enum AchievementType: String, Codable, CaseIterable {
             return "trophy.fill"
         }
     }
+
+    var isRepeatable: Bool {
+        switch self {
+        case .hundredPagesInDay, .marathonReader:
+            return true
+        default:
+            return false
+        }
+    }
 }

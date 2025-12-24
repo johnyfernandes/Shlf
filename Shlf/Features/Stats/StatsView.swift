@@ -73,6 +73,24 @@ struct StatsView: View {
         max(0, todayTrackedSessions.reduce(0) { $0 + $1.durationMinutes })
     }
 
+    private var dailyPagesTotals: [Date: Int] {
+        let calendar = Calendar.current
+        var totals: [Date: Int] = [:]
+        for session in statSessions {
+            let day = calendar.startOfDay(for: session.startDate)
+            totals[day, default: 0] += session.pagesRead
+        }
+        return totals
+    }
+
+    private var dailyHundredPageCount: Int {
+        dailyPagesTotals.values.filter { max(0, $0) >= 100 }.count
+    }
+
+    private var marathonSessionCount: Int {
+        statSessions.filter { $0.pagesRead > 0 && $0.durationMinutes >= 180 }.count
+    }
+
     private var booksThisYear: Int {
         let calendar = Calendar.current
         let year = calendar.component(.year, from: Date())
@@ -312,7 +330,7 @@ struct StatsView: View {
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Spacing.sm) {
                 ForEach(AchievementType.allCases, id: \.self) { type in
                     let unlockedAchievement = (profile.achievements ?? []).first { $0.type == type }
-                    let progress = achievementProgress(for: type)
+                    let progress = achievementProgress(for: type, isUnlocked: unlockedAchievement != nil)
                     AchievementCard(
                         type: type,
                         achievement: unlockedAchievement,
@@ -382,51 +400,64 @@ struct StatsView: View {
         }
     }
 
-    private func achievementProgress(for type: AchievementType) -> AchievementProgress {
+    private func achievementProgress(for type: AchievementType, isUnlocked: Bool) -> AchievementProgress {
+        let repeatCount = repeatCount(for: type, isUnlocked: isUnlocked)
         switch type {
         case .firstBook:
-            return progress(current: totalBooksRead, target: 1, unit: "book")
+            return progress(current: totalBooksRead, target: 1, unit: "book", repeatCount: repeatCount)
         case .tenBooks:
-            return progress(current: totalBooksRead, target: 10, unit: "books")
+            return progress(current: totalBooksRead, target: 10, unit: "books", repeatCount: repeatCount)
         case .fiftyBooks:
-            return progress(current: totalBooksRead, target: 50, unit: "books")
+            return progress(current: totalBooksRead, target: 50, unit: "books", repeatCount: repeatCount)
         case .hundredBooks:
-            return progress(current: totalBooksRead, target: 100, unit: "books")
+            return progress(current: totalBooksRead, target: 100, unit: "books", repeatCount: repeatCount)
         case .hundredPages:
-            return progress(current: totalPagesRead, target: 100, unit: "pages")
+            return progress(current: totalPagesRead, target: 100, unit: "pages", repeatCount: repeatCount)
         case .thousandPages:
-            return progress(current: totalPagesRead, target: 1000, unit: "pages")
+            return progress(current: totalPagesRead, target: 1000, unit: "pages", repeatCount: repeatCount)
         case .tenThousandPages:
-            return progress(current: totalPagesRead, target: 10000, unit: "pages")
+            return progress(current: totalPagesRead, target: 10000, unit: "pages", repeatCount: repeatCount)
         case .sevenDayStreak:
-            return progress(current: profile.currentStreak, target: 7, unit: "days")
+            return progress(current: profile.currentStreak, target: 7, unit: "days", repeatCount: repeatCount)
         case .thirtyDayStreak:
-            return progress(current: profile.currentStreak, target: 30, unit: "days")
+            return progress(current: profile.currentStreak, target: 30, unit: "days", repeatCount: repeatCount)
         case .hundredDayStreak:
-            return progress(current: profile.currentStreak, target: 100, unit: "days")
+            return progress(current: profile.currentStreak, target: 100, unit: "days", repeatCount: repeatCount)
         case .levelFive:
-            return levelProgress(current: profile.currentLevel, target: 5)
+            return levelProgress(current: profile.currentLevel, target: 5, repeatCount: repeatCount)
         case .levelTen:
-            return levelProgress(current: profile.currentLevel, target: 10)
+            return levelProgress(current: profile.currentLevel, target: 10, repeatCount: repeatCount)
         case .levelTwenty:
-            return levelProgress(current: profile.currentLevel, target: 20)
+            return levelProgress(current: profile.currentLevel, target: 20, repeatCount: repeatCount)
         case .hundredPagesInDay:
-            return progress(current: todayPagesRead, target: 100, unit: "pages today")
+            return progress(current: todayPagesRead, target: 100, unit: "pages today", repeatCount: repeatCount)
         case .marathonReader:
-            return progress(current: todayMinutesRead, target: 180, unit: "min today")
+            return progress(current: todayMinutesRead, target: 180, unit: "min today", repeatCount: repeatCount)
         }
     }
 
-    private func progress(current: Int, target: Int, unit: String) -> AchievementProgress {
+    private func progress(current: Int, target: Int, unit: String, repeatCount: Int) -> AchievementProgress {
         let clampedCurrent = max(0, current)
         let text = "\(formatNumber(clampedCurrent))/\(formatNumber(target)) \(unit)"
-        return AchievementProgress(current: clampedCurrent, target: target, text: text)
+        return AchievementProgress(current: clampedCurrent, target: target, text: text, repeatCount: repeatCount)
     }
 
-    private func levelProgress(current: Int, target: Int) -> AchievementProgress {
+    private func levelProgress(current: Int, target: Int, repeatCount: Int) -> AchievementProgress {
         let clampedCurrent = max(0, current)
         let text = "Level \(formatNumber(clampedCurrent))/\(formatNumber(target))"
-        return AchievementProgress(current: clampedCurrent, target: target, text: text)
+        return AchievementProgress(current: clampedCurrent, target: target, text: text, repeatCount: repeatCount)
+    }
+
+    private func repeatCount(for type: AchievementType, isUnlocked: Bool) -> Int {
+        guard isUnlocked, type.isRepeatable else { return 0 }
+        switch type {
+        case .hundredPagesInDay:
+            return dailyHundredPageCount
+        case .marathonReader:
+            return marathonSessionCount
+        default:
+            return 0
+        }
     }
 }
 
@@ -666,6 +697,7 @@ struct AchievementCard: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
 
+
                     if let achievement = achievement, achievement.isNew {
                         Text("New!")
                             .font(.system(size: 9, weight: .bold))
@@ -688,8 +720,22 @@ struct AchievementCard: View {
                         .stroke(isUnlocked ? themeColor.color.opacity(0.3) : Theme.Colors.tertiaryText.opacity(0.2), lineWidth: 1)
                 )
 
-                // Lock icon for locked achievements
-                if !isUnlocked {
+                if isUnlocked && progress.repeatCount > 1 {
+                    VStack {
+                        HStack {
+                            Text("x\(progress.repeatCount)")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(themeColor.color)
+                                .clipShape(Capsule())
+                            Spacer()
+                        }
+                        Spacer()
+                    }
+                } else if !isUnlocked {
+                    // Lock icon for locked achievements
                     VStack {
                         Spacer()
                         HStack {
@@ -795,6 +841,12 @@ struct AchievementDetailView: View {
                                         .foregroundStyle(Theme.Colors.secondaryText)
                                 }
                             }
+
+                            if type.isRepeatable {
+                                Text("Times earned: \(progress.repeatCount)")
+                                    .font(.caption)
+                                    .foregroundStyle(Theme.Colors.secondaryText)
+                            }
                         }
                         .padding(16)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -839,6 +891,7 @@ struct AchievementProgress {
     let current: Int
     let target: Int
     let text: String
+    let repeatCount: Int
 
     var fraction: Double {
         guard target > 0 else { return 0 }
