@@ -20,6 +20,16 @@ struct BookInfo: Hashable {
     let language: String?
     let olid: String? // Open Library ID for fetching full details
     let workID: String? // Work ID for finding best edition
+
+    var stableID: String {
+        if let olid { return "olid:\(olid)" }
+        if let workID { return "work:\(workID)" }
+        if let isbn { return "isbn:\(isbn)" }
+        let normalizedTitle = title.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalizedAuthor = author.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        let year = publishedDate ?? ""
+        return "fallback:\(normalizedTitle)|\(normalizedAuthor)|\(year)"
+    }
 }
 
 enum BookAPIError: Error {
@@ -84,10 +94,23 @@ final class BookAPIService {
     // MARK: - Open Library API
 
     private func fetchFromOpenLibrary(isbn: String) async throws -> BookInfo {
-        let cleanISBN = isbn.replacingOccurrences(of: "-", with: "")
-        let urlString = "https://openlibrary.org/api/books?bibkeys=ISBN:\(cleanISBN)&format=json&jscmd=data"
+        let cleanISBN = sanitizeISBN(isbn)
 
-        guard let url = URL(string: urlString) else {
+        guard cleanISBN.count == 10 || cleanISBN.count == 13 else {
+            throw BookAPIError.invalidISBN
+        }
+
+        var components = URLComponents()
+        components.scheme = "https"
+        components.host = "openlibrary.org"
+        components.path = "/api/books"
+        components.queryItems = [
+            URLQueryItem(name: "bibkeys", value: "ISBN:\(cleanISBN)"),
+            URLQueryItem(name: "format", value: "json"),
+            URLQueryItem(name: "jscmd", value: "data")
+        ]
+
+        guard let url = components.url else {
             throw BookAPIError.invalidISBN
         }
 
@@ -108,10 +131,16 @@ final class BookAPIService {
     }
 
     private func searchOpenLibrary(query: String) async throws -> [BookInfo] {
-        let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
-        let urlString = "https://openlibrary.org/search.json?q=\(encodedQuery)&limit=20"
+        var components = URLComponents()
+        components.scheme = "https"
+        components.host = "openlibrary.org"
+        components.path = "/search.json"
+        components.queryItems = [
+            URLQueryItem(name: "q", value: query),
+            URLQueryItem(name: "limit", value: "20")
+        ]
 
-        guard let url = URL(string: urlString) else {
+        guard let url = components.url else {
             throw BookAPIError.invalidResponse
         }
 
@@ -146,20 +175,28 @@ final class BookAPIService {
         let author = authors.first ?? "Unknown Author"
 
         // ISBN from identifiers
-        var isbn: String?
+        var isbnCandidates: [String] = []
         if let identifiers = data["identifiers"] as? [String: Any] {
             if let isbn13List = identifiers["isbn_13"] as? [String] {
-                isbn = isbn13List.first
-            } else if let isbn10List = identifiers["isbn_10"] as? [String] {
-                isbn = isbn10List.first
+                isbnCandidates.append(contentsOf: isbn13List)
+            }
+            if let isbn10List = identifiers["isbn_10"] as? [String] {
+                isbnCandidates.append(contentsOf: isbn10List)
             }
         }
+        let isbn = chooseISBN(isbnCandidates)
 
         // Cover from data.cover
         var coverURL: URL?
-        if let cover = data["cover"] as? [String: String],
-           let large = cover["large"] {
-            coverURL = URL(string: large)
+        if let cover = data["cover"] as? [String: String] {
+            coverURL = makeCoverURL(from: cover)
+        }
+
+        if coverURL == nil,
+           let details = record["details"] as? [String: Any],
+           let detailsData = details["details"] as? [String: Any],
+           let covers = detailsData["covers"] as? [Any] {
+            coverURL = makeCoverURL(from: covers)
         }
 
         // Pages from data.number_of_pages
@@ -258,9 +295,8 @@ final class BookAPIService {
         let pages = json["number_of_pages"] as? Int
 
         var coverURL: URL?
-        if let cover = json["cover"] as? [String: String],
-           let large = cover["large"] {
-            coverURL = URL(string: large)
+        if let cover = json["cover"] as? [String: String] {
+            coverURL = makeCoverURL(from: cover)
         }
 
         let publishedDate = json["publish_date"] as? String
@@ -303,7 +339,8 @@ final class BookAPIService {
         let authors = (json["author_name"] as? [String]) ?? []
         let author = authors.first ?? "Unknown Author"
 
-        let isbn = (json["isbn"] as? [String])?.first
+        let isbnCandidates = (json["isbn"] as? [String]) ?? []
+        let isbn = chooseISBN(isbnCandidates)
         let pages = json["number_of_pages_median"] as? Int
 
         var coverURL: URL?
@@ -347,9 +384,15 @@ final class BookAPIService {
     // MARK: - Best Edition Selection
 
     private func fetchBestEditionOLID(workID: String, originalTitle: String) async throws -> String? {
-        let urlString = "https://openlibrary.org/works/\(workID)/editions.json?limit=50"
+        var components = URLComponents()
+        components.scheme = "https"
+        components.host = "openlibrary.org"
+        components.path = "/works/\(workID)/editions.json"
+        components.queryItems = [
+            URLQueryItem(name: "limit", value: "50")
+        ]
 
-        guard let url = URL(string: urlString) else {
+        guard let url = components.url else {
             throw BookAPIError.invalidResponse
         }
 
@@ -511,10 +554,32 @@ final class BookAPIService {
         return languageMap[code.lowercased()] ?? code.uppercased()
     }
 
+    private func makeCoverURL(from cover: [String: String]) -> URL? {
+        if let large = cover["large"] {
+            return URL(string: large)
+        }
+        if let medium = cover["medium"] {
+            return URL(string: medium)
+        }
+        if let small = cover["small"] {
+            return URL(string: small)
+        }
+        return nil
+    }
+
+    private func makeCoverURL(from coverIDs: [Any]) -> URL? {
+        guard let first = coverIDs.first else { return nil }
+        if let coverID = first as? Int {
+            return URL(string: "https://covers.openlibrary.org/b/id/\(coverID)-L.jpg")
+        }
+        if let coverID = first as? String, let intID = Int(coverID) {
+            return URL(string: "https://covers.openlibrary.org/b/id/\(intID)-L.jpg")
+        }
+        return nil
+    }
+
     private func sanitizeISBN(_ isbn: String) -> String {
-        isbn.replacingOccurrences(of: "-", with: "")
-            .replacingOccurrences(of: " ", with: "")
-            .trimmingCharacters(in: .whitespaces)
+        String(isbn.uppercased().filter { $0.isNumber || $0 == "X" })
     }
 
     private func chooseISBN(_ isbns: [String]) -> String? {

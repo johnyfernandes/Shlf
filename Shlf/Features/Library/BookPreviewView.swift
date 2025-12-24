@@ -332,12 +332,34 @@ struct BookPreviewView: View {
                 }
 
                 if let olid = bestOLID {
-                    fullBookInfo = try await bookAPI.fetchBookByOLID(olid: olid)
+                    let fetchedInfo = try await bookAPI.fetchBookByOLID(olid: olid)
+                    fullBookInfo = mergedBookInfo(fetched: fetchedInfo, fallback: bookInfo)
                 }
             } catch {
                 print("Failed to fetch best edition: \(error)")
             }
         }
+    }
+
+    private func mergedBookInfo(fetched: BookInfo, fallback: BookInfo) -> BookInfo {
+        let resolvedTitle = fetched.title.isEmpty ? fallback.title : fetched.title
+        let resolvedAuthor = fetched.author == "Unknown Author" ? fallback.author : fetched.author
+        let resolvedSubjects = fetched.subjects?.isEmpty == false ? fetched.subjects : fallback.subjects
+
+        return BookInfo(
+            title: resolvedTitle,
+            author: resolvedAuthor,
+            isbn: fetched.isbn ?? fallback.isbn,
+            coverImageURL: fetched.coverImageURL ?? fallback.coverImageURL,
+            totalPages: fetched.totalPages ?? fallback.totalPages,
+            publishedDate: fetched.publishedDate ?? fallback.publishedDate,
+            description: fetched.description ?? fallback.description,
+            subjects: resolvedSubjects,
+            publisher: fetched.publisher ?? fallback.publisher,
+            language: fetched.language ?? fallback.language,
+            olid: fetched.olid ?? fallback.olid,
+            workID: fetched.workID ?? fallback.workID
+        )
     }
 
     private func addBookToLibrary() {
@@ -365,7 +387,7 @@ struct BookPreviewView: View {
                     title: displayInfo.title,
                     author: displayInfo.author,
                     isbn: displayInfo.isbn,
-                    coverImageURL: displayInfo.coverImageURL,
+                    coverImageURL: displayInfo.coverImageURL ?? bookInfo.coverImageURL,
                     totalPages: displayInfo.totalPages ?? 0,
                     currentPage: readingStatus == .currentlyReading ? currentPage : 0,
                     bookType: bookType,

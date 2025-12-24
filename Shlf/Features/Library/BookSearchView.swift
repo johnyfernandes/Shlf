@@ -91,7 +91,7 @@ struct BookSearchView: View {
                     } else {
                         ScrollView {
                             LazyVStack(spacing: 12) {
-                                ForEach(searchResults, id: \.olid) { bookInfo in
+                                ForEach(searchResults, id: \.stableID) { bookInfo in
                                     NavigationLink {
                                         BookPreviewView(
                                             bookInfo: bookInfo,
@@ -147,7 +147,9 @@ struct BookSearchView: View {
     }
 
     private func performSearch(query: String) async {
-        guard !query.isEmpty else {
+        let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !trimmedQuery.isEmpty else {
             await MainActor.run {
                 searchResults = []
                 cachedResults = []
@@ -171,8 +173,17 @@ struct BookSearchView: View {
             return
         }
 
+        if !lastAPIQuery.isEmpty,
+           trimmedQuery.hasPrefix(lastAPIQuery),
+           !cachedResults.isEmpty {
+            let filteredResults = filterResults(cachedResults, query: trimmedQuery)
+            await MainActor.run {
+                searchResults = filteredResults
+            }
+        }
+
         do {
-            let results = try await bookAPI.searchBooks(query: query)
+            let results = try await bookAPI.searchBooks(query: trimmedQuery)
 
             guard !Task.isCancelled else {
                 // Don't touch cached results on cancellation
@@ -187,7 +198,7 @@ struct BookSearchView: View {
                 let sortedResults = sortByCovers(results)
                 cachedResults = sortedResults
                 searchResults = sortedResults
-                lastAPIQuery = query
+                lastAPIQuery = trimmedQuery
                 isSearching = false
             }
         } catch is CancellationError {
