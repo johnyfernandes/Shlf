@@ -28,6 +28,7 @@ struct ShareSheetView: View {
     @State private var selectedGraphMetric: ShareGraphMetric = .pages
     @State private var selectedGraphStyle: ShareGraphStyle = .line
     @State private var showCover = true
+    @State private var showProgressRing = true
     @State private var showQuote = true
     @State private var selectedQuoteSource: ShareQuoteSource = .latest
     @State private var selectedBookStats: [BookStatOption] = [.pagesRead, .timeRead, .sessions, .milestoneDate]
@@ -259,6 +260,8 @@ struct ShareSheetView: View {
         Section("Content") {
             if selectedTemplate == .book {
                 Toggle("Show cover", isOn: $showCover)
+
+                Toggle("Show progress ring", isOn: $showProgressRing)
             }
 
             Toggle("Show graph", isOn: $showGraph)
@@ -859,6 +862,8 @@ private extension ShareSheetView {
                 coverImage: nil,
                 progress: nil,
                 progressText: nil,
+                showProgressRing: false,
+                hideProgressRingWhenComplete: true,
                 quote: nil,
                 graph: nil,
                 blocks: [],
@@ -906,6 +911,8 @@ private extension ShareSheetView {
             coverImage: showCover ? coverImage : nil,
             progress: progress,
             progressText: progressText,
+            showProgressRing: showProgressRing,
+            hideProgressRingWhenComplete: true,
             quote: quote,
             graph: graph,
             blocks: blocks,
@@ -954,6 +961,8 @@ private extension ShareSheetView {
             coverImage: nil,
             progress: nil,
             progressText: nil,
+            showProgressRing: true,
+            hideProgressRingWhenComplete: false,
             quote: nil,
             graph: graph,
             blocks: blocks,
@@ -1002,6 +1011,8 @@ private extension ShareSheetView {
             coverImage: nil,
             progress: progress,
             progressText: progressText,
+            showProgressRing: true,
+            hideProgressRingWhenComplete: false,
             quote: nil,
             graph: graph,
             blocks: blocks,

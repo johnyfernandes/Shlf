@@ -132,6 +132,8 @@ private struct ShareHeroView: View {
     let coverImage: UIImage?
     let progress: Double?
     let progressText: String?
+    let showProgressRing: Bool
+    let hideProgressRingWhenComplete: Bool
     let accentColor: Color
     let primaryText: Color
     let shadowColor: Color
@@ -142,7 +144,7 @@ private struct ShareHeroView: View {
     var body: some View {
         if coverImage != nil || progress != nil {
             if let coverImage {
-                let shouldShowRing = (progress ?? 0) > 0 && (progress ?? 0) < 1
+                let shouldShowRing = shouldShowRing(for: progress)
 
                 let heroContent = HStack(alignment: .top, spacing: 16 * scale) {
                     ZStack(alignment: .bottomTrailing) {
@@ -168,7 +170,11 @@ private struct ShareHeroView: View {
                             .padding(6 * scale)
                             .background(
                                 Circle()
-                                    .fill(ringBackground)
+                                    .fill(.ultraThinMaterial)
+                                    .overlay(
+                                        Circle()
+                                            .fill(ringBackground)
+                                    )
                                     .overlay(
                                         Circle()
                                             .stroke(primaryText.opacity(0.08), lineWidth: 1)
@@ -210,14 +216,31 @@ private struct ShareHeroView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             } else if let progress {
+                let shouldShowRing = shouldShowRing(for: progress)
                 VStack(spacing: 10 * scale) {
-                    ShareProgressRing(
-                        progress: progress,
-                        color: accentColor,
-                        trackColor: primaryText.opacity(0.2),
-                        size: 88 * scale,
-                        lineWidth: 12 * scale
-                    )
+                    if shouldShowRing {
+                        ShareProgressRing(
+                            progress: progress,
+                            color: accentColor,
+                            trackColor: primaryText.opacity(0.2),
+                            size: 88 * scale,
+                            lineWidth: 12 * scale
+                        )
+                        .padding(8 * scale)
+                        .background(
+                            Circle()
+                                .fill(.ultraThinMaterial)
+                                .overlay(
+                                    Circle()
+                                        .fill(ringBackground)
+                                )
+                                .overlay(
+                                    Circle()
+                                        .stroke(primaryText.opacity(0.08), lineWidth: 1)
+                                )
+                        )
+                        .shadow(color: shadowColor.opacity(0.35), radius: 10 * scale, y: 6 * scale)
+                    }
 
                     if let progressText {
                         Text(progressText)
@@ -229,6 +252,12 @@ private struct ShareHeroView: View {
                 .frame(maxWidth: .infinity)
             }
         }
+    }
+
+    private func shouldShowRing(for progress: Double?) -> Bool {
+        guard showProgressRing, let progress else { return false }
+        guard hideProgressRingWhenComplete else { return true }
+        return progress > 0 && progress < 1
     }
 }
 
@@ -508,17 +537,19 @@ private extension ShareCardView {
     ) -> some View {
         switch block {
         case .hero:
-            ShareHeroView(
-                coverImage: content.coverImage,
-                progress: content.progress,
-                progressText: content.progressText,
-                accentColor: style.accentColor,
-                primaryText: primaryText,
-                shadowColor: shadowColor,
-                ringBackground: ringBackground,
-                isCentered: isCentered,
-                scale: scale
-            )
+                    ShareHeroView(
+                        coverImage: content.coverImage,
+                        progress: content.progress,
+                        progressText: content.progressText,
+                        showProgressRing: content.showProgressRing,
+                        hideProgressRingWhenComplete: content.hideProgressRingWhenComplete,
+                        accentColor: style.accentColor,
+                        primaryText: primaryText,
+                        shadowColor: shadowColor,
+                        ringBackground: ringBackground,
+                        isCentered: isCentered,
+                        scale: scale
+                    )
         case .quote:
             if let quote = content.quote {
                 ShareQuoteView(

@@ -168,6 +168,8 @@ struct ShareCardContent {
     let coverImage: UIImage?
     let progress: Double?
     let progressText: String?
+    let showProgressRing: Bool
+    let hideProgressRingWhenComplete: Bool
     let quote: ShareQuote?
     let graph: ShareGraph?
     let blocks: [ShareContentBlock]
