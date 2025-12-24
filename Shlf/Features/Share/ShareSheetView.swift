@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import Photos
 import UIKit
 
 struct ShareSheetView: View {
@@ -25,6 +26,8 @@ struct ShareSheetView: View {
     @State private var includeImportedSessions = false
     @State private var coverImage: UIImage?
     @State private var showInstagramAlert = false
+    @State private var showSaveConfirmation = false
+    @State private var saveResultMessage = "Saved to Photos."
     @State private var isRendering = false
 
     init(book: Book? = nil, defaultTemplate: ShareTemplate? = nil) {
@@ -103,6 +106,11 @@ struct ShareSheetView: View {
         } message: {
             Text("Install Instagram to share directly to Stories, or use the Share Image button instead.")
         }
+        .alert("Image Saved", isPresented: $showSaveConfirmation) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(saveResultMessage)
+        }
     }
 
     private var previewCard: some View {
@@ -158,6 +166,15 @@ struct ShareSheetView: View {
     private var actionsSection: some View {
         VStack(spacing: Theme.Spacing.sm) {
             Button {
+                handleShare(.save)
+            } label: {
+                Label("Save Image", systemImage: "square.and.arrow.down")
+                    .frame(maxWidth: .infinity)
+            }
+            .secondaryButton(fullWidth: true)
+            .disabled(isRendering)
+
+            Button {
                 handleShare(.instagram)
             } label: {
                 Label("Share to Instagram Story", systemImage: "camera.fill")
@@ -173,16 +190,6 @@ struct ShareSheetView: View {
                     .frame(maxWidth: .infinity)
             }
             .secondaryButton(fullWidth: true)
-            .disabled(isRendering)
-
-            Button {
-                handleShare(.save)
-            } label: {
-                Label("Save Image", systemImage: "square.and.arrow.down")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.bordered)
-            .tint(themeColor.color)
             .disabled(isRendering)
 
             if isRendering {
@@ -230,7 +237,7 @@ struct ShareSheetView: View {
             case .shareSheet:
                 presentShareSheet(image)
             case .save:
-                UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+                saveImage(image)
             }
         }
     }
@@ -281,6 +288,31 @@ struct ShareSheetView: View {
             }
             activityVC.popoverPresentationController?.sourceView = topVC.view
             topVC.present(activityVC, animated: true)
+        }
+    }
+
+    private func saveImage(_ image: UIImage) {
+        PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+            guard status == .authorized || status == .limited else {
+                Task { @MainActor in
+                    saveResultMessage = "Allow Photos access to save images."
+                    showSaveConfirmation = true
+                }
+                return
+            }
+
+            PHPhotoLibrary.shared().performChanges({
+                PHAssetChangeRequest.creationRequestForAsset(from: image)
+            }) { success, error in
+                Task { @MainActor in
+                    if success {
+                        saveResultMessage = "Saved to Photos."
+                    } else {
+                        saveResultMessage = error?.localizedDescription ?? "Couldn't save the image."
+                    }
+                    showSaveConfirmation = true
+                }
+            }
         }
     }
 }
