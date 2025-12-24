@@ -19,6 +19,9 @@ struct QuickProgressStepper: View {
     @State private var longPressTimer: Timer?
     @State private var accelerationMultiplier: Double = 1.0
     @State private var showFinishAlert = false
+    @State private var isEditingPage = false
+    @State private var pageText = ""
+    @FocusState private var isPageFieldFocused: Bool
 
     private var totalPendingPages: Int {
         book.currentPage + pendingPages
@@ -54,12 +57,41 @@ struct QuickProgressStepper: View {
                 // Page display
                 VStack(spacing: 2) {
                     HStack(spacing: 6) {
-                        Text("\(book.currentPage)")
-                            .font(.system(size: 36, weight: .bold, design: .rounded))
-                            .foregroundStyle(Theme.Colors.text)
-                            .monospacedDigit()
+                        if isEditingPage {
+                            TextField("", text: $pageText)
+                                .font(.system(size: 36, weight: .bold, design: .rounded))
+                                .foregroundStyle(themeColor.color)
+                                .multilineTextAlignment(.center)
+                                .keyboardType(.numberPad)
+                                .focused($isPageFieldFocused)
+                                .frame(minWidth: 60)
+                                .textFieldStyle(.plain)
+                                .onSubmit {
+                                    commitPageEdit()
+                                }
+                                .onChange(of: pageText) { _, newValue in
+                                    let filtered = newValue.filter { $0.isNumber }
+                                    if filtered != newValue {
+                                        pageText = filtered
+                                    }
+                                }
+                                .onChange(of: isPageFieldFocused) { _, newValue in
+                                    if !newValue {
+                                        commitPageEdit()
+                                    }
+                                }
+                        } else {
+                            Text("\(book.currentPage)")
+                                .font(.system(size: 36, weight: .bold, design: .rounded))
+                                .foregroundStyle(Theme.Colors.text)
+                                .monospacedDigit()
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    startPageEditing()
+                                }
+                        }
 
-                        if pendingPages != 0 {
+                        if pendingPages != 0 && !isEditingPage {
                             Image(systemName: "arrow.right")
                                 .font(.title3)
                                 .foregroundStyle(themeColor.color)
@@ -131,6 +163,13 @@ struct QuickProgressStepper: View {
         }
         .padding(16)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .toolbar {
+            ToolbarItem(placement: .keyboard) {
+                Button("Done") {
+                    commitPageEdit()
+                }
+            }
+        }
         .onChange(of: pendingPages) { oldValue, newValue in
             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                 showSaveButton = newValue != 0
@@ -283,6 +322,35 @@ struct QuickProgressStepper: View {
 
         // Create session with ACTUAL pages read
         onSave(actualPagesRead)
+    }
+
+    private func startPageEditing() {
+        pageText = "\(totalPendingPages)"
+        isEditingPage = true
+        isPageFieldFocused = true
+    }
+
+    private func commitPageEdit() {
+        guard isEditingPage else { return }
+        let filtered = pageText.filter { $0.isNumber }
+        guard !filtered.isEmpty, let value = Int(filtered) else {
+            pageText = "\(totalPendingPages)"
+            isEditingPage = false
+            isPageFieldFocused = false
+            return
+        }
+
+        let clamped = clampPage(value)
+        pendingPages = clamped - book.currentPage
+        pageText = "\(clamped)"
+        isEditingPage = false
+        isPageFieldFocused = false
+    }
+
+    private func clampPage(_ value: Int) -> Int {
+        let minPage = 0
+        let maxPage = book.totalPages ?? Int.max
+        return min(maxPage, max(minPage, value))
     }
 }
 

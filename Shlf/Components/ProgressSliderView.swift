@@ -20,6 +20,9 @@ struct ProgressSliderView: View {
     @State private var showSaveButton = false
     @State private var lastHapticPage: Int = 0
     @State private var showFinishAlert = false
+    @State private var isEditingPage = false
+    @State private var pageText = ""
+    @FocusState private var isPageFieldFocused: Bool
 
     private var currentPage: Int {
         Int(sliderValue)
@@ -70,11 +73,40 @@ struct ProgressSliderView: View {
                 // Page display with info
                 VStack(spacing: 4) {
                     HStack(spacing: 6) {
-                        Text("\(currentPage)")
-                            .font(.system(size: 42, weight: .bold, design: .rounded))
-                            .foregroundStyle(isDragging ? themeColor.color : Theme.Colors.text)
-                            .monospacedDigit()
-                            .contentTransition(.numericText())
+                        if isEditingPage {
+                            TextField("", text: $pageText)
+                                .font(.system(size: 42, weight: .bold, design: .rounded))
+                                .foregroundStyle(themeColor.color)
+                                .multilineTextAlignment(.center)
+                                .keyboardType(.numberPad)
+                                .focused($isPageFieldFocused)
+                                .frame(minWidth: 60)
+                                .textFieldStyle(.plain)
+                                .onSubmit {
+                                    commitPageEdit()
+                                }
+                                .onChange(of: pageText) { _, newValue in
+                                    let filtered = newValue.filter { $0.isNumber }
+                                    if filtered != newValue {
+                                        pageText = filtered
+                                    }
+                                }
+                                .onChange(of: isPageFieldFocused) { _, newValue in
+                                    if !newValue {
+                                        commitPageEdit()
+                                    }
+                                }
+                        } else {
+                            Text("\(currentPage)")
+                                .font(.system(size: 42, weight: .bold, design: .rounded))
+                                .foregroundStyle(isDragging ? themeColor.color : Theme.Colors.text)
+                                .monospacedDigit()
+                                .contentTransition(.numericText())
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    startPageEditing()
+                                }
+                        }
 
                         if let total = book.totalPages {
                             Text("/ \(total)")
@@ -195,6 +227,13 @@ struct ProgressSliderView: View {
         }
         .padding(16)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .toolbar {
+            ToolbarItem(placement: .keyboard) {
+                Button("Done") {
+                    commitPageEdit()
+                }
+            }
+        }
         .onAppear {
             sliderValue = max(0, min(Double(book.currentPage), maxSliderValue))
         }
@@ -311,6 +350,35 @@ struct ProgressSliderView: View {
         withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) {
             sliderValue = max(0, sliderValue - Double(incrementAmount))
         }
+    }
+
+    private func startPageEditing() {
+        pageText = "\(currentPage)"
+        isEditingPage = true
+        isPageFieldFocused = true
+    }
+
+    private func commitPageEdit() {
+        guard isEditingPage else { return }
+        let filtered = pageText.filter { $0.isNumber }
+        guard !filtered.isEmpty, let value = Int(filtered) else {
+            pageText = "\(currentPage)"
+            isEditingPage = false
+            isPageFieldFocused = false
+            return
+        }
+
+        let clamped = clampPage(value)
+        sliderValue = Double(clamped)
+        pageText = "\(clamped)"
+        isEditingPage = false
+        isPageFieldFocused = false
+    }
+
+    private func clampPage(_ value: Int) -> Int {
+        let minPage = 0
+        let maxPage = book.totalPages ?? Int.max
+        return min(maxPage, max(minPage, value))
     }
 }
 
