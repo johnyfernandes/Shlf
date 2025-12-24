@@ -17,6 +17,7 @@ final class Book {
     var coverImageURL: URL?
     var totalPages: Int?
     var currentPage: Int = 0
+    var savedCurrentPage: Int? // Stores progress when switching away from Currently Reading
     var bookTypeRawValue: String = BookType.physical.rawValue
     var readingStatusRawValue: String = ReadingStatus.wantToRead.rawValue
     var dateAdded: Date = Date()

@@ -110,13 +110,7 @@ struct BookDetailView: View {
                         }
 
                         Button {
-                            book.readingStatus = .didNotFinish
-                            book.dateFinished = Date()
-
-                            // Sync status change to Watch
-                            Task { @MainActor in
-                                await WatchConnectivityManager.shared.syncBooksToWatch()
-                            }
+                            updateReadingStatus(to: .didNotFinish)
                         } label: {
                             Label("Mark as DNF", systemImage: "xmark.circle")
                         }
@@ -181,7 +175,7 @@ struct BookDetailView: View {
             }
         } message: {
             if let status = pendingStatus {
-                Text("You're on page \(book.currentPage). Changing to \"\(status.rawValue)\" will reset your progress, but it will be saved and restored if you switch back to \"Currently Reading\".")
+                Text("You're on page \(book.currentPage). Your progress will be saved and automatically restored when you return to \"Currently Reading\".")
             }
         }
     }
@@ -297,6 +291,20 @@ struct BookDetailView: View {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
                 .background(.ultraThinMaterial, in: Capsule())
+            }
+
+            // Saved progress indicator
+            if let saved = book.savedCurrentPage, book.readingStatus != .currentlyReading {
+                HStack(spacing: 4) {
+                    Image(systemName: "bookmark.fill")
+                        .font(.caption2)
+                    Text("Saved at page \(saved)")
+                        .font(.caption2.weight(.medium))
+                }
+                .foregroundStyle(.orange)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(.orange.opacity(0.15), in: Capsule())
             }
         }
         .frame(maxWidth: .infinity)
@@ -702,22 +710,14 @@ struct BookDetailView: View {
     // MARK: - Actions
 
     private func markAsFinished() {
-        book.readingStatus = .finished
-        book.dateFinished = Date()
-        if let totalPages = book.totalPages {
-            book.currentPage = totalPages
-        }
+        updateReadingStatus(to: .finished)
         showConfetti = true
-
-        // Sync status change to Watch
-        Task { @MainActor in
-            await WatchConnectivityManager.shared.syncBooksToWatch()
-        }
     }
 
     private func handleStatusChange(to status: ReadingStatus) {
         if book.readingStatus == status { return }
 
+        // If leaving Currently Reading with progress, show alert to confirm
         if book.readingStatus == .currentlyReading && book.currentPage > 0 {
             savedProgress = book.currentPage
             pendingStatus = status
@@ -728,28 +728,64 @@ struct BookDetailView: View {
     }
 
     private func updateReadingStatus(to status: ReadingStatus) {
+        let oldStatus = book.readingStatus
+
         withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+            // STEP 1: Save progress when leaving Currently Reading
+            if oldStatus == .currentlyReading && book.currentPage > 0 {
+                book.savedCurrentPage = book.currentPage
+            }
+
+            // STEP 2: Update status
             book.readingStatus = status
 
+            // STEP 3: Handle progress and dates based on NEW status
             switch status {
             case .currentlyReading:
+                // Set start date if first time reading
                 if book.dateStarted == nil {
                     book.dateStarted = Date()
                 }
-                if let saved = savedProgress {
+
+                // Restore saved progress if available
+                if let saved = book.savedCurrentPage {
                     book.currentPage = saved
+                    book.savedCurrentPage = nil // Clear after use
+                } else if let temp = savedProgress {
+                    // Fallback to temporary saved progress
+                    book.currentPage = temp
                 }
+
             case .finished:
-                book.dateFinished = Date()
+                // Save current progress before forcing to total
+                if book.currentPage > 0 {
+                    book.savedCurrentPage = book.currentPage
+                }
+                // Set to total pages if available
                 if let totalPages = book.totalPages {
                     book.currentPage = totalPages
                 }
-            case .didNotFinish:
                 book.dateFinished = Date()
+
+            case .didNotFinish:
+                // Save current progress
+                if book.currentPage > 0 {
+                    book.savedCurrentPage = book.currentPage
+                }
+                book.dateFinished = Date()
+
             case .wantToRead:
-                break
+                // Save current progress
+                if book.currentPage > 0 {
+                    book.savedCurrentPage = book.currentPage
+                }
+                // Reset to 0 for Want to Read
+                book.currentPage = 0
             }
         }
+
+        // Clear temporary saved progress after use
+        savedProgress = nil
 
         // Sync status change to Watch
         Task { @MainActor in

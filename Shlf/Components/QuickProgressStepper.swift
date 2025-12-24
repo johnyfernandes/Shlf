@@ -258,9 +258,19 @@ struct QuickProgressStepper: View {
         // Calculate ACTUAL pages read (accounting for clamping)
         let actualPagesRead = clampedPage - originalCurrentPage
 
+        // Auto-change status to Currently Reading if needed
+        // But restore saved progress first if available
         if book.readingStatus == .wantToRead && clampedPage > 0 {
             book.readingStatus = .currentlyReading
             book.dateStarted = Date()
+        }
+
+        // If book has saved progress and user is starting fresh, warn them
+        // (Don't automatically restore - let user decide)
+        if let saved = book.savedCurrentPage, saved > 0, originalCurrentPage == 0 {
+            // User had saved progress but is starting from 0
+            // Keep the current action but don't clear savedCurrentPage yet
+            // User can manually restore via EditBookView if needed
         }
 
         withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {

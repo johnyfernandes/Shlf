@@ -266,10 +266,14 @@ struct ProgressSliderView: View {
 
         book.currentPage = currentPage
 
+        // Auto-change status to Currently Reading if needed
         if book.readingStatus == .wantToRead && currentPage > 0 {
             book.readingStatus = .currentlyReading
             book.dateStarted = Date()
         }
+
+        // If book has saved progress, keep it for potential restoration
+        // (Don't automatically clear it)
 
         withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
             showSaveButton = false
