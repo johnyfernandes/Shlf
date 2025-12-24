@@ -75,7 +75,11 @@ enum WidgetDataExporter {
 
             let payloadBooks = selectedBooks.map { book in
                 let xpToday = sessions
-                    .filter { $0.book?.id == book.id && Calendar.current.isDate($0.startDate, inSameDayAs: Date()) }
+                    .filter {
+                        $0.countsTowardStats &&
+                        $0.book?.id == book.id &&
+                        Calendar.current.isDate($0.startDate, inSameDayAs: Date())
+                    }
                     .reduce(0) { $0 + $1.xpEarned }
 
                 // Check if this book has an active session

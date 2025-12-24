@@ -37,10 +37,20 @@ struct SessionsListWatchView: View {
         }
     }
 
+    private var trackedBookSessions: [ReadingSession] {
+        bookSessions.filter { $0.countsTowardStats }
+    }
+
     private var todaysSessions: [ReadingSession] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         return bookSessions.filter { calendar.isDate($0.startDate, inSameDayAs: today) }
+    }
+
+    private var todaysTrackedSessions: [ReadingSession] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        return trackedBookSessions.filter { calendar.isDate($0.startDate, inSameDayAs: today) }
     }
 
     private var olderSessions: [ReadingSession] {
@@ -52,9 +62,9 @@ struct SessionsListWatchView: View {
     var body: some View {
         List {
             // Today's Summary
-            if !todaysSessions.isEmpty {
+            if !todaysTrackedSessions.isEmpty {
                 Section {
-                    TodaysSummaryCard(sessions: todaysSessions)
+                    TodaysSummaryCard(sessions: todaysTrackedSessions)
                 }
             }
 
@@ -171,6 +181,12 @@ struct SessionRowWatch: View {
                 Text("\(session.xpEarned) XP")
                     .font(.caption)
                     .foregroundStyle(themeColor.color)
+            }
+
+            if session.isImported || !session.countsTowardStats {
+                Text("Imported")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.orange)
             }
 
             HStack {

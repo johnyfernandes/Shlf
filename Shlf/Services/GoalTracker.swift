@@ -66,6 +66,7 @@ class GoalTracker {
 
             let today = Date()
             let sessions = allSessions.filter { session in
+                session.countsTowardStats &&
                 session.startDate >= goal.startDate &&
                 session.startDate <= goal.endDate &&
                 calendar.isDate(session.startDate, inSameDayAs: today)
@@ -81,6 +82,7 @@ class GoalTracker {
 
             let today = Date()
             let sessions = allSessions.filter { session in
+                session.countsTowardStats &&
                 session.startDate >= goal.startDate &&
                 session.startDate <= goal.endDate &&
                 calendar.isDate(session.startDate, inSameDayAs: today)
@@ -97,6 +99,7 @@ class GoalTracker {
 
             // Filter sessions within goal period
             let sessionsInPeriod = allSessions.filter { session in
+                session.countsTowardStats &&
                 session.startDate >= goal.startDate &&
                 session.startDate <= goal.endDate
             }

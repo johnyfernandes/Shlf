@@ -42,12 +42,16 @@ struct StatsView: View {
     }
 
     // Computed properties that SwiftUI watches
+    private var statSessions: [ReadingSession] {
+        allSessions.filter { $0.countsTowardStats }
+    }
+
     private var totalPagesRead: Int {
-        allSessions.reduce(0) { $0 + $1.pagesRead }
+        statSessions.reduce(0) { $0 + $1.pagesRead }
     }
 
     private var totalMinutesRead: Int {
-        allSessions.reduce(0) { $0 + $1.durationMinutes }
+        statSessions.reduce(0) { $0 + $1.durationMinutes }
     }
 
     private var totalBooksRead: Int {
@@ -196,14 +200,14 @@ struct StatsView: View {
                 .font(Theme.Typography.title3)
                 .foregroundStyle(Theme.Colors.text)
 
-            if !allSessions.isEmpty {
+            if !statSessions.isEmpty {
                 Group {
                     switch profile.chartType {
                     case .bar:
-                        ReadingActivityChart(sessions: allSessions)
+                        ReadingActivityChart(sessions: statSessions)
                             .frame(height: 260)
                     case .heatmap:
-                        ReadingHeatmapChart(sessions: allSessions, period: profile.heatmapPeriod)
+                        ReadingHeatmapChart(sessions: statSessions, period: profile.heatmapPeriod)
                     }
                 }
                 .padding(20)

@@ -30,11 +30,12 @@ final class GamificationEngine {
     func recalculateStats(for profile: UserProfile) {
         let previousLevel = profile.currentLevel
 
-        // Recalculate XP from all sessions
+        // Recalculate XP from tracked sessions only
         let sessionDescriptor = FetchDescriptor<ReadingSession>()
         guard let allSessions = try? modelContext.fetch(sessionDescriptor) else { return }
+        let trackedSessions = allSessions.filter { $0.countsTowardStats }
 
-        let totalXP = allSessions.reduce(0) { $0 + $1.xpEarned }
+        let totalXP = trackedSessions.reduce(0) { $0 + $1.xpEarned }
         profile.totalXP = totalXP // Set directly, don't add
 
         // Check for level-up achievements
@@ -44,7 +45,7 @@ final class GamificationEngine {
         }
 
         // Recalculate streak
-        recalculateStreak(for: profile, sessions: allSessions)
+        recalculateStreak(for: profile, sessions: trackedSessions)
 
         // Update goals
         let tracker = GoalTracker(modelContext: modelContext)
@@ -214,8 +215,9 @@ final class GamificationEngine {
     private func checkPageAchievements(profile: UserProfile) {
         let descriptor = FetchDescriptor<ReadingSession>()
         guard let sessions = try? modelContext.fetch(descriptor) else { return }
+        let trackedSessions = sessions.filter { $0.countsTowardStats }
 
-        let totalPages = sessions.reduce(0) { $0 + $1.pagesRead }
+        let totalPages = trackedSessions.reduce(0) { $0 + $1.pagesRead }
 
         let milestones: [(Int, AchievementType)] = [
             (100, .hundredPages),
@@ -233,7 +235,7 @@ final class GamificationEngine {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
 
-        let todaySessions = sessions.filter {
+        let todaySessions = trackedSessions.filter {
             calendar.isDate($0.startDate, inSameDayAs: today)
         }
 
@@ -326,7 +328,9 @@ final class GamificationEngine {
         // iOS 26 optimization: Add fetch limit for safety
         var sessionDescriptor = FetchDescriptor<ReadingSession>()
         sessionDescriptor.fetchLimit = 50000 // Sanity limit
-        let sessionPages = (try? modelContext.fetch(sessionDescriptor))?.reduce(0) { $0 + $1.pagesRead } ?? 0
+        let sessionPages = (try? modelContext.fetch(sessionDescriptor))?
+            .filter { $0.countsTowardStats }
+            .reduce(0) { $0 + $1.pagesRead } ?? 0
 
         return max(0, sessionPages) // Don't show negative if user makes big corrections
     }
@@ -336,7 +340,7 @@ final class GamificationEngine {
         var descriptor = FetchDescriptor<ReadingSession>()
         descriptor.fetchLimit = 50000 // Sanity limit
         guard let sessions = try? modelContext.fetch(descriptor) else { return 0 }
-        return sessions.reduce(0) { $0 + $1.durationMinutes }
+        return sessions.filter { $0.countsTowardStats }.reduce(0) { $0 + $1.durationMinutes }
     }
 
     func booksReadThisYear() -> Int {

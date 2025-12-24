@@ -936,8 +936,19 @@ struct ReadingSessionRow: View {
     var body: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(session.displayName)
-                    .font(.subheadline.weight(.medium))
+                HStack(spacing: 6) {
+                    Text(session.displayName)
+                        .font(.subheadline.weight(.medium))
+
+                    if session.isImported || !session.countsTowardStats {
+                        Text("Imported")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.orange)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(.orange.opacity(0.15), in: Capsule())
+                    }
+                }
 
                 HStack(spacing: 4) {
                     Text(session.pagesRead >= 0 ? "+\(session.pagesRead)" : "\(session.pagesRead)")
