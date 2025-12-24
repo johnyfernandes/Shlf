@@ -999,7 +999,8 @@ struct FinishBookLogView: View {
     @State private var endPage: Int
     @State private var endPageText: String
     @State private var durationMinutes = 60
-    @State private var sessionDate = Date()
+    @State private var finishDate = Date()
+    @State private var includeDuration = false
     @FocusState private var focusedField: FocusField?
 
     enum FocusField: Hashable {
@@ -1071,12 +1072,33 @@ struct FinishBookLogView: View {
                     }
                 }
 
-            Section("Duration") {
-                    DurationPickerView(minutes: $durationMinutes, maxHours: 99)
+                Section("Time Spent") {
+                    Toggle("Track time spent", isOn: $includeDuration)
+                        .onChange(of: includeDuration) { _, newValue in
+                            if newValue {
+                                if durationMinutes == 0 {
+                                    durationMinutes = 60
+                                }
+                            } else {
+                                durationMinutes = 0
+                            }
+                        }
+
+                    if includeDuration {
+                        DurationPickerView(minutes: $durationMinutes, maxHours: 99)
+                    } else {
+                        Text("This finish will count pages only.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
                 Section("Date") {
-                    DatePicker("Finish Date", selection: $sessionDate, displayedComponents: [.date, .hourAndMinute])
+                    DatePicker(
+                        "Finish Date",
+                        selection: $finishDate,
+                        displayedComponents: includeDuration ? [.date, .hourAndMinute] : [.date]
+                    )
                 }
 
                 Section {
@@ -1094,6 +1116,9 @@ struct FinishBookLogView: View {
             }
             .scrollDismissesKeyboard(.interactively)
             .onAppear {
+                if !includeDuration {
+                    durationMinutes = 0
+                }
                 syncEndPageText(with: endPage)
             }
             .onChange(of: focusedField) { _, newValue in
@@ -1177,9 +1202,12 @@ struct FinishBookLogView: View {
             }
         }
 
+        let endDate = finishDate
+        let startDate = endDate.addingTimeInterval(TimeInterval(-durationMinutes * 60))
+
         let session = ReadingSession(
-            startDate: sessionDate,
-            endDate: sessionDate.addingTimeInterval(TimeInterval(durationMinutes * 60)),
+            startDate: startDate,
+            endDate: endDate,
             startPage: 0,
             endPage: endPage,
             durationMinutes: durationMinutes,
@@ -1197,9 +1225,9 @@ struct FinishBookLogView: View {
             book.currentPage = max(0, endPage)
         }
         book.readingStatus = .finished
-        book.dateFinished = sessionDate
+        book.dateFinished = finishDate
         if book.dateStarted == nil {
-            book.dateStarted = sessionDate
+            book.dateStarted = durationMinutes > 0 ? startDate : finishDate
         }
         book.savedCurrentPage = nil
 
@@ -1213,7 +1241,7 @@ struct FinishBookLogView: View {
                 engine.awardXP(session.xpEarned, to: profile)
                 session.xpAwarded = true
             }
-            engine.updateStreak(for: profile, sessionDate: sessionDate)
+            engine.updateStreak(for: profile, sessionDate: finishDate)
             engine.checkAchievements(for: profile)
             WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
         }
