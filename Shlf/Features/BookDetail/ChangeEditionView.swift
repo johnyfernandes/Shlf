@@ -107,9 +107,11 @@ struct ChangeEditionView: View {
 
         do {
             let fetched = try await bookAPI.fetchBookByOLID(olid: edition.olid)
-            applyEditionData(fetched: fetched, edition: edition)
-            try? modelContext.save()
-            dismiss()
+            await MainActor.run {
+                applyEditionData(fetched: fetched, edition: edition)
+                try? modelContext.save()
+                dismiss()
+            }
         } catch {
             errorMessage = "Failed to load edition details. Please try again."
         }
@@ -166,6 +168,7 @@ struct ChangeEditionView: View {
         return nil
     }
 
+    @MainActor
     private func applyEditionData(fetched: BookInfo, edition: EditionInfo) {
         let resolvedTitle = fetched.title.isEmpty ? edition.title : fetched.title
         let resolvedAuthor = fetched.author == "Unknown Author" ? book.author : fetched.author
