@@ -34,6 +34,18 @@ struct ProgressSliderView: View {
         return (Double(currentPage) / Double(total)) * 100
     }
 
+    private var maxSliderValue: Double {
+        if let total = book.totalPages, total > 0 {
+            return Double(total)
+        }
+        return Double(max(book.currentPage, 100))
+    }
+
+    private var sliderProgress: Double {
+        let denominator = max(1, maxSliderValue)
+        return min(1, max(0, sliderValue / denominator))
+    }
+
     var body: some View {
         VStack(spacing: 16) {
             // Compact page display
@@ -130,7 +142,7 @@ struct ProgressSliderView: View {
                                     endPoint: .trailing
                                 )
                             )
-                            .frame(width: geometry.size.width * (sliderValue / Double(book.totalPages ?? 1)), height: 6)
+                            .frame(width: geometry.size.width * sliderProgress, height: 6)
                             .animation(.spring(response: 0.3, dampingFraction: 0.8), value: sliderValue)
 
                         // Thumb
@@ -142,7 +154,7 @@ struct ProgressSliderView: View {
                                 Circle()
                                     .strokeBorder(themeColor.color, lineWidth: isDragging ? 3 : 2)
                             )
-                            .offset(x: geometry.size.width * (sliderValue / Double(book.totalPages ?? 1)) - (isDragging ? 14 : 11))
+                            .offset(x: geometry.size.width * sliderProgress - (isDragging ? 14 : 11))
                             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isDragging)
                             .gesture(
                                 DragGesture(minimumDistance: 0)
@@ -184,11 +196,11 @@ struct ProgressSliderView: View {
         .padding(16)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .onAppear {
-            sliderValue = Double(book.currentPage)
+            sliderValue = max(0, min(Double(book.currentPage), maxSliderValue))
         }
         .onChange(of: book.currentPage) { oldValue, newValue in
             if !isDragging && !showSaveButton {
-                sliderValue = Double(newValue)
+                sliderValue = max(0, min(Double(newValue), maxSliderValue))
             }
         }
         .onChange(of: hasChanges) { oldValue, newValue in
@@ -232,7 +244,8 @@ struct ProgressSliderView: View {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         }
 
-        let maxValue = Double(book.totalPages ?? 100)
+        guard width > 0 else { return }
+        let maxValue = maxSliderValue
         let newValue = max(0, min(maxValue, (value.location.x / width) * maxValue))
         let roundedValue = round(newValue)
 

@@ -554,7 +554,12 @@ struct BookDetailView: View {
 
             VStack(spacing: 10) {
                 ForEach(displayedSessions) { session in
-                    ReadingSessionRow(session: session)
+                    NavigationLink {
+                        SessionDetailView(session: session, book: book)
+                    } label: {
+                        ReadingSessionRow(session: session)
+                    }
+                    .buttonStyle(.plain)
 
                     if session.id != displayedSessions.last?.id {
                         Divider()
