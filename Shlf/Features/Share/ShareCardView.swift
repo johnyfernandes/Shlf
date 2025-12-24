@@ -25,6 +25,7 @@ struct ShareCardView: View {
             let statFill = isLightBackground ? Color.white.opacity(0.7) : Color.white.opacity(0.12)
             let statStroke = isLightBackground ? Color.black.opacity(0.08) : Color.white.opacity(0.15)
             let shadowColor = isLightBackground ? Color.black.opacity(0.12) : Color.black.opacity(0.25)
+            let ringBackground = isLightBackground ? Color.white.opacity(0.95) : Color.black.opacity(0.35)
 
             ZStack {
                 ShareBackgroundView(style: style.background, accentColor: style.accentColor)
@@ -69,12 +70,13 @@ struct ShareCardView: View {
                             block,
                             primaryText: primaryText,
                             secondaryText: tertiaryText,
-                            statFill: statFill,
-                            statStroke: statStroke,
-                            shadowColor: shadowColor,
-                            isCentered: isCentered,
-                            scale: scale
-                        )
+                        statFill: statFill,
+                        statStroke: statStroke,
+                        shadowColor: shadowColor,
+                        ringBackground: ringBackground,
+                        isCentered: isCentered,
+                        scale: scale
+                    )
                     }
 
                     Spacer(minLength: 12 * scale)
@@ -133,6 +135,7 @@ private struct ShareHeroView: View {
     let accentColor: Color
     let primaryText: Color
     let shadowColor: Color
+    let ringBackground: Color
     let isCentered: Bool
     let scale: CGFloat
 
@@ -140,33 +143,57 @@ private struct ShareHeroView: View {
         if coverImage != nil || progress != nil {
             if let coverImage {
                 HStack(alignment: .top, spacing: 16 * scale) {
-                    Image(uiImage: coverImage)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 140 * scale, height: 200 * scale)
-                        .clipShape(RoundedRectangle(cornerRadius: 18 * scale, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 18 * scale, style: .continuous)
-                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                        )
-                        .shadow(color: shadowColor, radius: 16 * scale, y: 8 * scale)
+                    ZStack(alignment: .bottomTrailing) {
+                        Image(uiImage: coverImage)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 140 * scale, height: 200 * scale)
+                            .clipShape(RoundedRectangle(cornerRadius: 18 * scale, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 18 * scale, style: .continuous)
+                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                            )
+                            .shadow(color: shadowColor, radius: 16 * scale, y: 8 * scale)
 
-                    if let progress {
-                        VStack(alignment: .leading, spacing: 10 * scale) {
+                        if let progress {
                             ShareProgressRing(
                                 progress: progress,
                                 color: accentColor,
                                 trackColor: primaryText.opacity(0.2),
-                                size: 76 * scale,
-                                lineWidth: 10 * scale
+                                size: 54 * scale,
+                                lineWidth: 7 * scale
                             )
-
-                            if let progressText {
-                                Text(progressText)
-                                    .font(.system(size: 14 * scale, weight: .semibold, design: .rounded))
-                                    .foregroundStyle(primaryText.opacity(0.85))
-                            }
+                            .padding(6 * scale)
+                            .background(
+                                Circle()
+                                    .fill(ringBackground)
+                                    .overlay(
+                                        Circle()
+                                            .stroke(primaryText.opacity(0.08), lineWidth: 1)
+                                    )
+                            )
+                            .shadow(color: shadowColor.opacity(0.4), radius: 6 * scale, y: 3 * scale)
+                            .padding(8 * scale)
                         }
+                    }
+
+                    if let progressText {
+                        VStack(alignment: .leading, spacing: 6 * scale) {
+                            Text("Progress")
+                                .font(.system(size: 12 * scale, weight: .semibold, design: .rounded))
+                                .foregroundStyle(primaryText.opacity(0.6))
+
+                            if let progress {
+                                Text("\(Int((progress * 100).rounded()))%")
+                                    .font(.system(size: 22 * scale, weight: .bold, design: .rounded))
+                                    .foregroundStyle(primaryText)
+                            }
+
+                            Text(progressText)
+                                .font(.system(size: 14 * scale, weight: .semibold, design: .rounded))
+                                .foregroundStyle(primaryText.opacity(0.85))
+                        }
+                        .padding(.top, 6 * scale)
                     }
 
                     Spacer(minLength: 0)
@@ -465,6 +492,7 @@ private extension ShareCardView {
         statFill: Color,
         statStroke: Color,
         shadowColor: Color,
+        ringBackground: Color,
         isCentered: Bool,
         scale: CGFloat
     ) -> some View {
@@ -477,6 +505,7 @@ private extension ShareCardView {
                 accentColor: style.accentColor,
                 primaryText: primaryText,
                 shadowColor: shadowColor,
+                ringBackground: ringBackground,
                 isCentered: isCentered,
                 scale: scale
             )

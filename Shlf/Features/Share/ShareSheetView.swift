@@ -155,16 +155,20 @@ struct ShareSheetView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: Theme.Spacing.lg) {
-                    previewCard
-                    optionsSection
-                    statsSection
-                    contentOrderSection
-                    actionsSection
-                }
-                .padding(Theme.Spacing.md)
+            Form {
+                previewSection
+                templateSection
+                appearanceSection
+                contentSection
+                graphSection
+                quoteSection
+                dataSection
+                contentOrderSection
+                statsSections
+                actionsSection
             }
+            .environment(\.editMode, .constant(.active))
+            .tint(themeColor.color)
             .navigationTitle("Share")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -202,12 +206,17 @@ struct ShareSheetView: View {
             .shadow(color: Theme.Shadow.medium, radius: 12, y: 6)
     }
 
-    private var optionsSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-            Text("Customize")
-                .font(Theme.Typography.headline)
-                .foregroundStyle(Theme.Colors.text)
+    private var previewSection: some View {
+        Section("Preview") {
+            previewCard
+                .listRowInsets(EdgeInsets(top: Theme.Spacing.sm, leading: Theme.Spacing.md, bottom: Theme.Spacing.sm, trailing: Theme.Spacing.md))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+        }
+    }
 
+    private var templateSection: some View {
+        Section("Template") {
             if availableTemplates.count > 1 {
                 Picker("Template", selection: $selectedTemplate) {
                     ForEach(availableTemplates) { template in
@@ -225,8 +234,12 @@ struct ShareSheetView: View {
                 }
                 .pickerStyle(.segmented)
             }
+        }
+    }
 
-            Picker("Style", selection: $selectedBackground) {
+    private var appearanceSection: some View {
+        Section("Appearance") {
+            Picker("Background", selection: $selectedBackground) {
                 ForEach(ShareBackgroundStyle.allCases) { style in
                     Text(style.title).tag(style)
                 }
@@ -239,37 +252,50 @@ struct ShareSheetView: View {
                 }
             }
             .pickerStyle(.segmented)
+        }
+    }
 
+    private var contentSection: some View {
+        Section("Content") {
             if selectedTemplate == .book {
                 Toggle("Show cover", isOn: $showCover)
-                    .tint(themeColor.color)
             }
 
             Toggle("Show graph", isOn: $showGraph)
-                .tint(themeColor.color)
-
-            if showGraph {
-                Picker("Graph metric", selection: $selectedGraphMetric) {
-                    ForEach(availableGraphMetrics) { metric in
-                        Text(metric.title).tag(metric)
-                    }
-                }
-                .pickerStyle(.segmented)
-
-                Picker("Graph style", selection: $selectedGraphStyle) {
-                    ForEach(ShareGraphStyle.allCases) { style in
-                        Text(style.title).tag(style)
-                    }
-                }
-                .pickerStyle(.segmented)
-            }
 
             if selectedTemplate == .book, hasQuotes {
                 Toggle("Show quote", isOn: $showQuote)
-                    .tint(themeColor.color)
+            }
+        }
+    }
 
-                if showQuote {
-                    Picker("Quote", selection: $selectedQuoteSource) {
+    private var graphSection: some View {
+        Group {
+            if showGraph {
+                Section("Graph") {
+                    Picker("Metric", selection: $selectedGraphMetric) {
+                        ForEach(availableGraphMetrics) { metric in
+                            Text(metric.title).tag(metric)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+
+                    Picker("Style", selection: $selectedGraphStyle) {
+                        ForEach(ShareGraphStyle.allCases) { style in
+                            Text(style.title).tag(style)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+            }
+        }
+    }
+
+    private var quoteSection: some View {
+        Group {
+            if selectedTemplate == .book, hasQuotes, showQuote {
+                Section("Quote") {
+                    Picker("Selection", selection: $selectedQuoteSource) {
                         ForEach(ShareQuoteSource.allCases) { source in
                             Text(source.title).tag(source)
                         }
@@ -277,104 +303,84 @@ struct ShareSheetView: View {
                     .pickerStyle(.segmented)
                 }
             }
+        }
+    }
 
+    private var dataSection: some View {
+        Section(
+            footer: Text("Imported sessions are excluded from stats by default.")
+        ) {
             Toggle("Include imported sessions", isOn: $includeImportedSessions)
-                .tint(themeColor.color)
-
-            Text("Imported sessions are excluded from stats by default.")
-                .font(Theme.Typography.caption)
-                .foregroundStyle(Theme.Colors.secondaryText)
         }
-        .padding(Theme.Spacing.md)
-        .cardStyle()
-    }
-
-    private var actionsSection: some View {
-        VStack(spacing: Theme.Spacing.sm) {
-            Button {
-                handleShare(.save)
-            } label: {
-                Label("Save Image", systemImage: "square.and.arrow.down")
-                    .frame(maxWidth: .infinity)
-            }
-            .secondaryButton(fullWidth: true)
-            .disabled(isRendering)
-
-            Button {
-                handleShare(.instagram)
-            } label: {
-                Label("Share to Instagram Story", systemImage: "camera.fill")
-                    .frame(maxWidth: .infinity)
-            }
-            .primaryButton(fullWidth: true, color: themeColor.color)
-            .disabled(isRendering)
-
-            Button {
-                handleShare(.shareSheet)
-            } label: {
-                Label("Share Image", systemImage: "square.and.arrow.up")
-                    .frame(maxWidth: .infinity)
-            }
-            .secondaryButton(fullWidth: true)
-            .disabled(isRendering)
-
-            if isRendering {
-                ProgressView("Preparing your share...")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(Theme.Colors.secondaryText)
-                    .padding(.top, Theme.Spacing.xs)
-            }
-        }
-    }
-
-    private var statsSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-            Text("Stats")
-                .font(Theme.Typography.headline)
-                .foregroundStyle(Theme.Colors.text)
-
-            switch selectedTemplate {
-            case .book:
-                StatSelectorView(
-                    title: "Choose 4 stats",
-                    options: BookStatOption.allCases.map { StatOption(option: $0, title: $0.title, icon: $0.icon) },
-                    selected: $selectedBookStats,
-                    accentColor: themeColor.color
-                )
-            case .wrap:
-                StatSelectorView(
-                    title: "Choose 4 stats",
-                    options: WrapStatOption.allCases.map { StatOption(option: $0, title: $0.title, icon: $0.icon) },
-                    selected: $selectedWrapStats,
-                    accentColor: themeColor.color
-                )
-            case .streak:
-                StatSelectorView(
-                    title: "Choose 4 stats",
-                    options: StreakStatOption.allCases.map { StatOption(option: $0, title: $0.title, icon: $0.icon) },
-                    selected: $selectedStreakStats,
-                    accentColor: themeColor.color
-                )
-            }
-        }
-        .padding(Theme.Spacing.md)
-        .cardStyle()
     }
 
     private var contentOrderSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-            Text("Content Order")
-                .font(Theme.Typography.headline)
-                .foregroundStyle(Theme.Colors.text)
-
+        Section(
+            header: Text("Content Order"),
+            footer: Text("Drag to reorder. Disabled blocks stay hidden.")
+        ) {
             ContentOrderView(
                 order: contentOrderBinding,
                 enabledBlocks: enabledContentBlocks,
                 accentColor: themeColor.color
             )
         }
-        .padding(Theme.Spacing.md)
-        .cardStyle()
+    }
+
+    private var statsSections: some View {
+        Group {
+            switch selectedTemplate {
+            case .book:
+                StatSelectorSections(
+                    options: BookStatOption.allCases.map { StatOption(option: $0, title: $0.title, icon: $0.icon) },
+                    selected: $selectedBookStats,
+                    accentColor: themeColor.color
+                )
+            case .wrap:
+                StatSelectorSections(
+                    options: WrapStatOption.allCases.map { StatOption(option: $0, title: $0.title, icon: $0.icon) },
+                    selected: $selectedWrapStats,
+                    accentColor: themeColor.color
+                )
+            case .streak:
+                StatSelectorSections(
+                    options: StreakStatOption.allCases.map { StatOption(option: $0, title: $0.title, icon: $0.icon) },
+                    selected: $selectedStreakStats,
+                    accentColor: themeColor.color
+                )
+            }
+        }
+    }
+
+    private var actionsSection: some View {
+        Section("Share") {
+            Button {
+                handleShare(.save)
+            } label: {
+                Label("Save Image", systemImage: "square.and.arrow.down")
+            }
+            .disabled(isRendering)
+
+            Button {
+                handleShare(.instagram)
+            } label: {
+                Label("Share to Instagram Story", systemImage: "camera.fill")
+            }
+            .disabled(isRendering)
+
+            Button {
+                handleShare(.shareSheet)
+            } label: {
+                Label("Share Image", systemImage: "square.and.arrow.up")
+            }
+            .disabled(isRendering)
+
+            if isRendering {
+                ProgressView("Preparing your share...")
+                    .foregroundStyle(Theme.Colors.secondaryText)
+            }
+        }
+        .tint(themeColor.color)
     }
 
     private func loadCoverImageIfNeeded() async {
@@ -615,104 +621,70 @@ private struct StatOption<Stat: Hashable & Identifiable>: Identifiable {
     var id: Stat.ID { option.id }
 }
 
-private struct StatSelectorView<Stat: Hashable & Identifiable>: View {
-    let title: String
+private struct StatSelectorSections<Stat: Hashable & Identifiable>: View {
     let options: [StatOption<Stat>]
     @Binding var selected: [Stat]
     let accentColor: Color
 
     private let maxSelection = 4
-    private let rowHeight: CGFloat = 56
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            HStack {
-                Text(title)
-                    .font(Theme.Typography.subheadline)
-                    .foregroundStyle(Theme.Colors.text)
-
-                Spacer()
-
-                Text("\(selected.count)/\(maxSelection)")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(Theme.Colors.secondaryText)
-            }
-
-            if selected.count < maxSelection {
-                Text("Select \(maxSelection - selected.count) more.")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(Theme.Colors.secondaryText)
-            }
-
-            List {
-                ForEach(selected, id: \.self) { option in
-                    let metadata = options.first { $0.option == option }
-                    StatRowView(
-                        title: metadata?.title ?? "Stat",
-                        icon: metadata?.icon ?? "circle",
-                        accentColor: accentColor
-                    )
-                    .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color.clear)
-                }
-                .onMove(perform: move)
-            }
-            .listStyle(.plain)
-            .scrollDisabled(true)
-            .scrollContentBackground(.hidden)
-            .environment(\.editMode, .constant(.active))
-            .frame(height: rowHeight * CGFloat(max(selected.count, 1)) + 8)
-
+        Section(
+            header: statsHeader,
+            footer: Text("Drag to reorder.")
+        ) {
             if selected.isEmpty {
                 Text("No stats selected.")
-                    .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
 
-            Divider()
-                .padding(.vertical, Theme.Spacing.xs)
+            ForEach(selected, id: \.self) { option in
+                let metadata = options.first { $0.option == option }
+                StatRowView(
+                    title: metadata?.title ?? "Stat",
+                    icon: metadata?.icon ?? "circle",
+                    accentColor: accentColor
+                )
+            }
+            .onMove(perform: move)
+        }
 
-            Text("Available")
-                .font(Theme.Typography.caption)
-                .foregroundStyle(Theme.Colors.secondaryText)
+        Section(
+            header: Text("Available"),
+            footer: Text("Choose up to \(maxSelection) stats. Tap to add or remove.")
+        ) {
+            ForEach(options) { option in
+                let isSelected = selected.contains(option.option)
+                let canSelect = isSelected || selected.count < maxSelection
 
-            VStack(spacing: Theme.Spacing.xs) {
-                ForEach(options) { option in
-                    let isSelected = selected.contains(option.option)
-                    let canSelect = isSelected || selected.count < maxSelection
-
-                    Button {
-                        toggle(option.option)
-                    } label: {
-                        HStack {
-                            Image(systemName: option.icon)
-                                .foregroundStyle(isSelected ? accentColor : Theme.Colors.secondaryText)
-
-                            Text(option.title)
-                                .font(Theme.Typography.body)
-                                .foregroundStyle(Theme.Colors.text)
-
-                            Spacer()
-
-                            if isSelected {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(accentColor)
-                            }
-                        }
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 10)
-                        .background(
-                            RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous)
-                                .fill(Theme.Colors.secondaryBackground)
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(!canSelect)
-                    .opacity(canSelect ? 1 : 0.5)
+                Button {
+                    toggle(option.option)
+                } label: {
+                    SelectableStatRow(
+                        title: option.title,
+                        icon: option.icon,
+                        accentColor: accentColor,
+                        isSelected: isSelected
+                    )
                 }
+                .buttonStyle(.plain)
+                .disabled(!canSelect)
+                .opacity(canSelect ? 1 : 0.5)
             }
         }
+    }
+
+    private var statsHeader: some View {
+        HStack {
+            Text("Selected")
+                .foregroundStyle(Theme.Colors.secondaryText)
+
+            Spacer()
+
+            Text("\(selected.count)/\(maxSelection)")
+                .foregroundStyle(Theme.Colors.secondaryText)
+        }
+        .font(.caption)
     }
 
     private func toggle(_ option: Stat) {
@@ -741,17 +713,36 @@ private struct StatRowView: View {
                 .foregroundStyle(accentColor)
 
             Text(title)
-                .font(Theme.Typography.body)
                 .foregroundStyle(Theme.Colors.text)
 
             Spacer()
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 10)
-        .background(
-            RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous)
-                .fill(Theme.Colors.secondaryBackground)
-        )
+        .contentShape(Rectangle())
+    }
+}
+
+private struct SelectableStatRow: View {
+    let title: String
+    let icon: String
+    let accentColor: Color
+    let isSelected: Bool
+
+    var body: some View {
+        HStack {
+            Image(systemName: icon)
+                .foregroundStyle(isSelected ? accentColor : Theme.Colors.secondaryText)
+
+            Text(title)
+                .foregroundStyle(Theme.Colors.text)
+
+            Spacer()
+
+            if isSelected {
+                Image(systemName: "checkmark")
+                    .foregroundStyle(accentColor)
+            }
+        }
+        .contentShape(Rectangle())
     }
 }
 
@@ -759,29 +750,18 @@ private struct ContentOrderView: View {
     @Binding var order: [ShareContentBlock]
     let enabledBlocks: Set<ShareContentBlock>
     let accentColor: Color
-    private let rowHeight: CGFloat = 60
 
     var body: some View {
-        List {
-            ForEach(order) { block in
-                let isEnabled = enabledBlocks.contains(block)
-                ContentOrderRow(
-                    title: block.title,
-                    icon: block.icon,
-                    accentColor: accentColor,
-                    isEnabled: isEnabled
-                )
-                .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 6, trailing: 0))
-                .listRowSeparator(.hidden)
-                .listRowBackground(Color.clear)
-            }
-            .onMove(perform: move)
+        ForEach(order) { block in
+            let isEnabled = enabledBlocks.contains(block)
+            ContentOrderRow(
+                title: block.title,
+                icon: block.icon,
+                accentColor: accentColor,
+                isEnabled: isEnabled
+            )
         }
-        .listStyle(.plain)
-        .scrollDisabled(true)
-        .scrollContentBackground(.hidden)
-        .environment(\.editMode, .constant(.active))
-        .frame(height: rowHeight * CGFloat(order.count) + 12)
+        .onMove(perform: move)
     }
 
     private func move(from source: IndexSet, to destination: Int) {
@@ -801,23 +781,17 @@ private struct ContentOrderRow: View {
                 .foregroundStyle(accentColor)
 
             Text(title)
-                .font(Theme.Typography.body)
                 .foregroundStyle(Theme.Colors.text)
 
             if !isEnabled {
                 Text("Off")
-                    .font(Theme.Typography.caption)
+                    .font(.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
 
             Spacer()
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 10)
-        .background(
-            RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous)
-                .fill(Theme.Colors.secondaryBackground)
-        )
+        .contentShape(Rectangle())
         .opacity(isEnabled ? 1 : 0.6)
     }
 }
