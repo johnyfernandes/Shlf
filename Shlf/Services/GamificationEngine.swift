@@ -313,7 +313,9 @@ final class GamificationEngine {
     // MARK: - Stats Calculation
 
     func totalBooksRead() -> Int {
-        let descriptor = FetchDescriptor<Book>()
+        // iOS 26 optimization: Add fetch limit for safety
+        var descriptor = FetchDescriptor<Book>()
+        descriptor.fetchLimit = 10000 // Sanity limit
         guard let books = try? modelContext.fetch(descriptor) else { return 0 }
         return books.filter { $0.readingStatus == .finished }.count
     }
@@ -321,14 +323,18 @@ final class GamificationEngine {
     func totalPagesRead() -> Int {
         // ONLY count reading sessions (including auto-generated ones)
         // Auto-generated sessions now handle corrections with negative values
-        let sessionDescriptor = FetchDescriptor<ReadingSession>()
+        // iOS 26 optimization: Add fetch limit for safety
+        var sessionDescriptor = FetchDescriptor<ReadingSession>()
+        sessionDescriptor.fetchLimit = 50000 // Sanity limit
         let sessionPages = (try? modelContext.fetch(sessionDescriptor))?.reduce(0) { $0 + $1.pagesRead } ?? 0
 
         return max(0, sessionPages) // Don't show negative if user makes big corrections
     }
 
     func totalReadingMinutes() -> Int {
-        let descriptor = FetchDescriptor<ReadingSession>()
+        // iOS 26 optimization: Add fetch limit for safety
+        var descriptor = FetchDescriptor<ReadingSession>()
+        descriptor.fetchLimit = 50000 // Sanity limit
         guard let sessions = try? modelContext.fetch(descriptor) else { return 0 }
         return sessions.reduce(0) { $0 + $1.durationMinutes }
     }
@@ -337,7 +343,9 @@ final class GamificationEngine {
         let calendar = Calendar.current
         let year = calendar.component(.year, from: Date())
 
-        let descriptor = FetchDescriptor<Book>()
+        // iOS 26 optimization: Add fetch limit for safety
+        var descriptor = FetchDescriptor<Book>()
+        descriptor.fetchLimit = 10000 // Sanity limit
         guard let books = try? modelContext.fetch(descriptor) else { return 0 }
 
         return books.filter { book in
@@ -353,7 +361,9 @@ final class GamificationEngine {
         let month = calendar.component(.month, from: now)
         let year = calendar.component(.year, from: now)
 
-        let descriptor = FetchDescriptor<Book>()
+        // iOS 26 optimization: Add fetch limit for safety
+        var descriptor = FetchDescriptor<Book>()
+        descriptor.fetchLimit = 10000 // Sanity limit
         guard let books = try? modelContext.fetch(descriptor) else { return 0 }
 
         return books.filter { book in

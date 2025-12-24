@@ -23,7 +23,8 @@ struct ActiveSessionCleanup {
 
         do {
             // Fetch user profile to check auto-end settings
-            let profileDescriptor = FetchDescriptor<UserProfile>()
+            var profileDescriptor = FetchDescriptor<UserProfile>()
+            profileDescriptor.fetchLimit = 1 // Only need one profile
             guard let profile = try modelContext.fetch(profileDescriptor).first else {
                 logger.info("No profile found, skipping cleanup")
                 return
@@ -37,8 +38,9 @@ struct ActiveSessionCleanup {
 
             let autoEndHours = profile.autoEndSessionHours
 
-            // Fetch all active sessions
-            let sessionDescriptor = FetchDescriptor<ActiveReadingSession>()
+            // Fetch all active sessions (iOS 26: Add limit for safety)
+            var sessionDescriptor = FetchDescriptor<ActiveReadingSession>()
+            sessionDescriptor.fetchLimit = 100 // Sanity limit
             let activeSessions = try modelContext.fetch(sessionDescriptor)
 
             guard !activeSessions.isEmpty else {
@@ -82,8 +84,9 @@ struct ActiveSessionCleanup {
     /// OR restore Live Activity from ActiveReadingSession if it was lost due to crash
     private static func checkForOrphanedLiveActivity(modelContext: ModelContext) async {
         do {
-            // Fetch all active sessions
-            let sessionDescriptor = FetchDescriptor<ActiveReadingSession>()
+            // Fetch all active sessions (iOS 26: Add limit for safety)
+            var sessionDescriptor = FetchDescriptor<ActiveReadingSession>()
+            sessionDescriptor.fetchLimit = 100 // Sanity limit
             let activeSessions = try modelContext.fetch(sessionDescriptor)
 
             let liveActivityIsActive = ReadingSessionActivityManager.shared.isActive
@@ -107,7 +110,8 @@ struct ActiveSessionCleanup {
                 }
 
                 // Get profile for theme color
-                let profileDescriptor = FetchDescriptor<UserProfile>()
+                var profileDescriptor = FetchDescriptor<UserProfile>()
+                profileDescriptor.fetchLimit = 1
                 let profile = try? modelContext.fetch(profileDescriptor).first
                 let themeHex = profile?.themeColor.color.toHex() ?? "#00CED1"
 

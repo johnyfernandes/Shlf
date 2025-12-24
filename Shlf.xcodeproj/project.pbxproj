@@ -104,6 +104,7 @@
 				Services/ReadingSessionActivityManager.swift,
 				Services/WatchConnectivityManager.swift,
 				Services/WidgetDataExporter.swift,
+				Services/WidgetUpdateCoordinator.swift,
 				Shared/ActiveReadingSession.swift,
 				Shared/ConnectivityTransfers.swift,
 				Shared/DesignSystem/Theme.swift,
