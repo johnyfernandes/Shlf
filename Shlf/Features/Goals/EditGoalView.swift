@@ -70,9 +70,12 @@ struct EditGoalView: View {
 
                     if let daysLeft = Calendar.current.dateComponents([.day], from: Date(), to: goal.endDate).day {
                         HStack {
-                            Text("Days Remaining")
+                            Text(goal.type.isDaily ? "Daily Reset" : "Days Remaining")
                             Spacer()
-                            if daysLeft >= 0 {
+                            if goal.type.isDaily {
+                                Text("Resets at midnight")
+                                    .foregroundStyle(themeColor.color)
+                            } else if daysLeft >= 0 {
                                 Text("\(daysLeft) days")
                                     .foregroundStyle(themeColor.color)
                             } else {

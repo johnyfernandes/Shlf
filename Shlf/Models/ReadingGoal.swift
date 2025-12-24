@@ -80,4 +80,8 @@ enum GoalType: String, Codable, CaseIterable {
         case .readingStreak: return "days"
         }
     }
+
+    var isDaily: Bool {
+        self == .pagesPerDay || self == .minutesPerDay
+    }
 }

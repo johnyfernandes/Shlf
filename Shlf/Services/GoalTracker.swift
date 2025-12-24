@@ -30,11 +30,11 @@ class GoalTracker {
             }
 
             let newValue = calculateProgress(for: goal, profile: profile)
-            // CRITICAL: Clamp to target to prevent >100% progress
-            goal.currentValue = min(newValue, goal.targetValue)
+            // CRITICAL: Clamp to target and zero to prevent invalid progress values
+            goal.currentValue = min(max(0, newValue), goal.targetValue)
 
-            // Auto-complete if target reached
-            if newValue >= goal.targetValue {
+            // Auto-complete if target reached (daily goals never auto-complete)
+            if !goal.type.isDaily && newValue >= goal.targetValue {
                 goal.isCompleted = true
             }
         }
@@ -60,45 +60,34 @@ class GoalTracker {
             }.count
 
         case .pagesPerDay:
-            // ONLY count pages from ReadingSessions during the goal period
-            // This ensures we only track progress made AFTER the goal was created
+            // Count pages read today within the goal period (daily reset)
             let sessionDescriptor = FetchDescriptor<ReadingSession>()
             let allSessions = (try? modelContext.fetch(sessionDescriptor)) ?? []
 
+            let today = Date()
             let sessions = allSessions.filter { session in
                 session.startDate >= goal.startDate &&
-                session.startDate <= goal.endDate
+                session.startDate <= goal.endDate &&
+                calendar.isDate(session.startDate, inSameDayAs: today)
             }
 
             let totalPages = sessions.reduce(0) { $0 + $1.pagesRead }
-
-            // Calculate days elapsed, capping at goal end date if goal has ended
-            let endPoint = min(Date(), goal.endDate)
-            let daysDiff = calendar.dateComponents([.day], from: goal.startDate, to: endPoint).day ?? 0
-            // CRITICAL: Add 1 to include start day (same-day goals = 1 day, not 0)
-            let daysElapsed = max(1, daysDiff + 1)
-
-            return totalPages / daysElapsed
+            return max(0, totalPages)
 
         case .minutesPerDay:
-            // Calculate average minutes per day in the goal period
+            // Count minutes read today within the goal period (daily reset)
             let sessionDescriptor = FetchDescriptor<ReadingSession>()
             let allSessions = (try? modelContext.fetch(sessionDescriptor)) ?? []
 
+            let today = Date()
             let sessions = allSessions.filter { session in
                 session.startDate >= goal.startDate &&
-                session.startDate <= goal.endDate
+                session.startDate <= goal.endDate &&
+                calendar.isDate(session.startDate, inSameDayAs: today)
             }
 
             let totalMinutes = sessions.reduce(0) { $0 + $1.durationMinutes }
-
-            // Calculate days elapsed, capping at goal end date if goal has ended
-            let endPoint = min(Date(), goal.endDate)
-            let daysDiff = calendar.dateComponents([.day], from: goal.startDate, to: endPoint).day ?? 0
-            // CRITICAL: Add 1 to include start day (same-day goals = 1 day, not 0)
-            let daysElapsed = max(1, daysDiff + 1)
-
-            return totalMinutes / daysElapsed
+            return max(0, totalMinutes)
 
         case .readingStreak:
             // Calculate longest streak within the goal period

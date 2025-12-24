@@ -12,6 +12,7 @@ import Charts
 struct StatsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.scenePhase) private var scenePhase
     @Query private var profiles: [UserProfile]
     @Query private var allSessions: [ReadingSession]
     @Query private var allBooks: [Book]
@@ -100,6 +101,14 @@ struct StatsView: View {
             }
             .navigationTitle("Stats")
             .id(refreshTrigger) // Force view refresh
+            .onAppear {
+                refreshGoals()
+            }
+            .onChange(of: scenePhase) { _, newValue in
+                if newValue == .active {
+                    refreshGoals()
+                }
+            }
             .onReceive(NotificationCenter.default.publisher(for: .watchSessionReceived)) { _ in
                 refreshTrigger = UUID()
             }
@@ -107,6 +116,11 @@ struct StatsView: View {
                 refreshTrigger = UUID()
             }
         }
+    }
+
+    private func refreshGoals() {
+        let tracker = GoalTracker(modelContext: modelContext)
+        tracker.updateGoals(for: profile)
     }
 
     private var overviewSection: some View {
@@ -626,7 +640,11 @@ struct GoalCard: View {
                 Spacer()
 
                 if let daysLeft = Calendar.current.dateComponents([.day], from: Date(), to: goal.endDate).day {
-                    if daysLeft >= 0 {
+                    if goal.type.isDaily {
+                        Text("Resets at midnight")
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(Theme.Colors.tertiaryText)
+                    } else if daysLeft >= 0 {
                         Text("\(daysLeft) days left")
                             .font(Theme.Typography.caption)
                             .foregroundStyle(Theme.Colors.tertiaryText)
@@ -690,6 +708,12 @@ struct ManageGoalsView: View {
             }
         }
         .navigationTitle("Goals")
+        .onAppear {
+            if let profile = profile {
+                let tracker = GoalTracker(modelContext: modelContext)
+                tracker.updateGoals(for: profile)
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
@@ -746,9 +770,15 @@ struct GoalRow: View {
                     Spacer()
 
                     if let daysLeft = Calendar.current.dateComponents([.day], from: Date(), to: goal.endDate).day, daysLeft >= 0 {
-                        Text("\(daysLeft) days left")
-                            .font(Theme.Typography.caption)
-                            .foregroundStyle(Theme.Colors.tertiaryText)
+                        if goal.type.isDaily {
+                            Text("Resets at midnight")
+                                .font(Theme.Typography.caption)
+                                .foregroundStyle(Theme.Colors.tertiaryText)
+                        } else {
+                            Text("\(daysLeft) days left")
+                                .font(Theme.Typography.caption)
+                                .foregroundStyle(Theme.Colors.tertiaryText)
+                        }
                     } else if !goal.isCompleted {
                         Text("Expired")
                             .font(Theme.Typography.caption)

@@ -165,9 +165,15 @@ struct GoalPreviewCard: View {
 
                 Spacer()
 
-                Text("\(daysRemaining) days left")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(Theme.Colors.tertiaryText)
+                if type.isDaily {
+                    Text("Resets at midnight")
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(Theme.Colors.tertiaryText)
+                } else {
+                    Text("\(daysRemaining) days left")
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(Theme.Colors.tertiaryText)
+                }
             }
         }
         .padding(Theme.Spacing.md)
