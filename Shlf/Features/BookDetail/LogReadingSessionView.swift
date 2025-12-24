@@ -157,12 +157,7 @@ struct LogReadingSessionView: View {
                                     try? modelContext.save()
                                     WatchConnectivityManager.shared.sendActiveSessionToWatch(session)
                                     WidgetDataExporter.exportSnapshot(modelContext: modelContext)
-                                    Task {
-                                        await ReadingSessionActivityManager.shared.updateActivity(
-                                            currentPage: session.currentPage,
-                                            xpEarned: estimatedXP
-                                        )
-                                    }
+                                    syncLiveActivity(with: session)
                                 }
                                 .buttonStyle(.bordered)
                                 .tint(themeColor.color)
@@ -408,10 +403,30 @@ struct LogReadingSessionView: View {
     }
 
     private func syncWithLiveActivity() {
+        if let session = activeSession {
+            endPage = session.currentPage
+            syncLiveActivity(with: session)
+            return
+        }
+
         // Sync the endPage from Live Activity if timer is active
         if timerStartTime != nil, let currentPage = ReadingSessionActivityManager.shared.getCurrentPage() {
             endPage = currentPage
             // Synced with Live Activity - this is expected behavior during active sessions
+        }
+    }
+
+    private func syncLiveActivity(with session: ActiveReadingSession) {
+        Task {
+            await ReadingSessionActivityManager.shared.syncActivityState(
+                startTime: session.startDate,
+                startPage: session.startPage,
+                currentPage: session.currentPage,
+                totalPausedDuration: session.totalPausedDuration,
+                pausedAt: session.pausedAt,
+                isPaused: session.isPaused,
+                xpEarned: estimatedXP
+            )
         }
     }
 
@@ -440,12 +455,7 @@ struct LogReadingSessionView: View {
             try? modelContext.save()
             WatchConnectivityManager.shared.sendActiveSessionToWatch(session)
             WidgetDataExporter.exportSnapshot(modelContext: modelContext)
-            Task {
-                await ReadingSessionActivityManager.shared.updateActivity(
-                    currentPage: clampedValue,
-                    xpEarned: estimatedXP
-                )
-            }
+            syncLiveActivity(with: session)
             WidgetDataExporter.exportSnapshot(modelContext: modelContext)
         } else {
             endPage = clampedValue

@@ -17,6 +17,8 @@ struct ReadingSessionWidgetAttributes: ActivityAttributes, Sendable {
         var pagesRead: Int
         var xpEarned: Int
         var isPaused: Bool
+        var timerStartTime: Date
+        var pausedElapsedSeconds: Int?
     }
 
     // Fixed non-changing properties about your activity go here!
@@ -97,12 +99,20 @@ struct ReadingSessionWidgetLiveActivity: Widget {
                                         .fontWeight(.medium)
                                         .foregroundStyle(.orange)
                                 }
+
+                                if let pausedElapsed = context.state.pausedElapsedSeconds {
+                                    Text(formattedElapsed(seconds: pausedElapsed))
+                                        .font(.callout)
+                                        .fontWeight(.medium)
+                                        .monospacedDigit()
+                                        .foregroundStyle(.orange)
+                                }
                             } else {
                                 HStack(spacing: 4) {
                                     Image(systemName: "clock.fill")
                                         .font(.caption2)
                                         .foregroundStyle(context.attributes.themeColor)
-                                    Text(context.attributes.startTime, style: .timer)
+                                    Text(context.state.timerStartTime, style: .timer)
                                         .font(.callout)
                                         .fontWeight(.medium)
                                         .monospacedDigit()
@@ -180,11 +190,18 @@ struct ReadingSessionLockScreenView: View {
                             .font(.caption)
                             .foregroundStyle(.orange)
                     }
+
+                    if let pausedElapsed = context.state.pausedElapsedSeconds {
+                        Text(formattedElapsed(seconds: pausedElapsed))
+                            .font(.caption)
+                            .monospacedDigit()
+                            .foregroundStyle(.orange)
+                    }
                 } else {
                     HStack(spacing: 4) {
                         Image(systemName: "clock")
                             .font(.caption2)
-                        Text(context.attributes.startTime, style: .timer)
+                        Text(context.state.timerStartTime, style: .timer)
                             .font(.caption)
                             .monospacedDigit()
                     }
@@ -227,6 +244,17 @@ struct ReadingSessionLockScreenView: View {
         .activityBackgroundTint(.black.opacity(0.2))
         .activitySystemActionForegroundColor(context.attributes.themeColor)
     }
+}
+
+private func formattedElapsed(seconds: Int) -> String {
+    let hours = seconds / 3600
+    let minutes = (seconds % 3600) / 60
+    let remainingSeconds = seconds % 60
+
+    if hours > 0 {
+        return String(format: "%d:%02d:%02d", hours, minutes, remainingSeconds)
+    }
+    return String(format: "%02d:%02d", minutes, remainingSeconds)
 }
 
 // MARK: - Previews
@@ -292,7 +320,9 @@ extension ReadingSessionWidgetAttributes.ContentState {
             currentPage: 5,
             pagesRead: 5,
             xpEarned: 15,
-            isPaused: false
+            isPaused: false,
+            timerStartTime: Date().addingTimeInterval(-300),
+            pausedElapsedSeconds: nil
         )
     }
 
@@ -301,7 +331,9 @@ extension ReadingSessionWidgetAttributes.ContentState {
             currentPage: 25,
             pagesRead: 25,
             xpEarned: 75,
-            isPaused: false
+            isPaused: false,
+            timerStartTime: Date().addingTimeInterval(-900),
+            pausedElapsedSeconds: nil
         )
     }
 }

@@ -1330,8 +1330,13 @@ extension WatchConnectivityManager: WCSessionDelegate {
             }
 
             // Update Live Activity FIRST (real-time)
-            await ReadingSessionActivityManager.shared.updateActivity(
+            await ReadingSessionActivityManager.shared.syncActivityState(
+                startTime: transfer.startDate,
+                startPage: transfer.startPage,
                 currentPage: transfer.currentPage,
+                totalPausedDuration: transfer.totalPausedDuration,
+                pausedAt: transfer.pausedAt,
+                isPaused: transfer.isPaused,
                 xpEarned: 0
             )
 

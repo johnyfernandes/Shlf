@@ -24,7 +24,13 @@ struct IncrementPageIntent: LiveActivityIntent {
             let pagesRead = newPage - activity.attributes.startPage
 
             // Calculate XP using centralized XPCalculator for consistency
-            let elapsedMinutes = max(1, Int(Date().timeIntervalSince(activity.attributes.startTime) / 60))
+            let elapsedSeconds: TimeInterval
+            if activity.content.state.isPaused, let pausedElapsed = activity.content.state.pausedElapsedSeconds {
+                elapsedSeconds = TimeInterval(pausedElapsed)
+            } else {
+                elapsedSeconds = Date().timeIntervalSince(activity.content.state.timerStartTime)
+            }
+            let elapsedMinutes = max(1, Int(elapsedSeconds / 60))
             let totalXP = XPCalculator.calculate(pagesRead: pagesRead, durationMinutes: elapsedMinutes)
 
             // Update Live Activity state
@@ -32,7 +38,9 @@ struct IncrementPageIntent: LiveActivityIntent {
                 currentPage: newPage,
                 pagesRead: pagesRead,
                 xpEarned: totalXP,
-                isPaused: activity.content.state.isPaused
+                isPaused: activity.content.state.isPaused,
+                timerStartTime: activity.content.state.timerStartTime,
+                pausedElapsedSeconds: activity.content.state.pausedElapsedSeconds
             )
             await activity.update(ActivityContent(state: newState, staleDate: nil))
             logger.info("📈 Live Activity updated: Page \(newPage)")
@@ -63,7 +71,13 @@ struct DecrementPageIntent: LiveActivityIntent {
             let pagesRead = max(0, newPage - startPage)
 
             // Calculate XP using centralized XPCalculator for consistency
-            let elapsedMinutes = max(1, Int(Date().timeIntervalSince(activity.attributes.startTime) / 60))
+            let elapsedSeconds: TimeInterval
+            if activity.content.state.isPaused, let pausedElapsed = activity.content.state.pausedElapsedSeconds {
+                elapsedSeconds = TimeInterval(pausedElapsed)
+            } else {
+                elapsedSeconds = Date().timeIntervalSince(activity.content.state.timerStartTime)
+            }
+            let elapsedMinutes = max(1, Int(elapsedSeconds / 60))
             let totalXP = XPCalculator.calculate(pagesRead: pagesRead, durationMinutes: elapsedMinutes)
 
             // Update Live Activity state
@@ -71,7 +85,9 @@ struct DecrementPageIntent: LiveActivityIntent {
                 currentPage: newPage,
                 pagesRead: pagesRead,
                 xpEarned: totalXP,
-                isPaused: activity.content.state.isPaused
+                isPaused: activity.content.state.isPaused,
+                timerStartTime: activity.content.state.timerStartTime,
+                pausedElapsedSeconds: activity.content.state.pausedElapsedSeconds
             )
             await activity.update(ActivityContent(state: newState, staleDate: nil))
             logger.info("📉 Live Activity updated: Page \(newPage)")

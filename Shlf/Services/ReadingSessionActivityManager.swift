@@ -20,6 +20,8 @@ class ReadingSessionActivityManager {
 
     private var startTime: Date?
     private var startPage: Int = 0
+    private var pausedAt: Date?
+    private var totalPausedDuration: TimeInterval = 0
 
     private init() {}
 
@@ -54,7 +56,9 @@ class ReadingSessionActivityManager {
             currentPage: currentPageValue,
             pagesRead: pagesRead,
             xpEarned: xpEarned,
-            isPaused: false
+            isPaused: false,
+            timerStartTime: activityStartTime,
+            pausedElapsedSeconds: nil
         )
 
         let activityContent = ActivityContent(state: initialState, staleDate: nil)
@@ -69,6 +73,8 @@ class ReadingSessionActivityManager {
             currentActivity = activity
             self.startTime = activityStartTime
             self.startPage = startPageValue
+            self.pausedAt = nil
+            self.totalPausedDuration = 0
 
             Self.logger.info("✅ Live Activity started: \(activity.id)")
         } catch {
@@ -93,11 +99,17 @@ class ReadingSessionActivityManager {
         let durationMinutes = elapsedMinutes()
         let xpValue = xpEarned == 0 ? estimatedXP(pagesRead: pagesRead, durationMinutes: durationMinutes) : xpEarned
 
+        let timerStartTime = effectiveTimerStartTime() ?? Date()
+        let isCurrentlyPaused = pausedAt != nil
+        let pausedElapsedSeconds = isCurrentlyPaused ? Int(elapsedSeconds()) : nil
+
         let newState = ReadingSessionWidgetAttributes.ContentState(
             currentPage: currentPage,
             pagesRead: pagesRead,
             xpEarned: xpValue,
-            isPaused: activity.content.state.isPaused
+            isPaused: isCurrentlyPaused,
+            timerStartTime: timerStartTime,
+            pausedElapsedSeconds: pausedElapsedSeconds
         )
 
         let updatedContent = ActivityContent(state: newState, staleDate: nil)
@@ -124,11 +136,17 @@ class ReadingSessionActivityManager {
             durationMinutes: elapsedMinutes()
         )
 
+        let timerStartTime = effectiveTimerStartTime() ?? Date()
+        let isCurrentlyPaused = pausedAt != nil
+        let pausedElapsedSeconds = isCurrentlyPaused ? Int(elapsedSeconds()) : nil
+
         let newState = ReadingSessionWidgetAttributes.ContentState(
             currentPage: currentPage,
             pagesRead: pagesRead,
             xpEarned: xpEarned,
-            isPaused: activity.content.state.isPaused
+            isPaused: isCurrentlyPaused,
+            timerStartTime: timerStartTime,
+            pausedElapsedSeconds: pausedElapsedSeconds
         )
 
         let updatedContent = ActivityContent(state: newState, staleDate: nil)
@@ -151,8 +169,17 @@ class ReadingSessionActivityManager {
             return
         }
 
+        if pausedAt == nil {
+            pausedAt = Date()
+        }
+
+        let timerStartTime = effectiveTimerStartTime() ?? Date()
+        let pausedElapsedSeconds = Int(elapsedSeconds())
+
         var newState = activity.content.state
         newState.isPaused = true
+        newState.timerStartTime = timerStartTime
+        newState.pausedElapsedSeconds = pausedElapsedSeconds
 
         let updatedContent = ActivityContent(state: newState, staleDate: nil)
         await activity.update(updatedContent)
@@ -171,13 +198,68 @@ class ReadingSessionActivityManager {
             return
         }
 
+        if let pausedAt {
+            totalPausedDuration += Date().timeIntervalSince(pausedAt)
+            self.pausedAt = nil
+        }
+
+        let timerStartTime = effectiveTimerStartTime() ?? Date()
+
         var newState = activity.content.state
         newState.isPaused = false
+        newState.timerStartTime = timerStartTime
+        newState.pausedElapsedSeconds = nil
 
         let updatedContent = ActivityContent(state: newState, staleDate: nil)
         await activity.update(updatedContent)
 
         Self.logger.info("▶️ Live Activity resumed")
+    }
+
+    /// Syncs Live Activity timing with an external session source (iPhone/Watch).
+    /// Uses the provided timing data as the single source of truth.
+    func syncActivityState(
+        startTime: Date,
+        startPage: Int,
+        currentPage: Int,
+        totalPausedDuration: TimeInterval,
+        pausedAt: Date?,
+        isPaused: Bool,
+        xpEarned: Int
+    ) async {
+        if currentActivity == nil {
+            await rehydrateExistingActivity()
+        }
+
+        guard let activity = currentActivity else {
+            Self.logger.debug("⚠️ No Live Activity to sync (currentActivity is nil)")
+            return
+        }
+
+        self.startTime = startTime
+        self.startPage = startPage
+        self.totalPausedDuration = max(0, totalPausedDuration)
+        self.pausedAt = isPaused ? (pausedAt ?? Date()) : nil
+
+        let pagesRead = currentPage - startPage
+        let durationMinutes = max(0, Int(elapsedSeconds() / 60))
+        let xpValue = xpEarned == 0 ? estimatedXP(pagesRead: pagesRead, durationMinutes: durationMinutes) : xpEarned
+        let timerStartTime = startTime.addingTimeInterval(self.totalPausedDuration)
+        let pausedElapsedSeconds = isPaused ? Int(elapsedSeconds()) : nil
+
+        let newState = ReadingSessionWidgetAttributes.ContentState(
+            currentPage: currentPage,
+            pagesRead: pagesRead,
+            xpEarned: xpValue,
+            isPaused: isPaused,
+            timerStartTime: timerStartTime,
+            pausedElapsedSeconds: pausedElapsedSeconds
+        )
+
+        let updatedContent = ActivityContent(state: newState, staleDate: nil)
+        await activity.update(updatedContent)
+
+        Self.logger.info("🔄 Live Activity synced to session state")
     }
 
     // MARK: - End Activity
@@ -202,6 +284,8 @@ class ReadingSessionActivityManager {
         currentActivity = nil
         startTime = nil
         startPage = 0
+        pausedAt = nil
+        totalPausedDuration = 0
 
         Self.logger.info("🛑 Live Activity ended")
     }
@@ -224,6 +308,8 @@ class ReadingSessionActivityManager {
         currentActivity = active
         startPage = active.attributes.startPage
         startTime = active.attributes.startTime
+        totalPausedDuration = max(0, active.content.state.timerStartTime.timeIntervalSince(active.attributes.startTime))
+        pausedAt = active.content.state.isPaused ? Date() : nil
         Self.logger.info("🔄 Rehydrated existing Live Activity: \(active.id)")
     }
 
@@ -240,8 +326,25 @@ class ReadingSessionActivityManager {
     // MARK: - Helpers
 
     private func elapsedMinutes() -> Int {
+        let seconds = elapsedSeconds()
+        return max(0, Int(seconds / 60))
+    }
+
+    private func elapsedSeconds(at date: Date = Date()) -> TimeInterval {
         guard let startTime else { return 0 }
-        return max(0, Int(Date().timeIntervalSince(startTime) / 60))
+        let totalElapsed = date.timeIntervalSince(startTime)
+        var pausedTime = totalPausedDuration
+
+        if let pausedAt, date >= pausedAt {
+            pausedTime += date.timeIntervalSince(pausedAt)
+        }
+
+        return max(0, totalElapsed - pausedTime)
+    }
+
+    private func effectiveTimerStartTime() -> Date? {
+        guard let startTime else { return nil }
+        return startTime.addingTimeInterval(totalPausedDuration)
     }
 
     /// Calculate LIVE XP for active reading session
@@ -260,6 +363,15 @@ class ReadingSessionActivityManager {
     func startActivity(book: Book, currentPage: Int? = nil, startPage: Int? = nil, startTime: Date? = nil) async {}
     func updateActivity(currentPage: Int, xpEarned: Int) async {}
     func updateCurrentPage(_ currentPage: Int) async {}
+    func syncActivityState(
+        startTime: Date,
+        startPage: Int,
+        currentPage: Int,
+        totalPausedDuration: TimeInterval,
+        pausedAt: Date?,
+        isPaused: Bool,
+        xpEarned: Int
+    ) async {}
     func pauseActivity() async {}
     func resumeActivity() async {}
     func endActivity() async {}
