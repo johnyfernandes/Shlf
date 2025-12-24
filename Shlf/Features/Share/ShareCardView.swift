@@ -25,7 +25,7 @@ struct ShareCardView: View {
             let statFill = isLightBackground ? Color.white.opacity(0.7) : Color.white.opacity(0.12)
             let statStroke = isLightBackground ? Color.black.opacity(0.08) : Color.white.opacity(0.15)
             let shadowColor = isLightBackground ? Color.black.opacity(0.12) : Color.black.opacity(0.25)
-            let ringBackground = isLightBackground ? Color.white.opacity(0.95) : Color.black.opacity(0.35)
+            let ringBackground = isLightBackground ? Color.white.opacity(0.45) : Color.black.opacity(0.25)
 
             ZStack {
                 ShareBackgroundView(style: style.background, accentColor: style.accentColor)
@@ -164,13 +164,14 @@ private struct ShareHeroView: View {
                                 progress: progress,
                                 color: accentColor,
                                 trackColor: primaryText.opacity(0.2),
-                                size: 54 * scale,
-                                lineWidth: 7 * scale
+                                size: 44 * scale,
+                                lineWidth: 6 * scale
                             )
-                            .padding(6 * scale)
+                            .padding(5 * scale)
                             .background(
                                 Circle()
                                     .fill(.ultraThinMaterial)
+                                    .opacity(0.7)
                                     .overlay(
                                         Circle()
                                             .fill(ringBackground)
@@ -181,7 +182,7 @@ private struct ShareHeroView: View {
                                     )
                             )
                             .shadow(color: shadowColor.opacity(0.4), radius: 6 * scale, y: 3 * scale)
-                            .padding(8 * scale)
+                            .padding(6 * scale)
                         }
                     }
 
@@ -223,13 +224,14 @@ private struct ShareHeroView: View {
                             progress: progress,
                             color: accentColor,
                             trackColor: primaryText.opacity(0.2),
-                            size: 88 * scale,
-                            lineWidth: 12 * scale
+                            size: 76 * scale,
+                            lineWidth: 10 * scale
                         )
                         .padding(8 * scale)
                         .background(
                             Circle()
                                 .fill(.ultraThinMaterial)
+                                .opacity(0.7)
                                 .overlay(
                                     Circle()
                                         .fill(ringBackground)
