@@ -12,6 +12,20 @@ struct LevelDetailView: View {
     @Environment(\.themeColor) private var themeColor
     @Bindable var profile: UserProfile
 
+    private var xpPerPageSubtitle: String {
+        "Earn \(XPCalculator.xpPerPage) XP per page"
+    }
+
+    private var xpPerPageDetail: String {
+        "\(XPCalculator.xpPerPage) XP per page read"
+    }
+
+    private var durationBonusDetail: String {
+        let bonusValues = XPCalculator.durationBonuses.map { "\($0.bonus)" }.joined(separator: "/")
+        let timeValues = XPCalculator.durationBonuses.map { formatMinutes($0.minMinutes) }.joined(separator: "/")
+        return "\(bonusValues) XP at \(timeValues)"
+    }
+
     var body: some View {
         NavigationStack {
             ZStack(alignment: .top) {
@@ -273,7 +287,7 @@ struct LevelDetailView: View {
                                             .foregroundStyle(Theme.Colors.text)
                                             .lineLimit(2)
 
-                                        Text("Earn 1 XP per page")
+                                        Text(xpPerPageSubtitle)
                                             .font(.caption)
                                             .foregroundStyle(Theme.Colors.secondaryText)
                                             .lineLimit(1)
@@ -281,7 +295,7 @@ struct LevelDetailView: View {
                                         HStack(spacing: 4) {
                                             Image(systemName: "book.pages")
                                                 .font(.caption2)
-                                            Text("1 XP per page read")
+                                            Text(xpPerPageDetail)
                                                 .font(.caption)
                                         }
                                         .foregroundStyle(themeColor.color)
@@ -307,7 +321,7 @@ struct LevelDetailView: View {
                                             )
                                             .frame(width: 44, height: 44)
 
-                                        Image(systemName: "checkmark.circle.fill")
+                                        Image(systemName: "clock.fill")
                                             .font(.system(size: 18))
                                             .fontWeight(.semibold)
                                             .foregroundStyle(.white)
@@ -315,22 +329,22 @@ struct LevelDetailView: View {
                                     .shadow(color: themeColor.color.opacity(0.3), radius: 6, y: 3)
 
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text("Finishing Books")
+                                        Text("Session Bonus")
                                             .font(.subheadline)
                                             .fontWeight(.semibold)
                                             .foregroundStyle(Theme.Colors.text)
                                             .lineLimit(2)
 
-                                        Text("Complete a book")
+                                        Text("Read longer sessions")
                                             .font(.caption)
                                             .foregroundStyle(Theme.Colors.secondaryText)
                                             .lineLimit(1)
 
                                         HStack(spacing: 4) {
-                                            Image(systemName: "book.pages")
+                                            Image(systemName: "bolt.fill")
                                                 .font(.caption2)
-                                            Text("50 XP bonus")
-                                                .font(.caption)
+                                        Text(durationBonusDetail)
+                                            .font(.caption)
                                         }
                                         .foregroundStyle(themeColor.color)
                                     }
@@ -340,53 +354,6 @@ struct LevelDetailView: View {
                                 .padding(12)
                                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
 
-                                HStack(spacing: 12) {
-                                    ZStack {
-                                        Circle()
-                                            .fill(
-                                                LinearGradient(
-                                                    colors: [
-                                                        themeColor.color,
-                                                        themeColor.color.opacity(0.7)
-                                                    ],
-                                                    startPoint: .topLeading,
-                                                    endPoint: .bottomTrailing
-                                                )
-                                            )
-                                            .frame(width: 44, height: 44)
-
-                                        Image(systemName: "flame.fill")
-                                            .font(.system(size: 18))
-                                            .fontWeight(.semibold)
-                                            .foregroundStyle(.white)
-                                    }
-                                    .shadow(color: themeColor.color.opacity(0.3), radius: 6, y: 3)
-
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text("Daily Streaks")
-                                            .font(.subheadline)
-                                            .fontWeight(.semibold)
-                                            .foregroundStyle(Theme.Colors.text)
-                                            .lineLimit(2)
-
-                                        Text("Read every day")
-                                            .font(.caption)
-                                            .foregroundStyle(Theme.Colors.secondaryText)
-                                            .lineLimit(1)
-
-                                        HStack(spacing: 4) {
-                                            Image(systemName: "book.pages")
-                                                .font(.caption2)
-                                            Text("10 XP per day")
-                                                .font(.caption)
-                                        }
-                                        .foregroundStyle(themeColor.color)
-                                    }
-
-                                    Spacer()
-                                }
-                                .padding(12)
-                                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                             }
                         }
                         .padding(16)
@@ -410,6 +377,14 @@ struct LevelDetailView: View {
             }
         }
     }
+}
+
+private func formatMinutes(_ minutes: Int) -> String {
+    guard minutes > 0 else { return "0m" }
+    if minutes % 60 == 0 {
+        return "\(minutes / 60)h"
+    }
+    return "\(minutes)m"
 }
 
 #Preview {
