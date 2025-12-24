@@ -43,12 +43,18 @@ struct SessionDetailView: View {
     }
 
     private var startDateText: String {
-        session.startDate.formatted(date: .abbreviated, time: .shortened)
+        if durationMinutes > 0 {
+            return session.startDate.formatted(date: .abbreviated, time: .shortened)
+        }
+        return session.startDate.formatted(date: .abbreviated, time: .omitted)
     }
 
     private var endDateText: String {
         if let endDate = session.endDate {
-            return endDate.formatted(date: .abbreviated, time: .shortened)
+            if durationMinutes > 0 {
+                return endDate.formatted(date: .abbreviated, time: .shortened)
+            }
+            return endDate.formatted(date: .abbreviated, time: .omitted)
         }
         return "In progress"
     }
