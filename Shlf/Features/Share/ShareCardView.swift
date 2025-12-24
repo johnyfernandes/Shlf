@@ -18,6 +18,7 @@ struct ShareCardView: View {
             let horizontalPadding = 32 * scale
             let verticalSpacing = 18 * scale
             let isLightBackground = style.background == .paper
+            let isCentered = style.layout == .centered
             let primaryText = isLightBackground ? Color.black.opacity(0.88) : Color.white
             let secondaryText = isLightBackground ? Color.black.opacity(0.65) : Color.white.opacity(0.85)
             let tertiaryText = isLightBackground ? Color.black.opacity(0.45) : Color.white.opacity(0.7)
@@ -28,7 +29,7 @@ struct ShareCardView: View {
             ZStack {
                 ShareBackgroundView(style: style.background, accentColor: style.accentColor)
 
-                VStack(alignment: .leading, spacing: verticalSpacing) {
+                VStack(alignment: isCentered ? .center : .leading, spacing: verticalSpacing) {
                     ShareHeaderView(
                         badge: content.badge,
                         accentColor: style.accentColor,
@@ -43,57 +44,45 @@ struct ShareCardView: View {
                             .font(.system(size: 34 * scale, weight: .bold, design: .rounded))
                             .foregroundStyle(primaryText)
                             .lineLimit(3)
+                            .frame(maxWidth: .infinity, alignment: isCentered ? .center : .leading)
+                            .multilineTextAlignment(isCentered ? .center : .leading)
 
                         if let subtitle = content.subtitle {
                             Text(subtitle)
                                 .font(.system(size: 18 * scale, weight: .medium, design: .rounded))
                                 .foregroundStyle(secondaryText)
                                 .lineLimit(2)
+                                .frame(maxWidth: .infinity, alignment: isCentered ? .center : .leading)
+                                .multilineTextAlignment(isCentered ? .center : .leading)
                         }
 
                         if let period = content.period {
                             Text(period)
                                 .font(.system(size: 14 * scale, weight: .semibold, design: .rounded))
                                 .foregroundStyle(tertiaryText)
+                                .frame(maxWidth: .infinity, alignment: isCentered ? .center : .leading)
                         }
                     }
 
-                    ShareHeroView(
-                        coverImage: content.coverImage,
-                        progress: content.progress,
-                        progressText: content.progressText,
-                        accentColor: style.accentColor,
-                        primaryText: primaryText,
-                        shadowColor: shadowColor,
-                        scale: scale
-                    )
-
-                    if let graph = content.graph {
-                        ShareGraphView(
-                            graph: graph,
-                            accentColor: style.accentColor,
+                    ForEach(content.blocks) { block in
+                        blockView(
+                            block,
                             primaryText: primaryText,
                             secondaryText: tertiaryText,
-                            fillColor: statFill,
-                            strokeColor: statStroke,
+                            statFill: statFill,
+                            statStroke: statStroke,
+                            shadowColor: shadowColor,
+                            isCentered: isCentered,
                             scale: scale
                         )
                     }
-
-                    ShareStatsGrid(
-                        stats: content.stats,
-                        primaryText: primaryText,
-                        secondaryText: tertiaryText,
-                        fillColor: statFill,
-                        strokeColor: statStroke,
-                        scale: scale
-                    )
 
                     Spacer(minLength: 12 * scale)
 
                     Text(content.footer)
                         .font(.system(size: 13 * scale, weight: .semibold, design: .rounded))
                         .foregroundStyle(tertiaryText)
+                        .frame(maxWidth: .infinity, alignment: isCentered ? .center : .leading)
                 }
                 .padding(.horizontal, horizontalPadding)
                 .padding(.vertical, 28 * scale)
@@ -144,6 +133,7 @@ private struct ShareHeroView: View {
     let accentColor: Color
     let primaryText: Color
     let shadowColor: Color
+    let isCentered: Bool
     let scale: CGFloat
 
     var body: some View {
@@ -181,6 +171,7 @@ private struct ShareHeroView: View {
 
                     Spacer(minLength: 0)
                 }
+                .frame(maxWidth: .infinity, alignment: isCentered ? .center : .leading)
             } else if let progress {
                 VStack(spacing: 10 * scale) {
                     ShareProgressRing(
@@ -195,6 +186,7 @@ private struct ShareHeroView: View {
                         Text(progressText)
                             .font(.system(size: 15 * scale, weight: .semibold, design: .rounded))
                             .foregroundStyle(primaryText.opacity(0.85))
+                            .multilineTextAlignment(isCentered ? .center : .leading)
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -231,6 +223,7 @@ private struct ShareStatsGrid: View {
                 )
             }
         }
+        .frame(maxWidth: .infinity)
     }
 }
 
@@ -303,6 +296,44 @@ private struct ShareProgressRing: View {
     }
 }
 
+private struct ShareQuoteView: View {
+    let quote: ShareQuote
+    let accentColor: Color
+    let primaryText: Color
+    let secondaryText: Color
+    let fillColor: Color
+    let strokeColor: Color
+    let isCentered: Bool
+    let scale: CGFloat
+
+    var body: some View {
+        VStack(alignment: isCentered ? .center : .leading, spacing: 6 * scale) {
+            Text("“\(quote.text)”")
+                .font(.system(size: 14 * scale, weight: .medium, design: .rounded))
+                .foregroundStyle(primaryText)
+                .lineLimit(3)
+                .multilineTextAlignment(isCentered ? .center : .leading)
+
+            if let attribution = quote.attribution {
+                Text(attribution)
+                    .font(.system(size: 12 * scale, weight: .semibold, design: .rounded))
+                    .foregroundStyle(secondaryText)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: isCentered ? .center : .leading)
+        .padding(.vertical, 10 * scale)
+        .padding(.horizontal, 12 * scale)
+        .background(
+            RoundedRectangle(cornerRadius: 18 * scale, style: .continuous)
+                .fill(fillColor)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18 * scale, style: .continuous)
+                .stroke(strokeColor, lineWidth: 1)
+        )
+    }
+}
+
 private struct ShareGraphView: View {
     let graph: ShareGraph
     let accentColor: Color
@@ -310,6 +341,7 @@ private struct ShareGraphView: View {
     let secondaryText: Color
     let fillColor: Color
     let strokeColor: Color
+    let isCentered: Bool
     let scale: CGFloat
 
     private var normalizedValues: [Double] {
@@ -321,61 +353,89 @@ private struct ShareGraphView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8 * scale) {
+        VStack(alignment: isCentered ? .center : .leading, spacing: 8 * scale) {
             Text(graph.title)
                 .font(.system(size: 15 * scale, weight: .semibold, design: .rounded))
                 .foregroundStyle(primaryText)
+                .frame(maxWidth: .infinity, alignment: isCentered ? .center : .leading)
 
             if let subtitle = graph.subtitle {
                 Text(subtitle)
                     .font(.system(size: 12 * scale, weight: .medium, design: .rounded))
                     .foregroundStyle(secondaryText)
+                    .frame(maxWidth: .infinity, alignment: isCentered ? .center : .leading)
             }
 
             GeometryReader { proxy in
                 let size = proxy.size
-                let points = normalizedValues.enumerated().map { index, value -> CGPoint in
-                    let x = size.width * CGFloat(index) / CGFloat(max(normalizedValues.count - 1, 1))
-                    let y = size.height * (1 - CGFloat(value))
-                    return CGPoint(x: x, y: y)
-                }
 
                 ZStack {
-                    if points.count > 1 {
-                        Path { path in
-                            path.move(to: points[0])
-                            for point in points.dropFirst() {
-                                path.addLine(to: point)
-                            }
+                    switch graph.style {
+                    case .line:
+                        let points = normalizedValues.enumerated().map { index, value -> CGPoint in
+                            let x = size.width * CGFloat(index) / CGFloat(max(normalizedValues.count - 1, 1))
+                            let y = size.height * (1 - CGFloat(value))
+                            return CGPoint(x: x, y: y)
                         }
-                        .stroke(accentColor, style: StrokeStyle(lineWidth: 2.5 * scale, lineCap: .round, lineJoin: .round))
 
-                        Path { path in
-                            path.move(to: CGPoint(x: points[0].x, y: size.height))
-                            path.addLine(to: points[0])
-                            for point in points.dropFirst() {
-                                path.addLine(to: point)
+                        if points.count > 1 {
+                            Path { path in
+                                path.move(to: points[0])
+                                for point in points.dropFirst() {
+                                    path.addLine(to: point)
+                                }
                             }
-                            path.addLine(to: CGPoint(x: points.last?.x ?? 0, y: size.height))
-                            path.closeSubpath()
-                        }
-                        .fill(
-                            LinearGradient(
-                                colors: [accentColor.opacity(0.35), accentColor.opacity(0.05)],
-                                startPoint: .top,
-                                endPoint: .bottom
+                            .stroke(accentColor, style: StrokeStyle(lineWidth: 2.5 * scale, lineCap: .round, lineJoin: .round))
+
+                            Path { path in
+                                path.move(to: CGPoint(x: points[0].x, y: size.height))
+                                path.addLine(to: points[0])
+                                for point in points.dropFirst() {
+                                    path.addLine(to: point)
+                                }
+                                path.addLine(to: CGPoint(x: points.last?.x ?? 0, y: size.height))
+                                path.closeSubpath()
+                            }
+                            .fill(
+                                LinearGradient(
+                                    colors: [accentColor.opacity(0.35), accentColor.opacity(0.05)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
                             )
-                        )
 
-                        if let last = points.last {
-                            Circle()
-                                .fill(accentColor)
-                                .frame(width: 8 * scale, height: 8 * scale)
-                                .position(last)
+                            if let last = points.last {
+                                Circle()
+                                    .fill(accentColor)
+                                    .frame(width: 8 * scale, height: 8 * scale)
+                                    .position(last)
+                            }
+                        } else {
+                            RoundedRectangle(cornerRadius: 8 * scale, style: .continuous)
+                                .fill(accentColor.opacity(0.12))
                         }
-                    } else {
-                        RoundedRectangle(cornerRadius: 8 * scale, style: .continuous)
-                            .fill(accentColor.opacity(0.12))
+                    case .bars:
+                        let values = normalizedValues
+                        let count = max(values.count, 1)
+                        let spacing = 6 * scale
+                        let totalSpacing = spacing * CGFloat(max(count - 1, 0))
+                        let barWidth = max(2 * scale, (size.width - totalSpacing) / CGFloat(count))
+
+                        HStack(alignment: .bottom, spacing: spacing) {
+                            ForEach(values.indices, id: \.self) { index in
+                                let value = values[index]
+                                RoundedRectangle(cornerRadius: 4 * scale, style: .continuous)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [accentColor.opacity(0.9), accentColor.opacity(0.45)],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
+                                    )
+                                    .frame(width: barWidth, height: max(2 * scale, size.height * CGFloat(value)))
+                            }
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                     }
                 }
             }
@@ -384,7 +444,7 @@ private struct ShareGraphView: View {
         }
         .padding(.vertical, 10 * scale)
         .padding(.horizontal, 12 * scale)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: isCentered ? .center : .leading)
         .background(
             RoundedRectangle(cornerRadius: 18 * scale, style: .continuous)
                 .fill(fillColor)
@@ -393,6 +453,72 @@ private struct ShareGraphView: View {
             RoundedRectangle(cornerRadius: 18 * scale, style: .continuous)
                 .stroke(strokeColor, lineWidth: 1)
         )
+    }
+}
+
+private extension ShareCardView {
+    @ViewBuilder
+    func blockView(
+        _ block: ShareContentBlock,
+        primaryText: Color,
+        secondaryText: Color,
+        statFill: Color,
+        statStroke: Color,
+        shadowColor: Color,
+        isCentered: Bool,
+        scale: CGFloat
+    ) -> some View {
+        switch block {
+        case .hero:
+            ShareHeroView(
+                coverImage: content.coverImage,
+                progress: content.progress,
+                progressText: content.progressText,
+                accentColor: style.accentColor,
+                primaryText: primaryText,
+                shadowColor: shadowColor,
+                isCentered: isCentered,
+                scale: scale
+            )
+        case .quote:
+            if let quote = content.quote {
+                ShareQuoteView(
+                    quote: quote,
+                    accentColor: style.accentColor,
+                    primaryText: primaryText,
+                    secondaryText: secondaryText,
+                    fillColor: statFill,
+                    strokeColor: statStroke,
+                    isCentered: isCentered,
+                    scale: scale
+                )
+            }
+        case .graph:
+            if let graph = content.graph {
+                ShareGraphView(
+                    graph: graph,
+                    accentColor: style.accentColor,
+                    primaryText: primaryText,
+                    secondaryText: secondaryText,
+                    fillColor: statFill,
+                    strokeColor: statStroke,
+                    isCentered: isCentered,
+                    scale: scale
+                )
+            }
+        case .stats:
+            if !content.stats.isEmpty {
+                ShareStatsGrid(
+                    stats: content.stats,
+                    primaryText: primaryText,
+                    secondaryText: secondaryText,
+                    fillColor: statFill,
+                    strokeColor: statStroke,
+                    scale: scale
+                )
+                .frame(maxWidth: .infinity, alignment: isCentered ? .center : .leading)
+            }
+        }
     }
 }
 

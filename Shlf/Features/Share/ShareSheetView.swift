@@ -23,9 +23,19 @@ struct ShareSheetView: View {
     @State private var selectedTemplate: ShareTemplate
     @State private var selectedPeriod: SharePeriod = .last30
     @State private var selectedBackground: ShareBackgroundStyle = .paper
+    @State private var selectedLayout: ShareLayoutStyle = .classic
     @State private var showGraph = true
     @State private var selectedGraphMetric: ShareGraphMetric = .pages
+    @State private var selectedGraphStyle: ShareGraphStyle = .line
     @State private var showCover = true
+    @State private var showQuote = true
+    @State private var selectedQuoteSource: ShareQuoteSource = .latest
+    @State private var selectedBookStats: [BookStatOption] = [.pagesRead, .timeRead, .sessions, .milestoneDate]
+    @State private var selectedWrapStats: [WrapStatOption] = [.pages, .time, .sessions, .books]
+    @State private var selectedStreakStats: [StreakStatOption] = [.bestStreak, .pagesToday, .minutesToday, .sessionsToday]
+    @State private var bookContentOrder: [ShareContentBlock] = [.hero, .quote, .graph, .stats]
+    @State private var wrapContentOrder: [ShareContentBlock] = [.graph, .stats]
+    @State private var streakContentOrder: [ShareContentBlock] = [.hero, .graph, .stats]
     @State private var includeImportedSessions = false
     @State private var coverImage: UIImage?
     @State private var showInstagramAlert = false
@@ -63,7 +73,7 @@ struct ShareSheetView: View {
     }
 
     private var shareStyle: ShareCardStyle {
-        ShareCardStyle(background: selectedBackground, accentColor: themeColor.color)
+        ShareCardStyle(background: selectedBackground, accentColor: themeColor.color, layout: selectedLayout)
     }
 
     private var shareContent: ShareCardContent {
@@ -90,12 +100,67 @@ struct ShareSheetView: View {
         }
     }
 
+    private var bookQuotes: [Quote] {
+        book?.quotes ?? []
+    }
+
+    private var hasQuotes: Bool {
+        !bookQuotes.isEmpty
+    }
+
+    private var contentOrderBinding: Binding<[ShareContentBlock]> {
+        switch selectedTemplate {
+        case .book:
+            return $bookContentOrder
+        case .wrap:
+            return $wrapContentOrder
+        case .streak:
+            return $streakContentOrder
+        }
+    }
+
+    private var activeContentBlocks: [ShareContentBlock] {
+        switch selectedTemplate {
+        case .book:
+            return activeBlocksForBook()
+        case .wrap:
+            return activeBlocksForWrap()
+        case .streak:
+            return activeBlocksForStreak()
+        }
+    }
+
+    private var enabledContentBlocks: Set<ShareContentBlock> {
+        Set(activeContentBlocks)
+    }
+
+    private var bookProgressValue: Double? {
+        guard let book else { return nil }
+        let totalPages = max(0, book.totalPages ?? 0)
+        guard totalPages > 0 else { return nil }
+        let currentPage = max(0, book.currentPage)
+        return Double(currentPage) / Double(totalPages)
+    }
+
+    private var streakProgressValue: Double? {
+        let bestStreak = max(profile.longestStreak, profile.currentStreak)
+        guard bestStreak > 0 else { return nil }
+        return Double(profile.currentStreak) / Double(bestStreak)
+    }
+
+    private var bookGraphEnabled: Bool {
+        guard let book else { return false }
+        return showGraph && !sessionsForBook(book).isEmpty
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: Theme.Spacing.lg) {
                     previewCard
                     optionsSection
+                    statsSection
+                    contentOrderSection
                     actionsSection
                 }
                 .padding(Theme.Spacing.md)
@@ -168,6 +233,13 @@ struct ShareSheetView: View {
             }
             .pickerStyle(.segmented)
 
+            Picker("Layout", selection: $selectedLayout) {
+                ForEach(ShareLayoutStyle.allCases) { layout in
+                    Text(layout.title).tag(layout)
+                }
+            }
+            .pickerStyle(.segmented)
+
             if selectedTemplate == .book {
                 Toggle("Show cover", isOn: $showCover)
                     .tint(themeColor.color)
@@ -183,6 +255,27 @@ struct ShareSheetView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+
+                Picker("Graph style", selection: $selectedGraphStyle) {
+                    ForEach(ShareGraphStyle.allCases) { style in
+                        Text(style.title).tag(style)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
+
+            if selectedTemplate == .book, hasQuotes {
+                Toggle("Show quote", isOn: $showQuote)
+                    .tint(themeColor.color)
+
+                if showQuote {
+                    Picker("Quote", selection: $selectedQuoteSource) {
+                        ForEach(ShareQuoteSource.allCases) { source in
+                            Text(source.title).tag(source)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
             }
 
             Toggle("Include imported sessions", isOn: $includeImportedSessions)
@@ -232,6 +325,56 @@ struct ShareSheetView: View {
                     .padding(.top, Theme.Spacing.xs)
             }
         }
+    }
+
+    private var statsSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            Text("Stats")
+                .font(Theme.Typography.headline)
+                .foregroundStyle(Theme.Colors.text)
+
+            switch selectedTemplate {
+            case .book:
+                StatSelectorView(
+                    title: "Choose 4 stats",
+                    options: BookStatOption.allCases.map { StatOption(option: $0, title: $0.title, icon: $0.icon) },
+                    selected: $selectedBookStats,
+                    accentColor: themeColor.color
+                )
+            case .wrap:
+                StatSelectorView(
+                    title: "Choose 4 stats",
+                    options: WrapStatOption.allCases.map { StatOption(option: $0, title: $0.title, icon: $0.icon) },
+                    selected: $selectedWrapStats,
+                    accentColor: themeColor.color
+                )
+            case .streak:
+                StatSelectorView(
+                    title: "Choose 4 stats",
+                    options: StreakStatOption.allCases.map { StatOption(option: $0, title: $0.title, icon: $0.icon) },
+                    selected: $selectedStreakStats,
+                    accentColor: themeColor.color
+                )
+            }
+        }
+        .padding(Theme.Spacing.md)
+        .cardStyle()
+    }
+
+    private var contentOrderSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            Text("Content Order")
+                .font(Theme.Typography.headline)
+                .foregroundStyle(Theme.Colors.text)
+
+            ContentOrderView(
+                order: contentOrderBinding,
+                enabledBlocks: enabledContentBlocks,
+                accentColor: themeColor.color
+            )
+        }
+        .padding(Theme.Spacing.md)
+        .cardStyle()
     }
 
     private func loadCoverImageIfNeeded() async {
@@ -351,6 +494,382 @@ struct ShareSheetView: View {
     }
 }
 
+private enum ShareQuoteSource: String, CaseIterable, Identifiable {
+    case latest
+    case random
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .latest: return "Latest"
+        case .random: return "Random"
+        }
+    }
+}
+
+private enum BookStatOption: String, CaseIterable, Identifiable {
+    case pagesRead
+    case totalPages
+    case progressPercent
+    case timeRead
+    case sessions
+    case milestoneDate
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .pagesRead: return "Pages Read"
+        case .totalPages: return "Total Pages"
+        case .progressPercent: return "Progress"
+        case .timeRead: return "Time"
+        case .sessions: return "Sessions"
+        case .milestoneDate: return "Milestone"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .pagesRead: return "book.pages"
+        case .totalPages: return "books.vertical"
+        case .progressPercent: return "chart.pie.fill"
+        case .timeRead: return "clock.fill"
+        case .sessions: return "waveform.path.ecg"
+        case .milestoneDate: return "calendar"
+        }
+    }
+}
+
+private enum WrapStatOption: String, CaseIterable, Identifiable {
+    case pages
+    case time
+    case sessions
+    case books
+    case activeDays
+    case avgPagesPerDay
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .pages: return "Pages"
+        case .time: return "Time"
+        case .sessions: return "Sessions"
+        case .books: return "Books Finished"
+        case .activeDays: return "Active Days"
+        case .avgPagesPerDay: return "Avg Pages/Day"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .pages: return "book.pages"
+        case .time: return "clock.fill"
+        case .sessions: return "sparkles"
+        case .books: return "checkmark.seal.fill"
+        case .activeDays: return "calendar.badge.clock"
+        case .avgPagesPerDay: return "speedometer"
+        }
+    }
+}
+
+private enum StreakStatOption: String, CaseIterable, Identifiable {
+    case currentStreak
+    case bestStreak
+    case pagesToday
+    case minutesToday
+    case sessionsToday
+    case activeDays7
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .currentStreak: return "Current Streak"
+        case .bestStreak: return "Best Streak"
+        case .pagesToday: return "Pages Today"
+        case .minutesToday: return "Minutes Today"
+        case .sessionsToday: return "Sessions Today"
+        case .activeDays7: return "Active Days (7d)"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .currentStreak: return "flame.fill"
+        case .bestStreak: return "flame.circle.fill"
+        case .pagesToday: return "book.pages"
+        case .minutesToday: return "clock.fill"
+        case .sessionsToday: return "sparkles"
+        case .activeDays7: return "calendar"
+        }
+    }
+}
+
+private struct StatOption<Stat: Hashable & Identifiable>: Identifiable {
+    let option: Stat
+    let title: String
+    let icon: String
+
+    var id: Stat.ID { option.id }
+}
+
+private struct StatSelectorView<Stat: Hashable & Identifiable>: View {
+    let title: String
+    let options: [StatOption<Stat>]
+    @Binding var selected: [Stat]
+    let accentColor: Color
+
+    private let maxSelection = 4
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            HStack {
+                Text(title)
+                    .font(Theme.Typography.subheadline)
+                    .foregroundStyle(Theme.Colors.text)
+
+                Spacer()
+
+                Text("\(selected.count)/\(maxSelection)")
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(Theme.Colors.secondaryText)
+            }
+
+            if selected.count < maxSelection {
+                Text("Select \(maxSelection - selected.count) more.")
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(Theme.Colors.secondaryText)
+            }
+
+            Text("Order")
+                .font(Theme.Typography.caption)
+                .foregroundStyle(Theme.Colors.secondaryText)
+
+            VStack(spacing: Theme.Spacing.xs) {
+                ForEach(selected, id: \.self) { option in
+                    let metadata = options.first { $0.option == option }
+                    StatRowView(
+                        title: metadata?.title ?? "Stat",
+                        icon: metadata?.icon ?? "circle",
+                        accentColor: accentColor,
+                        moveUpEnabled: canMoveUp(option),
+                        moveDownEnabled: canMoveDown(option),
+                        onMoveUp: { move(option, by: -1) },
+                        onMoveDown: { move(option, by: 1) }
+                    )
+                }
+            }
+
+            Divider()
+                .padding(.vertical, Theme.Spacing.xs)
+
+            Text("Available")
+                .font(Theme.Typography.caption)
+                .foregroundStyle(Theme.Colors.secondaryText)
+
+            VStack(spacing: Theme.Spacing.xs) {
+                ForEach(options) { option in
+                    let isSelected = selected.contains(option.option)
+                    let canSelect = isSelected || selected.count < maxSelection
+
+                    Button {
+                        toggle(option.option)
+                    } label: {
+                        HStack {
+                            Image(systemName: option.icon)
+                                .foregroundStyle(isSelected ? accentColor : Theme.Colors.secondaryText)
+
+                            Text(option.title)
+                                .font(Theme.Typography.body)
+                                .foregroundStyle(Theme.Colors.text)
+
+                            Spacer()
+
+                            if isSelected {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(accentColor)
+                            }
+                        }
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 10)
+                        .background(
+                            RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous)
+                                .fill(Theme.Colors.secondaryBackground)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!canSelect)
+                    .opacity(canSelect ? 1 : 0.5)
+                }
+            }
+        }
+    }
+
+    private func toggle(_ option: Stat) {
+        if let index = selected.firstIndex(of: option) {
+            selected.remove(at: index)
+            return
+        }
+
+        guard selected.count < maxSelection else { return }
+        selected.append(option)
+    }
+
+    private func canMoveUp(_ option: Stat) -> Bool {
+        guard let index = selected.firstIndex(of: option) else { return false }
+        return index > 0
+    }
+
+    private func canMoveDown(_ option: Stat) -> Bool {
+        guard let index = selected.firstIndex(of: option) else { return false }
+        return index < selected.count - 1
+    }
+
+    private func move(_ option: Stat, by offset: Int) {
+        guard let index = selected.firstIndex(of: option) else { return }
+        let newIndex = index + offset
+        guard selected.indices.contains(newIndex) else { return }
+        selected.move(fromOffsets: IndexSet(integer: index), toOffset: newIndex > index ? newIndex + 1 : newIndex)
+    }
+}
+
+private struct StatRowView: View {
+    let title: String
+    let icon: String
+    let accentColor: Color
+    let moveUpEnabled: Bool
+    let moveDownEnabled: Bool
+    let onMoveUp: () -> Void
+    let onMoveDown: () -> Void
+
+    var body: some View {
+        HStack {
+            Image(systemName: icon)
+                .foregroundStyle(accentColor)
+
+            Text(title)
+                .font(Theme.Typography.body)
+                .foregroundStyle(Theme.Colors.text)
+
+            Spacer()
+
+            Button(action: onMoveUp) {
+                Image(systemName: "chevron.up")
+                    .foregroundStyle(moveUpEnabled ? Theme.Colors.text : Theme.Colors.tertiaryText)
+            }
+            .buttonStyle(.plain)
+            .disabled(!moveUpEnabled)
+
+            Button(action: onMoveDown) {
+                Image(systemName: "chevron.down")
+                    .foregroundStyle(moveDownEnabled ? Theme.Colors.text : Theme.Colors.tertiaryText)
+            }
+            .buttonStyle(.plain)
+            .disabled(!moveDownEnabled)
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 10)
+        .background(
+            RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous)
+                .fill(Theme.Colors.secondaryBackground)
+        )
+    }
+}
+
+private struct ContentOrderView: View {
+    @Binding var order: [ShareContentBlock]
+    let enabledBlocks: Set<ShareContentBlock>
+    let accentColor: Color
+
+    var body: some View {
+        VStack(spacing: Theme.Spacing.xs) {
+            ForEach(order) { block in
+                let isEnabled = enabledBlocks.contains(block)
+                ContentOrderRow(
+                    title: block.title,
+                    icon: block.icon,
+                    accentColor: accentColor,
+                    isEnabled: isEnabled,
+                    moveUpEnabled: canMoveUp(block),
+                    moveDownEnabled: canMoveDown(block),
+                    onMoveUp: { move(block, by: -1) },
+                    onMoveDown: { move(block, by: 1) }
+                )
+            }
+        }
+    }
+
+    private func canMoveUp(_ block: ShareContentBlock) -> Bool {
+        guard let index = order.firstIndex(of: block) else { return false }
+        return index > 0
+    }
+
+    private func canMoveDown(_ block: ShareContentBlock) -> Bool {
+        guard let index = order.firstIndex(of: block) else { return false }
+        return index < order.count - 1
+    }
+
+    private func move(_ block: ShareContentBlock, by offset: Int) {
+        guard let index = order.firstIndex(of: block) else { return }
+        let newIndex = index + offset
+        guard order.indices.contains(newIndex) else { return }
+        order.move(fromOffsets: IndexSet(integer: index), toOffset: newIndex > index ? newIndex + 1 : newIndex)
+    }
+}
+
+private struct ContentOrderRow: View {
+    let title: String
+    let icon: String
+    let accentColor: Color
+    let isEnabled: Bool
+    let moveUpEnabled: Bool
+    let moveDownEnabled: Bool
+    let onMoveUp: () -> Void
+    let onMoveDown: () -> Void
+
+    var body: some View {
+        HStack {
+            Image(systemName: icon)
+                .foregroundStyle(accentColor)
+
+            Text(title)
+                .font(Theme.Typography.body)
+                .foregroundStyle(Theme.Colors.text)
+
+            if !isEnabled {
+                Text("Off")
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(Theme.Colors.secondaryText)
+            }
+
+            Spacer()
+
+            Button(action: onMoveUp) {
+                Image(systemName: "chevron.up")
+                    .foregroundStyle(moveUpEnabled ? Theme.Colors.text : Theme.Colors.tertiaryText)
+            }
+            .buttonStyle(.plain)
+            .disabled(!moveUpEnabled)
+
+            Button(action: onMoveDown) {
+                Image(systemName: "chevron.down")
+                    .foregroundStyle(moveDownEnabled ? Theme.Colors.text : Theme.Colors.tertiaryText)
+            }
+            .buttonStyle(.plain)
+            .disabled(!moveDownEnabled)
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 10)
+        .background(
+            RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous)
+                .fill(Theme.Colors.secondaryBackground)
+        )
+        .opacity(isEnabled ? 1 : 0.6)
+    }
+}
+
 private extension ShareSheetView {
     static let numberFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
@@ -414,7 +933,9 @@ private extension ShareSheetView {
                 coverImage: nil,
                 progress: nil,
                 progressText: nil,
+                quote: nil,
                 graph: nil,
+                blocks: [],
                 stats: [],
                 footer: "Shared with Shlf"
             )
@@ -435,30 +956,21 @@ private extension ShareSheetView {
         let dateValue = date.map(formatDate) ?? "N/A"
         let period = date.map { "\(dateLabel) \(formatDate($0))" }
 
-        let graph = showGraph ? bookGraph(for: sessions, totalPages: totalPages) : nil
-
-        let stats = [
-            ShareStatItem(
-                icon: "book.pages",
-                label: "Pages Read",
-                value: formatNumber(currentPage)
-            ),
-            ShareStatItem(
-                icon: "clock.fill",
-                label: "Time",
-                value: formatMinutes(minutesRead)
-            ),
-            ShareStatItem(
-                icon: "waveform.path.ecg",
-                label: "Sessions",
-                value: formatNumber(sessionCount)
-            ),
-            ShareStatItem(
-                icon: "calendar",
-                label: dateLabel,
-                value: dateValue
+        let graph = showGraph ? bookGraph(for: sessions) : nil
+        let quote = (showQuote && hasQuotes) ? bookQuote(for: book) : nil
+        let blocks = activeBlocksForBook()
+        let stats = selectedBookStats.map {
+            bookStatItem(
+                $0,
+                currentPage: currentPage,
+                totalPages: totalPages,
+                minutesRead: minutesRead,
+                sessionCount: sessionCount,
+                dateLabel: dateLabel,
+                dateValue: dateValue,
+                progress: progress
             )
-        ]
+        }
 
         return ShareCardContent(
             title: book.title,
@@ -468,7 +980,9 @@ private extension ShareSheetView {
             coverImage: showCover ? coverImage : nil,
             progress: progress,
             progressText: progressText,
+            quote: quote,
             graph: graph,
+            blocks: blocks,
             stats: stats,
             footer: "Shared with Shlf"
         )
@@ -491,28 +1005,20 @@ private extension ShareSheetView {
             return finishDate >= range.start && finishDate <= range.end
         }.count
 
-        let stats = [
-            ShareStatItem(
-                icon: "book.pages",
-                label: "Pages",
-                value: formatNumber(max(0, pagesRead))
-            ),
-            ShareStatItem(
-                icon: "clock.fill",
-                label: "Time",
-                value: formatMinutes(minutesRead)
-            ),
-            ShareStatItem(
-                icon: "sparkles",
-                label: "Sessions",
-                value: formatNumber(sessionCount)
-            ),
-            ShareStatItem(
-                icon: "checkmark.seal.fill",
-                label: "Books",
-                value: formatNumber(booksFinished)
+        let daysInRange = max(1, daysBetween(start: range.start, end: range.end))
+        let activeDays = activeDaysCount(for: sessionsInRange)
+        let blocks = activeBlocksForWrap()
+        let stats = selectedWrapStats.map {
+            wrapStatItem(
+                $0,
+                pagesRead: pagesRead,
+                minutesRead: minutesRead,
+                sessionCount: sessionCount,
+                booksFinished: booksFinished,
+                daysInRange: daysInRange,
+                activeDays: activeDays
             )
-        ]
+        }
 
         return ShareCardContent(
             title: "Reading Wrap",
@@ -522,7 +1028,9 @@ private extension ShareSheetView {
             coverImage: nil,
             progress: nil,
             progressText: nil,
+            quote: nil,
             graph: graph,
+            blocks: blocks,
             stats: stats,
             footer: "Shared with Shlf"
         )
@@ -545,29 +1053,20 @@ private extension ShareSheetView {
             : nil
 
         let graph = showGraph ? streakGraph(for: filteredSessions) : nil
-
-        let stats = [
-            ShareStatItem(
-                icon: "flame.fill",
-                label: "Best Streak",
-                value: "\(formatNumber(bestStreak))d"
-            ),
-            ShareStatItem(
-                icon: "book.pages",
-                label: "Pages Today",
-                value: formatNumber(max(0, pagesToday))
-            ),
-            ShareStatItem(
-                icon: "clock.fill",
-                label: "Minutes",
-                value: formatMinutes(minutesToday)
-            ),
-            ShareStatItem(
-                icon: "sparkles",
-                label: "Sessions",
-                value: formatNumber(sessionCount)
+        let weekSessions = sessionsInRange(days: 7)
+        let activeDays = activeDaysCount(for: weekSessions)
+        let blocks = activeBlocksForStreak()
+        let stats = selectedStreakStats.map {
+            streakStatItem(
+                $0,
+                bestStreak: bestStreak,
+                pagesToday: pagesToday,
+                minutesToday: minutesToday,
+                sessionCount: sessionCount,
+                activeDays: activeDays,
+                currentStreak: profile.currentStreak
             )
-        ]
+        }
 
         return ShareCardContent(
             title: "Streak Mode",
@@ -577,7 +1076,9 @@ private extension ShareSheetView {
             coverImage: nil,
             progress: progress,
             progressText: progressText,
+            quote: nil,
             graph: graph,
+            blocks: blocks,
             stats: stats,
             footer: "Shared with Shlf"
         )
@@ -589,7 +1090,12 @@ private extension ShareSheetView {
         let bucketed = shouldBucketWeekly(range: range)
         let values = graphValues(for: sessions, range: range, metric: selectedGraphMetric)
         let subtitle = graphSubtitle(for: range, bucketed: bucketed)
-        return ShareGraph(title: "\(selectedGraphMetric.title) Over Time", subtitle: subtitle, values: values)
+        return ShareGraph(
+            title: "\(selectedGraphMetric.title) Over Time",
+            subtitle: subtitle,
+            values: values,
+            style: selectedGraphStyle
+        )
     }
 
     func streakGraph(for sessions: [ReadingSession]) -> ShareGraph {
@@ -598,10 +1104,15 @@ private extension ShareSheetView {
         let start = calendar.date(byAdding: .day, value: -6, to: calendar.startOfDay(for: end)) ?? end
         let range = (start: start, end: end)
         let values = graphValues(for: sessions, range: range, metric: selectedGraphMetric)
-        return ShareGraph(title: "Last 7 Days", subtitle: selectedGraphMetric.title, values: values)
+        return ShareGraph(
+            title: "Last 7 Days",
+            subtitle: selectedGraphMetric.title,
+            values: values,
+            style: selectedGraphStyle
+        )
     }
 
-    func bookGraph(for sessions: [ReadingSession], totalPages: Int) -> ShareGraph? {
+    func bookGraph(for sessions: [ReadingSession]) -> ShareGraph? {
         guard !sessions.isEmpty else { return nil }
 
         let sorted = sessions.sorted { $0.startDate < $1.startDate }
@@ -619,7 +1130,7 @@ private extension ShareSheetView {
 
         let title = "Recent Sessions"
         let subtitle = selectedGraphMetric.title
-        return ShareGraph(title: title, subtitle: subtitle, values: values)
+        return ShareGraph(title: title, subtitle: subtitle, values: values, style: selectedGraphStyle)
     }
 
     func graphValues(
@@ -705,5 +1216,164 @@ private extension ShareSheetView {
         let endDay = calendar.startOfDay(for: range.end)
         let dayCount = calendar.dateComponents([.day], from: startDay, to: endDay).day ?? 0
         return dayCount > 90
+    }
+
+    func daysBetween(start: Date, end: Date) -> Int {
+        let calendar = Calendar.current
+        let startDay = calendar.startOfDay(for: start)
+        let endDay = calendar.startOfDay(for: end)
+        let dayCount = calendar.dateComponents([.day], from: startDay, to: endDay).day ?? 0
+        return max(1, dayCount + 1)
+    }
+
+    func activeDaysCount(for sessions: [ReadingSession]) -> Int {
+        let calendar = Calendar.current
+        let days = sessions.map { calendar.startOfDay(for: $0.startDate) }
+        return Set(days).count
+    }
+
+    func sessionsInRange(days: Int) -> [ReadingSession] {
+        let calendar = Calendar.current
+        let end = Date()
+        let start = calendar.date(byAdding: .day, value: -(days - 1), to: calendar.startOfDay(for: end)) ?? end
+        return filteredSessions.filter { $0.startDate >= start && $0.startDate <= end }
+    }
+
+    func bookQuote(for book: Book) -> ShareQuote? {
+        let quotes = book.quotes ?? []
+        guard !quotes.isEmpty else { return nil }
+
+        let quote: Quote?
+        switch selectedQuoteSource {
+        case .latest:
+            quote = quotes.sorted { $0.dateAdded > $1.dateAdded }.first
+        case .random:
+            quote = quotes.randomElement()
+        }
+
+        guard let quote else { return nil }
+        let attribution: String?
+        if let page = quote.pageNumber {
+            attribution = "Page \(formatNumber(page))"
+        } else {
+            attribution = nil
+        }
+        return ShareQuote(text: quote.text, attribution: attribution)
+    }
+
+    func bookStatItem(
+        _ option: BookStatOption,
+        currentPage: Int,
+        totalPages: Int,
+        minutesRead: Int,
+        sessionCount: Int,
+        dateLabel: String,
+        dateValue: String,
+        progress: Double?
+    ) -> ShareStatItem {
+        switch option {
+        case .pagesRead:
+            return ShareStatItem(icon: option.icon, label: option.title, value: formatNumber(currentPage))
+        case .totalPages:
+            let value = totalPages > 0 ? formatNumber(totalPages) : "N/A"
+            return ShareStatItem(icon: option.icon, label: option.title, value: value)
+        case .progressPercent:
+            let value = progress.map { "\(Int(($0 * 100).rounded()))%" } ?? "N/A"
+            return ShareStatItem(icon: option.icon, label: option.title, value: value)
+        case .timeRead:
+            return ShareStatItem(icon: option.icon, label: option.title, value: formatMinutes(minutesRead))
+        case .sessions:
+            return ShareStatItem(icon: option.icon, label: option.title, value: formatNumber(sessionCount))
+        case .milestoneDate:
+            return ShareStatItem(icon: option.icon, label: dateLabel, value: dateValue)
+        }
+    }
+
+    func wrapStatItem(
+        _ option: WrapStatOption,
+        pagesRead: Int,
+        minutesRead: Int,
+        sessionCount: Int,
+        booksFinished: Int,
+        daysInRange: Int,
+        activeDays: Int
+    ) -> ShareStatItem {
+        switch option {
+        case .pages:
+            return ShareStatItem(icon: option.icon, label: option.title, value: formatNumber(max(0, pagesRead)))
+        case .time:
+            return ShareStatItem(icon: option.icon, label: option.title, value: formatMinutes(minutesRead))
+        case .sessions:
+            return ShareStatItem(icon: option.icon, label: option.title, value: formatNumber(sessionCount))
+        case .books:
+            return ShareStatItem(icon: option.icon, label: option.title, value: formatNumber(booksFinished))
+        case .activeDays:
+            return ShareStatItem(icon: option.icon, label: option.title, value: formatNumber(activeDays))
+        case .avgPagesPerDay:
+            let average = Double(max(0, pagesRead)) / Double(max(1, daysInRange))
+            let value = formatNumber(Int(average.rounded()))
+            return ShareStatItem(icon: option.icon, label: option.title, value: value)
+        }
+    }
+
+    func streakStatItem(
+        _ option: StreakStatOption,
+        bestStreak: Int,
+        pagesToday: Int,
+        minutesToday: Int,
+        sessionCount: Int,
+        activeDays: Int,
+        currentStreak: Int
+    ) -> ShareStatItem {
+        switch option {
+        case .currentStreak:
+            return ShareStatItem(icon: option.icon, label: option.title, value: "\(formatNumber(currentStreak))d")
+        case .bestStreak:
+            return ShareStatItem(icon: option.icon, label: option.title, value: "\(formatNumber(bestStreak))d")
+        case .pagesToday:
+            return ShareStatItem(icon: option.icon, label: option.title, value: formatNumber(max(0, pagesToday)))
+        case .minutesToday:
+            return ShareStatItem(icon: option.icon, label: option.title, value: formatMinutes(minutesToday))
+        case .sessionsToday:
+            return ShareStatItem(icon: option.icon, label: option.title, value: formatNumber(sessionCount))
+        case .activeDays7:
+            return ShareStatItem(icon: option.icon, label: option.title, value: "\(formatNumber(activeDays))d")
+        }
+    }
+
+    func activeBlocksForBook() -> [ShareContentBlock] {
+        let heroEnabled = bookProgressValue != nil || (showCover && book?.coverImageURL != nil)
+        let quoteEnabled = showQuote && hasQuotes
+        let graphEnabled = bookGraphEnabled
+        let statsEnabled = !selectedBookStats.isEmpty
+        let availability: [ShareContentBlock: Bool] = [
+            .hero: heroEnabled,
+            .quote: quoteEnabled,
+            .graph: graphEnabled,
+            .stats: statsEnabled
+        ]
+        return bookContentOrder.filter { availability[$0] ?? false }
+    }
+
+    func activeBlocksForWrap() -> [ShareContentBlock] {
+        let graphEnabled = showGraph
+        let statsEnabled = !selectedWrapStats.isEmpty
+        let availability: [ShareContentBlock: Bool] = [
+            .graph: graphEnabled,
+            .stats: statsEnabled
+        ]
+        return wrapContentOrder.filter { availability[$0] ?? false }
+    }
+
+    func activeBlocksForStreak() -> [ShareContentBlock] {
+        let heroEnabled = streakProgressValue != nil
+        let graphEnabled = showGraph
+        let statsEnabled = !selectedStreakStats.isEmpty
+        let availability: [ShareContentBlock: Bool] = [
+            .hero: heroEnabled,
+            .graph: graphEnabled,
+            .stats: statsEnabled
+        ]
+        return streakContentOrder.filter { availability[$0] ?? false }
     }
 }
