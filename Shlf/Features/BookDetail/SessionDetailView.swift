@@ -33,6 +33,11 @@ struct SessionDetailView: View {
         return Double(durationMinutes) / Double(pages)
     }
 
+    private var sessionImpactPercentage: Double? {
+        guard let totalPages = book.totalPages, totalPages > 0 else { return nil }
+        return (Double(abs(pagesRead)) / Double(totalPages)) * 100
+    }
+
     private var startDateText: String {
         session.startDate.formatted(date: .abbreviated, time: .shortened)
     }
@@ -64,6 +69,11 @@ struct SessionDetailView: View {
     private var timePerPageText: String {
         guard let minutesPerPage else { return "—" }
         return String(format: "%.1f", minutesPerPage)
+    }
+
+    private var sessionImpactText: String {
+        guard let sessionImpactPercentage else { return "—" }
+        return String(format: "%.1f%%", sessionImpactPercentage)
     }
 
     var body: some View {
@@ -174,6 +184,13 @@ struct SessionDetailView: View {
                 title: "Min/Page",
                 value: timePerPageText,
                 icon: "hourglass",
+                gradient: nil
+            )
+
+            StatCard(
+                title: "Impact",
+                value: sessionImpactText,
+                icon: "percent",
                 gradient: nil
             )
         }
