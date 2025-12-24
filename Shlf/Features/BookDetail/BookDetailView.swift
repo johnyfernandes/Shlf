@@ -545,6 +545,11 @@ struct BookDetailView: View {
     // MARK: - Reading History Section
 
     @State private var showAllSessions = false
+    private var historyRowHeight: CGFloat { 64 }
+
+    private func historyListHeight(_ count: Int) -> CGFloat {
+        CGFloat(count) * historyRowHeight
+    }
 
     private var readingHistorySection: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -568,27 +573,38 @@ struct BookDetailView: View {
             let displayedSessions = showAllSessions ? sessions : Array(sessions.prefix(5))
 
             VStack(spacing: 10) {
-                ForEach(displayedSessions) { session in
-                    NavigationLink {
-                        SessionDetailView(session: session, book: book)
-                    } label: {
-                        ReadingSessionRow(session: session)
-                    }
-                    .contextMenu {
-                        Button(role: .destructive) {
-                            sessionToDelete = session
-                            showDeleteSessionAlert = true
+                List {
+                    ForEach(displayedSessions) { session in
+                        NavigationLink {
+                            SessionDetailView(session: session, book: book)
                         } label: {
-                            Label("Delete Session", systemImage: "trash")
+                            ReadingSessionRow(session: session)
                         }
-                    }
-                    .buttonStyle(.plain)
-
-                    if session.id != displayedSessions.last?.id {
-                        Divider()
-                            .padding(.leading, 12)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                sessionToDelete = session
+                                showDeleteSessionAlert = true
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                sessionToDelete = session
+                                showDeleteSessionAlert = true
+                            } label: {
+                                Label("Delete Session", systemImage: "trash")
+                            }
+                        }
+                        .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 6, trailing: 0))
+                        .listRowBackground(Color.clear)
                     }
                 }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .scrollDisabled(true)
+                .environment(\.defaultMinListRowHeight, historyRowHeight)
+                .frame(height: historyListHeight(displayedSessions.count))
 
                 if sessions.count > 5 {
                     Button {
@@ -952,6 +968,8 @@ struct ReadingSessionRow: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.green)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
     }
 }
 
