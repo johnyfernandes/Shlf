@@ -18,7 +18,8 @@ struct StatsView: View {
     @Query private var allBooks: [Book]
     @State private var showAddGoal = false
     @State private var refreshTrigger = UUID() // Force refresh when Watch updates
-    @State private var selectedAchievement: AchievementSelection?
+    @State private var selectedAchievement: AchievementEntry?
+    @State private var showAllAchievements = false
 
     private var profile: UserProfile {
         if let existing = profiles.first {
@@ -151,6 +152,12 @@ struct StatsView: View {
             }
             .onReceive(NotificationCenter.default.publisher(for: .watchStatsUpdated)) { _ in
                 refreshTrigger = UUID()
+            }
+            .sheet(isPresented: $showAllAchievements) {
+                AchievementsGridView(
+                    entries: achievementEntries,
+                    onSelect: handleAchievementSelection
+                )
             }
             .sheet(item: $selectedAchievement) { selection in
                 AchievementDetailView(
@@ -325,34 +332,29 @@ struct StatsView: View {
                 Text("\((profile.achievements ?? []).count) / \(AchievementType.allCases.count)")
                     .font(Theme.Typography.callout)
                     .foregroundStyle(Theme.Colors.secondaryText)
+
+                if AchievementType.allCases.count > 6 {
+                    Button("View All") {
+                        showAllAchievements = true
+                    }
+                    .font(Theme.Typography.callout)
+                    .foregroundStyle(themeColor.color)
+                }
             }
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Spacing.sm) {
-                ForEach(AchievementType.allCases, id: \.self) { type in
-                    let unlockedAchievement = (profile.achievements ?? []).first { $0.type == type }
-                    let progress = achievementProgress(for: type, isUnlocked: unlockedAchievement != nil)
-                    AchievementCard(
-                        type: type,
-                        achievement: unlockedAchievement,
-                        progress: progress,
-                        onView: {
-                            selectedAchievement = AchievementSelection(
-                                type: type,
-                                achievement: unlockedAchievement,
-                                progress: progress
-                            )
-                            if let achievement = unlockedAchievement, achievement.isNew {
-                                achievement.isNew = false
-                                do {
-                                    try modelContext.save()
-                                } catch {
-                                    // Log but don't show error to user (non-critical UX state)
-                                    print("Failed to mark achievement as viewed: \(error.localizedDescription)")
-                                }
-                            }
-                        }
-                    )
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: Theme.Spacing.sm) {
+                    ForEach(achievementHighlights) { entry in
+                        AchievementCard(
+                            type: entry.type,
+                            achievement: entry.achievement,
+                            progress: entry.progress,
+                            onView: { handleAchievementSelection(entry) }
+                        )
+                        .frame(width: 120)
+                    }
                 }
+                .padding(.vertical, 4)
             }
         }
     }
@@ -457,6 +459,40 @@ struct StatsView: View {
             return marathonSessionCount
         default:
             return 0
+        }
+    }
+
+    private var achievementEntries: [AchievementEntry] {
+        AchievementType.allCases.map { type in
+            let unlockedAchievement = (profile.achievements ?? []).first { $0.type == type }
+            let progress = achievementProgress(for: type, isUnlocked: unlockedAchievement != nil)
+            return AchievementEntry(
+                type: type,
+                achievement: unlockedAchievement,
+                progress: progress
+            )
+        }
+    }
+
+    private var achievementHighlights: [AchievementEntry] {
+        let sorted = achievementEntries.sorted { lhs, rhs in
+            if lhs.isUnlocked != rhs.isUnlocked {
+                return lhs.isUnlocked && !rhs.isUnlocked
+            }
+            return lhs.progress.fraction > rhs.progress.fraction
+        }
+        return Array(sorted.prefix(6))
+    }
+
+    private func handleAchievementSelection(_ entry: AchievementEntry) {
+        selectedAchievement = entry
+        if let achievement = entry.achievement, achievement.isNew {
+            achievement.isNew = false
+            do {
+                try modelContext.save()
+            } catch {
+                print("Failed to mark achievement as viewed: \(error.localizedDescription)")
+            }
         }
     }
 }
@@ -611,11 +647,15 @@ struct ReadingActivityChart: View {
 
 }
 
-private struct AchievementSelection: Identifiable {
-    let id = UUID()
+struct AchievementEntry: Identifiable {
+    var id: String { type.rawValue }
     let type: AchievementType
     let achievement: Achievement?
     let progress: AchievementProgress
+
+    var isUnlocked: Bool {
+        achievement != nil
+    }
 }
 
 struct AchievementCard: View {
@@ -881,6 +921,44 @@ struct AchievementDetailView: View {
                         dismiss()
                     }
                     .foregroundStyle(themeColor.color)
+                }
+            }
+        }
+    }
+}
+
+struct AchievementsGridView: View {
+    @Environment(\.dismiss) private var dismiss
+    let entries: [AchievementEntry]
+    let onSelect: (AchievementEntry) -> Void
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                LazyVGrid(
+                    columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())],
+                    spacing: Theme.Spacing.sm
+                ) {
+                    ForEach(entries) { entry in
+                        AchievementCard(
+                            type: entry.type,
+                            achievement: entry.achievement,
+                            progress: entry.progress,
+                            onView: { onSelect(entry) }
+                        )
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 20)
+                .padding(.bottom, 40)
+            }
+            .navigationTitle("Achievements")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
                 }
             }
         }
