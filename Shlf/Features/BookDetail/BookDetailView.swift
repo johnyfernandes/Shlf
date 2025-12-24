@@ -1071,16 +1071,8 @@ struct FinishBookLogView: View {
                     }
                 }
 
-                Section("Duration") {
-                    Picker("Duration", selection: $durationMinutes) {
-                        Text("15 min").tag(15)
-                        Text("30 min").tag(30)
-                        Text("45 min").tag(45)
-                        Text("60 min").tag(60)
-                        Text("90 min").tag(90)
-                        Text("120 min").tag(120)
-                    }
-                    .pickerStyle(.wheel)
+            Section("Duration") {
+                    DurationPickerView(minutes: $durationMinutes, maxHours: 99)
                 }
 
                 Section("Date") {
