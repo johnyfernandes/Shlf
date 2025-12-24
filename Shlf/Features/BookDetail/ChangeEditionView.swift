@@ -82,9 +82,11 @@ struct ChangeEditionView: View {
     }
 
     private func loadEditions() async {
-        guard let workID = await resolveWorkIDIfNeeded() else { return }
+        guard !isLoading else { return }
         isLoading = true
         defer { isLoading = false }
+
+        guard let workID = await resolveWorkIDIfNeeded() else { return }
 
         do {
             let fetched = try await bookAPI.fetchEditions(workID: workID)
