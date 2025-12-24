@@ -999,8 +999,11 @@ struct FinishBookLogView: View {
     @State private var endPage: Int
     @State private var endPageText: String
     @State private var durationMinutes = 60
+    @State private var lastDurationMinutes = 60
     @State private var finishDate = Date()
     @State private var includeDuration = false
+    @State private var useStartDate = false
+    @State private var startDate = Date()
     @FocusState private var focusedField: FocusField?
 
     enum FocusField: Hashable {
@@ -1014,6 +1017,10 @@ struct FinishBookLogView: View {
         let defaultEndPage = totalPages > 0 ? totalPages : max(0, book.currentPage)
         _endPage = State(initialValue: defaultEndPage)
         _endPageText = State(initialValue: defaultEndPage > 0 ? "\(defaultEndPage)" : "")
+        let now = Date()
+        _finishDate = State(initialValue: now)
+        _useStartDate = State(initialValue: book.dateStarted != nil)
+        _startDate = State(initialValue: book.dateStarted ?? now)
     }
 
     private var pagesRead: Int {
@@ -1025,7 +1032,7 @@ struct FinishBookLogView: View {
         let mockSession = ReadingSession(
             startPage: 0,
             endPage: endPage,
-            durationMinutes: durationMinutes
+            durationMinutes: includeDuration ? durationMinutes : 0
         )
         return engine.calculateXP(for: mockSession)
     }
@@ -1072,14 +1079,42 @@ struct FinishBookLogView: View {
                     }
                 }
 
+                Section("Dates") {
+                    DatePicker(
+                        "Finished on",
+                        selection: $finishDate,
+                        in: (useStartDate ? startDate : Date.distantPast)...Date(),
+                        displayedComponents: [.date]
+                    )
+
+                    Toggle("Add start date", isOn: $useStartDate)
+                        .onChange(of: useStartDate) { _, newValue in
+                            if newValue, startDate > finishDate {
+                                startDate = finishDate
+                            }
+                        }
+
+                    if useStartDate {
+                        DatePicker(
+                            "Started on",
+                            selection: $startDate,
+                            in: ...finishDate,
+                            displayedComponents: [.date]
+                        )
+                    }
+
+                    Text("Dates track your reading window. Time spent is separate.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
                 Section("Time Spent") {
                     Toggle("Track time spent", isOn: $includeDuration)
                         .onChange(of: includeDuration) { _, newValue in
                             if newValue {
-                                if durationMinutes == 0 {
-                                    durationMinutes = 60
-                                }
+                                durationMinutes = max(1, lastDurationMinutes)
                             } else {
+                                lastDurationMinutes = max(1, durationMinutes)
                                 durationMinutes = 0
                             }
                         }
@@ -1091,14 +1126,6 @@ struct FinishBookLogView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                }
-
-                Section("Date") {
-                    DatePicker(
-                        "Finish Date",
-                        selection: $finishDate,
-                        displayedComponents: includeDuration ? [.date, .hourAndMinute] : [.date]
-                    )
                 }
 
                 Section {
@@ -1120,6 +1147,11 @@ struct FinishBookLogView: View {
                     durationMinutes = 0
                 }
                 syncEndPageText(with: endPage)
+            }
+            .onChange(of: finishDate) { _, newValue in
+                if useStartDate, newValue < startDate {
+                    startDate = newValue
+                }
             }
             .onChange(of: focusedField) { _, newValue in
                 if newValue == nil {
@@ -1203,14 +1235,15 @@ struct FinishBookLogView: View {
         }
 
         let endDate = finishDate
-        let startDate = endDate.addingTimeInterval(TimeInterval(-durationMinutes * 60))
+        let sessionStartDate = finishDate
+        let durationToSave = includeDuration ? durationMinutes : 0
 
         let session = ReadingSession(
-            startDate: startDate,
+            startDate: sessionStartDate,
             endDate: endDate,
             startPage: 0,
             endPage: endPage,
-            durationMinutes: durationMinutes,
+            durationMinutes: durationToSave,
             book: book
         )
 
@@ -1226,8 +1259,8 @@ struct FinishBookLogView: View {
         }
         book.readingStatus = .finished
         book.dateFinished = finishDate
-        if book.dateStarted == nil {
-            book.dateStarted = durationMinutes > 0 ? startDate : finishDate
+        if useStartDate {
+            book.dateStarted = sessionStartDate
         }
         book.savedCurrentPage = nil
 
