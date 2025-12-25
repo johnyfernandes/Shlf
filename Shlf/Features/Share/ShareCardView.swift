@@ -162,7 +162,8 @@ struct LibraryShareCardView: View {
                         cardStroke: cardStroke,
                         shadowColor: shadowColor,
                         showTitles: content.showTitles,
-                        showStatus: content.showStatus
+                        showStatus: content.showStatus,
+                        isCentered: isCentered
                     )
                     .frame(maxWidth: .infinity, alignment: isCentered ? .center : .leading)
 
@@ -200,6 +201,7 @@ struct LibraryShareCardView: View {
         let gridSpacing = 12 * scale
         let gridWidth = size.width - horizontalPadding * 2
         let columnWidth = max(20 * scale, (gridWidth - gridSpacing * CGFloat(columns - 1)) / CGFloat(columns))
+        let totalGridWidth = (columnWidth * CGFloat(columns)) + (gridSpacing * CGFloat(max(columns - 1, 0)))
 
         let titleLineHeight = content.showTitles ? (gridStyle == .compact ? 11 * scale : 12 * scale) : 0
         let titleLines = content.showTitles ? (gridStyle == .compact ? 1 : 2) : 0
@@ -225,6 +227,7 @@ struct LibraryShareCardView: View {
             columns: columns,
             spacing: gridSpacing,
             columnWidth: columnWidth,
+            gridWidth: totalGridWidth,
             rowHeight: rowHeight,
             coverHeight: coverHeight,
             titleHeight: titleHeight,
@@ -785,6 +788,7 @@ private struct LibraryShareGridMetrics {
     let columns: Int
     let spacing: CGFloat
     let columnWidth: CGFloat
+    let gridWidth: CGFloat
     let rowHeight: CGFloat
     let coverHeight: CGFloat
     let titleHeight: CGFloat
@@ -814,13 +818,15 @@ private struct LibraryShareGridView: View {
     let shadowColor: Color
     let showTitles: Bool
     let showStatus: Bool
+    let isCentered: Bool
 
     private var columns: [GridItem] {
-        Array(repeating: GridItem(.flexible(), spacing: metrics.spacing), count: metrics.columns)
+        let alignment: Alignment = isCentered ? .center : .leading
+        return Array(repeating: GridItem(.fixed(metrics.columnWidth), spacing: metrics.spacing, alignment: alignment), count: metrics.columns)
     }
 
     var body: some View {
-        LazyVGrid(columns: columns, alignment: .leading, spacing: metrics.spacing) {
+        let grid = LazyVGrid(columns: columns, alignment: isCentered ? .center : .leading, spacing: metrics.spacing) {
             ForEach(items) { item in
                 switch item {
                 case .book(let book):
@@ -832,7 +838,8 @@ private struct LibraryShareGridView: View {
                         secondaryText: secondaryText,
                         shadowColor: shadowColor,
                         showTitles: showTitles,
-                        showStatus: showStatus
+                        showStatus: showStatus,
+                        isCentered: isCentered
                     )
                 case .overflow(let count):
                     LibraryShareOverflowCell(
@@ -841,10 +848,21 @@ private struct LibraryShareGridView: View {
                         primaryText: primaryText,
                         secondaryText: secondaryText,
                         fillColor: cardFill,
-                        strokeColor: cardStroke
+                        strokeColor: cardStroke,
+                        isCentered: isCentered
                     )
                 }
             }
+        }
+
+        if isCentered {
+            HStack(spacing: 0) {
+                Spacer(minLength: 0)
+                grid.frame(width: metrics.gridWidth, alignment: .center)
+                Spacer(minLength: 0)
+            }
+        } else {
+            grid.frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }
@@ -858,6 +876,7 @@ private struct LibraryShareBookCell: View {
     let shadowColor: Color
     let showTitles: Bool
     let showStatus: Bool
+    let isCentered: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6 * metrics.scale) {
@@ -881,7 +900,8 @@ private struct LibraryShareBookCell: View {
                     .foregroundStyle(primaryText)
                     .lineLimit(max(1, metrics.titleLines))
                     .minimumScaleFactor(0.85)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .frame(maxWidth: .infinity, alignment: isCentered ? .center : .leading)
+                    .multilineTextAlignment(isCentered ? .center : .leading)
             }
         }
         .frame(width: metrics.columnWidth, height: metrics.rowHeight, alignment: .top)
@@ -947,6 +967,7 @@ private struct LibraryShareOverflowCell: View {
     let secondaryText: Color
     let fillColor: Color
     let strokeColor: Color
+    let isCentered: Bool
 
     var body: some View {
         VStack(spacing: 6 * metrics.scale) {
@@ -974,7 +995,7 @@ private struct LibraryShareOverflowCell: View {
                 Text("More books")
                     .font(.system(size: 11 * metrics.scale, weight: .semibold, design: .rounded))
                     .foregroundStyle(secondaryText)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .frame(maxWidth: .infinity, alignment: isCentered ? .center : .leading)
             }
         }
         .frame(width: metrics.columnWidth, height: metrics.rowHeight, alignment: .top)
