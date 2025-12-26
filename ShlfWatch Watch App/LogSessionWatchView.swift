@@ -24,6 +24,14 @@ struct LogSessionWatchView: View {
     @Query private var profiles: [UserProfile]
     @Query private var activeSessions: [ActiveReadingSession]
 
+    private var activeSessionForBook: ActiveReadingSession? {
+        activeSessions.first { $0.book?.id == book.id }
+    }
+
+    private var anyActiveSession: ActiveReadingSession? {
+        activeSessions.first
+    }
+
     private var profile: UserProfile {
         if let existing = profiles.first {
             return existing
@@ -265,17 +273,30 @@ struct LogSessionWatchView: View {
                 WatchConnectivityManager.logger.info("🔄 Synced page from iPhone: \(newPage)")
             }
         }
-        .onChange(of: activeSessions.first?.currentPage) { oldValue, newValue in
+        .onChange(of: activeSessionForBook?.currentPage) { oldValue, newValue in
             // SINGLE SOURCE OF TRUTH: Always sync local state from model
             if let newPage = newValue, newPage != currentPage {
                 currentPage = newPage
                 WatchConnectivityManager.logger.info("✅ Synced page from active session: \(newPage)")
+            }
+            if newValue != nil, !isActive {
+                isActive = true
             }
             // If the active session disappears (ended on iPhone), clear local state
             if newValue == nil {
                 resetActiveSessionState()
                 WatchConnectivityManager.logger.info("🛑 Cleared active session state after end signal")
                 dismiss()
+            }
+        }
+        .onChange(of: activeSessionForBook?.isPaused) { _, newValue in
+            guard let activeSession = activeSessionForBook else { return }
+            if let newValue, newValue != isPaused {
+                isPaused = newValue
+                elapsedTime = activeSession.elapsedTime(at: Date())
+                if !isActive {
+                    isActive = true
+                }
             }
         }
         .onChange(of: book.currentPage) { _, newValue in
@@ -294,7 +315,7 @@ struct LogSessionWatchView: View {
         .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { date in
             // Keep elapsed time synced from the model to avoid drift
             guard isActive else { return }
-            if let activeSession = activeSessions.first {
+            if let activeSession = activeSessionForBook {
                 elapsedTime = activeSession.elapsedTime(at: date)
             } else if !isPaused {
                 elapsedTime += 1
@@ -339,7 +360,7 @@ struct LogSessionWatchView: View {
     }
 
     private var currentElapsedSeconds: TimeInterval {
-        if let activeSession = activeSessions.first {
+        if let activeSession = activeSessionForBook {
             return activeSession.elapsedTime(at: Date())
         }
         return elapsedTime
@@ -349,7 +370,7 @@ struct LogSessionWatchView: View {
 
     private func loadExistingActiveSession() {
         // Check if there's an existing active session and auto-load it
-        guard let activeSession = activeSessions.first else { return }
+        guard let activeSession = activeSessionForBook else { return }
 
         // Load the session state
         startPage = activeSession.startPage
@@ -385,8 +406,8 @@ struct LogSessionWatchView: View {
 
     private func startSession() {
         // Check for existing active session
-        if let activeSession = activeSessions.first {
-            pendingActiveSession = activeSession
+        if let existing = anyActiveSession {
+            pendingActiveSession = existing
             showActiveSessionAlert = true
             return
         }
@@ -442,7 +463,7 @@ struct LogSessionWatchView: View {
         isPaused = true
 
         // Update active session in database
-        if let activeSession = activeSessions.first {
+        if let activeSession = activeSessionForBook {
             activeSession.isPaused = true
             activeSession.pausedAt = Date()
             activeSession.lastUpdated = Date()
@@ -465,7 +486,7 @@ struct LogSessionWatchView: View {
         isPaused = false
 
         // Update active session in database
-        if let activeSession = activeSessions.first {
+        if let activeSession = activeSessionForBook {
             // Calculate paused duration and add to total
             if let pausedAt = activeSession.pausedAt {
                 let pauseDuration = Date().timeIntervalSince(pausedAt)
@@ -505,10 +526,10 @@ struct LogSessionWatchView: View {
         }
 
         // Capture active session ID before deleting
-        let activeSessionId = activeSessions.first?.id
+        let activeSessionId = activeSessionForBook?.id
 
         // Delete any active session
-        if let activeSession = activeSessions.first {
+        if let activeSession = activeSessionForBook {
             modelContext.delete(activeSession)
         }
 
@@ -618,7 +639,7 @@ struct LogSessionWatchView: View {
         debounceTask?.cancel()
 
         // Use active session if exists, otherwise local state
-        if let activeSession = activeSessions.first {
+        if let activeSession = activeSessionForBook {
             let newPage = activeSession.currentPage + delta
             if newPage >= activeSession.startPage && newPage <= (book.totalPages ?? ReadingConstants.defaultMaxPages) {
                 activeSession.currentPage = newPage
@@ -648,11 +669,11 @@ struct LogSessionWatchView: View {
             // Sync to iPhone (debounced to avoid spamming)
             WatchConnectivityManager.shared.sendActiveSessionToPhone(activeSession)
 
-            // Update Live Activity
-            let xpEarned = estimatedXP(
-                pagesRead: activeSession.currentPage - activeSession.startPage,
-                durationMinutes: max(1, Int(elapsedTime / 60))
-            )
+        // Update Live Activity
+        let xpEarned = estimatedXP(
+            pagesRead: activeSession.currentPage - activeSession.startPage,
+            durationMinutes: max(1, Int(elapsedTime / 60))
+        )
             WatchConnectivityManager.shared.sendLiveActivityUpdate(
                 currentPage: activeSession.currentPage,
                 xpEarned: xpEarned

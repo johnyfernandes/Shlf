@@ -1268,10 +1268,19 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
             // Check if we have an existing session with the same ID
             if let existingSession = existingSessions.first(where: { $0.id == transfer.id }) {
-                // Drop stale updates that arrive out of order
-                if transfer.lastUpdated <= existingSession.lastUpdated {
-                    Self.logger.info("Ignoring stale active session update from Watch (existing newer)")
-                    return
+                // Drop stale updates that arrive out of order (tolerate clock skew for state changes)
+                let clockSkewTolerance: TimeInterval = 300
+                let isStale = transfer.lastUpdated <= existingSession.lastUpdated
+                let stateChanged = transfer.isPaused != existingSession.isPaused ||
+                    transfer.currentPage != existingSession.currentPage ||
+                    transfer.totalPausedDuration != existingSession.totalPausedDuration
+                if isStale {
+                    let drift = abs(transfer.lastUpdated.timeIntervalSince(existingSession.lastUpdated))
+                    if !(stateChanged && drift <= clockSkewTolerance) {
+                        Self.logger.info("Ignoring stale active session update from Watch (existing newer)")
+                        return
+                    }
+                    Self.logger.info("Accepting state change despite clock drift (\(Int(drift))s)")
                 }
 
                 // UPDATE in place
@@ -1281,7 +1290,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 existingSession.isPaused = transfer.isPaused
                 existingSession.pausedAt = transfer.pausedAt
                 existingSession.totalPausedDuration = transfer.totalPausedDuration
-                existingSession.lastUpdated = transfer.lastUpdated
+                existingSession.lastUpdated = max(existingSession.lastUpdated, transfer.lastUpdated)
                 existingSession.book?.currentPage = clampedPage
                 Self.logger.info("✅ Updated session from Watch: \(transfer.pagesRead) pages")
 
@@ -1308,11 +1317,13 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 }
 
                 // Create NEW session only if none exists
+                let maxPages = book.totalPages ?? ReadingConstants.defaultMaxPages
+                let clampedPage = min(maxPages, max(0, transfer.currentPage))
                 let activeSession = ActiveReadingSession(
                     id: transfer.id,
                     book: book,
                     startDate: transfer.startDate,
-                    currentPage: transfer.currentPage,
+                    currentPage: clampedPage,
                     startPage: transfer.startPage,
                     isPaused: transfer.isPaused,
                     pausedAt: transfer.pausedAt,
@@ -1321,9 +1332,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                     sourceDevice: transfer.sourceDevice
                 )
                 modelContext.insert(activeSession)
-                // Clamp to max pages
-                let maxPages = book.totalPages ?? ReadingConstants.defaultMaxPages
-                book.currentPage = min(maxPages, max(0, transfer.currentPage))
+                book.currentPage = clampedPage
                 Self.logger.info("✅ Created session from Watch: \(transfer.pagesRead) pages")
             }
 

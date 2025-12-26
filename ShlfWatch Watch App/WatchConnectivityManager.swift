@@ -889,7 +889,15 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
             // Update current page
             let oldPage = book.currentPage
-            book.currentPage = min((book.totalPages ?? 1000), book.currentPage + delta.delta)
+            let maxPages = book.totalPages ?? ReadingConstants.defaultMaxPages
+            let nextPage = book.currentPage + delta.delta
+            book.currentPage = min(maxPages, max(0, nextPage))
+
+            if let activeSession = (try? modelContext.fetch(FetchDescriptor<ActiveReadingSession>()))?
+                .first(where: { $0.book?.id == book.id }) {
+                activeSession.currentPage = book.currentPage
+                activeSession.lastUpdated = Date()
+            }
 
             // Post notification so active timer sessions can update their state
             NotificationCenter.default.post(
@@ -1113,20 +1121,37 @@ extension WatchConnectivityManager: WCSessionDelegate {
             let descriptor = FetchDescriptor<ActiveReadingSession>()
             let existingSessions = try modelContext.fetch(descriptor)
 
-            if let existingSession = existingSessions.first {
+            if let existingSession = existingSessions.first(where: { $0.id == transfer.id }) {
                 // UPDATE in place - don't delete!
-                if transfer.lastUpdated <= existingSession.lastUpdated {
-                    Self.logger.info("Ignoring stale active session update from iPhone (existing newer)")
-                    return
+                let clockSkewTolerance: TimeInterval = 300
+                let isStale = transfer.lastUpdated <= existingSession.lastUpdated
+                let stateChanged = transfer.isPaused != existingSession.isPaused ||
+                    transfer.currentPage != existingSession.currentPage ||
+                    transfer.totalPausedDuration != existingSession.totalPausedDuration
+                if isStale {
+                    let drift = abs(transfer.lastUpdated.timeIntervalSince(existingSession.lastUpdated))
+                    if !(stateChanged && drift <= clockSkewTolerance) {
+                        Self.logger.info("Ignoring stale active session update from iPhone (existing newer)")
+                        return
+                    }
+                    Self.logger.info("Accepting state change despite clock drift (\(Int(drift))s)")
                 }
 
-                existingSession.currentPage = transfer.currentPage
+                let maxPages = existingSession.book?.totalPages ?? ReadingConstants.defaultMaxPages
+                let clampedPage = min(maxPages, max(0, transfer.currentPage))
+                existingSession.currentPage = clampedPage
                 existingSession.isPaused = transfer.isPaused
                 existingSession.pausedAt = transfer.pausedAt
                 existingSession.totalPausedDuration = transfer.totalPausedDuration
-                existingSession.lastUpdated = transfer.lastUpdated
+                existingSession.lastUpdated = max(existingSession.lastUpdated, transfer.lastUpdated)
+                existingSession.book?.currentPage = clampedPage
                 Self.logger.info("✅ Updated session from iPhone: \(transfer.pagesRead) pages")
             } else {
+                // ENFORCE SINGLE SESSION: Delete all existing sessions before creating new one
+                for oldSession in existingSessions {
+                    Self.logger.info("🧹 Deleting old active session \(oldSession.id) to enforce single session")
+                    modelContext.delete(oldSession)
+                }
                 // Find the book
                 let bookDescriptor = FetchDescriptor<Book>(
                     predicate: #Predicate<Book> { book in
@@ -1141,11 +1166,13 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 }
 
                 // Create NEW session only if none exists
+                let maxPages = book.totalPages ?? ReadingConstants.defaultMaxPages
+                let clampedPage = min(maxPages, max(0, transfer.currentPage))
                 let activeSession = ActiveReadingSession(
                     id: transfer.id,
                     book: book,
                     startDate: transfer.startDate,
-                    currentPage: transfer.currentPage,
+                    currentPage: clampedPage,
                     startPage: transfer.startPage,
                     isPaused: transfer.isPaused,
                     pausedAt: transfer.pausedAt,
@@ -1154,6 +1181,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                     sourceDevice: transfer.sourceDevice
                 )
                 modelContext.insert(activeSession)
+                book.currentPage = clampedPage
                 Self.logger.info("✅ Created session from iPhone: \(transfer.pagesRead) pages")
             }
 
