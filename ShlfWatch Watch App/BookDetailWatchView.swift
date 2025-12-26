@@ -188,7 +188,11 @@ struct BookDetailWatchView: View {
                             try? modelContext.save()
 
                             // Send delta to iPhone
-                            let delta = PageDelta(bookUUID: book.id, delta: 0) // No pages read, just position change
+                            let delta = PageDelta(
+                                bookUUID: book.id,
+                                delta: 0,
+                                newPage: book.currentPage
+                            ) // No pages read, just position change
                             WatchConnectivityManager.shared.sendPageDelta(delta)
                         } label: {
                             Label("Resume Here", systemImage: "arrow.forward.circle")
@@ -247,7 +251,7 @@ struct BookDetailWatchView: View {
         if actualDelta == 0 { return }
 
         // Send delta to iPhone
-        let delta = PageDelta(bookUUID: book.id, delta: actualDelta)
+        let delta = PageDelta(bookUUID: book.id, delta: actualDelta, newPage: book.currentPage)
         WatchConnectivityManager.shared.sendPageDelta(delta)
 
         // Create session only for positive progress
@@ -387,7 +391,7 @@ struct AddPagesWatchView: View {
         }
 
         // Send delta to iPhone
-        let delta = PageDelta(bookUUID: book.id, delta: actualDelta)
+        let delta = PageDelta(bookUUID: book.id, delta: actualDelta, newPage: book.currentPage)
         WatchConnectivityManager.shared.sendPageDelta(delta)
 
         // Create session only for positive progress

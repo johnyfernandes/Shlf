@@ -10,6 +10,30 @@ import Foundation
 struct PageDelta: Codable, Sendable {
     let bookUUID: UUID
     let delta: Int
+    let newPage: Int?
+    let timestamp: Date
+
+    private enum CodingKeys: String, CodingKey {
+        case bookUUID
+        case delta
+        case newPage
+        case timestamp
+    }
+
+    init(bookUUID: UUID, delta: Int, newPage: Int? = nil, timestamp: Date = Date()) {
+        self.bookUUID = bookUUID
+        self.delta = delta
+        self.newPage = newPage
+        self.timestamp = timestamp
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        bookUUID = try container.decode(UUID.self, forKey: .bookUUID)
+        delta = try container.decode(Int.self, forKey: .delta)
+        newPage = try container.decodeIfPresent(Int.self, forKey: .newPage)
+        timestamp = try container.decodeIfPresent(Date.self, forKey: .timestamp) ?? Date()
+    }
 }
 
 struct BookTransfer: Codable, Sendable {
@@ -219,9 +243,65 @@ struct ActiveSessionTransfer: Codable, Sendable {
     let totalPausedDuration: TimeInterval
     let lastUpdated: Date
     let sourceDevice: String
+    let sentAt: Date
 
     var pagesRead: Int {
         max(0, currentPage - startPage)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case bookId
+        case startDate
+        case currentPage
+        case startPage
+        case isPaused
+        case pausedAt
+        case totalPausedDuration
+        case lastUpdated
+        case sourceDevice
+        case sentAt
+    }
+
+    init(
+        id: UUID,
+        bookId: UUID,
+        startDate: Date,
+        currentPage: Int,
+        startPage: Int,
+        isPaused: Bool,
+        pausedAt: Date?,
+        totalPausedDuration: TimeInterval,
+        lastUpdated: Date,
+        sourceDevice: String,
+        sentAt: Date = Date()
+    ) {
+        self.id = id
+        self.bookId = bookId
+        self.startDate = startDate
+        self.currentPage = currentPage
+        self.startPage = startPage
+        self.isPaused = isPaused
+        self.pausedAt = pausedAt
+        self.totalPausedDuration = totalPausedDuration
+        self.lastUpdated = lastUpdated
+        self.sourceDevice = sourceDevice
+        self.sentAt = sentAt
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        bookId = try container.decode(UUID.self, forKey: .bookId)
+        startDate = try container.decode(Date.self, forKey: .startDate)
+        currentPage = try container.decode(Int.self, forKey: .currentPage)
+        startPage = try container.decode(Int.self, forKey: .startPage)
+        isPaused = try container.decode(Bool.self, forKey: .isPaused)
+        pausedAt = try container.decodeIfPresent(Date.self, forKey: .pausedAt)
+        totalPausedDuration = try container.decode(TimeInterval.self, forKey: .totalPausedDuration)
+        lastUpdated = try container.decode(Date.self, forKey: .lastUpdated)
+        sourceDevice = try container.decode(String.self, forKey: .sourceDevice)
+        sentAt = try container.decodeIfPresent(Date.self, forKey: .sentAt) ?? Date()
     }
 }
 

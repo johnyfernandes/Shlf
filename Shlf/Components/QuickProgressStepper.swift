@@ -351,7 +351,11 @@ struct QuickProgressStepper: View {
         }
 
         // Send ACTUAL delta to Watch (not pending, which might have been clamped)
-        WatchConnectivityManager.shared.sendPageDeltaToWatch(bookUUID: book.id, delta: actualPagesRead)
+        WatchConnectivityManager.shared.sendPageDeltaToWatch(
+            bookUUID: book.id,
+            delta: actualPagesRead,
+            newPage: book.currentPage
+        )
 
         // Create session with ACTUAL pages read
         onSave(actualPagesRead)

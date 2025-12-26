@@ -1276,7 +1276,11 @@ struct FinishBookLogView: View {
 
         let pageDelta = book.currentPage - previousPage
         if pageDelta != 0 {
-            WatchConnectivityManager.shared.sendPageDeltaToWatch(bookUUID: book.id, delta: pageDelta)
+            WatchConnectivityManager.shared.sendPageDeltaToWatch(
+                bookUUID: book.id,
+                delta: pageDelta,
+                newPage: book.currentPage
+            )
         }
 
         if let profile = profiles.first {

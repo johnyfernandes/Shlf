@@ -364,7 +364,11 @@ struct ProgressSliderView: View {
             showSaveButton = false
         }
 
-        WatchConnectivityManager.shared.sendPageDeltaToWatch(bookUUID: book.id, delta: pagesRead)
+        WatchConnectivityManager.shared.sendPageDeltaToWatch(
+            bookUUID: book.id,
+            delta: pagesRead,
+            newPage: book.currentPage
+        )
 
         onSave(pagesRead)
     }

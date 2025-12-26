@@ -21,6 +21,10 @@ class WatchConnectivityManager: NSObject {
     private var modelContext: ModelContext?
     private var lastActiveSessionEndDate: Date?
     private var endedActiveSessionIDs: [UUID: Date] = [:] // Track UUID -> timestamp when ended
+    private var lastPageUpdateTimestamps: [UUID: Date] = [:]
+    private let pendingSessionIdsKey = "pendingSessionIds"
+    private var pendingSessionIds: Set<UUID> = []
+    private let pendingSessionIdsLock = NSLock()
 
     // MARK: - Live Activity Handlers
     @MainActor
@@ -31,6 +35,7 @@ class WatchConnectivityManager: NSObject {
 
     private override init() {
         super.init()
+        loadPendingSessionIds()
 
         // Schedule periodic cleanup of old endedActiveSessionIDs (every hour)
         Timer.scheduledTimer(withTimeInterval: 3600, repeats: true) { [weak self] _ in
@@ -63,6 +68,69 @@ class WatchConnectivityManager: NSObject {
         session.delegate = self
         session.activate()
         Self.logger.info("WatchConnectivity activated on Watch")
+    }
+
+    private func loadPendingSessionIds() {
+        let stored = UserDefaults.standard.array(forKey: pendingSessionIdsKey) as? [String] ?? []
+        pendingSessionIdsLock.lock()
+        pendingSessionIds = Set(stored.compactMap(UUID.init))
+        pendingSessionIdsLock.unlock()
+    }
+
+    private func persistPendingSessionIdsLocked() {
+        let stored = pendingSessionIds.map { $0.uuidString }
+        UserDefaults.standard.set(stored, forKey: pendingSessionIdsKey)
+    }
+
+    private func insertPendingSessionId(_ id: UUID) {
+        pendingSessionIdsLock.lock()
+        pendingSessionIds.insert(id)
+        persistPendingSessionIdsLocked()
+        pendingSessionIdsLock.unlock()
+    }
+
+    private func removePendingSessionId(_ id: UUID) -> Bool {
+        pendingSessionIdsLock.lock()
+        let removed = pendingSessionIds.remove(id) != nil
+        if removed {
+            persistPendingSessionIdsLocked()
+        }
+        pendingSessionIdsLock.unlock()
+        return removed
+    }
+
+    private func removePendingSessionIds(_ ids: [UUID]) -> Int {
+        pendingSessionIdsLock.lock()
+        var removedCount = 0
+        for id in ids {
+            if pendingSessionIds.remove(id) != nil {
+                removedCount += 1
+            }
+        }
+        if removedCount > 0 {
+            persistPendingSessionIdsLocked()
+        }
+        pendingSessionIdsLock.unlock()
+        return removedCount
+    }
+
+    private func subtractPendingSessionIds(_ ids: Set<UUID>) -> Int {
+        pendingSessionIdsLock.lock()
+        let before = pendingSessionIds.count
+        pendingSessionIds.subtract(ids)
+        let removedCount = before - pendingSessionIds.count
+        if removedCount > 0 {
+            persistPendingSessionIdsLocked()
+        }
+        pendingSessionIdsLock.unlock()
+        return removedCount
+    }
+
+    private func snapshotPendingSessionIds() -> Set<UUID> {
+        pendingSessionIdsLock.lock()
+        let snapshot = pendingSessionIds
+        pendingSessionIdsLock.unlock()
+        return snapshot
     }
 
     func sendPageDelta(_ delta: PageDelta) {
@@ -106,6 +174,8 @@ class WatchConnectivityManager: NSObject {
         }
 
         do {
+            insertPendingSessionId(session.id)
+
             let transfer = SessionTransfer(
                 id: session.id,
                 bookId: bookId,
@@ -232,7 +302,8 @@ class WatchConnectivityManager: NSObject {
                 pausedAt: activeSession.pausedAt,
                 totalPausedDuration: activeSession.totalPausedDuration,
                 lastUpdated: activeSession.lastUpdated,
-                sourceDevice: activeSession.sourceDevice
+                sourceDevice: activeSession.sourceDevice,
+                sentAt: Date()
             )
 
             let data = try JSONEncoder().encode(transfer)
@@ -286,6 +357,8 @@ class WatchConnectivityManager: NSObject {
         }
 
         do {
+            insertPendingSessionId(completedSession.id)
+
             let sessionTransfer = SessionTransfer(
                 id: completedSession.id,
                 bookId: bookId,
@@ -849,6 +922,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
             book.currentPage = min(maxPages, max(0, transfer.endPage))
 
             try modelContext.save()
+            _ = removePendingSessionId(transfer.id)
             Self.logger.info("Applied session from iPhone to Watch: \(transfer.endPage - transfer.startPage) pages")
         } catch {
             Self.logger.error("Failed to handle session from iPhone: \(error)")
@@ -879,6 +953,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
             }
 
             try modelContext.save()
+            _ = removePendingSessionIds(sessionIds)
             Self.logger.info("🗑️ Deleted \(sessionsToDelete.count) session(s) on Watch")
         } catch {
             Self.logger.error("Failed to delete sessions on Watch: \(error)")
@@ -942,16 +1017,23 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 return
             }
 
+            if let lastTimestamp = lastPageUpdateTimestamps[delta.bookUUID],
+               delta.timestamp <= lastTimestamp {
+                Self.logger.info("Ignoring stale page update for book \(delta.bookUUID)")
+                return
+            }
+            lastPageUpdateTimestamps[delta.bookUUID] = delta.timestamp
+
             // Update current page
             let oldPage = book.currentPage
             let maxPages = book.totalPages ?? ReadingConstants.defaultMaxPages
-            let nextPage = book.currentPage + delta.delta
-            book.currentPage = min(maxPages, max(0, nextPage))
+            let targetPage = delta.newPage ?? (book.currentPage + delta.delta)
+            book.currentPage = min(maxPages, max(0, targetPage))
 
             if let activeSession = (try? modelContext.fetch(FetchDescriptor<ActiveReadingSession>()))?
                 .first(where: { $0.book?.id == book.id }) {
                 activeSession.currentPage = book.currentPage
-                activeSession.lastUpdated = Date()
+                activeSession.lastUpdated = max(activeSession.lastUpdated, delta.timestamp)
             }
 
             // Post notification so active timer sessions can update their state
@@ -1104,6 +1186,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
             }
 
             // Update or insert sessions (MERGE, don't delete local sessions)
+            let transferredSessionIds = Set(sessionTransfers.map { $0.id })
             for transfer in sessionTransfers {
                 guard let book = booksMap[transfer.bookId] else {
                     Self.logger.warning("Book not found for session: \(transfer.bookId)")
@@ -1141,7 +1224,23 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 }
             }
 
-            // DON'T delete Watch-created sessions - we'll merge them instead
+            _ = subtractPendingSessionIds(transferredSessionIds)
+
+            // Prune sessions for currently reading books that no longer exist on iPhone.
+            let trackedBookIds = Set(booksMap.keys)
+            let pendingSnapshot = snapshotPendingSessionIds()
+            let sessionsToDelete = existingSessions.filter { session in
+                guard let bookId = session.book?.id else { return true }
+                guard trackedBookIds.contains(bookId) else { return true }
+                return !transferredSessionIds.contains(session.id) && !pendingSnapshot.contains(session.id)
+            }
+
+            if !sessionsToDelete.isEmpty {
+                for session in sessionsToDelete {
+                    modelContext.delete(session)
+                }
+                Self.logger.info("Pruned \(sessionsToDelete.count) stale session(s) from Watch sync")
+            }
 
             try modelContext.save()
             Self.logger.info("Synced \(sessionTransfers.count) sessions to Watch")
@@ -1159,10 +1258,22 @@ extension WatchConnectivityManager: WCSessionDelegate {
             return
         }
 
+        let receiveDate = Date()
+        let clockSkewTolerance: TimeInterval = 300
+        let rawOffset = receiveDate.timeIntervalSince(transfer.sentAt)
+        let timeOffset = abs(rawOffset) <= clockSkewTolerance ? rawOffset : 0
+        let adjustedPausedAt = transfer.pausedAt?.addingTimeInterval(timeOffset)
+        let safePausedAt = adjustedPausedAt.map { min($0, receiveDate) }
+        let clampedPausedDuration = max(0, transfer.totalPausedDuration)
+        let adjustedStartDate = transfer.startDate.addingTimeInterval(timeOffset)
+
         // Ignore stale updates that arrive after an end message
         if let lastEnd = lastActiveSessionEndDate, transfer.lastUpdated <= lastEnd {
-            Self.logger.info("Ignoring stale active session update (ended at \(lastEnd))")
-            return
+            let drift = abs(lastEnd.timeIntervalSince(transfer.lastUpdated))
+            if drift > clockSkewTolerance && adjustedStartDate <= lastEnd {
+                Self.logger.info("Ignoring stale active session update (ended at \(lastEnd))")
+                return
+            }
         }
 
         // Ignore updates for sessions we've explicitly ended
@@ -1171,12 +1282,6 @@ extension WatchConnectivityManager: WCSessionDelegate {
             return
         }
 
-        let receiveDate = Date()
-        let timeOffset = receiveDate.timeIntervalSince(transfer.lastUpdated)
-        let adjustedPausedAt = transfer.pausedAt?.addingTimeInterval(timeOffset)
-        let safePausedAt = adjustedPausedAt.map { min($0, receiveDate) }
-        let clampedPausedDuration = max(0, transfer.totalPausedDuration)
-
         do {
             // Fetch existing session
             let descriptor = FetchDescriptor<ActiveReadingSession>()
@@ -1184,7 +1289,6 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
             if let existingSession = existingSessions.first(where: { $0.id == transfer.id }) {
                 // UPDATE in place - don't delete!
-                let clockSkewTolerance: TimeInterval = 300
                 let isStale = transfer.lastUpdated <= existingSession.lastUpdated
                 let stateChanged = transfer.isPaused != existingSession.isPaused ||
                     transfer.currentPage != existingSession.currentPage ||
@@ -1203,7 +1307,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 let maxPausedDuration = max(0, receiveDate.timeIntervalSince(existingSession.startDate))
                 existingSession.currentPage = clampedPage
                 existingSession.isPaused = transfer.isPaused
-                existingSession.pausedAt = safePausedAt
+                existingSession.pausedAt = safePausedAt.map { max($0, existingSession.startDate) }
                 existingSession.totalPausedDuration = min(clampedPausedDuration, maxPausedDuration)
                 existingSession.lastUpdated = max(existingSession.lastUpdated, transfer.lastUpdated)
                 existingSession.book?.currentPage = clampedPage
@@ -1230,7 +1334,6 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 // Create NEW session only if none exists
                 let maxPages = book.totalPages ?? ReadingConstants.defaultMaxPages
                 let clampedPage = min(maxPages, max(0, transfer.currentPage))
-                let adjustedStartDate = transfer.startDate.addingTimeInterval(timeOffset)
                 let maxPausedDuration = max(0, receiveDate.timeIntervalSince(adjustedStartDate))
                 let activeSession = ActiveReadingSession(
                     id: transfer.id,
@@ -1239,7 +1342,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                     currentPage: clampedPage,
                     startPage: transfer.startPage,
                     isPaused: transfer.isPaused,
-                    pausedAt: safePausedAt,
+                    pausedAt: safePausedAt.map { max($0, adjustedStartDate) },
                     totalPausedDuration: min(clampedPausedDuration, maxPausedDuration),
                     lastUpdated: transfer.lastUpdated,
                     sourceDevice: transfer.sourceDevice

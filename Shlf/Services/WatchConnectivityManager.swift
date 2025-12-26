@@ -28,6 +28,7 @@ class WatchConnectivityManager: NSObject {
     private var lastActiveSessionEndDate: Date?
     private var endedActiveSessionIDs: [UUID: Date] = [:] // Track UUID -> timestamp when ended
     private var lastLiveActivityStateTimestamp: Date?
+    private var lastPageUpdateTimestamps: [UUID: Date] = [:]
 
     private override init() {
         super.init()
@@ -79,14 +80,14 @@ class WatchConnectivityManager: NSObject {
         Self.logger.info("WatchConnectivity activated on iPhone")
     }
 
-    func sendPageDeltaToWatch(bookUUID: UUID, delta: Int) {
+    func sendPageDeltaToWatch(bookUUID: UUID, delta: Int, newPage: Int? = nil) {
         guard WCSession.default.activationState == .activated else {
             Self.logger.warning("WC not activated")
             return
         }
 
         do {
-            let pageDelta = PageDelta(bookUUID: bookUUID, delta: delta)
+            let pageDelta = PageDelta(bookUUID: bookUUID, delta: delta, newPage: newPage)
             let data = try JSONEncoder().encode(pageDelta)
             if WCSession.default.isReachable {
                 WCSession.default.sendMessage(
@@ -272,7 +273,8 @@ class WatchConnectivityManager: NSObject {
                 pausedAt: activeSession.pausedAt,
                 totalPausedDuration: activeSession.totalPausedDuration,
                 lastUpdated: activeSession.lastUpdated,
-                sourceDevice: activeSession.sourceDevice
+                sourceDevice: activeSession.sourceDevice,
+                sentAt: Date()
             )
 
             let data = try JSONEncoder().encode(transfer)
@@ -891,10 +893,17 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 return
             }
 
+            if let lastTimestamp = lastPageUpdateTimestamps[delta.bookUUID],
+               delta.timestamp <= lastTimestamp {
+                Self.logger.info("Ignoring stale page update for book \(delta.bookUUID)")
+                return
+            }
+            lastPageUpdateTimestamps[delta.bookUUID] = delta.timestamp
+
             // Update current page
             let maxPages = book.totalPages ?? ReadingConstants.defaultMaxPages
-            let nextPage = book.currentPage + delta.delta
-            book.currentPage = min(maxPages, max(0, nextPage))
+            let targetPage = delta.newPage ?? (book.currentPage + delta.delta)
+            book.currentPage = min(maxPages, max(0, targetPage))
 
             // Save context
             try modelContext.save()
@@ -1217,12 +1226,20 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
     @MainActor
     private func handleLiveActivityState(_ transfer: LiveActivityStateTransfer) async {
+        let clockSkewTolerance: TimeInterval = 300
         if let last = lastLiveActivityStateTimestamp, transfer.timestamp <= last {
-            Self.logger.info("Ignoring stale Live Activity state update")
-            return
+            let drift = abs(transfer.timestamp.timeIntervalSince(last))
+            if drift > clockSkewTolerance {
+                Self.logger.info("Ignoring stale Live Activity state update")
+                return
+            }
         }
 
-        lastLiveActivityStateTimestamp = transfer.timestamp
+        if let last = lastLiveActivityStateTimestamp {
+            lastLiveActivityStateTimestamp = max(last, transfer.timestamp)
+        } else {
+            lastLiveActivityStateTimestamp = transfer.timestamp
+        }
 
         if transfer.isPaused {
             await ReadingSessionActivityManager.shared.pauseActivity()
@@ -1251,23 +1268,28 @@ extension WatchConnectivityManager: WCSessionDelegate {
             return
         }
 
+        let receiveDate = Date()
+        let clockSkewTolerance: TimeInterval = 300
+        let rawOffset = receiveDate.timeIntervalSince(transfer.sentAt)
+        let timeOffset = abs(rawOffset) <= clockSkewTolerance ? rawOffset : 0
+        let adjustedPausedAt = transfer.pausedAt?.addingTimeInterval(timeOffset)
+        let safePausedAt = adjustedPausedAt.map { min($0, receiveDate) }
+        let clampedPausedDuration = max(0, transfer.totalPausedDuration)
+        let adjustedStartDate = transfer.startDate.addingTimeInterval(timeOffset)
+        var liveActivityStartDate = adjustedStartDate
+
         if let lastEnd = lastActiveSessionEndDate, transfer.lastUpdated <= lastEnd {
-            Self.logger.info("Ignoring stale active session update (ended at \(lastEnd))")
-            return
+            let drift = abs(lastEnd.timeIntervalSince(transfer.lastUpdated))
+            if drift > clockSkewTolerance && adjustedStartDate <= lastEnd {
+                Self.logger.info("Ignoring stale active session update (ended at \(lastEnd))")
+                return
+            }
         }
 
         if endedActiveSessionIDs[transfer.id] != nil {
             Self.logger.info("Ignoring active session update for ended id \(transfer.id)")
             return
         }
-
-        let receiveDate = Date()
-        let timeOffset = receiveDate.timeIntervalSince(transfer.lastUpdated)
-        let adjustedPausedAt = transfer.pausedAt?.addingTimeInterval(timeOffset)
-        let safePausedAt = adjustedPausedAt.map { min($0, receiveDate) }
-        let clampedPausedDuration = max(0, transfer.totalPausedDuration)
-        let adjustedStartDate = transfer.startDate.addingTimeInterval(timeOffset)
-        var liveActivityStartDate = adjustedStartDate
 
         do {
             // Fetch existing sessions
@@ -1277,7 +1299,6 @@ extension WatchConnectivityManager: WCSessionDelegate {
             // Check if we have an existing session with the same ID
             if let existingSession = existingSessions.first(where: { $0.id == transfer.id }) {
                 // Drop stale updates that arrive out of order (tolerate clock skew for state changes)
-                let clockSkewTolerance: TimeInterval = 300
                 let isStale = transfer.lastUpdated <= existingSession.lastUpdated
                 let stateChanged = transfer.isPaused != existingSession.isPaused ||
                     transfer.currentPage != existingSession.currentPage ||
@@ -1297,7 +1318,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 let maxPausedDuration = max(0, receiveDate.timeIntervalSince(existingSession.startDate))
                 existingSession.currentPage = clampedPage
                 existingSession.isPaused = transfer.isPaused
-                existingSession.pausedAt = safePausedAt
+                existingSession.pausedAt = safePausedAt.map { max($0, existingSession.startDate) }
                 existingSession.totalPausedDuration = min(clampedPausedDuration, maxPausedDuration)
                 existingSession.lastUpdated = max(existingSession.lastUpdated, transfer.lastUpdated)
                 existingSession.book?.currentPage = clampedPage
@@ -1337,7 +1358,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                     currentPage: clampedPage,
                     startPage: transfer.startPage,
                     isPaused: transfer.isPaused,
-                    pausedAt: safePausedAt,
+                    pausedAt: safePausedAt.map { max($0, adjustedStartDate) },
                     totalPausedDuration: min(clampedPausedDuration, maxPausedDuration),
                     lastUpdated: transfer.lastUpdated,
                     sourceDevice: transfer.sourceDevice
@@ -1353,7 +1374,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 startPage: transfer.startPage,
                 currentPage: transfer.currentPage,
                 totalPausedDuration: min(clampedPausedDuration, max(0, receiveDate.timeIntervalSince(liveActivityStartDate))),
-                pausedAt: safePausedAt,
+                pausedAt: safePausedAt.map { max($0, liveActivityStartDate) },
                 isPaused: transfer.isPaused,
                 xpEarned: 0
             )

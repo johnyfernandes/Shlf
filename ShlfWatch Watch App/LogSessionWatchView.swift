@@ -314,6 +314,7 @@ struct LogSessionWatchView: View {
         }
         .onDisappear {
             timer?.invalidate()
+            timer = nil
             debounceTask?.cancel()
         }
         .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { date in
@@ -321,7 +322,7 @@ struct LogSessionWatchView: View {
             guard isActive else { return }
             if let activeSession = activeSessionForBook {
                 elapsedTime = activeSession.elapsedTime(at: date)
-            } else if !effectiveIsPaused {
+            } else if !effectiveIsPaused && timer == nil {
                 elapsedTime += 1
             }
         }
@@ -522,6 +523,7 @@ struct LogSessionWatchView: View {
         guard let startDate = startDate else {
             WatchConnectivityManager.logger.error("No start date - session not started")
             timer?.invalidate()
+            timer = nil
             dismiss()
             return
         }
@@ -529,6 +531,7 @@ struct LogSessionWatchView: View {
         guard pagesRead > 0 else {
             WatchConnectivityManager.logger.warning("No pages read - session not saved")
             timer?.invalidate()
+            timer = nil
             dismiss()
             return
         }
@@ -543,6 +546,7 @@ struct LogSessionWatchView: View {
 
         // Stop timer
         timer?.invalidate()
+        timer = nil
 
         let endDate = Date()
         let durationMinutes = max(1, Int(currentElapsedSeconds / 60))
@@ -711,6 +715,7 @@ struct LogSessionWatchView: View {
 
     private func resetActiveSessionState() {
         timer?.invalidate()
+        timer = nil
         isActive = false
         isPaused = false
         startDate = nil

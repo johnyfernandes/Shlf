@@ -136,7 +136,11 @@ final class SessionManager {
                let previousPage,
                previousPage != book.currentPage {
                 let delta = book.currentPage - previousPage
-                WatchConnectivityManager.shared.sendPageDeltaToWatch(bookUUID: book.id, delta: delta)
+                WatchConnectivityManager.shared.sendPageDeltaToWatch(
+                    bookUUID: book.id,
+                    delta: delta,
+                    newPage: book.currentPage
+                )
             }
 
             // Update widget (debounced for performance)
@@ -230,7 +234,11 @@ final class SessionManager {
             for state in bookStates {
                 if state.previousPage != state.book.currentPage {
                     let delta = state.book.currentPage - state.previousPage
-                    WatchConnectivityManager.shared.sendPageDeltaToWatch(bookUUID: state.book.id, delta: delta)
+                    WatchConnectivityManager.shared.sendPageDeltaToWatch(
+                        bookUUID: state.book.id,
+                        delta: delta,
+                        newPage: state.book.currentPage
+                    )
                 }
             }
 

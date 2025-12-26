@@ -663,7 +663,11 @@ struct LogReadingSessionView: View {
         let clampedEndPage = min(maxPages, endPage)
         let pageDelta = clampedEndPage - book.currentPage
         book.currentPage = clampedEndPage
-        WatchConnectivityManager.shared.sendPageDeltaToWatch(bookUUID: book.id, delta: pageDelta)
+        WatchConnectivityManager.shared.sendPageDeltaToWatch(
+            bookUUID: book.id,
+            delta: pageDelta,
+            newPage: book.currentPage
+        )
 
         if book.readingStatus == .wantToRead {
         book.readingStatus = .currentlyReading
