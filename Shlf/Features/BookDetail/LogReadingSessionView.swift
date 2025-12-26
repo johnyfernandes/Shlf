@@ -53,21 +53,26 @@ struct LogReadingSessionView: View {
         _endPageText = State(initialValue: "\(book.currentPage)")
     }
 
-    // SINGLE SOURCE OF TRUTH - use active session if exists
-    private var activeSession: ActiveReadingSession? {
+    // SINGLE SOURCE OF TRUTH - only bind to active session for this book
+    private var activeSessionForBook: ActiveReadingSession? {
+        activeSessions.first { $0.book?.id == book.id }
+    }
+
+    // Any active session (global), used to prevent parallel sessions
+    private var anyActiveSession: ActiveReadingSession? {
         activeSessions.first
     }
 
     private var actualStartPage: Int {
-        activeSession?.startPage ?? startPage
+        activeSessionForBook?.startPage ?? startPage
     }
 
     private var actualEndPage: Int {
-        activeSession?.currentPage ?? endPage
+        activeSessionForBook?.currentPage ?? endPage
     }
 
     private var isTimerActive: Bool {
-        activeSession != nil || timerStartTime != nil
+        activeSessionForBook != nil || timerStartTime != nil
     }
 
     private var pagesRead: Int {
@@ -126,11 +131,11 @@ struct LogReadingSessionView: View {
                 }
 
                 Section("Duration") {
-                    if activeSession == nil {
+                    if activeSessionForBook == nil {
                         Toggle("Use Timer", isOn: $useTimer)
                     }
 
-                    if let session = activeSession {
+                    if let session = activeSessionForBook {
                         VStack(spacing: Theme.Spacing.md) {
                             Text(session.isPaused ? "Paused" : "Reading...")
                                 .font(Theme.Typography.headline)
@@ -395,7 +400,7 @@ struct LogReadingSessionView: View {
     }
 
     private func syncWithLiveActivity() {
-        if let session = activeSession {
+        if let session = activeSessionForBook {
             endPage = session.currentPage
             syncLiveActivity(with: session)
             return
@@ -440,7 +445,7 @@ struct LogReadingSessionView: View {
             endPageText = "\(clampedValue)"
         }
 
-        if let session = activeSession {
+        if let session = activeSessionForBook {
             session.currentPage = clampedValue
             session.lastUpdated = Date()
             endPage = clampedValue
@@ -471,8 +476,8 @@ struct LogReadingSessionView: View {
 
     private func startTimer() {
         // Check for existing active session
-        if let activeSession = activeSessions.first {
-            pendingActiveSession = activeSession
+        if let existing = anyActiveSession {
+            pendingActiveSession = existing
             showActiveSessionAlert = true
             return
         }
@@ -620,7 +625,7 @@ struct LogReadingSessionView: View {
 
     private func saveSession() {
         // Delete any active session for this book
-        if let activeSession = activeSessions.first {
+        if let activeSession = activeSessionForBook {
             let endedId = activeSession.id
             modelContext.delete(activeSession)
             WatchConnectivityManager.shared.sendActiveSessionEndToWatch(activeSessionId: endedId)

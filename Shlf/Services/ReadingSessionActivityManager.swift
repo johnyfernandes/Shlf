@@ -309,7 +309,14 @@ class ReadingSessionActivityManager {
         startPage = active.attributes.startPage
         startTime = active.attributes.startTime
         totalPausedDuration = max(0, active.content.state.timerStartTime.timeIntervalSince(active.attributes.startTime))
-        pausedAt = active.content.state.isPaused ? Date() : nil
+        if active.content.state.isPaused {
+            let pausedElapsed = TimeInterval(active.content.state.pausedElapsedSeconds ?? 0)
+            pausedAt = active.attributes.startTime
+                .addingTimeInterval(totalPausedDuration)
+                .addingTimeInterval(pausedElapsed)
+        } else {
+            pausedAt = nil
+        }
         Self.logger.info("🔄 Rehydrated existing Live Activity: \(active.id)")
     }
 

@@ -892,7 +892,9 @@ extension WatchConnectivityManager: WCSessionDelegate {
             }
 
             // Update current page
-            book.currentPage = min((book.totalPages ?? ReadingConstants.defaultMaxPages), book.currentPage + delta.delta)
+            let maxPages = book.totalPages ?? ReadingConstants.defaultMaxPages
+            let nextPage = book.currentPage + delta.delta
+            book.currentPage = min(maxPages, max(0, nextPage))
 
             // Save context
             try modelContext.save()
@@ -1145,38 +1147,9 @@ extension WatchConnectivityManager: WCSessionDelegate {
             return
         }
 
-        do {
-            let descriptor = FetchDescriptor<UserProfile>()
-            let profiles = try modelContext.fetch(descriptor)
-
-            if let profile = profiles.first {
-                // Use max to prevent race condition data loss
-                // (iPhone might have newer stats that Watch hasn't synced yet)
-                profile.totalXP = max(profile.totalXP, stats.totalXP)
-                profile.currentStreak = max(profile.currentStreak, stats.currentStreak)
-                profile.longestStreak = max(profile.longestStreak, stats.longestStreak)
-
-                // Use most recent lastReadingDate
-                if let newDate = stats.lastReadingDate {
-                    if let existingDate = profile.lastReadingDate {
-                        profile.lastReadingDate = max(existingDate, newDate)
-                    } else {
-                        profile.lastReadingDate = newDate
-                    }
-                }
-
-                try modelContext.save()
-                Self.logger.info("Merged profile stats from Watch: XP=\(profile.totalXP), Streak=\(profile.currentStreak)")
-
-                // Refresh widget with updated stats
-                WidgetDataExporter.exportSnapshot(modelContext: modelContext)
-
-                // Force UI refresh
-                NotificationCenter.default.post(name: .watchStatsUpdated, object: nil)
-            }
-        } catch {
-            Self.logger.error("Failed to update profile stats: \(error)")
-        }
+        // iPhone is the source of truth for stats (Watch only creates/view sessions).
+        // Ignore Watch-sent stats to prevent stale overrides after deletions/edits on iPhone.
+        Self.logger.info("Ignoring profile stats from Watch (iPhone authoritative)")
     }
 
     // MARK: - Live Activity Handlers
@@ -1302,12 +1275,14 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 }
 
                 // UPDATE in place
-                existingSession.currentPage = transfer.currentPage
+                let maxPages = existingSession.book?.totalPages ?? ReadingConstants.defaultMaxPages
+                let clampedPage = min(maxPages, max(0, transfer.currentPage))
+                existingSession.currentPage = clampedPage
                 existingSession.isPaused = transfer.isPaused
                 existingSession.pausedAt = transfer.pausedAt
                 existingSession.totalPausedDuration = transfer.totalPausedDuration
                 existingSession.lastUpdated = transfer.lastUpdated
-                existingSession.book?.currentPage = transfer.currentPage
+                existingSession.book?.currentPage = clampedPage
                 Self.logger.info("✅ Updated session from Watch: \(transfer.pagesRead) pages")
 
                 // Force immediate widget update
@@ -1348,7 +1323,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 modelContext.insert(activeSession)
                 // Clamp to max pages
                 let maxPages = book.totalPages ?? ReadingConstants.defaultMaxPages
-                book.currentPage = min(maxPages, transfer.currentPage)
+                book.currentPage = min(maxPages, max(0, transfer.currentPage))
                 Self.logger.info("✅ Created session from Watch: \(transfer.pagesRead) pages")
             }
 
