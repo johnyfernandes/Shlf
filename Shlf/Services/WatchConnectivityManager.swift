@@ -1261,6 +1261,14 @@ extension WatchConnectivityManager: WCSessionDelegate {
             return
         }
 
+        let receiveDate = Date()
+        let timeOffset = receiveDate.timeIntervalSince(transfer.lastUpdated)
+        let adjustedPausedAt = transfer.pausedAt?.addingTimeInterval(timeOffset)
+        let safePausedAt = adjustedPausedAt.map { min($0, receiveDate) }
+        let clampedPausedDuration = max(0, transfer.totalPausedDuration)
+        let adjustedStartDate = transfer.startDate.addingTimeInterval(timeOffset)
+        var liveActivityStartDate = adjustedStartDate
+
         do {
             // Fetch existing sessions
             let descriptor = FetchDescriptor<ActiveReadingSession>()
@@ -1286,13 +1294,15 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 // UPDATE in place
                 let maxPages = existingSession.book?.totalPages ?? ReadingConstants.defaultMaxPages
                 let clampedPage = min(maxPages, max(0, transfer.currentPage))
+                let maxPausedDuration = max(0, receiveDate.timeIntervalSince(existingSession.startDate))
                 existingSession.currentPage = clampedPage
                 existingSession.isPaused = transfer.isPaused
-                existingSession.pausedAt = transfer.pausedAt
-                existingSession.totalPausedDuration = transfer.totalPausedDuration
+                existingSession.pausedAt = safePausedAt
+                existingSession.totalPausedDuration = min(clampedPausedDuration, maxPausedDuration)
                 existingSession.lastUpdated = max(existingSession.lastUpdated, transfer.lastUpdated)
                 existingSession.book?.currentPage = clampedPage
                 Self.logger.info("✅ Updated session from Watch: \(transfer.pagesRead) pages")
+                liveActivityStartDate = existingSession.startDate
 
                 // Force immediate widget update
                 try? modelContext.save()
@@ -1319,15 +1329,16 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 // Create NEW session only if none exists
                 let maxPages = book.totalPages ?? ReadingConstants.defaultMaxPages
                 let clampedPage = min(maxPages, max(0, transfer.currentPage))
+                let maxPausedDuration = max(0, receiveDate.timeIntervalSince(adjustedStartDate))
                 let activeSession = ActiveReadingSession(
                     id: transfer.id,
                     book: book,
-                    startDate: transfer.startDate,
+                    startDate: adjustedStartDate,
                     currentPage: clampedPage,
                     startPage: transfer.startPage,
                     isPaused: transfer.isPaused,
-                    pausedAt: transfer.pausedAt,
-                    totalPausedDuration: transfer.totalPausedDuration,
+                    pausedAt: safePausedAt,
+                    totalPausedDuration: min(clampedPausedDuration, maxPausedDuration),
                     lastUpdated: transfer.lastUpdated,
                     sourceDevice: transfer.sourceDevice
                 )
@@ -1338,11 +1349,11 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
             // Update Live Activity FIRST (real-time)
             await ReadingSessionActivityManager.shared.syncActivityState(
-                startTime: transfer.startDate,
+                startTime: liveActivityStartDate,
                 startPage: transfer.startPage,
                 currentPage: transfer.currentPage,
-                totalPausedDuration: transfer.totalPausedDuration,
-                pausedAt: transfer.pausedAt,
+                totalPausedDuration: min(clampedPausedDuration, max(0, receiveDate.timeIntervalSince(liveActivityStartDate))),
+                pausedAt: safePausedAt,
                 isPaused: transfer.isPaused,
                 xpEarned: 0
             )

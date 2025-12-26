@@ -574,6 +574,19 @@ extension WatchConnectivityManager: WCSessionDelegate {
             }
         }
 
+        // Handle session deletion from iPhone
+        if let deletionData = message["sessionDeletion"] as? Data {
+            Task { @MainActor in
+                do {
+                    let sessionIds = try JSONDecoder().decode([UUID].self, from: deletionData)
+                    Self.logger.info("Received session deletion from iPhone: \(sessionIds.count) session(s)")
+                    await self.handleSessionDeletion(sessionIds)
+                } catch {
+                    Self.logger.error("Session deletion decoding error: \(error)")
+                }
+            }
+        }
+
         // Handle active session from iPhone
         if let activeSessionData = message["activeSession"] as? Data {
             Task { @MainActor in
@@ -703,6 +716,18 @@ extension WatchConnectivityManager: WCSessionDelegate {
             }
         }
 
+        if let deletionData = userInfo["sessionDeletion"] as? Data {
+            Task { @MainActor in
+                do {
+                    let sessionIds = try JSONDecoder().decode([UUID].self, from: deletionData)
+                    Self.logger.info("Received queued session deletion from iPhone: \(sessionIds.count) session(s)")
+                    await self.handleSessionDeletion(sessionIds)
+                } catch {
+                    Self.logger.error("Session deletion userInfo decoding error: \(error)")
+                }
+            }
+        }
+
         // Handle queued active session from iPhone
         if let activeSessionData = userInfo["activeSession"] as? Data {
             Task { @MainActor in
@@ -827,6 +852,36 @@ extension WatchConnectivityManager: WCSessionDelegate {
             Self.logger.info("Applied session from iPhone to Watch: \(transfer.endPage - transfer.startPage) pages")
         } catch {
             Self.logger.error("Failed to handle session from iPhone: \(error)")
+        }
+    }
+
+    @MainActor
+    private func handleSessionDeletion(_ sessionIds: [UUID]) async {
+        guard let modelContext = modelContext else {
+            Self.logger.warning("ModelContext not configured")
+            return
+        }
+
+        guard !sessionIds.isEmpty else { return }
+
+        do {
+            let descriptor = FetchDescriptor<ReadingSession>()
+            let existingSessions = try modelContext.fetch(descriptor)
+            let sessionsToDelete = existingSessions.filter { sessionIds.contains($0.id) }
+
+            guard !sessionsToDelete.isEmpty else {
+                Self.logger.info("No matching sessions to delete on Watch")
+                return
+            }
+
+            for session in sessionsToDelete {
+                modelContext.delete(session)
+            }
+
+            try modelContext.save()
+            Self.logger.info("🗑️ Deleted \(sessionsToDelete.count) session(s) on Watch")
+        } catch {
+            Self.logger.error("Failed to delete sessions on Watch: \(error)")
         }
     }
 
@@ -1116,6 +1171,12 @@ extension WatchConnectivityManager: WCSessionDelegate {
             return
         }
 
+        let receiveDate = Date()
+        let timeOffset = receiveDate.timeIntervalSince(transfer.lastUpdated)
+        let adjustedPausedAt = transfer.pausedAt?.addingTimeInterval(timeOffset)
+        let safePausedAt = adjustedPausedAt.map { min($0, receiveDate) }
+        let clampedPausedDuration = max(0, transfer.totalPausedDuration)
+
         do {
             // Fetch existing session
             let descriptor = FetchDescriptor<ActiveReadingSession>()
@@ -1139,10 +1200,11 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
                 let maxPages = existingSession.book?.totalPages ?? ReadingConstants.defaultMaxPages
                 let clampedPage = min(maxPages, max(0, transfer.currentPage))
+                let maxPausedDuration = max(0, receiveDate.timeIntervalSince(existingSession.startDate))
                 existingSession.currentPage = clampedPage
                 existingSession.isPaused = transfer.isPaused
-                existingSession.pausedAt = transfer.pausedAt
-                existingSession.totalPausedDuration = transfer.totalPausedDuration
+                existingSession.pausedAt = safePausedAt
+                existingSession.totalPausedDuration = min(clampedPausedDuration, maxPausedDuration)
                 existingSession.lastUpdated = max(existingSession.lastUpdated, transfer.lastUpdated)
                 existingSession.book?.currentPage = clampedPage
                 Self.logger.info("✅ Updated session from iPhone: \(transfer.pagesRead) pages")
@@ -1168,15 +1230,17 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 // Create NEW session only if none exists
                 let maxPages = book.totalPages ?? ReadingConstants.defaultMaxPages
                 let clampedPage = min(maxPages, max(0, transfer.currentPage))
+                let adjustedStartDate = transfer.startDate.addingTimeInterval(timeOffset)
+                let maxPausedDuration = max(0, receiveDate.timeIntervalSince(adjustedStartDate))
                 let activeSession = ActiveReadingSession(
                     id: transfer.id,
                     book: book,
-                    startDate: transfer.startDate,
+                    startDate: adjustedStartDate,
                     currentPage: clampedPage,
                     startPage: transfer.startPage,
                     isPaused: transfer.isPaused,
-                    pausedAt: transfer.pausedAt,
-                    totalPausedDuration: transfer.totalPausedDuration,
+                    pausedAt: safePausedAt,
+                    totalPausedDuration: min(clampedPausedDuration, maxPausedDuration),
                     lastUpdated: transfer.lastUpdated,
                     sourceDevice: transfer.sourceDevice
                 )

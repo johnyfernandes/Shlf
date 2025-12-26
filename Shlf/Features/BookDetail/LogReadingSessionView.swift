@@ -154,7 +154,7 @@ struct LogReadingSessionView: View {
                                         session.pausedAt = Date()
                                     } else {
                                         if let pausedAt = session.pausedAt {
-                                            session.totalPausedDuration += Date().timeIntervalSince(pausedAt)
+                                            session.totalPausedDuration += max(0, Date().timeIntervalSince(pausedAt))
                                         }
                                         session.pausedAt = nil
                                     }

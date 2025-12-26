@@ -80,12 +80,12 @@ struct LogSessionWatchView: View {
                 VStack(spacing: 4) {
                     Text(timeString)
                         .font(.system(size: 48, weight: .bold, design: .rounded))
-                        .foregroundStyle(isPaused ? Color.orange : themeColor.color)
+                        .foregroundStyle(effectiveIsPaused ? Color.orange : themeColor.color)
                         .monospacedDigit()
 
-                    Text(isActive ? (isPaused ? "Paused" : "Reading...") : "Ready")
+                    Text(isActive ? (effectiveIsPaused ? "Paused" : "Reading...") : "Ready")
                         .font(.caption)
-                        .foregroundStyle(isPaused ? Color.orange : Color.secondary)
+                        .foregroundStyle(effectiveIsPaused ? Color.orange : Color.secondary)
                 }
                 .padding(.vertical)
 
@@ -185,13 +185,16 @@ struct LogSessionWatchView: View {
                     } else {
                         // Pause/Resume Button
                         Button {
-                            if isPaused {
+                            if effectiveIsPaused {
                                 resumeSession()
                             } else {
                                 pauseSession()
                             }
                         } label: {
-                            Label(isPaused ? "Resume" : "Pause", systemImage: isPaused ? "play.circle.fill" : "pause.circle.fill")
+                            Label(
+                                effectiveIsPaused ? "Resume" : "Pause",
+                                systemImage: effectiveIsPaused ? "play.circle.fill" : "pause.circle.fill"
+                            )
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.bordered)
@@ -291,12 +294,13 @@ struct LogSessionWatchView: View {
         }
         .onChange(of: activeSessionForBook?.isPaused) { _, newValue in
             guard let activeSession = activeSessionForBook else { return }
-            if let newValue, newValue != isPaused {
-                isPaused = newValue
-                elapsedTime = activeSession.elapsedTime(at: Date())
-                if !isActive {
-                    isActive = true
-                }
+            let updatedPaused = newValue ?? false
+            if updatedPaused != isPaused {
+                isPaused = updatedPaused
+            }
+            elapsedTime = activeSession.elapsedTime(at: Date())
+            if !isActive {
+                isActive = true
             }
         }
         .onChange(of: book.currentPage) { _, newValue in
@@ -317,7 +321,7 @@ struct LogSessionWatchView: View {
             guard isActive else { return }
             if let activeSession = activeSessionForBook {
                 elapsedTime = activeSession.elapsedTime(at: date)
-            } else if !isPaused {
+            } else if !effectiveIsPaused {
                 elapsedTime += 1
             }
         }
@@ -344,6 +348,10 @@ struct LogSessionWatchView: View {
 
     private var pagesRead: Int {
         max(0, currentPage - startPage)
+    }
+
+    private var effectiveIsPaused: Bool {
+        activeSessionForBook?.isPaused ?? isPaused
     }
 
     private var xpEarned: Int {
@@ -489,7 +497,7 @@ struct LogSessionWatchView: View {
         if let activeSession = activeSessionForBook {
             // Calculate paused duration and add to total
             if let pausedAt = activeSession.pausedAt {
-                let pauseDuration = Date().timeIntervalSince(pausedAt)
+                let pauseDuration = max(0, Date().timeIntervalSince(pausedAt))
                 activeSession.totalPausedDuration += pauseDuration
             }
             activeSession.isPaused = false
@@ -713,7 +721,7 @@ struct LogSessionWatchView: View {
 
     private func makeTickingTimer() -> Timer {
         let newTimer = Timer(timeInterval: 1.0, repeats: true) { _ in
-            if !isPaused {
+            if !effectiveIsPaused {
                 elapsedTime += 1
             }
         }
