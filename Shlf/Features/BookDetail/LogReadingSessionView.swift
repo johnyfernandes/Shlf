@@ -30,6 +30,7 @@ struct LogReadingSessionView: View {
     @State private var showDiscardAlert = false
     @State private var showActiveSessionAlert = false
     @State private var pendingActiveSession: ActiveReadingSession?
+    @State private var activeSessionSnapshot = false
     @FocusState private var focusedField: FocusField?
 
     enum FocusField: Hashable {
@@ -286,6 +287,7 @@ struct LogReadingSessionView: View {
             .onAppear {
                 syncWithLiveActivity()
                 syncEndPageText(with: actualEndPage)
+                refreshActiveSessionSnapshot()
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
                 syncWithLiveActivity()
@@ -331,7 +333,7 @@ struct LogReadingSessionView: View {
                     .disabled(pagesRead <= 0 || (useTimer && timerStartTime != nil && !isPaused))
                 }
             }
-            .interactiveDismissDisabled(hasUnsavedData)
+            .interactiveDismissDisabled(hasUnsavedData || activeSessionSnapshot)
             .alert("Discard Session?", isPresented: $showDiscardAlert) {
                 Button("Keep Editing", role: .cancel) {}
                 Button("Discard", role: .destructive) {
@@ -342,6 +344,11 @@ struct LogReadingSessionView: View {
                 }
             } message: {
                 Text("You have unsaved progress. Are you sure you want to discard this reading session?")
+            }
+            .onChange(of: activeSessionForBook?.id) { _, newValue in
+                if newValue != nil {
+                    activeSessionSnapshot = true
+                }
             }
             .alert("Active Session Found", isPresented: $showActiveSessionAlert) {
                 Button("Cancel", role: .cancel) {
@@ -375,6 +382,18 @@ struct LogReadingSessionView: View {
             showDiscardAlert = true
         } else {
             dismiss()
+        }
+    }
+
+    private func refreshActiveSessionSnapshot() {
+        let bookId = book.id
+        let descriptor = FetchDescriptor<ActiveReadingSession>(
+            predicate: #Predicate<ActiveReadingSession> { session in
+                session.book?.id == bookId
+            }
+        )
+        if let sessions = try? modelContext.fetch(descriptor), !sessions.isEmpty {
+            activeSessionSnapshot = true
         }
     }
 
