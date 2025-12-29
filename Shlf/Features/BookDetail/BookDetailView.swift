@@ -327,16 +327,36 @@ struct BookDetailView: View {
                     }
                 }
             } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: book.readingStatus.icon)
-                        .font(.caption.weight(.semibold))
+                ZStack {
+                    HStack(spacing: 6) {
+                        Image(systemName: ReadingStatus.wantToRead.icon)
+                            .font(.caption.weight(.semibold))
+                            .frame(width: 14)
 
-                    Text(book.readingStatus.shortName)
-                        .font(.caption.weight(.semibold))
+                        Text(ReadingStatus.wantToRead.shortName)
+                            .font(.caption.weight(.semibold))
+                            .lineLimit(1)
 
-                    Image(systemName: "chevron.down.circle.fill")
-                        .font(.caption2)
-                        .symbolRenderingMode(.hierarchical)
+                        Image(systemName: "chevron.down.circle.fill")
+                            .font(.caption2)
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                    .opacity(0)
+                    .accessibilityHidden(true)
+
+                    HStack(spacing: 6) {
+                        Image(systemName: book.readingStatus.icon)
+                            .font(.caption.weight(.semibold))
+                            .frame(width: 14)
+
+                        Text(book.readingStatus.shortName)
+                            .font(.caption.weight(.semibold))
+                            .lineLimit(1)
+
+                        Image(systemName: "chevron.down.circle.fill")
+                            .font(.caption2)
+                            .symbolRenderingMode(.hierarchical)
+                    }
                 }
                 .foregroundStyle(.white)
                 .padding(.horizontal, 16)
@@ -348,7 +368,7 @@ struct BookDetailView: View {
                 )
                 .clipShape(Capsule())
                 .contentShape(Capsule())
-                .animation(.none, value: book.readingStatus)
+                .transaction { $0.animation = nil }
             }
             .buttonStyle(.plain)
 
