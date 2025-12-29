@@ -167,7 +167,7 @@ struct StatsView: View {
             .sheet(isPresented: $showAllAchievements) {
                 AchievementsGridView(
                     entries: achievementEntries,
-                    onSelect: handleAchievementSelection
+                    onSelect: markAchievementViewed
                 )
             }
             .sheet(isPresented: $showShareSheet) {
@@ -500,6 +500,10 @@ struct StatsView: View {
 
     private func handleAchievementSelection(_ entry: AchievementEntry) {
         selectedAchievement = entry
+        markAchievementViewed(entry)
+    }
+
+    private func markAchievementViewed(_ entry: AchievementEntry) {
         if let achievement = entry.achievement, achievement.isNew {
             achievement.isNew = false
             do {
@@ -945,6 +949,7 @@ struct AchievementsGridView: View {
     @Environment(\.dismiss) private var dismiss
     let entries: [AchievementEntry]
     let onSelect: (AchievementEntry) -> Void
+    @State private var selectedAchievement: AchievementEntry?
 
     var body: some View {
         NavigationStack {
@@ -958,7 +963,10 @@ struct AchievementsGridView: View {
                             type: entry.type,
                             achievement: entry.achievement,
                             progress: entry.progress,
-                            onView: { onSelect(entry) }
+                            onView: {
+                                onSelect(entry)
+                                selectedAchievement = entry
+                            }
                         )
                     }
                 }
@@ -974,6 +982,13 @@ struct AchievementsGridView: View {
                         dismiss()
                     }
                 }
+            }
+            .sheet(item: $selectedAchievement) { selection in
+                AchievementDetailView(
+                    type: selection.type,
+                    achievement: selection.achievement,
+                    progress: selection.progress
+                )
             }
         }
     }
