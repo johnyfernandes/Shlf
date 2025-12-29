@@ -33,7 +33,7 @@ struct ShlfApp: App {
                 ContentView()
                     .modelContainer(container)
                     .onAppear {
-                        WatchConnectivityManager.shared.configure(modelContext: container.mainContext)
+                        WatchConnectivityManager.shared.configure(modelContext: container.mainContext, container: container)
                         WatchConnectivityManager.shared.activate()
                         WidgetDataExporter.exportSnapshot(modelContext: container.mainContext)
                         Task {

@@ -24,11 +24,14 @@ class WatchConnectivityManager: NSObject {
     static let shared = WatchConnectivityManager()
     static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.shlf.app", category: "WatchSync")
 
+    private var modelContainer: ModelContainer?
     private var modelContext: ModelContext?
     private var lastActiveSessionEndDate: Date?
     private var endedActiveSessionIDs: [UUID: Date] = [:] // Track UUID -> timestamp when ended
     private var lastLiveActivityStateTimestamp: Date?
     private var lastPageUpdateTimestamps: [UUID: Date] = [:]
+    private var syncInProgress = false
+    private var syncPending = false
 
     private override init() {
         super.init()
@@ -39,8 +42,9 @@ class WatchConnectivityManager: NSObject {
         }
     }
 
-    func configure(modelContext: ModelContext) {
+    func configure(modelContext: ModelContext, container: ModelContainer? = nil) {
         self.modelContext = modelContext
+        self.modelContainer = container
     }
 
     /// Cleanup old ended session IDs (older than 24 hours) to prevent unbounded memory growth
@@ -70,6 +74,18 @@ class WatchConnectivityManager: NSObject {
             return ctx
         }
         return nil
+    }
+
+    @MainActor
+    private func makeSyncContext() -> ModelContext? {
+        if let modelContainer {
+            return ModelContext(modelContainer)
+        }
+        if let container = try? SwiftDataConfig.createModelContainer() {
+            self.modelContainer = container
+            return ModelContext(container)
+        }
+        return modelContext
     }
 
     func activate() {
@@ -443,9 +459,39 @@ class WatchConnectivityManager: NSObject {
 
     @MainActor
     func syncBooksToWatch() async {
-        guard WCSession.default.activationState == .activated,
-              let modelContext = modelContext else {
-            Self.logger.warning("Cannot sync - WC not activated or context not configured")
+        syncPending = true
+        guard !syncInProgress else { return }
+        syncInProgress = true
+
+        defer {
+            syncInProgress = false
+        }
+
+        while syncPending {
+            syncPending = false
+            await Task.yield()
+            try? await Task.sleep(nanoseconds: 120_000_000)
+            await performSyncBooksToWatch()
+        }
+    }
+
+    @MainActor
+    private func performSyncBooksToWatch() async {
+        guard WCSession.default.activationState == .activated else {
+            Self.logger.warning("Cannot sync - WC not activated")
+            return
+        }
+
+        if let modelContext {
+            do {
+                try modelContext.save()
+            } catch {
+                Self.logger.error("Pre-sync save failed: \(error)")
+            }
+        }
+
+        guard let syncContext = makeSyncContext() else {
+            Self.logger.warning("Cannot sync - context not configured")
             return
         }
 
@@ -454,7 +500,7 @@ class WatchConnectivityManager: NSObject {
             let booksDescriptor = FetchDescriptor<Book>(
                 sortBy: [SortDescriptor(\.title)]
             )
-            let allBooks = try modelContext.fetch(booksDescriptor)
+            let allBooks = try syncContext.fetch(booksDescriptor)
             let currentlyReading = allBooks.filter { $0.readingStatus == .currentlyReading }
 
             Self.logger.info("Syncing \(currentlyReading.count) books to Watch...")
@@ -481,7 +527,7 @@ class WatchConnectivityManager: NSObject {
             let sessionsDescriptor = FetchDescriptor<ReadingSession>(
                 sortBy: [SortDescriptor(\.startDate, order: .reverse)]
             )
-            let allSessions = try modelContext.fetch(sessionsDescriptor)
+            let allSessions = try syncContext.fetch(sessionsDescriptor)
             let relevantSessions = allSessions.filter { session in
                 guard let book = session.book else { return false }
                 return bookIds.contains(book.id)

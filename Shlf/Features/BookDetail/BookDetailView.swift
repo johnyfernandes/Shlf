@@ -346,7 +346,11 @@ struct BookDetailView: View {
                         .fill(themeColor.color.gradient)
                         .shadow(color: themeColor.color.opacity(0.4), radius: 8, x: 0, y: 4)
                 )
+                .clipShape(Capsule())
+                .contentShape(Capsule())
+                .animation(.none, value: book.readingStatus)
             }
+            .buttonStyle(.plain)
 
             // Type badge
             if book.bookType != .physical {
