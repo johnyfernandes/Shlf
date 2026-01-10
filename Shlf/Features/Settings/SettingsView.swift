@@ -386,7 +386,28 @@ struct UpgradeView: View {
                 Spacer()
 
                 VStack(spacing: Theme.Spacing.sm) {
-                    if let product = storeKit.products.first {
+                    if storeKit.isLoadingProducts {
+                        ProgressView()
+                    } else if let error = storeKit.lastLoadError {
+                        VStack(spacing: Theme.Spacing.xs) {
+                            Text("Unable to load purchase options")
+                                .font(Theme.Typography.callout)
+                                .foregroundStyle(Theme.Colors.secondaryText)
+                                .multilineTextAlignment(.center)
+
+                            Text(error)
+                                .font(Theme.Typography.caption)
+                                .foregroundStyle(Theme.Colors.tertiaryText)
+                                .multilineTextAlignment(.center)
+
+                            Button("Try Again") {
+                                Task { await storeKit.loadProducts() }
+                            }
+                            .font(Theme.Typography.callout)
+                            .foregroundStyle(themeColor.color)
+                        }
+                        .frame(maxWidth: .infinity)
+                    } else if let product = storeKit.products.first {
                         Button {
                             purchase(product)
                         } label: {
@@ -402,7 +423,9 @@ struct UpgradeView: View {
                         .primaryButton(color: themeColor.color)
                         .disabled(isPurchasing)
                     } else {
-                        ProgressView()
+                        Text("No products available")
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(Theme.Colors.tertiaryText)
                     }
 
                     Button("Not now") {
