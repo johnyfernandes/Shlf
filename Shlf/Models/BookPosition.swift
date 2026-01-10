@@ -12,7 +12,7 @@ import SwiftData
 final class BookPosition {
     var id: UUID = UUID()
     var book: Book?
-    var pageNumber: Int
+    var pageNumber: Int = 0
     var lineNumber: Int?
     var timestamp: Date = Date()
     var note: String?

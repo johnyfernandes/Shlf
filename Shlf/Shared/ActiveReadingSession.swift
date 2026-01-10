@@ -10,16 +10,16 @@ import SwiftData
 
 @Model
 final class ActiveReadingSession {
-    var id: UUID
+    var id: UUID = UUID()
     var book: Book?
-    var startDate: Date
-    var currentPage: Int
-    var startPage: Int
-    var isPaused: Bool
+    var startDate: Date = Date()
+    var currentPage: Int = 0
+    var startPage: Int = 0
+    var isPaused: Bool = false
     var pausedAt: Date?
-    var totalPausedDuration: TimeInterval
-    var lastUpdated: Date
-    var sourceDevice: String // "iPhone" or "Watch"
+    var totalPausedDuration: TimeInterval = 0
+    var lastUpdated: Date = Date()
+    var sourceDevice: String = "iPhone" // "iPhone" or "Watch"
 
     init(
         id: UUID = UUID(),

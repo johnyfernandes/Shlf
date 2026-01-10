@@ -44,6 +44,9 @@ final class Book {
     @Relationship(deleteRule: .cascade, inverse: \Quote.book)
     var quotes: [Quote]?
 
+    @Relationship(deleteRule: .cascade, inverse: \ActiveReadingSession.book)
+    var activeSessions: [ActiveReadingSession]?
+
     var bookType: BookType {
         get { BookType(rawValue: bookTypeRawValue) ?? .physical }
         set { bookTypeRawValue = newValue.rawValue }

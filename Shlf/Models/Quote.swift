@@ -12,7 +12,7 @@ import SwiftData
 final class Quote {
     var id: UUID = UUID()
     var book: Book?
-    var text: String
+    var text: String = ""
     var pageNumber: Int?
     var dateAdded: Date = Date()
     var note: String?
