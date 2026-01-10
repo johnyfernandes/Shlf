@@ -198,6 +198,16 @@ struct SettingsView: View {
                     }
                 }
 
+                #if DEBUG
+                Section("Developer") {
+                    NavigationLink {
+                        DeveloperSettingsView()
+                    } label: {
+                        Label("Developer", systemImage: "hammer.fill")
+                    }
+                }
+                #endif
+
                 Section {
                     HStack {
                         Text("Version")
@@ -224,7 +234,7 @@ struct SettingsView: View {
                 }
             }
             .sheet(isPresented: $showUpgradeSheet) {
-                UpgradeView()
+                PaywallView()
             }
             .alert("Restore Complete", isPresented: $showRestoreAlert) {
                 Button("OK") {}
@@ -344,151 +354,6 @@ struct SettingsView: View {
         }
     }
 
-}
-
-struct UpgradeView: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.themeColor) private var themeColor
-    @Environment(\.modelContext) private var modelContext
-    @Query private var profiles: [UserProfile]
-    @State private var storeKit = StoreKitService.shared
-    @State private var isPurchasing = false
-
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: Theme.Spacing.xl) {
-                Spacer()
-
-                VStack(spacing: Theme.Spacing.md) {
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: 80))
-                        .foregroundStyle(.yellow)
-
-                    Text("Upgrade to Pro")
-                        .font(Theme.Typography.largeTitle)
-
-                    Text("Unlock the full Shlf experience")
-                        .font(Theme.Typography.body)
-                        .foregroundStyle(Theme.Colors.secondaryText)
-                }
-
-                VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-                    FeatureRow(icon: "books.vertical.fill", text: "Unlimited books")
-                    FeatureRow(icon: "chart.bar.fill", text: "Advanced statistics")
-                    FeatureRow(icon: "target", text: "Custom reading goals")
-                    FeatureRow(icon: "paintbrush.fill", text: "Themes & customization")
-                    FeatureRow(icon: "cloud.fill", text: "Priority iCloud sync")
-                }
-                .padding(Theme.Spacing.lg)
-                .padding(16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-
-                Spacer()
-
-                VStack(spacing: Theme.Spacing.sm) {
-                    if storeKit.isLoadingProducts {
-                        ProgressView()
-                    } else if let error = storeKit.lastLoadError {
-                        VStack(spacing: Theme.Spacing.xs) {
-                            Text("Unable to load purchase options")
-                                .font(Theme.Typography.callout)
-                                .foregroundStyle(Theme.Colors.secondaryText)
-                                .multilineTextAlignment(.center)
-
-                            Text(error)
-                                .font(Theme.Typography.caption)
-                                .foregroundStyle(Theme.Colors.tertiaryText)
-                                .multilineTextAlignment(.center)
-
-                            Button("Try Again") {
-                                Task { await storeKit.loadProducts() }
-                            }
-                            .font(Theme.Typography.callout)
-                            .foregroundStyle(themeColor.color)
-                        }
-                        .frame(maxWidth: .infinity)
-                    } else if let product = storeKit.products.first {
-                        Button {
-                            purchase(product)
-                        } label: {
-                            if isPurchasing {
-                                ProgressView()
-                                    .tint(.white)
-                            } else {
-                                Text("Get Pro - \(product.displayPrice)")
-                                    .font(Theme.Typography.headline)
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .primaryButton(color: themeColor.color)
-                        .disabled(isPurchasing)
-                    } else {
-                        Text("No products available")
-                            .font(Theme.Typography.caption)
-                            .foregroundStyle(Theme.Colors.tertiaryText)
-                    }
-
-                    Button("Not now") {
-                        dismiss()
-                    }
-                    .foregroundStyle(Theme.Colors.secondaryText)
-                }
-            }
-            .padding(Theme.Spacing.xl)
-            .task {
-                await storeKit.loadProducts()
-            }
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(Theme.Colors.tertiaryText)
-                    }
-                }
-            }
-        }
-    }
-
-    private func purchase(_ product: Product) {
-        isPurchasing = true
-
-        Task {
-            do {
-                try await storeKit.purchase(product)
-                if let profile = profiles.first {
-                    profile.isProUser = storeKit.isProUser
-                    try? modelContext.save()
-                }
-                dismiss()
-            } catch {
-                print("Purchase failed: \(error)")
-            }
-            isPurchasing = false
-        }
-    }
-}
-
-struct FeatureRow: View {
-    @Environment(\.themeColor) private var themeColor
-    let icon: String
-    let text: String
-
-    var body: some View {
-        HStack(spacing: Theme.Spacing.sm) {
-            Image(systemName: icon)
-                .font(.title3)
-                .foregroundStyle(themeColor.color)
-                .frame(width: 30)
-
-            Text(text)
-                .font(Theme.Typography.body)
-                .foregroundStyle(Theme.Colors.text)
-
-            Spacer()
-        }
-    }
 }
 
 struct AboutView: View {

@@ -26,12 +26,20 @@ enum StoreError: Error {
 final class StoreKitService {
     static let shared = StoreKitService()
 
+    static let monthlyProductID = "shlf_pro_monthly"
+    static let yearlyProductID = "shlf_pro_yearly"
+    static let lifetimeProductID = "shlf_pro_lifetime"
+
     private(set) var products: [Product] = []
     private(set) var purchasedProductIDs = Set<String>()
     private(set) var isLoadingProducts = false
     private(set) var lastLoadError: String?
 
-    private var productIDs: [String] = ["shlf_pro_lifetime"]
+    private var productIDs: [String] = [
+        StoreKitService.yearlyProductID,
+        StoreKitService.monthlyProductID,
+        StoreKitService.lifetimeProductID
+    ]
     private var updates: Task<Void, Never>?
 
     private init() {
@@ -61,7 +69,8 @@ final class StoreKitService {
         // Retry up to 3 times with exponential backoff
         for attempt in 1...3 {
             do {
-                products = try await Product.products(for: productIDs)
+                let fetched = try await Product.products(for: productIDs)
+                products = fetched.sorted { productSortIndex($0.id) < productSortIndex($1.id) }
                 if !products.isEmpty {
                     return // Success, exit early
                 }
@@ -113,6 +122,16 @@ final class StoreKitService {
         await updatePurchasedProducts()
     }
 
+    @MainActor
+    func resetLocalProState() {
+        purchasedProductIDs.removeAll()
+        ProAccess.setCachedIsPro(false)
+    }
+
+    func product(for id: String) -> Product? {
+        products.first { $0.id == id }
+    }
+
     // MARK: - Private Methods
 
     private func observeTransactionUpdates() -> Task<Void, Never> {
@@ -155,5 +174,9 @@ final class StoreKitService {
         case .verified(let safe):
             return safe
         }
+    }
+
+    private func productSortIndex(_ id: String) -> Int {
+        productIDs.firstIndex(of: id) ?? Int.max
     }
 }

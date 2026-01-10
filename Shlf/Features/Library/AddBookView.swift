@@ -93,7 +93,7 @@ struct AddBookView: View {
                 Text("You've reached the limit of 5 books. Upgrade to Pro for unlimited books.")
             }
             .sheet(isPresented: $showUpgradeSheet) {
-                UpgradeView()
+                PaywallView()
             }
         }
     }

@@ -447,7 +447,7 @@ struct StatsView: View {
             AddGoalView(profile: profile)
         }
         .sheet(isPresented: $showUpgradeSheet) {
-            UpgradeView()
+            PaywallView()
         }
     }
 
@@ -1181,7 +1181,7 @@ struct ManageGoalsView: View {
             }
         }
         .sheet(isPresented: $showUpgradeSheet) {
-            UpgradeView()
+            PaywallView()
         }
     }
 }

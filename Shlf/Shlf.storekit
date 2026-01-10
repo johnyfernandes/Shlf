@@ -15,7 +15,7 @@
   ],
   "products" : [
     {
-      "displayPrice" : "0.99",
+      "displayPrice" : "49.99",
       "familyShareable" : false,
       "internalID" : "6A2FBB2C",
       "localizations" : [
@@ -27,6 +27,36 @@
       ],
       "productID" : "shlf_pro_lifetime",
       "referenceName" : "Shlf Pro Lifetime",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "3.99",
+      "familyShareable" : false,
+      "internalID" : "0736BE4B",
+      "localizations" : [
+        {
+          "description" : "",
+          "displayName" : "",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "shlf_pro_montly",
+      "referenceName" : "Shlf Pro Monthly",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "24.99",
+      "familyShareable" : false,
+      "internalID" : "E0171189",
+      "localizations" : [
+        {
+          "description" : "",
+          "displayName" : "",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "shlf_pro_yearly",
+      "referenceName" : "Shlf Pro Yearly",
       "type" : "NonConsumable"
     }
   ],
