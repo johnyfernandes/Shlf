@@ -1142,14 +1142,14 @@ extension WatchConnectivityManager: WCSessionDelegate {
             let pendingSessionIds = snapshotPendingSessionIds()
             let sessionsDescriptor = FetchDescriptor<ReadingSession>()
             let existingSessions = try modelContext.fetch(sessionsDescriptor)
-            let pendingBookIds = Set(existingSessions.compactMap { session in
+            let pendingBookIds: Set<UUID> = Set(existingSessions.compactMap { session in
                 guard pendingSessionIds.contains(session.id) else { return nil }
                 return session.book?.id
             })
 
             let activeSessionsDescriptor = FetchDescriptor<ActiveReadingSession>()
             let activeSessions = try modelContext.fetch(activeSessionsDescriptor)
-            let activeBookIds = Set(activeSessions.compactMap { $0.book?.id })
+            let activeBookIds: Set<UUID> = Set(activeSessions.compactMap { $0.book?.id })
 
             // Delete books that are no longer "Currently Reading" on iPhone
             // If a book has pending sessions, keep it but hide it from the reading list.

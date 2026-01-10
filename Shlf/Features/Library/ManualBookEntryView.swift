@@ -13,11 +13,15 @@ struct ManualBookEntryView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @Query private var profiles: [UserProfile]
+    @Query private var books: [Book]
     @Binding var selectedTab: Int
     let onDismissAll: () -> Void
 
     @FocusState private var focusedField: Field?
     @State private var showDiscardAlert = false
+    @State private var showUpgradeAlert = false
+    @State private var showUpgradeSheet = false
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var coverImage: UIImage?
 
@@ -49,6 +53,14 @@ struct ManualBookEntryView: View {
 
     private var isValid: Bool {
         !title.isEmpty && !author.isEmpty
+    }
+
+    private var isProUser: Bool {
+        ProAccess.isProUser(profile: profiles.first)
+    }
+
+    private var canAddBook: Bool {
+        isProUser || books.count < 5
     }
 
     var body: some View {
@@ -136,6 +148,17 @@ struct ManualBookEntryView: View {
                 Button("Keep Editing", role: .cancel) {}
             } message: {
                 Text("Are you sure you want to discard this book entry?")
+            }
+            .alert("Upgrade Required", isPresented: $showUpgradeAlert) {
+                Button("Upgrade to Pro") {
+                    showUpgradeSheet = true
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("You've reached the limit of 5 books. Upgrade to Pro for unlimited books.")
+            }
+            .sheet(isPresented: $showUpgradeSheet) {
+                UpgradeView()
             }
         }
     }
@@ -554,6 +577,11 @@ struct ManualBookEntryView: View {
     // MARK: - Actions
 
     private func saveBook() {
+        guard canAddBook else {
+            showUpgradeAlert = true
+            return
+        }
+
         let totalPagesValue = Int(totalPages)
         let maxPages = totalPagesValue ?? currentPage
         let clampedCurrentPage = min(maxPages, currentPage)

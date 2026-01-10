@@ -40,6 +40,19 @@ struct ShlfApp: App {
                             await ReadingSessionActivityManager.shared.rehydrateExistingActivity()
                         }
 
+                        Task { @MainActor in
+                            await StoreKitService.shared.refreshEntitlements()
+                            let descriptor = FetchDescriptor<UserProfile>()
+                            if let profiles = try? container.mainContext.fetch(descriptor),
+                               let profile = profiles.first {
+                                let isPro = StoreKitService.shared.isProUser
+                                if profile.isProUser != isPro {
+                                    profile.isProUser = isPro
+                                    try? container.mainContext.save()
+                                }
+                            }
+                        }
+
                         // Cleanup stale active sessions based on user preferences
                         Task { @MainActor in
                             await ActiveSessionCleanup.cleanupStaleSessionsIfNeeded(modelContext: container.mainContext)

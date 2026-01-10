@@ -19,17 +19,19 @@ struct AddBookView: View {
     @State private var viewModel: AddBookViewModel
     @State private var navigationPath = NavigationPath()
     @State private var showManualEntry = false
+    @State private var showUpgradeSheet = false
 
     init(selectedTab: Binding<Int>) {
         _selectedTab = selectedTab
         _viewModel = State(initialValue: AddBookViewModel())
     }
 
+    private var isProUser: Bool {
+        ProAccess.isProUser(profile: profiles.first)
+    }
+
     private var canAddBook: Bool {
-        if let profile = profiles.first, !profile.isProUser {
-            return books.count < 5
-        }
-        return true
+        isProUser || books.count < 5
     }
 
     var body: some View {
@@ -84,11 +86,14 @@ struct AddBookView: View {
             }
             .alert("Upgrade Required", isPresented: $viewModel.showUpgradeAlert) {
                 Button("Upgrade to Pro") {
-                    // Navigate to upgrade screen
+                    showUpgradeSheet = true
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
                 Text("You've reached the limit of 5 books. Upgrade to Pro for unlimited books.")
+            }
+            .sheet(isPresented: $showUpgradeSheet) {
+                UpgradeView()
             }
         }
     }
@@ -143,7 +148,11 @@ struct AddBookView: View {
                     // Quick Actions
                     VStack(spacing: 16) {
                         Button {
-                            viewModel.showSearch = true
+                            if canAddBook {
+                                viewModel.showSearch = true
+                            } else {
+                                viewModel.showUpgradeAlert = true
+                            }
                         } label: {
                             HStack(spacing: 16) {
                                 ZStack {
@@ -184,8 +193,12 @@ struct AddBookView: View {
                         .buttonStyle(.plain)
 
                         Button {
-                            Task {
-                                await viewModel.scanBarcode()
+                            if canAddBook {
+                                Task {
+                                    await viewModel.scanBarcode()
+                                }
+                            } else {
+                                viewModel.showUpgradeAlert = true
                             }
                         } label: {
                             HStack(spacing: 16) {
@@ -227,7 +240,11 @@ struct AddBookView: View {
                         .buttonStyle(.plain)
 
                         Button {
-                            showManualEntry = true
+                            if canAddBook {
+                                showManualEntry = true
+                            } else {
+                                viewModel.showUpgradeAlert = true
+                            }
                         } label: {
                             HStack(spacing: 16) {
                                 ZStack {

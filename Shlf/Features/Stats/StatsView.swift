@@ -21,6 +21,7 @@ struct StatsView: View {
     @State private var selectedAchievement: AchievementEntry?
     @State private var showAllAchievements = false
     @State private var showShareSheet = false
+    @State private var showUpgradeSheet = false
 
     private var profile: UserProfile {
         if let existing = profiles.first {
@@ -42,6 +43,10 @@ struct StatsView: View {
 
     private var engine: GamificationEngine {
         GamificationEngine(modelContext: modelContext)
+    }
+
+    private var isProUser: Bool {
+        ProAccess.isProUser(profile: profile)
     }
 
     // Computed properties that SwiftUI watches
@@ -382,28 +387,55 @@ struct StatsView: View {
 
                 Spacer()
 
-                NavigationLink {
-                    ManageGoalsView()
-                } label: {
-                    Text("Manage")
-                        .font(Theme.Typography.callout)
-                        .foregroundStyle(themeColor.color)
+                if isProUser {
+                    NavigationLink {
+                        ManageGoalsView()
+                    } label: {
+                        Text("Manage")
+                            .font(Theme.Typography.callout)
+                            .foregroundStyle(themeColor.color)
+                    }
+                } else {
+                    Button {
+                        showUpgradeSheet = true
+                    } label: {
+                        Text("Upgrade")
+                            .font(Theme.Typography.callout)
+                            .foregroundStyle(themeColor.color)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
 
             if (profile.readingGoals ?? []).isEmpty {
-                HStack {
-                    Spacer()
-                    EmptyStateView(
-                        icon: "target",
-                        title: "No Goals Set",
-                        message: "Set reading goals to track your progress",
-                        actionTitle: "Add Goal",
-                        action: {
-                            showAddGoal = true
-                        }
-                    )
-                    Spacer()
+                if !isProUser {
+                    HStack {
+                        Spacer()
+                        EmptyStateView(
+                            icon: "crown.fill",
+                            title: "Goals are Pro",
+                            message: "Upgrade to create custom reading goals",
+                            actionTitle: "Upgrade to Pro",
+                            action: {
+                                showUpgradeSheet = true
+                            }
+                        )
+                        Spacer()
+                    }
+                } else {
+                    HStack {
+                        Spacer()
+                        EmptyStateView(
+                            icon: "target",
+                            title: "No Goals Set",
+                            message: "Set reading goals to track your progress",
+                            actionTitle: "Add Goal",
+                            action: {
+                                showAddGoal = true
+                            }
+                        )
+                        Spacer()
+                    }
                 }
             } else {
                 ForEach((profile.readingGoals ?? []).filter { $0.isActive }) { goal in
@@ -413,6 +445,9 @@ struct StatsView: View {
         }
         .sheet(isPresented: $showAddGoal) {
             AddGoalView(profile: profile)
+        }
+        .sheet(isPresented: $showUpgradeSheet) {
+            UpgradeView()
         }
     }
 
@@ -1074,9 +1109,14 @@ struct ManageGoalsView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var profiles: [UserProfile]
     @State private var showAddGoal = false
+    @State private var showUpgradeSheet = false
 
     private var profile: UserProfile? {
         profiles.first
+    }
+
+    private var isProUser: Bool {
+        ProAccess.isProUser(profile: profile)
     }
 
     var body: some View {
@@ -1125,7 +1165,11 @@ struct ManageGoalsView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
-                    showAddGoal = true
+                    if isProUser {
+                        showAddGoal = true
+                    } else {
+                        showUpgradeSheet = true
+                    }
                 } label: {
                     Image(systemName: "plus")
                 }
@@ -1135,6 +1179,9 @@ struct ManageGoalsView: View {
             if let profile = profile {
                 AddGoalView(profile: profile)
             }
+        }
+        .sheet(isPresented: $showUpgradeSheet) {
+            UpgradeView()
         }
     }
 }

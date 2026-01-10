@@ -17,6 +17,9 @@ struct SettingsView: View {
     @State private var storeKit = StoreKitService.shared
     @State private var showUpgradeSheet = false
     @State private var showRestoreAlert = false
+    @State private var isMigratingCloud = false
+    @State private var showCloudRestartAlert = false
+    @State private var cloudMigrationError: String?
 
     private var profile: UserProfile {
         if let existing = profiles.first {
@@ -35,6 +38,10 @@ struct SettingsView: View {
         modelContext.insert(new)
         try? modelContext.save() // Save immediately to prevent other threads from creating
         return new
+    }
+
+    private var isProUser: Bool {
+        ProAccess.isProUser(profile: profile)
     }
 
     var body: some View {
@@ -56,47 +63,88 @@ struct SettingsView: View {
                     proSection
 
                     Section("Customization") {
+                        if isProUser {
+                            NavigationLink {
+                                ThemeColorSettingsView(profile: profile)
+                            } label: {
+                                Label {
+                                    Text("Theme Color")
+                                } icon: {
+                                    Image(systemName: "paintbrush.fill")
+                                        .foregroundStyle(profile.themeColor.gradient)
+                                }
+                            }
+                        } else {
+                            Button {
+                                showUpgradeSheet = true
+                            } label: {
+                                Label {
+                                    Text("Theme Color")
+                                } icon: {
+                                    Image(systemName: "paintbrush.fill")
+                                        .foregroundStyle(profile.themeColor.gradient)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                        }
+
+                        if isProUser {
+                            NavigationLink {
+                                HomeCardSettingsView(profile: profile)
+                            } label: {
+                                Label("Home Screen", systemImage: "square.grid.3x3")
+                            }
+                        } else {
+                            Button {
+                                showUpgradeSheet = true
+                            } label: {
+                                Label("Home Screen", systemImage: "square.grid.3x3")
+                            }
+                            .buttonStyle(.plain)
+                        }
+
                         NavigationLink {
-                            ThemeColorSettingsView(profile: profile)
+                            ReadingPreferencesView(profile: profile)
                         } label: {
-                        Label {
-                            Text("Theme Color")
-                        } icon: {
-                            Image(systemName: "paintbrush.fill")
-                                .foregroundStyle(profile.themeColor.gradient)
+                            Label("Reading Progress", systemImage: "book")
+                        }
+
+                        NavigationLink {
+                            SessionSettingsView(profile: profile)
+                        } label: {
+                            Label("Sessions", systemImage: "timer")
+                        }
+
+                        if isProUser {
+                            NavigationLink {
+                                BookDetailCustomizationView(profile: profile)
+                            } label: {
+                                Label("Book Details", systemImage: "slider.horizontal.3")
+                            }
+                        } else {
+                            Button {
+                                showUpgradeSheet = true
+                            } label: {
+                                Label("Book Details", systemImage: "slider.horizontal.3")
+                            }
+                            .buttonStyle(.plain)
+                        }
+
+                        if isProUser {
+                            NavigationLink {
+                                StatsSettingsView()
+                            } label: {
+                                Label("Stats", systemImage: "chart.xyaxis.line")
+                            }
+                        } else {
+                            Button {
+                                showUpgradeSheet = true
+                            } label: {
+                                Label("Stats", systemImage: "chart.xyaxis.line")
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
-
-                    NavigationLink {
-                        HomeCardSettingsView(profile: profile)
-                    } label: {
-                        Label("Home Screen", systemImage: "square.grid.3x3")
-                    }
-
-                    NavigationLink {
-                        ReadingPreferencesView(profile: profile)
-                    } label: {
-                        Label("Reading Progress", systemImage: "book")
-                    }
-
-                    NavigationLink {
-                        SessionSettingsView(profile: profile)
-                    } label: {
-                        Label("Sessions", systemImage: "timer")
-                    }
-
-                    NavigationLink {
-                        BookDetailCustomizationView(profile: profile)
-                    } label: {
-                        Label("Book Details", systemImage: "slider.horizontal.3")
-                    }
-
-                    NavigationLink {
-                        StatsSettingsView()
-                    } label: {
-                        Label("Stats", systemImage: "chart.xyaxis.line")
-                    }
-                }
 
                 Section("Apple Watch") {
                     NavigationLink {
@@ -109,10 +157,15 @@ struct SettingsView: View {
                 Section("Sync") {
                     Toggle("iCloud Sync", isOn: Binding(
                         get: { profile.cloudSyncEnabled },
-                        set: { profile.cloudSyncEnabled = $0 }
+                        set: { handleCloudSyncToggle($0) }
                     ))
+                    .disabled(!isProUser || isMigratingCloud)
 
-                    if profile.cloudSyncEnabled {
+                    if !isProUser {
+                        Label("Available with Shlf Pro", systemImage: "lock.fill")
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(Theme.Colors.tertiaryText)
+                    } else if profile.cloudSyncEnabled {
                         Label("Your books sync across devices", systemImage: "checkmark.circle.fill")
                             .font(Theme.Typography.caption)
                             .foregroundStyle(Theme.Colors.success)
@@ -157,6 +210,19 @@ struct SettingsView: View {
             .scrollContentBackground(.hidden)
             }
             .navigationTitle("Settings")
+            .overlay {
+                if isMigratingCloud {
+                    ZStack {
+                        Color.black.opacity(0.2)
+                            .ignoresSafeArea()
+
+                        ProgressView("Preparing iCloud Sync...")
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 16)
+                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+                }
+            }
             .sheet(isPresented: $showUpgradeSheet) {
                 UpgradeView()
             }
@@ -164,6 +230,22 @@ struct SettingsView: View {
                 Button("OK") {}
             } message: {
                 Text("Your purchases have been restored.")
+            }
+            .alert("Restart Required", isPresented: $showCloudRestartAlert) {
+                Button("Restart Now", role: .destructive) {
+                    exit(0)
+                }
+                Button("Later") {}
+            } message: {
+                Text("iCloud Sync will finish switching after you restart the app.")
+            }
+            .alert("iCloud Sync Error", isPresented: Binding(
+                get: { cloudMigrationError != nil },
+                set: { _ in cloudMigrationError = nil }
+            )) {
+                Button("OK") {}
+            } message: {
+                Text(cloudMigrationError ?? "Unknown error.")
             }
             .task {
                 await storeKit.loadProducts()
@@ -177,9 +259,37 @@ struct SettingsView: View {
         }
     }
 
+    private func handleCloudSyncToggle(_ isEnabled: Bool) {
+        guard isProUser else {
+            showUpgradeSheet = true
+            return
+        }
+
+        guard profile.cloudSyncEnabled != isEnabled else { return }
+
+        profile.cloudSyncEnabled = isEnabled
+        try? modelContext.save()
+
+        isMigratingCloud = true
+        let targetMode: SwiftDataConfig.StorageMode = isEnabled ? .cloud : .local
+
+        Task { @MainActor in
+            do {
+                try CloudSyncMigrator.migrate(modelContext: modelContext, to: targetMode)
+                SwiftDataConfig.setStorageMode(targetMode)
+                showCloudRestartAlert = true
+            } catch {
+                profile.cloudSyncEnabled.toggle()
+                try? modelContext.save()
+                cloudMigrationError = error.localizedDescription
+            }
+            isMigratingCloud = false
+        }
+    }
+
     private var proSection: some View {
         Section {
-            if storeKit.isProUser || profile.isProUser {
+            if isProUser {
                 HStack {
                     Image(systemName: "crown.fill")
                         .foregroundStyle(.yellow)
@@ -239,6 +349,8 @@ struct SettingsView: View {
 struct UpgradeView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.modelContext) private var modelContext
+    @Query private var profiles: [UserProfile]
     @State private var storeKit = StoreKitService.shared
     @State private var isPurchasing = false
 
@@ -300,6 +412,9 @@ struct UpgradeView: View {
                 }
             }
             .padding(Theme.Spacing.xl)
+            .task {
+                await storeKit.loadProducts()
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button {
@@ -319,6 +434,10 @@ struct UpgradeView: View {
         Task {
             do {
                 try await storeKit.purchase(product)
+                if let profile = profiles.first {
+                    profile.isProUser = storeKit.isProUser
+                    try? modelContext.save()
+                }
                 dismiss()
             } catch {
                 print("Purchase failed: \(error)")

@@ -34,6 +34,9 @@ final class StoreKitService {
 
     private init() {
         updates = observeTransactionUpdates()
+        Task {
+            await updatePurchasedProducts()
+        }
     }
 
     deinit {
@@ -46,6 +49,7 @@ final class StoreKitService {
         !purchasedProductIDs.isEmpty
     }
 
+    @MainActor
     func loadProducts() async {
         // Retry up to 3 times with exponential backoff
         for attempt in 1...3 {
@@ -67,6 +71,7 @@ final class StoreKitService {
         print("All product loading attempts failed")
     }
 
+    @MainActor
     func purchase(_ product: Product) async throws {
         let result = try await product.purchase()
 
@@ -87,7 +92,13 @@ final class StoreKitService {
         }
     }
 
+    @MainActor
     func restorePurchases() async {
+        await updatePurchasedProducts()
+    }
+
+    @MainActor
+    func refreshEntitlements() async {
         await updatePurchasedProducts()
     }
 
@@ -98,7 +109,7 @@ final class StoreKitService {
             for await result in Transaction.updates {
                 do {
                     let transaction = try checkVerified(result)
-                    await updatePurchasedProducts()
+                    await self.updatePurchasedProducts()
                     await transaction.finish()
                 } catch {
                     print("Transaction verification failed: \(error)")
@@ -107,6 +118,7 @@ final class StoreKitService {
         }
     }
 
+    @MainActor
     private func updatePurchasedProducts() async {
         var purchasedIDs = Set<String>()
 
@@ -122,6 +134,7 @@ final class StoreKitService {
         }
 
         purchasedProductIDs = purchasedIDs
+        ProAccess.setCachedIsPro(!purchasedIDs.isEmpty)
     }
 
     private func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {

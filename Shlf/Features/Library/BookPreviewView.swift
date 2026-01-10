@@ -25,6 +25,7 @@ struct BookPreviewView: View {
     @State private var isLoading = false
     @State private var fullBookInfo: BookInfo?
     @State private var showUpgradeAlert = false
+    @State private var showUpgradeSheet = false
     @State private var showDuplicateAlert = false
     @State private var existingBook: Book?
 
@@ -34,11 +35,12 @@ struct BookPreviewView: View {
         fullBookInfo ?? bookInfo
     }
 
+    private var isProUser: Bool {
+        ProAccess.isProUser(profile: profiles.first)
+    }
+
     private var canAddBook: Bool {
-        if let profile = profiles.first, !profile.isProUser {
-            return books.count < 5
-        }
-        return true
+        isProUser || books.count < 5
     }
 
     var body: some View {
@@ -320,10 +322,15 @@ struct BookPreviewView: View {
             }
         }
         .alert("Upgrade Required", isPresented: $showUpgradeAlert) {
-            Button("Upgrade to Pro") {}
+            Button("Upgrade to Pro") {
+                showUpgradeSheet = true
+            }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("You've reached the limit of 5 books. Upgrade to Pro for unlimited books.")
+        }
+        .sheet(isPresented: $showUpgradeSheet) {
+            UpgradeView()
         }
         .alert("Book Already in Library", isPresented: $showDuplicateAlert) {
             Button("Cancel", role: .cancel) {}
