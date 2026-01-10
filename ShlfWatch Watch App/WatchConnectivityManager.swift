@@ -1139,14 +1139,32 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 }
             }
 
+            let pendingSessionIds = snapshotPendingSessionIds()
+            let sessionsDescriptor = FetchDescriptor<ReadingSession>()
+            let existingSessions = try modelContext.fetch(sessionsDescriptor)
+            let pendingBookIds = Set(existingSessions.compactMap { session in
+                guard pendingSessionIds.contains(session.id) else { return nil }
+                return session.book?.id
+            })
+
+            let activeSessionsDescriptor = FetchDescriptor<ActiveReadingSession>()
+            let activeSessions = try modelContext.fetch(activeSessionsDescriptor)
+            let activeBookIds = Set(activeSessions.compactMap { $0.book?.id })
+
             // Delete books that are no longer "Currently Reading" on iPhone
-            // (iPhone only sends currently reading books, so if a book isn't in the transfer, remove it)
-            for existingBook in existingBooks {
-                if !transferredUUIDs.contains(existingBook.id) {
-                    // Book is no longer "Currently Reading" - remove it from Watch
-                    modelContext.delete(existingBook)
-                    Self.logger.info("Removed book from Watch: \(existingBook.title) (no longer Currently Reading)")
+            // If a book has pending sessions, keep it but hide it from the reading list.
+            for existingBook in existingBooks where !transferredUUIDs.contains(existingBook.id) {
+                if activeBookIds.contains(existingBook.id) {
+                    continue
                 }
+                if pendingBookIds.contains(existingBook.id) {
+                    if existingBook.readingStatus != .wantToRead {
+                        existingBook.readingStatus = .wantToRead
+                    }
+                    continue
+                }
+                modelContext.delete(existingBook)
+                Self.logger.info("Removed book from Watch: \(existingBook.title) (no longer Currently Reading)")
             }
 
             try modelContext.save()

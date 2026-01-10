@@ -217,7 +217,7 @@ final class GamificationEngine {
         guard let sessions = try? modelContext.fetch(descriptor) else { return }
         let trackedSessions = sessions.filter { $0.countsTowardStats }
 
-        let totalPages = trackedSessions.reduce(0) { $0 + $1.pagesRead }
+        let totalPages = max(0, trackedSessions.reduce(0) { $0 + $1.pagesRead })
 
         let milestones: [(Int, AchievementType)] = [
             (100, .hundredPages),

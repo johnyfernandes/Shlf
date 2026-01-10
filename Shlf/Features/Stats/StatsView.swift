@@ -50,7 +50,7 @@ struct StatsView: View {
     }
 
     private var totalPagesRead: Int {
-        statSessions.reduce(0) { $0 + $1.pagesRead }
+        max(0, statSessions.reduce(0) { $0 + $1.pagesRead })
     }
 
     private var totalMinutesRead: Int {
