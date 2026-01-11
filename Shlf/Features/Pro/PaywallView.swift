@@ -13,6 +13,7 @@ struct PaywallView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.themeColor) private var themeColor
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.openURL) private var openURL
     @Query private var profiles: [UserProfile]
     @State private var storeKit = StoreKitService.shared
     @State private var isPurchasing = false
@@ -93,6 +94,7 @@ struct PaywallView: View {
                     PaywallPlanCard(
                         plan: plan,
                         priceText: storeKit.product(for: plan.productID)?.displayPrice ?? "--",
+                        badgeText: badgeText(for: plan),
                         isSelected: selectedPlan == plan,
                         accentColor: themeColor.color
                     )
@@ -136,7 +138,7 @@ struct PaywallView: View {
                         ProgressView()
                             .tint(.white)
                     } else if let product = selectedProduct {
-                        Text("Continue - \(product.displayPrice)")
+                        Text("Continue with \(selectedPlan.title) - \(product.displayPrice)")
                             .font(Theme.Typography.headline)
                     } else {
                         Text("No products available")
@@ -159,6 +161,12 @@ struct PaywallView: View {
                 .font(Theme.Typography.callout)
                 .foregroundStyle(themeColor.color)
 
+                Button("Manage Subscription") {
+                    openSubscriptions()
+                }
+                .font(Theme.Typography.callout)
+                .foregroundStyle(themeColor.color)
+
                 Text(selectedPlan.footerText)
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.Colors.tertiaryText)
@@ -168,6 +176,15 @@ struct PaywallView: View {
                 dismiss()
             }
             .foregroundStyle(Theme.Colors.secondaryText)
+
+            HStack(spacing: Theme.Spacing.sm) {
+                Link("Terms", destination: URL(string: "https://shlf.app/terms")!)
+                Text("•")
+                    .foregroundStyle(Theme.Colors.tertiaryText)
+                Link("Privacy", destination: URL(string: "https://shlf.app/privacy")!)
+            }
+            .font(Theme.Typography.caption)
+            .foregroundStyle(Theme.Colors.tertiaryText)
         }
     }
 
@@ -187,6 +204,33 @@ struct PaywallView: View {
             }
             isPurchasing = false
         }
+    }
+
+    private func openSubscriptions() {
+        guard let url = URL(string: "https://apps.apple.com/account/subscriptions") else { return }
+        openURL(url)
+    }
+
+    private func badgeText(for plan: PaywallPlan) -> String? {
+        guard plan == .yearly else { return nil }
+        guard let monthly = storeKit.product(for: PaywallPlan.monthly.productID)?.price,
+              let yearly = storeKit.product(for: PaywallPlan.yearly.productID)?.price else {
+            return "Best Value"
+        }
+
+        let monthlyValue = NSDecimalNumber(decimal: monthly).doubleValue
+        let yearlyValue = NSDecimalNumber(decimal: yearly).doubleValue
+        guard monthlyValue > 0 else { return "Best Value" }
+
+        let annualEquivalent = monthlyValue * 12.0
+        guard annualEquivalent > 0 else { return "Best Value" }
+
+        let savings = max(0, 1.0 - (yearlyValue / annualEquivalent))
+        let percent = Int(round(savings * 100))
+        if percent >= 5 {
+            return "Save \(percent)%"
+        }
+        return "Best Value"
     }
 }
 
@@ -224,13 +268,6 @@ enum PaywallPlan: CaseIterable {
         }
     }
 
-    var badgeText: String? {
-        switch self {
-        case .yearly: return "Best Value"
-        default: return nil
-        }
-    }
-
     var periodText: String {
         switch self {
         case .monthly: return "per month"
@@ -263,6 +300,7 @@ enum PaywallPlan: CaseIterable {
 struct PaywallPlanCard: View {
     let plan: PaywallPlan
     let priceText: String
+    let badgeText: String?
     let isSelected: Bool
     let accentColor: Color
 
@@ -274,7 +312,7 @@ struct PaywallPlanCard: View {
                         .font(Theme.Typography.headline)
                         .foregroundStyle(Theme.Colors.text)
 
-                    if let badge = plan.badgeText {
+                    if let badge = badgeText {
                         Text(badge)
                             .font(Theme.Typography.caption2)
                             .foregroundStyle(.white)
