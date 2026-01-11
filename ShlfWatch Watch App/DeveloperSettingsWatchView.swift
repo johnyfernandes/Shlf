@@ -5,6 +5,8 @@ import SwiftData
 struct DeveloperSettingsWatchView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @AppStorage("debugWatchThemeOverrideEnabled") private var debugThemeOverrideEnabled = false
+    @AppStorage("debugWatchThemeOverrideColor") private var debugThemeOverrideRawValue = ThemeColor.blue.rawValue
     @State private var mockRange: MockSeedRange = .month
     @State private var mockIntensity: MockSeedIntensity = .balanced
     @State private var includePardon = true
@@ -18,6 +20,23 @@ struct DeveloperSettingsWatchView: View {
 
     var body: some View {
         List {
+            Section("Theme Preview") {
+                Toggle("Override Theme", isOn: $debugThemeOverrideEnabled)
+                    .tint(themeColor.color)
+
+                if debugThemeOverrideEnabled {
+                    Picker("Theme Color", selection: $debugThemeOverrideRawValue) {
+                        ForEach(ThemeColor.allCases) { color in
+                            Text(color.displayName).tag(color.rawValue)
+                        }
+                    }
+                } else {
+                    Text("Follows iPhone theme when connected.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             Section("Mock Data") {
                 Picker("Range", selection: $mockRange) {
                     ForEach(MockSeedRange.allCases) { range in

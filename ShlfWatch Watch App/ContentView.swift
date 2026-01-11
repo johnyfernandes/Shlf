@@ -14,6 +14,11 @@ struct ContentView: View {
     @Query private var profiles: [UserProfile]
     @Query private var activeSessions: [ActiveReadingSession]
 
+    #if DEBUG
+    @AppStorage("debugWatchThemeOverrideEnabled") private var debugThemeOverrideEnabled = false
+    @AppStorage("debugWatchThemeOverrideColor") private var debugThemeOverrideRawValue = ThemeColor.blue.rawValue
+    #endif
+
     private var currentBooks: [Book] {
         allBooks.filter { $0.readingStatus == .currentlyReading }
     }
@@ -41,7 +46,13 @@ struct ContentView: View {
     }
 
     private var currentThemeColor: ThemeColor {
-        profile.themeColor
+        #if DEBUG
+        if debugThemeOverrideEnabled,
+           let override = ThemeColor(rawValue: debugThemeOverrideRawValue) {
+            return override
+        }
+        #endif
+        return profile.themeColor
     }
 
     var body: some View {
