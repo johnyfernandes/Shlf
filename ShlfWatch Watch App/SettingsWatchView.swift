@@ -105,6 +105,14 @@ struct SettingsWatchView: View {
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
+
+                    #if DEBUG
+                    Section("Developer") {
+                        NavigationLink("Developer Tools") {
+                            DeveloperSettingsWatchView()
+                        }
+                    }
+                    #endif
                 } else {
                     Section {
                         Text("Settings are managed from your iPhone.")
