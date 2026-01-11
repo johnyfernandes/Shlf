@@ -77,6 +77,14 @@ enum MockSeedIntensity: String, CaseIterable, Identifiable {
         }
     }
 
+    var dailyPageRange: ClosedRange<Int> {
+        switch self {
+        case .light: return 12...30
+        case .balanced: return 18...45
+        case .dense: return 28...70
+        }
+    }
+
     var minutesPerPageRange: ClosedRange<Double> {
         switch self {
         case .light: return 2.5...4.0
@@ -455,20 +463,49 @@ final class MockDataGenerator {
             return eligible.randomElement()
         }()
 
+        let recentDayCount = min(3, days.count)
+        let recentDays = Set(days.suffix(recentDayCount).map { calendar.startOfDay(for: $0) })
+        let effectivePardonDay: Date? = {
+            guard let pardonDay else { return nil }
+            let normalized = calendar.startOfDay(for: pardonDay)
+            return recentDays.contains(normalized) ? nil : normalized
+        }()
+
+        var readingPlan = days.enumerated().map { index, day -> Bool in
+            let isStreakDay = index >= streakStartIndex
+            if isStreakDay {
+                return calendar.startOfDay(for: day) != calendar.startOfDay(for: effectivePardonDay ?? Date.distantPast)
+            }
+            return Double.random(in: 0...1) < configuration.intensity.dailyReadingChance
+        }
+
+        if !readingPlan.isEmpty {
+            for offset in 0..<recentDayCount {
+                readingPlan[readingPlan.count - 1 - offset] = true
+            }
+        }
+
+        let readingDayCount = max(1, readingPlan.filter { $0 }.count)
+        let totalReadablePages = states.enumerated().reduce(0) { partial, entry in
+            let (index, state) = entry
+            return unreadIndices.contains(index) ? partial : partial + state.totalPages
+        }
+        let targetTotalPages = Int(Double(totalReadablePages) * 0.7)
+        var remainingTargetPages = max(0, targetTotalPages)
+
         var sessionIDs: [UUID] = []
         var readingDays: Set<Date> = []
 
         for (index, day) in days.enumerated() {
-            let isStreakDay = index >= streakStartIndex
-            let shouldRead: Bool
-
-            if isStreakDay {
-                shouldRead = calendar.startOfDay(for: day) != calendar.startOfDay(for: pardonDay ?? Date.distantPast)
-            } else {
-                shouldRead = Double.random(in: 0...1) < configuration.intensity.dailyReadingChance
-            }
+            let shouldRead = readingPlan[index]
 
             guard shouldRead else { continue }
+
+            let remainingDays = max(1, readingPlan[index...].filter { $0 }.count)
+            let averageRemaining = max(4, remainingTargetPages / remainingDays)
+            let dailyRange = configuration.intensity.dailyPageRange
+            var dailyBudget = min(dailyRange.upperBound, max(averageRemaining, 4))
+            dailyBudget = max(4, Int(Double(dailyBudget) * Double.random(in: 0.75...1.25)))
 
             let sessionsToday = Int.random(in: configuration.intensity.sessionsPerDayRange)
             var sessionsCreatedToday = 0
@@ -481,7 +518,14 @@ final class MockDataGenerator {
                 let remaining = max(0, state.totalPages - state.currentPage)
                 guard remaining > 0 else { continue }
 
-                let pagesToRead = min(remaining, Int.random(in: pageRange))
+                if dailyBudget <= 0, sessionsCreatedToday > 0 { break }
+
+                var pagesToRead = min(remaining, Int.random(in: pageRange))
+                if dailyBudget > 0 {
+                    pagesToRead = min(pagesToRead, dailyBudget)
+                } else if sessionsCreatedToday == 0 {
+                    pagesToRead = min(remaining, min(6, max(2, dailyRange.lowerBound / 3)))
+                }
                 guard pagesToRead > 0 else { continue }
 
                 let startPage = state.currentPage
@@ -515,6 +559,13 @@ final class MockDataGenerator {
                 state.firstSessionDate = state.firstSessionDate ?? startDate
                 state.lastSessionDate = endDate
                 states[bookIndex] = state
+
+                if dailyBudget > 0 {
+                    dailyBudget = max(0, dailyBudget - pagesToRead)
+                }
+                if remainingTargetPages > 0 {
+                    remainingTargetPages = max(0, remainingTargetPages - pagesToRead)
+                }
             }
 
             if sessionsCreatedToday > 0 {
@@ -523,7 +574,7 @@ final class MockDataGenerator {
         }
 
         finalizeBooks(&states, unreadIndices: unreadIndices)
-        return (sessionIDs, readingDays, pardonDay)
+        return (sessionIDs, readingDays, effectivePardonDay)
     }
 
     private func createStreakEvents(
