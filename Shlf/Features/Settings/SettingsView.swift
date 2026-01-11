@@ -405,45 +405,36 @@ struct SettingsView: View {
     }
 
     private var cloudStatusInline: some View {
-        Group {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
             if !isProUser {
-                Label("Available with Shlf Pro", systemImage: "lock.fill")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(Theme.Colors.tertiaryText)
+                Text("Available with Shlf Pro")
             } else {
                 switch cloudStatus {
                 case .checking:
                     HStack(spacing: Theme.Spacing.xs) {
                         ProgressView()
+                            .controlSize(.small)
                         Text("Checking iCloud data...")
-                            .font(Theme.Typography.caption)
-                            .foregroundStyle(Theme.Colors.tertiaryText)
                     }
                 case .available(let snapshot):
-                    Label(profile.cloudSyncEnabled ? "Sync is on" : "iCloud data found", systemImage: "icloud.fill")
-                        .font(Theme.Typography.caption)
+                    Text(profile.cloudSyncEnabled ? "Sync is on" : "iCloud data found")
                         .foregroundStyle(Theme.Colors.success)
                     if let lastActivity = snapshot.lastActivity {
                         Text("Last activity \(formatDate(lastActivity))")
-                            .font(Theme.Typography.caption2)
-                            .foregroundStyle(Theme.Colors.tertiaryText)
                     }
                 case .empty:
-                    Label("No iCloud data yet", systemImage: "icloud")
-                        .font(Theme.Typography.caption)
-                        .foregroundStyle(Theme.Colors.secondaryText)
+                    Text("No iCloud data yet")
                     Text("Your data will upload from this iPhone.")
-                        .font(Theme.Typography.caption2)
-                        .foregroundStyle(Theme.Colors.tertiaryText)
                 case .error:
-                    Label("Unable to check iCloud data", systemImage: "exclamationmark.triangle.fill")
-                        .font(Theme.Typography.caption)
+                    Text("Unable to check iCloud data")
                         .foregroundStyle(Theme.Colors.warning)
                 case .unknown:
                     EmptyView()
                 }
             }
         }
+        .font(.footnote)
+        .foregroundStyle(Theme.Colors.secondaryText)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
