@@ -157,18 +157,25 @@ struct SettingsView: View {
                 }
 
                 Section("Sync") {
-                    Toggle("iCloud Sync", isOn: Binding(
-                        get: { profile.cloudSyncEnabled },
-                        set: { handleCloudSyncToggle($0) }
-                    ))
-                    .disabled(!isProUser || isMigratingCloud)
+                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                        Toggle("iCloud Sync", isOn: Binding(
+                            get: { profile.cloudSyncEnabled },
+                            set: { handleCloudSyncToggle($0) }
+                        ))
+                        .disabled(!isProUser || isMigratingCloud)
+                        .confirmationDialog("Use iCloud Data?", isPresented: $showCloudChoiceDialog, titleVisibility: .visible) {
+                            Button("Use iCloud Data") {
+                                enableCloudUsingRemoteData()
+                            }
+                            Button("Replace iCloud with This iPhone", role: .destructive) {
+                                migrateLocalToCloud()
+                            }
+                            Button("Cancel", role: .cancel) {}
+                        } message: {
+                            Text(cloudChoiceMessage)
+                        }
 
-                    if !isProUser {
-                        Label("Available with Shlf Pro", systemImage: "lock.fill")
-                            .font(Theme.Typography.caption)
-                            .foregroundStyle(Theme.Colors.tertiaryText)
-                    } else {
-                        cloudStatusRow
+                        cloudStatusInline
                     }
                 }
 
@@ -235,17 +242,6 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showUpgradeSheet) {
                 PaywallView()
-            }
-            .confirmationDialog("Use iCloud Data?", isPresented: $showCloudChoiceDialog, titleVisibility: .visible) {
-                Button("Use iCloud Data") {
-                    enableCloudUsingRemoteData()
-                }
-                Button("Replace iCloud with This iPhone", role: .destructive) {
-                    migrateLocalToCloud()
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text(cloudChoiceMessage)
             }
             .alert("Restore Complete", isPresented: $showRestoreAlert) {
                 Button("OK") {}
@@ -408,40 +404,47 @@ struct SettingsView: View {
         }
     }
 
-    private var cloudStatusRow: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-            switch cloudStatus {
-            case .checking:
-                HStack(spacing: Theme.Spacing.xs) {
-                    ProgressView()
-                    Text("Checking iCloud data...")
-                        .font(Theme.Typography.caption)
-                        .foregroundStyle(Theme.Colors.tertiaryText)
-                }
-            case .available(let snapshot):
-                Label(profile.cloudSyncEnabled ? "Sync is on" : "iCloud data found", systemImage: "icloud.fill")
+    private var cloudStatusInline: some View {
+        Group {
+            if !isProUser {
+                Label("Available with Shlf Pro", systemImage: "lock.fill")
                     .font(Theme.Typography.caption)
-                    .foregroundStyle(Theme.Colors.success)
-                if let lastActivity = snapshot.lastActivity {
-                    Text("Last activity \(formatDate(lastActivity))")
+                    .foregroundStyle(Theme.Colors.tertiaryText)
+            } else {
+                switch cloudStatus {
+                case .checking:
+                    HStack(spacing: Theme.Spacing.xs) {
+                        ProgressView()
+                        Text("Checking iCloud data...")
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(Theme.Colors.tertiaryText)
+                    }
+                case .available(let snapshot):
+                    Label(profile.cloudSyncEnabled ? "Sync is on" : "iCloud data found", systemImage: "icloud.fill")
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(Theme.Colors.success)
+                    if let lastActivity = snapshot.lastActivity {
+                        Text("Last activity \(formatDate(lastActivity))")
+                            .font(Theme.Typography.caption2)
+                            .foregroundStyle(Theme.Colors.tertiaryText)
+                    }
+                case .empty:
+                    Label("No iCloud data yet", systemImage: "icloud")
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(Theme.Colors.secondaryText)
+                    Text("Your data will upload from this iPhone.")
                         .font(Theme.Typography.caption2)
                         .foregroundStyle(Theme.Colors.tertiaryText)
+                case .error:
+                    Label("Unable to check iCloud data", systemImage: "exclamationmark.triangle.fill")
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(Theme.Colors.warning)
+                case .unknown:
+                    EmptyView()
                 }
-            case .empty:
-                Label("No iCloud data yet", systemImage: "icloud")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(Theme.Colors.secondaryText)
-                Text("Your data will upload from this iPhone.")
-                    .font(Theme.Typography.caption2)
-                    .foregroundStyle(Theme.Colors.tertiaryText)
-            case .error:
-                Label("Unable to check iCloud data", systemImage: "exclamationmark.triangle.fill")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(Theme.Colors.warning)
-            case .unknown:
-                EmptyView()
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var cloudChoiceMessage: String {
