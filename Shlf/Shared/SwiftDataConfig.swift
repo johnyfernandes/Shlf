@@ -28,7 +28,8 @@ enum SwiftDataConfig {
             Achievement.self,
             ActiveReadingSession.self,
             BookPosition.self,
-            Quote.self
+            Quote.self,
+            StreakEvent.self
         ])
 
         let mode = storageMode ?? currentStorageMode()

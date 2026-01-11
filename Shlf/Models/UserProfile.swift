@@ -57,6 +57,7 @@ final class UserProfile {
     var currentStreak: Int = 0
     var longestStreak: Int = 0
     var lastReadingDate: Date?
+    var lastPardonDate: Date?
     var hasCompletedOnboarding: Bool = false
     var isProUser: Bool = false
     var cloudSyncEnabled: Bool = false
@@ -126,6 +127,7 @@ final class UserProfile {
         currentStreak: Int = 0,
         longestStreak: Int = 0,
         lastReadingDate: Date? = nil,
+        lastPardonDate: Date? = nil,
         hasCompletedOnboarding: Bool = false,
         isProUser: Bool = false,
         cloudSyncEnabled: Bool = false,
@@ -157,6 +159,7 @@ final class UserProfile {
         self.currentStreak = currentStreak
         self.longestStreak = longestStreak
         self.lastReadingDate = lastReadingDate
+        self.lastPardonDate = lastPardonDate
         self.hasCompletedOnboarding = hasCompletedOnboarding
         self.isProUser = isProUser
         self.cloudSyncEnabled = cloudSyncEnabled

@@ -22,6 +22,7 @@ struct StatsView: View {
     @State private var showAllAchievements = false
     @State private var showShareSheet = false
     @State private var showUpgradeSheet = false
+    @State private var showStreakDetail = false
 
     private var profile: UserProfile {
         if let existing = profiles.first {
@@ -178,6 +179,9 @@ struct StatsView: View {
             .sheet(isPresented: $showShareSheet) {
                 ShareSheetView()
             }
+            .sheet(isPresented: $showStreakDetail) {
+                StreakDetailView(profile: profile)
+            }
             .sheet(item: $selectedAchievement) { selection in
                 AchievementDetailView(
                     type: selection.type,
@@ -221,6 +225,10 @@ struct StatsView: View {
                     icon: "flame.fill",
                     gradient: Theme.Colors.streakGradient
                 )
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    showStreakDetail = true
+                }
 
                 StatCard(
                     title: "Longest Streak",

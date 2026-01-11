@@ -46,6 +46,7 @@ final class GamificationEngine {
 
         // Recalculate streak
         recalculateStreak(for: profile, sessions: trackedSessions)
+        checkStreakAchievements(streak: profile.currentStreak, profile: profile)
 
         // Update goals
         let tracker = GoalTracker(modelContext: modelContext)
@@ -82,9 +83,19 @@ final class GamificationEngine {
 
     // MARK: - Streak Management
 
+    func refreshStreak(for profile: UserProfile) {
+        let sessionDescriptor = FetchDescriptor<ReadingSession>()
+        guard let allSessions = try? modelContext.fetch(sessionDescriptor) else { return }
+        let trackedSessions = allSessions.filter { $0.countsTowardStats }
+
+        recalculateStreak(for: profile, sessions: trackedSessions)
+        checkStreakAchievements(streak: profile.currentStreak, profile: profile)
+    }
+
     /// Recalculate streak from all sessions (source of truth)
     private func recalculateStreak(for profile: UserProfile, sessions: [ReadingSession]) {
-        guard !sessions.isEmpty else {
+        let pardonedDays = fetchPardonedDays()
+        guard !sessions.isEmpty || !pardonedDays.isEmpty else {
             profile.currentStreak = 0
             profile.longestStreak = 0
             profile.lastReadingDate = nil
@@ -101,7 +112,8 @@ final class GamificationEngine {
 
         // Get unique reading days
         let readingDays = Set(sortedSessions.map { calendar.startOfDay(for: $0.startDate) })
-        let sortedDays = readingDays.sorted()
+        let allDays = readingDays.union(pardonedDays)
+        let sortedDays = allDays.sorted()
 
         // Calculate longest and current streak
         var longestStreak = 0
@@ -142,7 +154,7 @@ final class GamificationEngine {
         }
 
         profile.longestStreak = longestStreak
-        profile.lastReadingDate = sortedSessions.last?.startDate
+        profile.lastReadingDate = sortedDays.last
     }
 
     func updateStreak(for profile: UserProfile, sessionDate: Date = Date()) {
@@ -180,6 +192,11 @@ final class GamificationEngine {
             checkStreakAchievements(streak: profile.currentStreak, profile: profile)
         default:
             // Streak broken
+            if profile.currentStreak > 0 {
+                let lastDay = calendar.startOfDay(for: lastReadingDate)
+                let missedDay = calendar.date(byAdding: .day, value: 1, to: lastDay) ?? lastDay
+                recordStreakEvent(type: .lost, date: missedDay, streakLength: profile.currentStreak)
+            }
             profile.currentStreak = 1
             profile.lastReadingDate = validSessionDate
         }
@@ -376,5 +393,28 @@ final class GamificationEngine {
             return calendar.component(.year, from: dateFinished) == year &&
                    calendar.component(.month, from: dateFinished) == month
         }.count
+    }
+
+    private func fetchPardonedDays() -> Set<Date> {
+        let predicate = #Predicate<StreakEvent> { $0.typeRawValue == "saved" }
+        let descriptor = FetchDescriptor<StreakEvent>(predicate: predicate)
+        guard let events = try? modelContext.fetch(descriptor) else { return [] }
+
+        let calendar = Calendar.current
+        return Set(events.map { calendar.startOfDay(for: $0.date) })
+    }
+
+    private func recordStreakEvent(type: StreakEventType, date: Date, streakLength: Int) {
+        let day = Calendar.current.startOfDay(for: date)
+        let predicate = #Predicate<StreakEvent> {
+            $0.typeRawValue == type.rawValue && $0.date == day
+        }
+        let descriptor = FetchDescriptor<StreakEvent>(predicate: predicate)
+        if let existing = try? modelContext.fetch(descriptor), !existing.isEmpty {
+            return
+        }
+
+        let event = StreakEvent(date: day, type: type, streakLength: streakLength)
+        modelContext.insert(event)
     }
 }

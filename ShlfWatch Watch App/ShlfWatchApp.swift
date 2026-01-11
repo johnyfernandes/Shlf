@@ -24,7 +24,8 @@ struct ShlfWatch_Watch_AppApp: App {
                 UserProfile.self,
                 ReadingGoal.self,
                 Achievement.self,
-                ActiveReadingSession.self
+                ActiveReadingSession.self,
+                StreakEvent.self
             ])
             let modelConfiguration = ModelConfiguration(
                 schema: schema,

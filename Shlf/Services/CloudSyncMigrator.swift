@@ -73,6 +73,7 @@ enum CloudSyncMigrator {
             currentStreak: sourceProfile.currentStreak,
             longestStreak: sourceProfile.longestStreak,
             lastReadingDate: sourceProfile.lastReadingDate,
+            lastPardonDate: sourceProfile.lastPardonDate,
             hasCompletedOnboarding: sourceProfile.hasCompletedOnboarding,
             isProUser: sourceProfile.isProUser,
             cloudSyncEnabled: sourceProfile.cloudSyncEnabled,
@@ -219,6 +220,18 @@ enum CloudSyncMigrator {
             targetContext.insert(quote)
         }
 
+        let streakDescriptor = FetchDescriptor<StreakEvent>()
+        let streakEvents = try modelContext.fetch(streakDescriptor)
+        for sourceEvent in streakEvents {
+            let event = StreakEvent(
+                id: sourceEvent.id,
+                date: sourceEvent.date,
+                type: sourceEvent.type,
+                streakLength: sourceEvent.streakLength
+            )
+            targetContext.insert(event)
+        }
+
         let activeDescriptor = FetchDescriptor<ActiveReadingSession>()
         let activeSessions = try modelContext.fetch(activeDescriptor)
         for sourceActive in activeSessions {
@@ -276,6 +289,12 @@ enum CloudSyncMigrator {
         let quotes = try context.fetch(quoteDescriptor)
         for quote in quotes {
             context.delete(quote)
+        }
+
+        let streakDescriptor = FetchDescriptor<StreakEvent>()
+        let streakEvents = try context.fetch(streakDescriptor)
+        for event in streakEvents {
+            context.delete(event)
         }
 
         let bookDescriptor = FetchDescriptor<Book>()
