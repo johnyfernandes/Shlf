@@ -14,6 +14,42 @@ enum CloudSyncMigrator {
         case missingProfile
     }
 
+    struct CloudSnapshot {
+        let hasData: Bool
+        let lastActivity: Date?
+    }
+
+    static func fetchCloudSnapshot() throws -> CloudSnapshot {
+        let cloudContainer = try SwiftDataConfig.createModelContainer(storageMode: .cloud)
+        let context = cloudContainer.mainContext
+
+        let profileDescriptor = FetchDescriptor<UserProfile>()
+        let profile = try context.fetch(profileDescriptor).first
+
+        var sessionDescriptor = FetchDescriptor<ReadingSession>(
+            sortBy: [SortDescriptor(\.endDate, order: .reverse)]
+        )
+        sessionDescriptor.fetchLimit = 1
+        let latestSession = try context.fetch(sessionDescriptor).first
+
+        var bookDescriptor = FetchDescriptor<Book>(
+            sortBy: [SortDescriptor(\.dateAdded, order: .reverse)]
+        )
+        bookDescriptor.fetchLimit = 1
+        let latestBook = try context.fetch(bookDescriptor).first
+
+        let lastActivityCandidates = [
+            profile?.lastReadingDate,
+            latestSession?.endDate ?? latestSession?.startDate,
+            latestBook?.dateAdded
+        ]
+
+        let lastActivity = lastActivityCandidates.compactMap { $0 }.max()
+        let hasData = profile != nil || latestSession != nil || latestBook != nil
+
+        return CloudSnapshot(hasData: hasData, lastActivity: lastActivity)
+    }
+
     static func migrate(modelContext: ModelContext, to targetMode: SwiftDataConfig.StorageMode) throws {
         let sourceMode = SwiftDataConfig.currentStorageMode()
         guard sourceMode != targetMode else { return }

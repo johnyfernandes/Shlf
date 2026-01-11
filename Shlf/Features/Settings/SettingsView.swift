@@ -20,6 +20,8 @@ struct SettingsView: View {
     @State private var isMigratingCloud = false
     @State private var showCloudRestartAlert = false
     @State private var cloudMigrationError: String?
+    @State private var cloudStatus: CloudDataStatus = .checking
+    @State private var showCloudChoiceDialog = false
 
     private var profile: UserProfile {
         if let existing = profiles.first {
@@ -165,10 +167,8 @@ struct SettingsView: View {
                         Label("Available with Shlf Pro", systemImage: "lock.fill")
                             .font(Theme.Typography.caption)
                             .foregroundStyle(Theme.Colors.tertiaryText)
-                    } else if profile.cloudSyncEnabled {
-                        Label("Your books sync across devices", systemImage: "checkmark.circle.fill")
-                            .font(Theme.Typography.caption)
-                            .foregroundStyle(Theme.Colors.success)
+                    } else {
+                        cloudStatusRow
                     }
                 }
 
@@ -236,6 +236,17 @@ struct SettingsView: View {
             .sheet(isPresented: $showUpgradeSheet) {
                 PaywallView()
             }
+            .confirmationDialog("Use iCloud Data?", isPresented: $showCloudChoiceDialog, titleVisibility: .visible) {
+                Button("Use iCloud Data") {
+                    enableCloudUsingRemoteData()
+                }
+                Button("Replace iCloud with This iPhone", role: .destructive) {
+                    migrateLocalToCloud()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text(cloudChoiceMessage)
+            }
             .alert("Restore Complete", isPresented: $showRestoreAlert) {
                 Button("OK") {}
             } message: {
@@ -259,6 +270,7 @@ struct SettingsView: View {
             }
             .task {
                 await storeKit.loadProducts()
+                await refreshCloudStatus()
 
                 // Sync Pro status on launch (StoreKit is source of truth)
                 if profile.isProUser != storeKit.isProUser {
@@ -272,29 +284,178 @@ struct SettingsView: View {
     private func handleCloudSyncToggle(_ isEnabled: Bool) {
         guard isProUser else {
             showUpgradeSheet = true
+            profile.cloudSyncEnabled = false
+            try? modelContext.save()
             return
         }
 
         guard profile.cloudSyncEnabled != isEnabled else { return }
 
-        profile.cloudSyncEnabled = isEnabled
+        if isEnabled {
+            requestEnableCloud()
+        } else {
+            disableCloudSync()
+        }
+    }
+
+    @MainActor
+    private func refreshCloudStatus() async {
+        guard isProUser else {
+            cloudStatus = .unknown
+            return
+        }
+
+        cloudStatus = .checking
+        do {
+            let snapshot = try CloudSyncMigrator.fetchCloudSnapshot()
+            if snapshot.hasData {
+                cloudStatus = .available(snapshot)
+            } else {
+                cloudStatus = .empty
+            }
+        } catch {
+            cloudStatus = .error(error.localizedDescription)
+        }
+    }
+
+    private func requestEnableCloud() {
+        isMigratingCloud = true
+        Task { @MainActor in
+            await refreshCloudStatus()
+            isMigratingCloud = false
+
+            switch cloudStatus {
+            case .available(let snapshot):
+                showCloudChoiceDialog = true
+            case .empty:
+                migrateLocalToCloud()
+            case .error(let message):
+                cloudMigrationError = message
+            case .checking, .unknown:
+                cloudMigrationError = "Unable to check iCloud status right now."
+            }
+        }
+    }
+
+    private func migrateLocalToCloud() {
+        guard !isMigratingCloud else { return }
+        profile.cloudSyncEnabled = true
         try? modelContext.save()
 
         isMigratingCloud = true
-        let targetMode: SwiftDataConfig.StorageMode = isEnabled ? .cloud : .local
-
         Task { @MainActor in
             do {
-                try CloudSyncMigrator.migrate(modelContext: modelContext, to: targetMode)
-                SwiftDataConfig.setStorageMode(targetMode)
+                try CloudSyncMigrator.migrate(modelContext: modelContext, to: .cloud)
+                SwiftDataConfig.setStorageMode(.cloud)
                 showCloudRestartAlert = true
             } catch {
-                profile.cloudSyncEnabled.toggle()
+                profile.cloudSyncEnabled = false
                 try? modelContext.save()
                 cloudMigrationError = error.localizedDescription
             }
             isMigratingCloud = false
         }
+    }
+
+    private func enableCloudUsingRemoteData() {
+        guard !isMigratingCloud else { return }
+        profile.cloudSyncEnabled = true
+        try? modelContext.save()
+
+        isMigratingCloud = true
+        Task { @MainActor in
+            do {
+                let cloudContainer = try SwiftDataConfig.createModelContainer(storageMode: .cloud)
+                let cloudContext = cloudContainer.mainContext
+                let descriptor = FetchDescriptor<UserProfile>()
+                if let cloudProfile = try cloudContext.fetch(descriptor).first {
+                    cloudProfile.cloudSyncEnabled = true
+                } else {
+                    let newProfile = UserProfile()
+                    newProfile.cloudSyncEnabled = true
+                    cloudContext.insert(newProfile)
+                }
+                try cloudContext.save()
+
+                SwiftDataConfig.setStorageMode(.cloud)
+                showCloudRestartAlert = true
+            } catch {
+                profile.cloudSyncEnabled = false
+                try? modelContext.save()
+                cloudMigrationError = error.localizedDescription
+            }
+            isMigratingCloud = false
+        }
+    }
+
+    private func disableCloudSync() {
+        guard !isMigratingCloud else { return }
+        profile.cloudSyncEnabled = false
+        try? modelContext.save()
+
+        isMigratingCloud = true
+        Task { @MainActor in
+            do {
+                try CloudSyncMigrator.migrate(modelContext: modelContext, to: .local)
+                SwiftDataConfig.setStorageMode(.local)
+                showCloudRestartAlert = true
+            } catch {
+                profile.cloudSyncEnabled = true
+                try? modelContext.save()
+                cloudMigrationError = error.localizedDescription
+            }
+            isMigratingCloud = false
+        }
+    }
+
+    private var cloudStatusRow: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            switch cloudStatus {
+            case .checking:
+                HStack(spacing: Theme.Spacing.xs) {
+                    ProgressView()
+                    Text("Checking iCloud data...")
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(Theme.Colors.tertiaryText)
+                }
+            case .available(let snapshot):
+                Label(profile.cloudSyncEnabled ? "Sync is on" : "iCloud data found", systemImage: "icloud.fill")
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(Theme.Colors.success)
+                if let lastActivity = snapshot.lastActivity {
+                    Text("Last activity \(formatDate(lastActivity))")
+                        .font(Theme.Typography.caption2)
+                        .foregroundStyle(Theme.Colors.tertiaryText)
+                }
+            case .empty:
+                Label("No iCloud data yet", systemImage: "icloud")
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(Theme.Colors.secondaryText)
+                Text("Your data will upload from this iPhone.")
+                    .font(Theme.Typography.caption2)
+                    .foregroundStyle(Theme.Colors.tertiaryText)
+            case .error:
+                Label("Unable to check iCloud data", systemImage: "exclamationmark.triangle.fill")
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(Theme.Colors.warning)
+            case .unknown:
+                EmptyView()
+            }
+        }
+    }
+
+    private var cloudChoiceMessage: String {
+        if case .available(let snapshot) = cloudStatus {
+            if let lastActivity = snapshot.lastActivity {
+                return "We found iCloud data from \(formatDate(lastActivity)). Choose which data to keep."
+            }
+            return "We found iCloud data. Choose which data to keep."
+        }
+        return "Choose which data to keep."
+    }
+
+    private func formatDate(_ date: Date) -> String {
+        date.formatted(date: .abbreviated, time: .omitted)
     }
 
     private var proSection: some View {
@@ -354,6 +515,14 @@ struct SettingsView: View {
         }
     }
 
+}
+
+private enum CloudDataStatus {
+    case unknown
+    case checking
+    case available(CloudSyncMigrator.CloudSnapshot)
+    case empty
+    case error(String)
 }
 
 struct AboutView: View {
