@@ -172,6 +172,11 @@ struct SessionRowWatch: View {
         return formatter.localizedString(for: session.startDate, relativeTo: Date())
     }
 
+    private var metricsText: String {
+        let pages = session.pagesRead >= 0 ? "+\(session.pagesRead)" : "\(session.pagesRead)"
+        return "\(pages) • \(session.durationMinutes) min • \(timeAgo)"
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
@@ -189,25 +194,13 @@ struct SessionRowWatch: View {
                     .foregroundStyle(.orange)
             }
 
-            HStack {
-                Text(session.pagesRead >= 0 ? "+\(session.pagesRead)" : "\(session.pagesRead)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                Text("•")
-                    .foregroundStyle(.secondary)
-
-                Text("\(session.durationMinutes) min")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                Text("•")
-                    .foregroundStyle(.secondary)
-
-                Text(timeAgo)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            Text(metricsText)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                .allowsTightening(true)
+                .layoutPriority(1)
         }
     }
 }
