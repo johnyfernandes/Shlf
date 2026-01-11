@@ -455,7 +455,7 @@ struct SettingsView: View {
     }
 
     private func formatDate(_ date: Date) -> String {
-        date.formatted(date: .abbreviated, time: .omitted)
+        date.formatted(date: .abbreviated, time: .shortened)
     }
 
     private var proSection: some View {
