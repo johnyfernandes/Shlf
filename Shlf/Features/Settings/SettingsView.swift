@@ -92,6 +92,21 @@ struct SettingsView: View {
 
                         if isProUser {
                             NavigationLink {
+                                AppIconSettingsView(profile: profile)
+                            } label: {
+                                Label("App Icon", systemImage: "app")
+                            }
+                        } else {
+                            Button {
+                                showUpgradeSheet = true
+                            } label: {
+                                Label("App Icon", systemImage: "app")
+                            }
+                            .buttonStyle(.plain)
+                        }
+
+                        if isProUser {
+                            NavigationLink {
                                 HomeCardSettingsView(profile: profile)
                             } label: {
                                 Label("Home Screen", systemImage: "square.grid.3x3")

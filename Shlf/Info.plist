@@ -2,19 +2,70 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-	</array>
+	<key>CFBundleIcons</key>
+	<dict>
+		<key>CFBundleAlternateIcons</key>
+		<dict>
+			<key>AppIcon-Black</key>
+			<dict>
+				<key>CFBundleIconName</key>
+				<string>AppIcon-Black</string>
+			</dict>
+			<key>AppIcon-Blue</key>
+			<dict>
+				<key>CFBundleIconName</key>
+				<string>AppIcon-Blue</string>
+			</dict>
+			<key>AppIcon-Gray</key>
+			<dict>
+				<key>CFBundleIconName</key>
+				<string>AppIcon-Gray</string>
+			</dict>
+			<key>AppIcon-Green</key>
+			<dict>
+				<key>CFBundleIconName</key>
+				<string>AppIcon-Green</string>
+			</dict>
+			<key>AppIcon-Pink</key>
+			<dict>
+				<key>CFBundleIconName</key>
+				<string>AppIcon-Pink</string>
+			</dict>
+			<key>AppIcon-Purple</key>
+			<dict>
+				<key>CFBundleIconName</key>
+				<string>AppIcon-Purple</string>
+			</dict>
+			<key>AppIcon-Red</key>
+			<dict>
+				<key>CFBundleIconName</key>
+				<string>AppIcon-Red</string>
+			</dict>
+			<key>AppIcon-White</key>
+			<dict>
+				<key>CFBundleIconName</key>
+				<string>AppIcon-White</string>
+			</dict>
+			<key>AppIcon-Yellow</key>
+			<dict>
+				<key>CFBundleIconName</key>
+				<string>AppIcon-Yellow</string>
+			</dict>
+		</dict>
+	</dict>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>instagram-stories</string>
 	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>Shlf needs access to your camera to scan book barcodes.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Shlf needs access to your photo library to select book covers.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Shlf saves book covers to your photo library.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Shlf needs access to your photo library to select book covers.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>
