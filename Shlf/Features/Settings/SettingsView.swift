@@ -117,6 +117,12 @@ struct SettingsView: View {
                             Label("Sessions", systemImage: "timer")
                         }
 
+                        NavigationLink {
+                            StreakSettingsView(profile: profile)
+                        } label: {
+                            Label("Streaks", systemImage: "flame.fill")
+                        }
+
                         if isProUser {
                             NavigationLink {
                                 BookDetailCustomizationView(profile: profile)
@@ -146,17 +152,6 @@ struct SettingsView: View {
                             }
                             .buttonStyle(.plain)
                     }
-                }
-
-                Section("Streaks") {
-                    Toggle("Pause Streaks", isOn: Binding(
-                        get: { profile.streaksPaused },
-                        set: { handleStreakPauseToggle($0) }
-                    ))
-
-                    Text("Streaks are hidden and won't update while paused.")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
                 }
 
                 Section("Apple Watch") {
@@ -303,14 +298,6 @@ struct SettingsView: View {
         } else {
             disableCloudSync()
         }
-    }
-
-    private func handleStreakPauseToggle(_ isPaused: Bool) {
-        profile.streaksPaused = isPaused
-        if !isPaused, profile.currentStreak > 0 {
-            profile.lastReadingDate = Calendar.current.startOfDay(for: Date())
-        }
-        try? modelContext.save()
     }
 
     @MainActor

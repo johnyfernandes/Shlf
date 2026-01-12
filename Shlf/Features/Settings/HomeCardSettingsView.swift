@@ -22,18 +22,8 @@ struct HomeCardSettingsView: View {
         GamificationEngine(modelContext: modelContext)
     }
 
-    private var streaksEnabled: Bool {
-        !profile.streaksPaused
-    }
-
-    private var visibleHomeCards: [StatCardType] {
-        profile.homeCards.filter { streaksEnabled || !$0.isStreakCard }
-    }
-
     private var availableCards: [StatCardType] {
-        StatCardType.allCases.filter { card in
-            (streaksEnabled || !card.isStreakCard) && !profile.homeCards.contains(card)
-        }
+        StatCardType.allCases.filter { !profile.homeCards.contains($0) }
     }
 
     private func getValue(for cardType: StatCardType) -> String {
@@ -94,7 +84,7 @@ struct HomeCardSettingsView: View {
                     .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
 
                     // Active Cards
-                    if !visibleHomeCards.isEmpty {
+                    if !profile.homeCards.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
                             HStack {
                                 HStack(spacing: 6) {
@@ -109,7 +99,7 @@ struct HomeCardSettingsView: View {
 
                                 Spacer()
 
-                                Text("\(visibleHomeCards.count)/3")
+                                Text("\(profile.homeCards.count)/3")
                                     .font(.caption.weight(.semibold))
                                     .foregroundStyle(.secondary)
                                     .padding(.horizontal, 8)
@@ -117,8 +107,14 @@ struct HomeCardSettingsView: View {
                                     .background(themeColor.color.opacity(0.1), in: Capsule())
                             }
 
+                            if profile.streaksPaused {
+                                Text("Streak cards are hidden while streaks are paused.")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+
                             VStack(spacing: 10) {
-                                ForEach(visibleHomeCards) { cardType in
+                                ForEach(profile.homeCards) { cardType in
                                     HStack(spacing: 12) {
                                         Image(systemName: cardType.icon)
                                             .font(.title3)

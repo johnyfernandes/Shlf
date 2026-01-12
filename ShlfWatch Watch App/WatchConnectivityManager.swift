@@ -222,7 +222,8 @@ class WatchConnectivityManager: NSObject {
                 showSettingsOnWatch: profile.showSettingsOnWatch,
                 useCircularProgressWatch: profile.useCircularProgressWatch,
                 enableWatchPositionMarking: profile.enableWatchPositionMarking,
-                themeColorRawValue: profile.themeColorRawValue
+                themeColorRawValue: profile.themeColorRawValue,
+                streaksPaused: profile.streaksPaused
             )
             let data = try JSONEncoder().encode(transfer)
             if WCSession.default.isReachable {
@@ -853,6 +854,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 profile.showSettingsOnWatch = settings.showSettingsOnWatch
                 profile.useCircularProgressWatch = settings.useCircularProgressWatch
                 profile.themeColorRawValue = settings.themeColorRawValue
+                profile.streaksPaused = settings.streaksPaused
                 try modelContext.save()
                 Self.logger.info("Updated profile settings from iPhone")
             }

@@ -77,11 +77,12 @@
 				Models/StatCardType.swift,
 				Models/StreakEvent.swift,
 				Models/UserProfile.swift,
+				Features/Settings/StreakSettingsView.swift,
 				Services/BookAPIService.swift,
 				Services/GamificationEngine.swift,
 				Services/GoalTracker.swift,
-				Services/ReadingSessionActivityManager.swift,
 				Services/RateLimiter.swift,
+				Services/ReadingSessionActivityManager.swift,
 				Services/RetryPolicy.swift,
 				Shared/ActiveReadingSession.swift,
 				Shared/ConnectivityTransfers.swift,
@@ -105,6 +106,7 @@
 				Models/StatCardType.swift,
 				Models/StreakEvent.swift,
 				Models/UserProfile.swift,
+				Features/Settings/StreakSettingsView.swift,
 				Services/GamificationEngine.swift,
 				Services/GoalTracker.swift,
 				Services/ReadingSessionActivityManager.swift,
@@ -704,6 +706,7 @@
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG WIDGET_EXTENSION $(inherited)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
@@ -737,6 +740,7 @@
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "WIDGET_EXTENSION $(inherited)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;

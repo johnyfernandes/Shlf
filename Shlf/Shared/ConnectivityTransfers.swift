@@ -126,6 +126,7 @@ struct ProfileSettingsTransfer: Codable, Sendable {
     let useCircularProgressWatch: Bool
     let enableWatchPositionMarking: Bool
     let themeColorRawValue: String
+    let streaksPaused: Bool
 
     init(
         hideAutoSessionsIPhone: Bool,
@@ -133,7 +134,8 @@ struct ProfileSettingsTransfer: Codable, Sendable {
         showSettingsOnWatch: Bool = true,
         useCircularProgressWatch: Bool = false,
         enableWatchPositionMarking: Bool = true,
-        themeColorRawValue: String = ThemeColor.blue.rawValue
+        themeColorRawValue: String = ThemeColor.blue.rawValue,
+        streaksPaused: Bool = false
     ) {
         self.hideAutoSessionsIPhone = hideAutoSessionsIPhone
         self.hideAutoSessionsWatch = hideAutoSessionsWatch
@@ -141,6 +143,7 @@ struct ProfileSettingsTransfer: Codable, Sendable {
         self.useCircularProgressWatch = useCircularProgressWatch
         self.enableWatchPositionMarking = enableWatchPositionMarking
         self.themeColorRawValue = themeColorRawValue
+        self.streaksPaused = streaksPaused
     }
 
     init(from decoder: Decoder) throws {
@@ -151,13 +154,15 @@ struct ProfileSettingsTransfer: Codable, Sendable {
         let useCircular = try container.decodeIfPresent(Bool.self, forKey: .useCircularProgressWatch) ?? false
         let enablePosition = try container.decodeIfPresent(Bool.self, forKey: .enableWatchPositionMarking) ?? true
         let themeColor = try container.decodeIfPresent(String.self, forKey: .themeColorRawValue) ?? ThemeColor.blue.rawValue
+        let streaksPaused = try container.decodeIfPresent(Bool.self, forKey: .streaksPaused) ?? false
         self.init(
             hideAutoSessionsIPhone: hideIPhone,
             hideAutoSessionsWatch: hideWatch,
             showSettingsOnWatch: showSettings,
             useCircularProgressWatch: useCircular,
             enableWatchPositionMarking: enablePosition,
-            themeColorRawValue: themeColor
+            themeColorRawValue: themeColor,
+            streaksPaused: streaksPaused
         )
     }
 }
