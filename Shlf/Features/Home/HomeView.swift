@@ -48,6 +48,10 @@ struct HomeView: View {
         GamificationEngine(modelContext: modelContext)
     }
 
+    private var visibleHomeCards: [StatCardType] {
+        profile.homeCards.filter { !profile.streaksPaused || !$0.isStreakCard }
+    }
+
     // Helper function to get value for each card type
     private func getValue(for cardType: StatCardType) -> String {
         switch cardType {
@@ -96,13 +100,13 @@ struct HomeView: View {
                 )
                 .ignoresSafeArea()
 
-                ScrollView {
-                    VStack(spacing: Theme.Spacing.xl) {
-                        heroSection
+        ScrollView {
+            VStack(spacing: Theme.Spacing.xl) {
+                heroSection
 
-                        if !profile.homeCards.isEmpty {
-                            statsSection
-                        }
+                if !visibleHomeCards.isEmpty {
+                    statsSection
+                }
 
                         if currentlyReading.isEmpty {
                             emptyCurrentlyReading
@@ -191,7 +195,7 @@ struct HomeView: View {
 
     private var statsSection: some View {
         HStack(spacing: Theme.Spacing.sm) {
-            ForEach(Array(profile.homeCards.enumerated()), id: \.element) { index, cardType in
+            ForEach(Array(visibleHomeCards.enumerated()), id: \.element) { index, cardType in
                 StatCard(
                     title: cardType.title,
                     value: getValue(for: cardType),

@@ -44,9 +44,11 @@ final class GamificationEngine {
             checkLevelAchievements(level: newLevel, profile: profile)
         }
 
-        // Recalculate streak
-        recalculateStreak(for: profile, sessions: trackedSessions)
-        checkStreakAchievements(streak: profile.currentStreak, profile: profile)
+        // Recalculate streak unless paused
+        if !profile.streaksPaused {
+            recalculateStreak(for: profile, sessions: trackedSessions)
+            checkStreakAchievements(streak: profile.currentStreak, profile: profile)
+        }
 
         // Update goals
         let tracker = GoalTracker(modelContext: modelContext)
@@ -84,6 +86,7 @@ final class GamificationEngine {
     // MARK: - Streak Management
 
     func refreshStreak(for profile: UserProfile) {
+        guard !profile.streaksPaused else { return }
         let sessionDescriptor = FetchDescriptor<ReadingSession>()
         guard let allSessions = try? modelContext.fetch(sessionDescriptor) else { return }
         let trackedSessions = allSessions.filter { $0.countsTowardStats }
@@ -94,6 +97,7 @@ final class GamificationEngine {
 
     /// Recalculate streak from all sessions (source of truth)
     private func recalculateStreak(for profile: UserProfile, sessions: [ReadingSession]) {
+        guard !profile.streaksPaused else { return }
         let pardonedDays = fetchPardonedDays()
         guard !sessions.isEmpty || !pardonedDays.isEmpty else {
             profile.currentStreak = 0
@@ -158,6 +162,7 @@ final class GamificationEngine {
     }
 
     func updateStreak(for profile: UserProfile, sessionDate: Date = Date()) {
+        guard !profile.streaksPaused else { return }
         let calendar = Calendar.current
 
         // Prevent future dates (clock skew protection)
@@ -268,6 +273,7 @@ final class GamificationEngine {
     }
 
     private func checkStreakAchievements(streak: Int, profile: UserProfile) {
+        guard !profile.streaksPaused else { return }
         let milestones: [(Int, AchievementType)] = [
             (7, .sevenDayStreak),
             (30, .thirtyDayStreak),

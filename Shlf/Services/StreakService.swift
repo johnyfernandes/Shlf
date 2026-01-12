@@ -22,6 +22,7 @@ struct StreakService {
     }
 
     func streakDeadline(for profile: UserProfile, now: Date = Date()) -> Date? {
+        guard !profile.streaksPaused else { return nil }
         guard let lastDay = profile.lastReadingDate else { return nil }
         let lastStart = calendar.startOfDay(for: lastDay)
         let todayStart = calendar.startOfDay(for: now)
@@ -31,6 +32,7 @@ struct StreakService {
     }
 
     func pardonEligibility(for profile: UserProfile, now: Date = Date()) -> StreakPardonEligibility {
+        guard !profile.streaksPaused else { return .notNeeded }
         guard let lastDay = profile.lastReadingDate else { return .notNeeded }
         let lastStart = calendar.startOfDay(for: lastDay)
         let todayStart = calendar.startOfDay(for: now)
@@ -60,6 +62,7 @@ struct StreakService {
     }
 
     func applyPardon(for profile: UserProfile, now: Date = Date()) throws -> StreakPardonEligibility {
+        guard !profile.streaksPaused else { return .notNeeded }
         let eligibility = pardonEligibility(for: profile, now: now)
         guard case let .available(missedDay, _) = eligibility else {
             return eligibility

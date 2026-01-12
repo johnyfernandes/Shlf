@@ -92,6 +92,7 @@ class GoalTracker {
             return max(0, totalMinutes)
 
         case .readingStreak:
+            guard !profile.streaksPaused else { return 0 }
             // Calculate longest streak within the goal period
             // This ensures streak goals only count consecutive days within the goal's date range
             let sessionDescriptor = FetchDescriptor<ReadingSession>()

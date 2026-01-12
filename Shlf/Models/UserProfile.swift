@@ -57,6 +57,7 @@ final class UserProfile {
     var currentStreak: Int = 0
     var longestStreak: Int = 0
     var lastReadingDate: Date?
+    var streaksPaused: Bool = false
     var lastPardonDate: Date?
     var hasCompletedOnboarding: Bool = false
     var isProUser: Bool = false
@@ -127,6 +128,7 @@ final class UserProfile {
         currentStreak: Int = 0,
         longestStreak: Int = 0,
         lastReadingDate: Date? = nil,
+        streaksPaused: Bool = false,
         lastPardonDate: Date? = nil,
         hasCompletedOnboarding: Bool = false,
         isProUser: Bool = false,
@@ -159,6 +161,7 @@ final class UserProfile {
         self.currentStreak = currentStreak
         self.longestStreak = longestStreak
         self.lastReadingDate = lastReadingDate
+        self.streaksPaused = streaksPaused
         self.lastPardonDate = lastPardonDate
         self.hasCompletedOnboarding = hasCompletedOnboarding
         self.isProUser = isProUser

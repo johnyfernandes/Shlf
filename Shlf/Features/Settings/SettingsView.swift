@@ -145,8 +145,19 @@ struct SettingsView: View {
                                 Label("Stats", systemImage: "chart.xyaxis.line")
                             }
                             .buttonStyle(.plain)
-                        }
                     }
+                }
+
+                Section("Streaks") {
+                    Toggle("Pause Streaks", isOn: Binding(
+                        get: { profile.streaksPaused },
+                        set: { handleStreakPauseToggle($0) }
+                    ))
+
+                    Text("Streaks are hidden and won't update while paused.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
 
                 Section("Apple Watch") {
                     NavigationLink {
@@ -292,6 +303,14 @@ struct SettingsView: View {
         } else {
             disableCloudSync()
         }
+    }
+
+    private func handleStreakPauseToggle(_ isPaused: Bool) {
+        profile.streaksPaused = isPaused
+        if !isPaused, profile.currentStreak > 0 {
+            profile.lastReadingDate = Calendar.current.startOfDay(for: Date())
+        }
+        try? modelContext.save()
     }
 
     @MainActor

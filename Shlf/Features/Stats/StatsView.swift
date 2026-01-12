@@ -50,6 +50,10 @@ struct StatsView: View {
         ProAccess.isProUser(profile: profile)
     }
 
+    private var streaksEnabled: Bool {
+        !profile.streaksPaused
+    }
+
     // Computed properties that SwiftUI watches
     private var statSessions: [ReadingSession] {
         allSessions.filter { $0.countsTowardStats }
@@ -219,23 +223,25 @@ struct StatsView: View {
                     gradient: Theme.Colors.xpGradient
                 )
 
-                StatCard(
-                    title: "Current Streak",
-                    value: "\(profile.currentStreak) days",
-                    icon: "flame.fill",
-                    gradient: Theme.Colors.streakGradient
-                )
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    showStreakDetail = true
-                }
+                if streaksEnabled {
+                    StatCard(
+                        title: "Current Streak",
+                        value: "\(profile.currentStreak) days",
+                        icon: "flame.fill",
+                        gradient: Theme.Colors.streakGradient
+                    )
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        showStreakDetail = true
+                    }
 
-                StatCard(
-                    title: "Longest Streak",
-                    value: "\(profile.longestStreak) days",
-                    icon: "flame.circle.fill",
-                    gradient: Theme.Colors.streakGradient
-                )
+                    StatCard(
+                        title: "Longest Streak",
+                        value: "\(profile.longestStreak) days",
+                        icon: "flame.circle.fill",
+                        gradient: Theme.Colors.streakGradient
+                    )
+                }
 
                 StatCard(
                     title: "Books Read",
@@ -446,7 +452,7 @@ struct StatsView: View {
                     }
                 }
             } else {
-                ForEach((profile.readingGoals ?? []).filter { $0.isActive }) { goal in
+                ForEach((profile.readingGoals ?? []).filter { $0.isActive && (streaksEnabled || $0.type != .readingStreak) }) { goal in
                     GoalCard(goal: goal)
                 }
             }
@@ -477,11 +483,11 @@ struct StatsView: View {
         case .tenThousandPages:
             return progress(current: totalPagesRead, target: 10000, unit: "pages", repeatCount: repeatCount)
         case .sevenDayStreak:
-            return progress(current: profile.currentStreak, target: 7, unit: "days", repeatCount: repeatCount)
+            return progress(current: streaksEnabled ? profile.currentStreak : 0, target: 7, unit: "days", repeatCount: repeatCount)
         case .thirtyDayStreak:
-            return progress(current: profile.currentStreak, target: 30, unit: "days", repeatCount: repeatCount)
+            return progress(current: streaksEnabled ? profile.currentStreak : 0, target: 30, unit: "days", repeatCount: repeatCount)
         case .hundredDayStreak:
-            return progress(current: profile.currentStreak, target: 100, unit: "days", repeatCount: repeatCount)
+            return progress(current: streaksEnabled ? profile.currentStreak : 0, target: 100, unit: "days", repeatCount: repeatCount)
         case .levelFive:
             return levelProgress(current: profile.currentLevel, target: 5, repeatCount: repeatCount)
         case .levelTen:
@@ -520,7 +526,7 @@ struct StatsView: View {
     }
 
     private var achievementEntries: [AchievementEntry] {
-        AchievementType.allCases.map { type in
+        AchievementType.allCases.filter { streaksEnabled || !$0.isStreakAchievement }.map { type in
             let unlockedAchievement = (profile.achievements ?? []).first { $0.type == type }
             let progress = achievementProgress(for: type, isUnlocked: unlockedAchievement != nil)
             return AchievementEntry(
@@ -1127,17 +1133,22 @@ struct ManageGoalsView: View {
         ProAccess.isProUser(profile: profile)
     }
 
+    private var streaksEnabled: Bool {
+        !(profile?.streaksPaused ?? false)
+    }
+
     var body: some View {
         List {
             if let profile = profile {
-                if !(profile.readingGoals ?? []).isEmpty {
+                let visibleGoals = (profile.readingGoals ?? []).filter { streaksEnabled || $0.type != .readingStreak }
+                if !visibleGoals.isEmpty {
                     Section("Active Goals") {
-                        ForEach((profile.readingGoals ?? []).filter { $0.isActive }) { goal in
+                        ForEach(visibleGoals.filter { $0.isActive }) { goal in
                             GoalRow(goal: goal, profile: profile)
                         }
                     }
 
-                    let completedGoals = (profile.readingGoals ?? []).filter { $0.isCompleted }
+                    let completedGoals = visibleGoals.filter { $0.isCompleted }
                     if !completedGoals.isEmpty {
                         Section("Completed") {
                             ForEach(completedGoals) { goal in
@@ -1146,7 +1157,7 @@ struct ManageGoalsView: View {
                         }
                     }
 
-                    let expiredGoals = (profile.readingGoals ?? []).filter { !$0.isActive && !$0.isCompleted && $0.endDate < Date() }
+                    let expiredGoals = visibleGoals.filter { !$0.isActive && !$0.isCompleted && $0.endDate < Date() }
                     if !expiredGoals.isEmpty {
                         Section("Expired") {
                             ForEach(expiredGoals) { goal in

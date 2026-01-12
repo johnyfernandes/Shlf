@@ -85,4 +85,13 @@ enum StatCardType: String, Codable, CaseIterable, Identifiable {
         case .thisMonth: return "Books read this month"
         }
     }
+
+    var isStreakCard: Bool {
+        switch self {
+        case .currentStreak, .longestStreak:
+            return true
+        default:
+            return false
+        }
+    }
 }

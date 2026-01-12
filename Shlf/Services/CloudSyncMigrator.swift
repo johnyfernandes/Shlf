@@ -73,6 +73,7 @@ enum CloudSyncMigrator {
             currentStreak: sourceProfile.currentStreak,
             longestStreak: sourceProfile.longestStreak,
             lastReadingDate: sourceProfile.lastReadingDate,
+            streaksPaused: sourceProfile.streaksPaused,
             lastPardonDate: sourceProfile.lastPardonDate,
             hasCompletedOnboarding: sourceProfile.hasCompletedOnboarding,
             isProUser: sourceProfile.isProUser,

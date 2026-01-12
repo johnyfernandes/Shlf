@@ -113,4 +113,13 @@ enum AchievementType: String, Codable, CaseIterable {
             return false
         }
     }
+
+    var isStreakAchievement: Bool {
+        switch self {
+        case .sevenDayStreak, .thirtyDayStreak, .hundredDayStreak:
+            return true
+        default:
+            return false
+        }
+    }
 }

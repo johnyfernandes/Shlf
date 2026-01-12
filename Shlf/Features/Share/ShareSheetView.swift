@@ -66,11 +66,15 @@ struct ShareSheetView: View {
         return new
     }
 
+    private var streaksEnabled: Bool {
+        !profile.streaksPaused
+    }
+
     private var availableTemplates: [ShareTemplate] {
         if book != nil {
-            return [.book, .wrap, .streak]
+            return streaksEnabled ? [.book, .wrap, .streak] : [.book, .wrap]
         }
-        return [.wrap, .streak]
+        return streaksEnabled ? [.wrap, .streak] : [.wrap]
     }
 
     private var shareStyle: ShareCardStyle {
@@ -144,6 +148,7 @@ struct ShareSheetView: View {
     }
 
     private var streakProgressValue: Double? {
+        guard streaksEnabled else { return nil }
         let bestStreak = max(profile.longestStreak, profile.currentStreak)
         guard bestStreak > 0 else { return nil }
         return Double(profile.currentStreak) / Double(bestStreak)
@@ -186,6 +191,10 @@ struct ShareSheetView: View {
         .onChange(of: selectedTemplate) { _, _ in
             guard !availableGraphMetrics.contains(selectedGraphMetric) else { return }
             selectedGraphMetric = availableGraphMetrics.first ?? .pages
+        }
+        .onChange(of: profile.streaksPaused) { _, paused in
+            guard paused, selectedTemplate == .streak else { return }
+            selectedTemplate = book == nil ? .wrap : .book
         }
         .alert("Instagram Not Available", isPresented: $showInstagramAlert) {
             Button("OK", role: .cancel) {}

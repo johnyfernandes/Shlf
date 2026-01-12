@@ -19,6 +19,12 @@ struct AddGoalView: View {
     @State private var duration: GoalDuration = .month
     @State private var customEndDate: Date = Calendar.current.date(byAdding: .month, value: 1, to: Date()) ?? Date()
 
+    private var availableGoalTypes: [GoalType] {
+        GoalType.allCases.filter { type in
+            !profile.streaksPaused || type != .readingStreak
+        }
+    }
+
     var endDate: Date {
         switch duration {
         case .week:
@@ -39,7 +45,7 @@ struct AddGoalView: View {
             Form {
                 Section("Goal Type") {
                     Picker("Type", selection: $selectedType) {
-                        ForEach(GoalType.allCases, id: \.self) { type in
+                        ForEach(availableGoalTypes, id: \.self) { type in
                             Label(type.rawValue, systemImage: type.icon)
                                 .tag(type)
                         }
@@ -104,6 +110,11 @@ struct AddGoalView: View {
                     }
                     .disabled(targetValue < 1)
                 }
+            }
+        }
+        .onAppear {
+            if !availableGoalTypes.contains(selectedType) {
+                selectedType = availableGoalTypes.first ?? .booksPerMonth
             }
         }
     }
