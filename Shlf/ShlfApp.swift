@@ -13,6 +13,9 @@ struct ShlfApp: App {
     @State private var modelContainer: ModelContainer?
     @State private var modelError: Error?
     @Environment(\.scenePhase) private var scenePhase
+#if DEBUG
+    @AppStorage(AppLanguage.overrideKey) private var developerLanguageOverride = AppLanguage.system.rawValue
+#endif
 
     init() {
         do {
@@ -27,51 +30,54 @@ struct ShlfApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if let error = modelError {
-                ErrorStateView(error: error)
-            } else if let container = modelContainer {
-                ContentView()
-                    .modelContainer(container)
-                    .onAppear {
-                        WatchConnectivityManager.shared.configure(modelContext: container.mainContext, container: container)
-                        WatchConnectivityManager.shared.activate()
-                        WidgetDataExporter.exportSnapshot(modelContext: container.mainContext)
-                        Task {
-                            await ReadingSessionActivityManager.shared.rehydrateExistingActivity()
-                        }
+            Group {
+                if let error = modelError {
+                    ErrorStateView(error: error)
+                } else if let container = modelContainer {
+                    ContentView()
+                        .modelContainer(container)
+                        .onAppear {
+                            WatchConnectivityManager.shared.configure(modelContext: container.mainContext, container: container)
+                            WatchConnectivityManager.shared.activate()
+                            WidgetDataExporter.exportSnapshot(modelContext: container.mainContext)
+                            Task {
+                                await ReadingSessionActivityManager.shared.rehydrateExistingActivity()
+                            }
 
-                        Task { @MainActor in
-                            await StoreKitService.shared.refreshEntitlements()
-                            let descriptor = FetchDescriptor<UserProfile>()
-                            if let profiles = try? container.mainContext.fetch(descriptor),
-                               let profile = profiles.first {
-                                let isPro = StoreKitService.shared.isProUser
-                                if profile.isProUser != isPro {
-                                    profile.isProUser = isPro
+                            Task { @MainActor in
+                                await StoreKitService.shared.refreshEntitlements()
+                                let descriptor = FetchDescriptor<UserProfile>()
+                                if let profiles = try? container.mainContext.fetch(descriptor),
+                                   let profile = profiles.first {
+                                    let isPro = StoreKitService.shared.isProUser
+                                    if profile.isProUser != isPro {
+                                        profile.isProUser = isPro
+                                        try? container.mainContext.save()
+                                    }
+                                }
+                            }
+
+                            // Cleanup stale active sessions based on user preferences
+                            Task { @MainActor in
+                                await ActiveSessionCleanup.cleanupStaleSessionsIfNeeded(modelContext: container.mainContext)
+                            }
+
+                            // Recalculate stats on launch (fixes any incorrect XP/streak from deletions)
+                            Task { @MainActor in
+                                let descriptor = FetchDescriptor<UserProfile>()
+                                if let profiles = try? container.mainContext.fetch(descriptor),
+                                   let profile = profiles.first {
+                                    let engine = GamificationEngine(modelContext: container.mainContext)
+                                    engine.recalculateStats(for: profile)
                                     try? container.mainContext.save()
                                 }
                             }
                         }
-
-                        // Cleanup stale active sessions based on user preferences
-                        Task { @MainActor in
-                            await ActiveSessionCleanup.cleanupStaleSessionsIfNeeded(modelContext: container.mainContext)
-                        }
-
-                        // Recalculate stats on launch (fixes any incorrect XP/streak from deletions)
-                        Task { @MainActor in
-                            let descriptor = FetchDescriptor<UserProfile>()
-                            if let profiles = try? container.mainContext.fetch(descriptor),
-                               let profile = profiles.first {
-                                let engine = GamificationEngine(modelContext: container.mainContext)
-                                engine.recalculateStats(for: profile)
-                                try? container.mainContext.save()
-                            }
-                        }
-                    }
-            } else {
-                ProgressView()
+                } else {
+                    ProgressView()
+                }
             }
+            .debugLocale(debugLanguage)
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
             guard let container = modelContainer else { return }
@@ -106,6 +112,14 @@ struct ShlfApp: App {
                 break
             }
         }
+    }
+
+    private var debugLanguage: AppLanguage? {
+        #if DEBUG
+        return AppLanguage(rawValue: developerLanguageOverride)
+        #else
+        return nil
+        #endif
     }
 }
 

@@ -13,6 +13,7 @@ struct DeveloperSettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var profiles: [UserProfile]
     @State private var storeKit = StoreKitService.shared
+    @AppStorage(AppLanguage.overrideKey) private var languageOverride = AppLanguage.system.rawValue
     @State private var showResetAlert = false
     @State private var showGenerateAlert = false
     @State private var showClearMockAlert = false
@@ -32,6 +33,14 @@ struct DeveloperSettingsView: View {
 
     var body: some View {
         Form {
+            Section("Localization") {
+                Picker("App Language", selection: $languageOverride) {
+                    ForEach(AppLanguage.allCases) { language in
+                        Text(language.displayNameKey).tag(language.rawValue)
+                    }
+                }
+            }
+
             Section("Purchases") {
                 Button("Reload Products") {
                     Task { await storeKit.loadProducts() }
