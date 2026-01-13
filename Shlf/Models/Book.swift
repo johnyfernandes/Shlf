@@ -135,7 +135,11 @@ enum BookType: String, Codable, CaseIterable {
     }
 
     var displayNameText: String {
-        String(localized: displayNameKey)
+        switch self {
+        case .physical: return String(localized: "Physical")
+        case .ebook: return String(localized: "Ebook")
+        case .audiobook: return String(localized: "Audiobook")
+        }
     }
 
     var icon: String {
@@ -181,6 +185,11 @@ enum ReadingStatus: String, Codable, CaseIterable {
     }
 
     var shortNameText: String {
-        String(localized: shortNameKey)
+        switch self {
+        case .wantToRead: return String(localized: "Want to Read")
+        case .currentlyReading: return String(localized: "Reading")
+        case .finished: return String(localized: "Finished")
+        case .didNotFinish: return String(localized: "DNF")
+        }
     }
 }

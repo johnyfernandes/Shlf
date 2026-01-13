@@ -784,14 +784,14 @@ struct AchievementCard: View {
                         }
                     }
 
-                    Text(type.title)
+                    Text(type.titleKey)
                         .font(Theme.Typography.caption2)
                         .foregroundStyle(isUnlocked ? Theme.Colors.text : Theme.Colors.tertiaryText)
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
                         .minimumScaleFactor(0.8)
 
-                    Text(type.description)
+                    Text(type.descriptionKey)
                         .font(.system(size: 9, weight: .medium))
                         .foregroundStyle(isUnlocked ? Theme.Colors.secondaryText : Theme.Colors.tertiaryText)
                         .lineLimit(1)
@@ -883,7 +883,7 @@ struct AchievementDetailView: View {
     }
 
     private var statusText: String {
-        isUnlocked ? "Unlocked" : "Locked"
+        isUnlocked ? String(localized: "Unlocked") : String(localized: "Locked")
     }
 
     private var unlockedDateText: String? {
@@ -922,11 +922,11 @@ struct AchievementDetailView: View {
                                     .foregroundStyle(isUnlocked ? themeColor.color : Theme.Colors.tertiaryText)
                             }
 
-                            Text(type.title)
+                            Text(type.titleKey)
                                 .font(.title2.weight(.semibold))
                                 .foregroundStyle(Theme.Colors.text)
 
-                            Text(type.description)
+                            Text(type.descriptionKey)
                                 .font(.subheadline)
                                 .foregroundStyle(Theme.Colors.secondaryText)
                                 .multilineTextAlignment(.center)

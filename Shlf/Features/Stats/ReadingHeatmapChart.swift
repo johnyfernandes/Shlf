@@ -95,7 +95,7 @@ struct ReadingHeatmapChart: View {
         let todayDate = Date()
         switch period {
         case .last12Weeks:
-            periodTitle = "Last 12 Weeks"
+            periodTitle = String(localized: "Last 12 Weeks")
         case .currentMonth:
             let formatter = DateFormatter()
             formatter.dateFormat = "MMMM yyyy"
@@ -105,7 +105,11 @@ struct ReadingHeatmapChart: View {
             formatter.dateFormat = "yyyy"
             let startOfYear = calendar.date(from: calendar.dateComponents([.year], from: todayDate))!
             let daysSinceStart = calendar.dateComponents([.day], from: startOfYear, to: todayDate).day! + 1
-            periodTitle = "\(formatter.string(from: todayDate)) (\(daysSinceStart) days)"
+            periodTitle = String.localizedStringWithFormat(
+                String(localized: "%@ (%lld days)"),
+                formatter.string(from: todayDate),
+                daysSinceStart
+            )
         }
 
         // Trigger scroll to end after data is ready
@@ -144,7 +148,7 @@ struct ReadingHeatmapChart: View {
                         HStack(spacing: 4) {
                             Image(systemName: "book.pages")
                                 .font(.caption2)
-                            Text("\(totalPages) total")
+                            Text(String.localizedStringWithFormat(String(localized: "%lld total"), totalPages))
                                 .font(.caption)
                         }
                         .foregroundStyle(Theme.Colors.secondaryText)
@@ -156,7 +160,7 @@ struct ReadingHeatmapChart: View {
                         HStack(spacing: 4) {
                             Image(systemName: "flame.fill")
                                 .font(.caption2)
-                            Text("\(totalDaysActive) days")
+                            Text(String.localizedStringWithFormat(String(localized: "%lld days"), totalDaysActive))
                                 .font(.caption)
                         }
                         .foregroundStyle(Theme.Colors.secondaryText)
@@ -355,7 +359,7 @@ struct DayDetailView: View {
                                     Image(systemName: "doc.text.fill")
                                         .foregroundStyle(themeColor.color)
 
-                                    Text("\(totalPages) pages")
+                                    Text(String.localizedStringWithFormat(String(localized: "%lld pages"), totalPages))
                                         .font(.title2)
                                         .fontWeight(.bold)
 
@@ -415,7 +419,7 @@ struct DayDetailView: View {
                                                 HStack(spacing: 4) {
                                                     Image(systemName: "book.pages")
                                                         .font(.caption2)
-                                                    Text("\(bookData.pages) pages")
+                                                    Text(String.localizedStringWithFormat(String(localized: "%lld pages"), bookData.pages))
                                                         .font(.caption)
                                                 }
                                                 .foregroundStyle(themeColor.color)
