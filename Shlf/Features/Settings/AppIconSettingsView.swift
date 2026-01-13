@@ -205,18 +205,23 @@ private struct AppIconOptionView: View {
                     .foregroundStyle(isSelected ? option.previewTint : .primary)
                     .fontWeight(isSelected ? .semibold : .regular)
 
-                if option.isDefault {
-                    Text("Default")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                } else if isLocked {
-                    Text("Pro")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
+                Text(statusLabel ?? "Default")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .opacity(statusLabel == nil ? 0 : 1)
             }
         }
         .buttonStyle(.plain)
+    }
+
+    private var statusLabel: String? {
+        if option.isDefault {
+            return "Default"
+        }
+        if isLocked {
+            return "Pro"
+        }
+        return nil
     }
 }
 
