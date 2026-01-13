@@ -915,7 +915,7 @@ private extension ShareSheetView {
         return ShareCardContent(
             title: book.title,
             subtitle: book.author,
-            badge: book.readingStatus.shortName,
+            badge: book.readingStatus.shortNameText,
             period: period,
             coverImage: showCover ? coverImage : nil,
             progress: progress,

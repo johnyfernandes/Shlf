@@ -317,7 +317,7 @@ struct BookDetailView: View {
                         handleStatusChange(to: status)
                     } label: {
                         Label {
-                            Text(status.rawValue)
+                            Text(status.displayNameKey)
                         } icon: {
                             Image(systemName: status.icon)
                             if book.readingStatus == status {
@@ -333,7 +333,7 @@ struct BookDetailView: View {
                             .font(.caption.weight(.semibold))
                             .frame(width: 14)
 
-                        Text(ReadingStatus.wantToRead.shortName)
+                        Text(ReadingStatus.wantToRead.shortNameKey)
                             .font(.caption.weight(.semibold))
                             .lineLimit(1)
 
@@ -349,7 +349,7 @@ struct BookDetailView: View {
                             .font(.caption.weight(.semibold))
                             .frame(width: 14)
 
-                        Text(book.readingStatus.shortName)
+                        Text(book.readingStatus.shortNameKey)
                             .font(.caption.weight(.semibold))
                             .lineLimit(1)
 
@@ -377,7 +377,7 @@ struct BookDetailView: View {
                 HStack(spacing: 4) {
                     Image(systemName: book.bookType.icon)
                         .font(.caption2)
-                    Text(book.bookType.rawValue)
+                    Text(book.bookType.displayNameKey)
                         .font(.caption2.weight(.medium))
                 }
                 .foregroundStyle(Theme.Colors.tertiaryText)
@@ -391,7 +391,7 @@ struct BookDetailView: View {
                 HStack(spacing: 4) {
                     Image(systemName: "bookmark.fill")
                         .font(.caption2)
-                    Text("Saved at page \(saved)")
+                    Text(String.localizedStringWithFormat(String(localized: "Saved at page %lld"), saved))
                         .font(.caption2.weight(.medium))
                 }
                 .foregroundStyle(.orange)

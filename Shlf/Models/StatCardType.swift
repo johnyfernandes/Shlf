@@ -19,7 +19,7 @@ enum StatCardType: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var title: String {
+    var titleKey: LocalizedStringKey {
         switch self {
         case .currentStreak: return "Streak"
         case .longestStreak: return "Best"
@@ -60,7 +60,7 @@ enum StatCardType: String, Codable, CaseIterable, Identifiable {
     }
     #endif
 
-    var displayName: String {
+    var displayNameKey: LocalizedStringKey {
         switch self {
         case .currentStreak: return "Current Streak"
         case .longestStreak: return "Longest Streak"
@@ -73,7 +73,7 @@ enum StatCardType: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    var description: String {
+    var descriptionKey: LocalizedStringKey {
         switch self {
         case .currentStreak: return "Your current reading streak"
         case .longestStreak: return "Your longest reading streak"

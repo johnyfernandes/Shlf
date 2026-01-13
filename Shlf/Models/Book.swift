@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import SwiftUI
 
 @Model
 final class Book {
@@ -125,6 +126,18 @@ enum BookType: String, Codable, CaseIterable {
     case ebook = "Ebook"
     case audiobook = "Audiobook"
 
+    var displayNameKey: LocalizedStringKey {
+        switch self {
+        case .physical: return "Physical"
+        case .ebook: return "Ebook"
+        case .audiobook: return "Audiobook"
+        }
+    }
+
+    var displayNameText: String {
+        String(localized: displayNameKey)
+    }
+
     var icon: String {
         switch self {
         case .physical: return "book.closed"
@@ -140,6 +153,15 @@ enum ReadingStatus: String, Codable, CaseIterable {
     case finished = "Finished"
     case didNotFinish = "Did Not Finish"
 
+    var displayNameKey: LocalizedStringKey {
+        switch self {
+        case .wantToRead: return "Want to Read"
+        case .currentlyReading: return "Currently Reading"
+        case .finished: return "Finished"
+        case .didNotFinish: return "Did Not Finish"
+        }
+    }
+
     var icon: String {
         switch self {
         case .wantToRead: return "bookmark"
@@ -149,12 +171,16 @@ enum ReadingStatus: String, Codable, CaseIterable {
         }
     }
 
-    var shortName: String {
+    var shortNameKey: LocalizedStringKey {
         switch self {
         case .wantToRead: return "Want to Read"
         case .currentlyReading: return "Reading"
         case .finished: return "Finished"
         case .didNotFinish: return "DNF"
         }
+    }
+
+    var shortNameText: String {
+        String(localized: shortNameKey)
     }
 }

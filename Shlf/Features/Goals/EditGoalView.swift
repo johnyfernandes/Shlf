@@ -22,7 +22,7 @@ struct EditGoalView: View {
             Form {
                 Section("Goal") {
                     HStack {
-                        Label(goal.type.rawValue, systemImage: goal.type.icon)
+                        Label(goal.type.displayNameKey, systemImage: goal.type.icon)
                         Spacer()
                         if goal.isCompleted {
                             Image(systemName: "checkmark.circle.fill")
@@ -35,7 +35,7 @@ struct EditGoalView: View {
                 Section("Progress") {
                     VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                         HStack {
-                            Text("\(goal.currentValue) / \(goal.targetValue) \(goal.type.unit)")
+                            Text("\(goal.currentValue) / \(goal.targetValue) \(goal.type.unitText)")
                                 .font(Theme.Typography.title3)
 
                             Spacer()
@@ -54,7 +54,7 @@ struct EditGoalView: View {
                 }
 
                 Section("Target") {
-                    Stepper("Target: \(goal.targetValue) \(goal.type.unit)", value: $goal.targetValue, in: max(1, goal.currentValue)...1000)
+                    Stepper("Target: \(goal.targetValue) \(goal.type.unitText)", value: $goal.targetValue, in: max(1, goal.currentValue)...1000)
                         .font(Theme.Typography.body)
                 }
 
@@ -76,7 +76,7 @@ struct EditGoalView: View {
                                 Text("Resets at midnight")
                                     .foregroundStyle(themeColor.color)
                             } else if daysLeft >= 0 {
-                                Text("\(daysLeft) days")
+                                Text(String.localizedStringWithFormat(String(localized: "%lld days"), daysLeft))
                                     .foregroundStyle(themeColor.color)
                             } else {
                                 Text("Expired")

@@ -13,6 +13,13 @@ enum ChartType: String, Codable, CaseIterable, Hashable {
     case bar = "Bar Chart"
     case heatmap = "Activity Heatmap"
 
+    var displayNameKey: LocalizedStringKey {
+        switch self {
+        case .bar: return "Bar Chart"
+        case .heatmap: return "Activity Heatmap"
+        }
+    }
+
     var icon: String {
         switch self {
         case .bar: return "chart.bar.fill"
@@ -20,7 +27,7 @@ enum ChartType: String, Codable, CaseIterable, Hashable {
         }
     }
 
-    var description: String {
+    var descriptionKey: LocalizedStringKey {
         switch self {
         case .bar: return "Display reading activity as vertical bars"
         case .heatmap: return "GitHub-style activity heatmap showing reading days"
@@ -33,6 +40,14 @@ enum HeatmapPeriod: String, Codable, CaseIterable, Hashable {
     case currentMonth = "Current Month"
     case currentYear = "Current Year"
 
+    var displayNameKey: LocalizedStringKey {
+        switch self {
+        case .last12Weeks: return "Last 12 Weeks"
+        case .currentMonth: return "Current Month"
+        case .currentYear: return "Current Year"
+        }
+    }
+
     var icon: String {
         switch self {
         case .last12Weeks: return "calendar"
@@ -41,7 +56,7 @@ enum HeatmapPeriod: String, Codable, CaseIterable, Hashable {
         }
     }
 
-    var description: String {
+    var descriptionKey: LocalizedStringKey {
         switch self {
         case .last12Weeks: return "Show activity for the past 12 weeks"
         case .currentMonth: return "Show activity for the current month"

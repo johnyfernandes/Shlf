@@ -46,7 +46,7 @@ struct AddGoalView: View {
                 Section("Goal Type") {
                     Picker("Type", selection: $selectedType) {
                         ForEach(availableGoalTypes, id: \.self) { type in
-                            Label(type.rawValue, systemImage: type.icon)
+                            Label(type.displayNameKey, systemImage: type.icon)
                                 .tag(type)
                         }
                     }
@@ -55,14 +55,14 @@ struct AddGoalView: View {
                 }
 
                 Section("Target") {
-                    Stepper("\(targetValue) \(selectedType.unit)", value: $targetValue, in: 1...1000)
+                    Stepper("\(targetValue) \(selectedType.unitText)", value: $targetValue, in: 1...1000)
                         .font(Theme.Typography.body)
                 }
 
                 Section("Duration") {
                     Picker("Duration", selection: $duration) {
                         ForEach(GoalDuration.allCases, id: \.self) { duration in
-                            Text(duration.rawValue).tag(duration)
+                            Text(duration.displayNameKey).tag(duration)
                         }
                     }
                     .pickerStyle(.segmented)
@@ -155,7 +155,7 @@ struct GoalPreviewCard: View {
                 Image(systemName: type.icon)
                     .foregroundStyle(themeColor.color)
 
-                Text(type.rawValue)
+                Text(type.displayNameKey)
                     .font(Theme.Typography.headline)
                     .foregroundStyle(Theme.Colors.text)
 
@@ -170,7 +170,7 @@ struct GoalPreviewCard: View {
                 .tint(themeColor.color)
 
             HStack {
-                Text("0 / \(targetValue) \(type.unit)")
+                Text("0 / \(targetValue) \(type.unitText)")
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
 
@@ -181,7 +181,7 @@ struct GoalPreviewCard: View {
                         .font(Theme.Typography.caption)
                         .foregroundStyle(Theme.Colors.tertiaryText)
                 } else {
-                    Text("\(daysRemaining) days left")
+                    Text(String.localizedStringWithFormat(String(localized: "%lld days left"), daysRemaining))
                         .font(Theme.Typography.caption)
                         .foregroundStyle(Theme.Colors.tertiaryText)
                 }
@@ -198,6 +198,16 @@ enum GoalDuration: String, CaseIterable {
     case quarter = "Quarter"
     case year = "Year"
     case custom = "Custom"
+
+    var displayNameKey: LocalizedStringKey {
+        switch self {
+        case .week: return "Week"
+        case .month: return "Month"
+        case .quarter: return "Quarter"
+        case .year: return "Year"
+        case .custom: return "Custom"
+        }
+    }
 }
 
 #Preview {

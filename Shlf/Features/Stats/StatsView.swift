@@ -226,7 +226,7 @@ struct StatsView: View {
                 if streaksEnabled {
                     StatCard(
                         title: "Current Streak",
-                        value: "\(profile.currentStreak) days",
+                        value: formatDays(profile.currentStreak),
                         icon: "flame.fill",
                         gradient: Theme.Colors.streakGradient
                     )
@@ -237,7 +237,7 @@ struct StatsView: View {
 
                     StatCard(
                         title: "Longest Streak",
-                        value: "\(profile.longestStreak) days",
+                        value: formatDays(profile.longestStreak),
                         icon: "flame.circle.fill",
                         gradient: Theme.Colors.streakGradient
                     )
@@ -259,14 +259,14 @@ struct StatsView: View {
 
                 StatCard(
                     title: "This Year",
-                    value: "\(booksThisYear) books",
+                    value: formatBooks(booksThisYear),
                     icon: "calendar",
                     gradient: Theme.Colors.successGradient
                 )
 
                 StatCard(
                     title: "This Month",
-                    value: "\(booksThisMonth) books",
+                    value: formatBooks(booksThisMonth),
                     icon: "calendar.circle",
                     gradient: Theme.Colors.successGradient
                 )
@@ -330,7 +330,7 @@ struct StatsView: View {
                         .font(.system(size: 48))
                         .foregroundStyle(themeColor.color.opacity(0.3))
 
-                    Text("You've read \(totalPagesRead) pages!")
+                    Text(String.localizedStringWithFormat(String(localized: "You've read %lld pages!"), totalPagesRead))
                         .font(Theme.Typography.headline)
                         .foregroundStyle(Theme.Colors.text)
 
@@ -469,25 +469,25 @@ struct StatsView: View {
         let repeatCount = repeatCount(for: type, isUnlocked: isUnlocked)
         switch type {
         case .firstBook:
-            return progress(current: totalBooksRead, target: 1, unit: "book", repeatCount: repeatCount)
+            return progress(current: totalBooksRead, target: 1, unit: String(localized: "book"), repeatCount: repeatCount)
         case .tenBooks:
-            return progress(current: totalBooksRead, target: 10, unit: "books", repeatCount: repeatCount)
+            return progress(current: totalBooksRead, target: 10, unit: String(localized: "books"), repeatCount: repeatCount)
         case .fiftyBooks:
-            return progress(current: totalBooksRead, target: 50, unit: "books", repeatCount: repeatCount)
+            return progress(current: totalBooksRead, target: 50, unit: String(localized: "books"), repeatCount: repeatCount)
         case .hundredBooks:
-            return progress(current: totalBooksRead, target: 100, unit: "books", repeatCount: repeatCount)
+            return progress(current: totalBooksRead, target: 100, unit: String(localized: "books"), repeatCount: repeatCount)
         case .hundredPages:
-            return progress(current: totalPagesRead, target: 100, unit: "pages", repeatCount: repeatCount)
+            return progress(current: totalPagesRead, target: 100, unit: String(localized: "pages"), repeatCount: repeatCount)
         case .thousandPages:
-            return progress(current: totalPagesRead, target: 1000, unit: "pages", repeatCount: repeatCount)
+            return progress(current: totalPagesRead, target: 1000, unit: String(localized: "pages"), repeatCount: repeatCount)
         case .tenThousandPages:
-            return progress(current: totalPagesRead, target: 10000, unit: "pages", repeatCount: repeatCount)
+            return progress(current: totalPagesRead, target: 10000, unit: String(localized: "pages"), repeatCount: repeatCount)
         case .sevenDayStreak:
-            return progress(current: streaksEnabled ? profile.currentStreak : 0, target: 7, unit: "days", repeatCount: repeatCount)
+            return progress(current: streaksEnabled ? profile.currentStreak : 0, target: 7, unit: String(localized: "days"), repeatCount: repeatCount)
         case .thirtyDayStreak:
-            return progress(current: streaksEnabled ? profile.currentStreak : 0, target: 30, unit: "days", repeatCount: repeatCount)
+            return progress(current: streaksEnabled ? profile.currentStreak : 0, target: 30, unit: String(localized: "days"), repeatCount: repeatCount)
         case .hundredDayStreak:
-            return progress(current: streaksEnabled ? profile.currentStreak : 0, target: 100, unit: "days", repeatCount: repeatCount)
+            return progress(current: streaksEnabled ? profile.currentStreak : 0, target: 100, unit: String(localized: "days"), repeatCount: repeatCount)
         case .levelFive:
             return levelProgress(current: profile.currentLevel, target: 5, repeatCount: repeatCount)
         case .levelTen:
@@ -495,9 +495,9 @@ struct StatsView: View {
         case .levelTwenty:
             return levelProgress(current: profile.currentLevel, target: 20, repeatCount: repeatCount)
         case .hundredPagesInDay:
-            return progress(current: todayPagesRead, target: 100, unit: "pages today", repeatCount: repeatCount)
+            return progress(current: todayPagesRead, target: 100, unit: String(localized: "pages today"), repeatCount: repeatCount)
         case .marathonReader:
-            return progress(current: todayMinutesRead, target: 180, unit: "min today", repeatCount: repeatCount)
+            return progress(current: todayMinutesRead, target: 180, unit: String(localized: "min today"), repeatCount: repeatCount)
         }
     }
 
@@ -509,7 +509,11 @@ struct StatsView: View {
 
     private func levelProgress(current: Int, target: Int, repeatCount: Int) -> AchievementProgress {
         let clampedCurrent = max(0, current)
-        let text = "Level \(formatNumber(clampedCurrent))/\(formatNumber(target))"
+        let text = String.localizedStringWithFormat(
+            String(localized: "Level %lld/%lld"),
+            clampedCurrent,
+            target
+        )
         return AchievementProgress(current: clampedCurrent, target: target, text: text, repeatCount: repeatCount)
     }
 
@@ -1065,6 +1069,14 @@ private func formatNumber(_ value: Int) -> String {
     achievementNumberFormatter.string(from: NSNumber(value: value)) ?? "\(value)"
 }
 
+private func formatDays(_ value: Int) -> String {
+    String.localizedStringWithFormat(String(localized: "%lld days"), value)
+}
+
+private func formatBooks(_ value: Int) -> String {
+    String.localizedStringWithFormat(String(localized: "%lld books"), value)
+}
+
 struct GoalCard: View {
     @Environment(\.themeColor) private var themeColor
     let goal: ReadingGoal
@@ -1075,7 +1087,7 @@ struct GoalCard: View {
                 Image(systemName: goal.type.icon)
                     .foregroundStyle(themeColor.color)
 
-                Text(goal.type.rawValue)
+                Text(goal.type.displayNameKey)
                     .font(Theme.Typography.headline)
                     .foregroundStyle(Theme.Colors.text)
 
@@ -1090,7 +1102,7 @@ struct GoalCard: View {
                 .tint(themeColor.color)
 
             HStack {
-                Text("\(goal.currentValue) / \(goal.targetValue) \(goal.type.unit)")
+                Text("\(goal.currentValue) / \(goal.targetValue) \(goal.type.unitText)")
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
 
@@ -1102,7 +1114,7 @@ struct GoalCard: View {
                             .font(Theme.Typography.caption)
                             .foregroundStyle(Theme.Colors.tertiaryText)
                     } else if daysLeft >= 0 {
-                        Text("\(daysLeft) days left")
+                        Text(String.localizedStringWithFormat(String(localized: "%lld days left"), daysLeft))
                             .font(Theme.Typography.caption)
                             .foregroundStyle(Theme.Colors.tertiaryText)
                     } else {
@@ -1221,7 +1233,7 @@ struct GoalRow: View {
                     Image(systemName: goal.type.icon)
                         .foregroundStyle(goal.isCompleted ? Theme.Colors.success : themeColor.color)
 
-                    Text(goal.type.rawValue)
+                    Text(goal.type.displayNameKey)
                         .font(Theme.Typography.headline)
                         .foregroundStyle(Theme.Colors.text)
 
@@ -1237,7 +1249,7 @@ struct GoalRow: View {
                     .tint(goal.isCompleted ? Theme.Colors.success : themeColor.color)
 
                 HStack {
-                    Text("\(goal.currentValue) / \(goal.targetValue) \(goal.type.unit)")
+                    Text("\(goal.currentValue) / \(goal.targetValue) \(goal.type.unitText)")
                         .font(Theme.Typography.caption)
                         .foregroundStyle(Theme.Colors.secondaryText)
 
@@ -1249,7 +1261,7 @@ struct GoalRow: View {
                                 .font(Theme.Typography.caption)
                                 .foregroundStyle(Theme.Colors.tertiaryText)
                         } else {
-                            Text("\(daysLeft) days left")
+                            Text(String.localizedStringWithFormat(String(localized: "%lld days left"), daysLeft))
                                 .font(Theme.Typography.caption)
                                 .foregroundStyle(Theme.Colors.tertiaryText)
                         }

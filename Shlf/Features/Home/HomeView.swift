@@ -35,7 +35,7 @@ struct HomeView: View {
         return new
     }
 
-    private var greeting: String {
+    private var greeting: LocalizedStringKey {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
         case 0..<12: return "Good Morning"
@@ -197,7 +197,7 @@ struct HomeView: View {
         HStack(spacing: Theme.Spacing.sm) {
             ForEach(Array(visibleHomeCards.enumerated()), id: \.element) { index, cardType in
                 StatCard(
-                    title: cardType.title,
+                    title: cardType.titleKey,
                     value: getValue(for: cardType),
                     icon: cardType.icon,
                     gradient: cardType.gradient,
@@ -227,7 +227,7 @@ struct HomeView: View {
                         .draggable(cardType.rawValue) {
                             // Drag preview
                             StatCard(
-                                title: cardType.title,
+                                title: cardType.titleKey,
                                 value: getValue(for: cardType),
                                 icon: cardType.icon,
                                 gradient: cardType.gradient,
@@ -282,7 +282,7 @@ struct HomeView: View {
     private var currentlyReadingSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             HStack {
-                Text("Currently Reading")
+            Text("Currently Reading")
                     .sectionHeader()
 
                 Spacer()

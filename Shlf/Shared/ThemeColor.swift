@@ -57,5 +57,30 @@ enum ThemeColor: String, CaseIterable, Codable, Identifiable {
         )
     }
 
-    var displayName: String { rawValue }
+    var displayNameKey: LocalizedStringKey {
+        switch self {
+        case .blue:
+            return "Blue"
+        case .purple:
+            return "Purple"
+        case .pink:
+            return "Pink"
+        case .red:
+            return "Red"
+        case .orange:
+            return "Orange"
+        case .yellow:
+            return "Yellow"
+        case .green:
+            return "Green"
+        case .cyan:
+            return "Cyan"
+        case .indigo:
+            return "Indigo"
+        case .teal:
+            return "Teal"
+        case .mint:
+            return "Mint"
+        }
+    }
 }

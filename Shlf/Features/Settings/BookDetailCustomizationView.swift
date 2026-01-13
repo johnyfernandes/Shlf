@@ -164,11 +164,11 @@ struct BookDetailCustomizationView: View {
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(section.displayName)
+                Text(section.displayNameKey)
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(isVisible ? Theme.Colors.text : Theme.Colors.secondaryText)
 
-                Text(section.description)
+                Text(section.descriptionKey)
                     .font(.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
             }

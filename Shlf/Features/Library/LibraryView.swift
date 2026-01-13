@@ -125,7 +125,7 @@ struct LibraryView: View {
                 ForEach(ReadingStatus.allCases, id: \.self) { status in
                     let count = allBooks.filter { $0.readingStatus == status }.count
                     FilterChip(
-                        title: status.shortName,
+                        title: status.shortNameKey,
                         icon: status.icon,
                         count: count,
                         isSelected: selectedFilter == status,
@@ -175,7 +175,8 @@ struct LibraryView: View {
     private var booksSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             HStack {
-                Text(selectedFilter?.rawValue ?? "All Books")
+                let headerTitle: LocalizedStringKey = selectedFilter?.displayNameKey ?? "All Books"
+                Text(headerTitle)
                     .sectionHeader()
 
                 Spacer()
@@ -326,7 +327,7 @@ struct StatusBadge: View {
             Image(systemName: status.icon)
                 .font(.caption2)
 
-            Text(status.shortName)
+            Text(status.shortNameKey)
                 .font(Theme.Typography.caption)
                 .fontWeight(.medium)
         }
@@ -340,7 +341,7 @@ struct StatusBadge: View {
 
 struct FilterChip: View {
     @Environment(\.themeColor) private var themeColor
-    let title: String
+    let title: LocalizedStringKey
     var icon: String? = nil
     var count: Int? = nil
     let isSelected: Bool

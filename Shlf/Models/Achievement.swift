@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import SwiftUI
 
 @Model
 final class Achievement {
@@ -60,7 +61,7 @@ enum AchievementType: String, Codable, CaseIterable {
     case hundredPagesInDay = "100 Pages in a Day"
     case marathonReader = "Marathon Reader"
 
-    var name: String {
+    var nameKey: LocalizedStringKey {
         switch self {
         case .firstBook: return "Chapter One"
         case .tenBooks: return "Shelf Stacker"
@@ -80,12 +81,28 @@ enum AchievementType: String, Codable, CaseIterable {
         }
     }
 
-    var title: String {
-        name
+    var titleKey: LocalizedStringKey {
+        nameKey
     }
 
-    var description: String {
-        rawValue
+    var descriptionKey: LocalizedStringKey {
+        switch self {
+        case .firstBook: return "First Book"
+        case .tenBooks: return "10 Books"
+        case .fiftyBooks: return "50 Books"
+        case .hundredBooks: return "100 Books"
+        case .hundredPages: return "100 Pages"
+        case .thousandPages: return "1,000 Pages"
+        case .tenThousandPages: return "10,000 Pages"
+        case .sevenDayStreak: return "7-Day Streak"
+        case .thirtyDayStreak: return "30-Day Streak"
+        case .hundredDayStreak: return "100-Day Streak"
+        case .levelFive: return "Level 5"
+        case .levelTen: return "Level 10"
+        case .levelTwenty: return "Level 20"
+        case .hundredPagesInDay: return "100 Pages in a Day"
+        case .marathonReader: return "Marathon Reader"
+        }
     }
 
     var icon: String {

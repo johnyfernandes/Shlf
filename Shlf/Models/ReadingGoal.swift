@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import SwiftUI
 
 @Model
 final class ReadingGoal {
@@ -63,6 +64,16 @@ enum GoalType: String, Codable, CaseIterable {
     case minutesPerDay = "Minutes Per Day"
     case readingStreak = "Reading Streak"
 
+    var displayNameKey: LocalizedStringKey {
+        switch self {
+        case .booksPerYear: return "Books Per Year"
+        case .booksPerMonth: return "Books Per Month"
+        case .pagesPerDay: return "Pages Per Day"
+        case .minutesPerDay: return "Minutes Per Day"
+        case .readingStreak: return "Reading Streak"
+        }
+    }
+
     var icon: String {
         switch self {
         case .booksPerYear, .booksPerMonth: return "books.vertical"
@@ -72,13 +83,17 @@ enum GoalType: String, Codable, CaseIterable {
         }
     }
 
-    var unit: String {
+    var unitKey: LocalizedStringKey {
         switch self {
         case .booksPerYear, .booksPerMonth: return "books"
         case .pagesPerDay: return "pages"
         case .minutesPerDay: return "minutes"
         case .readingStreak: return "days"
         }
+    }
+
+    var unitText: String {
+        String(localized: unitKey)
     }
 
     var isDaily: Bool {

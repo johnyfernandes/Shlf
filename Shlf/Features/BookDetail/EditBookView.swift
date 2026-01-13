@@ -298,7 +298,7 @@ struct EditBookView: View {
                 selection: $book.bookType
             ) {
                 ForEach(BookType.allCases, id: \.self) { type in
-                    Label(type.rawValue, systemImage: type.icon)
+                    Label(type.displayNameKey, systemImage: type.icon)
                         .tag(type)
                 }
             }
@@ -310,7 +310,7 @@ struct EditBookView: View {
                 selection: $book.readingStatus
             ) {
                 ForEach(ReadingStatus.allCases, id: \.self) { status in
-                    Label(status.rawValue, systemImage: status.icon)
+                    Label(status.displayNameKey, systemImage: status.icon)
                         .tag(status)
                 }
             }
@@ -541,10 +541,10 @@ struct EditBookView: View {
 // MARK: - Modern Text Field
 
 struct ModernTextField<Field: Hashable>: View {
-    let title: String
+    let title: LocalizedStringKey
     @Binding var text: String
     let icon: String
-    let placeholder: String
+    let placeholder: LocalizedStringKey
     @FocusState.Binding var focused: Field?
     let field: Field
     @Environment(\.themeColor) private var themeColor
@@ -623,7 +623,7 @@ struct ModernNumberField<Field: Hashable>: View {
 // MARK: - Modern Picker
 
 struct ModernPicker<Selection: Hashable, Content: View>: View {
-    let title: String
+    let title: LocalizedStringKey
     let icon: String
     @Binding var selection: Selection
     @ViewBuilder let content: () -> Content

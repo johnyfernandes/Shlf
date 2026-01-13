@@ -17,12 +17,7 @@ struct SessionSettingsView: View {
     @State private var showSaveError = false
     @State private var saveErrorMessage = ""
 
-    private let presetHours: [(label: String, hours: Int)] = [
-        ("12 hours", 12),
-        ("24 hours", 24),
-        ("48 hours", 48),
-        ("72 hours", 72)
-    ]
+    private let presetHours: [Int] = [12, 24, 48, 72]
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -104,10 +99,10 @@ struct SessionSettingsView: View {
 
                             VStack(spacing: 10) {
                                 // Preset options
-                                ForEach(presetHours, id: \.hours) { preset in
+                                ForEach(presetHours, id: \.self) { hours in
                                     Button {
                                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                            profile.autoEndSessionHours = preset.hours
+                                            profile.autoEndSessionHours = hours
                                             do {
                                                 try modelContext.save()
                                             } catch {
@@ -117,13 +112,13 @@ struct SessionSettingsView: View {
                                         }
                                     } label: {
                                         HStack(spacing: 12) {
-                                            Text(preset.label)
+                                            Text(hoursLabel(hours))
                                                 .font(.subheadline)
                                                 .foregroundStyle(.primary)
 
                                             Spacer()
 
-                                            if profile.autoEndSessionHours == preset.hours {
+                                            if profile.autoEndSessionHours == hours {
                                                 Image(systemName: "checkmark.circle.fill")
                                                     .font(.title3)
                                                     .foregroundStyle(themeColor.color)
@@ -154,8 +149,8 @@ struct SessionSettingsView: View {
 
                                         Spacer()
 
-                                        if !presetHours.contains(where: { $0.hours == profile.autoEndSessionHours }) {
-                                            Text("\(profile.autoEndSessionHours) hours")
+                                        if !presetHours.contains(where: { $0 == profile.autoEndSessionHours }) {
+                                            Text(hoursLabel(profile.autoEndSessionHours))
                                                 .font(.caption)
                                                 .foregroundStyle(.secondary)
 
@@ -173,7 +168,7 @@ struct SessionSettingsView: View {
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 12, style: .continuous)
                                             .strokeBorder(
-                                                !presetHours.contains(where: { $0.hours == profile.autoEndSessionHours }) ? themeColor.color : .clear,
+                                                !presetHours.contains(where: { $0 == profile.autoEndSessionHours }) ? themeColor.color : .clear,
                                                 lineWidth: 2
                                             )
                                     )
@@ -288,6 +283,10 @@ struct SessionSettingsView: View {
         } message: {
             Text(saveErrorMessage)
         }
+    }
+
+    private func hoursLabel(_ hours: Int) -> String {
+        String.localizedStringWithFormat(String(localized: "%lld hours"), hours)
     }
 }
 

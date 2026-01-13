@@ -177,7 +177,7 @@ struct ColorOption: View {
                 .scaleEffect(isSelected ? 1.05 : 1.0)
                 .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
 
-                Text(themeColor.displayName)
+                Text(themeColor.displayNameKey)
                     .font(.caption)
                     .foregroundStyle(isSelected ? themeColor.color : .primary)
                     .fontWeight(isSelected ? .semibold : .regular)

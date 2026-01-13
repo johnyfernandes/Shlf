@@ -9,7 +9,7 @@ import SwiftUI
 
 struct StatCard: View {
     @Environment(\.themeColor) private var themeColor
-    let title: String
+    let title: LocalizedStringKey
     let value: String
     let icon: String
     let gradient: LinearGradient?
@@ -33,7 +33,7 @@ struct StatCard: View {
     }
 
     init(
-        title: String,
+        title: LocalizedStringKey,
         value: String,
         icon: String,
         gradient: LinearGradient? = nil,

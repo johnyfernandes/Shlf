@@ -127,10 +127,10 @@ struct HomeCardSettingsView: View {
                                             .frame(width: 28)
 
                                         VStack(alignment: .leading, spacing: 2) {
-                                            Text(cardType.displayName)
+                                            Text(cardType.displayNameKey)
                                                 .font(.subheadline.weight(.medium))
 
-                                            Text(cardType.description)
+                                            Text(cardType.descriptionKey)
                                                 .font(.caption)
                                                 .foregroundStyle(.secondary)
                                         }
@@ -228,11 +228,11 @@ struct HomeCardSettingsView: View {
                                                 .frame(width: 28)
 
                                             VStack(alignment: .leading, spacing: 2) {
-                                                Text(cardType.displayName)
+                                                Text(cardType.displayNameKey)
                                                     .font(.subheadline.weight(.medium))
                                                     .foregroundStyle(.primary)
 
-                                                Text(cardType.description)
+                                                Text(cardType.descriptionKey)
                                                     .font(.caption)
                                                     .foregroundStyle(.secondary)
                                             }

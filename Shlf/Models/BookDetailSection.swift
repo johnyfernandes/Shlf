@@ -30,11 +30,26 @@ enum BookDetailSection: String, Codable, CaseIterable, Identifiable, Hashable {
         }
     }
 
-    var displayName: String {
-        rawValue
+    var displayNameKey: LocalizedStringKey {
+        switch self {
+        case .description:
+            return "Description"
+        case .lastPosition:
+            return "Last Position"
+        case .quotes:
+            return "Quotes"
+        case .notes:
+            return "Notes"
+        case .subjects:
+            return "Subjects"
+        case .metadata:
+            return "Metadata"
+        case .readingHistory:
+            return "Reading History"
+        }
     }
 
-    var description: String {
+    var descriptionKey: LocalizedStringKey {
         switch self {
         case .description:
             return "Book description and synopsis"

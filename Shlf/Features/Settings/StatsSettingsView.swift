@@ -96,11 +96,11 @@ struct StatsSettingsView: View {
                                                 .frame(width: 28)
 
                                             VStack(alignment: .leading, spacing: 2) {
-                                                Text(chartType.rawValue)
+                                                Text(chartType.displayNameKey)
                                                     .font(.subheadline.weight(.medium))
                                                     .foregroundStyle(.primary)
 
-                                                Text(chartType.description)
+                                                Text(chartType.descriptionKey)
                                                     .font(.caption)
                                                     .foregroundStyle(.secondary)
                                             }
@@ -168,13 +168,13 @@ struct StatsSettingsView: View {
                                                     .frame(width: 28)
 
                                                 VStack(alignment: .leading, spacing: 2) {
-                                                    Text(period.rawValue)
-                                                        .font(.subheadline.weight(.medium))
-                                                        .foregroundStyle(.primary)
+                                                Text(period.displayNameKey)
+                                                    .font(.subheadline.weight(.medium))
+                                                    .foregroundStyle(.primary)
 
-                                                    Text(period.description)
-                                                        .font(.caption)
-                                                        .foregroundStyle(.secondary)
+                                                Text(period.descriptionKey)
+                                                    .font(.caption)
+                                                    .foregroundStyle(.secondary)
                                                 }
 
                                                 Spacer()

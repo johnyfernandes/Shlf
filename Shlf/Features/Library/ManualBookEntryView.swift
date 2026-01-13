@@ -366,7 +366,7 @@ struct ManualBookEntryView: View {
                 selection: $bookType
             ) {
                 ForEach(BookType.allCases, id: \.self) { type in
-                    Label(type.rawValue, systemImage: type.icon)
+                    Label(type.displayNameKey, systemImage: type.icon)
                         .tag(type)
                 }
             }
@@ -377,7 +377,7 @@ struct ManualBookEntryView: View {
                 selection: $readingStatus
             ) {
                 ForEach(ReadingStatus.allCases, id: \.self) { status in
-                    Label(status.rawValue, systemImage: status.icon)
+                    Label(status.displayNameKey, systemImage: status.icon)
                         .tag(status)
                 }
             }
