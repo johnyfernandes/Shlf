@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import StoreKit
+import UIKit
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
@@ -779,8 +780,16 @@ struct ReadingPreferencesView: View {
 }
 
 struct DataManagementView: View {
+    @Environment(\.modelContext) private var modelContext
     @State private var showClearCacheAlert = false
     @State private var isClearing = false
+    @State private var isExporting = false
+    @State private var exportErrorMessage = ""
+    @State private var showExportError = false
+    @State private var showResetAlert = false
+    @State private var isResetting = false
+    @State private var resetErrorMessage = ""
+    @State private var showResetError = false
 
     var body: some View {
         Form {
@@ -792,7 +801,17 @@ struct DataManagementView: View {
 
             Section("Export") {
                 Button("Export Reading Data") {
-                    // TODO: Implement export
+                    exportReadingData()
+                }
+                .disabled(isExporting || isResetting)
+
+                if isExporting {
+                    HStack {
+                        ProgressView()
+                        Text("Preparing export...")
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(Theme.Colors.secondaryText)
+                    }
                 }
             }
 
@@ -814,7 +833,17 @@ struct DataManagementView: View {
 
             Section("Danger Zone") {
                 Button("Reset App", role: .destructive) {
-                    // TODO: Implement reset
+                    showResetAlert = true
+                }
+                .disabled(isExporting || isResetting)
+
+                if isResetting {
+                    HStack {
+                        ProgressView()
+                        Text("Resetting data...")
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(Theme.Colors.secondaryText)
+                    }
                 }
             }
         }
@@ -827,6 +856,24 @@ struct DataManagementView: View {
         } message: {
             Text("This will remove all cached book cover images. They will be downloaded again when needed.")
         }
+        .alert("Export Error", isPresented: $showExportError) {
+            Button("OK") {}
+        } message: {
+            Text(exportErrorMessage)
+        }
+        .alert("Reset App?", isPresented: $showResetAlert) {
+            Button("Cancel", role: .cancel) {}
+            Button("Reset", role: .destructive) {
+                resetApp()
+            }
+        } message: {
+            Text("This will permanently delete your books, sessions, goals, quotes, and streak history from this device. If iCloud Sync is enabled, it also removes them from iCloud.")
+        }
+        .alert("Reset Error", isPresented: $showResetError) {
+            Button("OK") {}
+        } message: {
+            Text(resetErrorMessage)
+        }
     }
 
     private func clearCache() {
@@ -837,6 +884,72 @@ struct DataManagementView: View {
                 isClearing = false
             }
         }
+    }
+
+    private func exportReadingData() {
+        isExporting = true
+
+        Task { @MainActor in
+            do {
+                let url = try ReadingDataExporter.export(modelContext: modelContext)
+                isExporting = false
+                shareExportFile(url)
+            } catch {
+                exportErrorMessage = error.localizedDescription
+                showExportError = true
+                isExporting = false
+            }
+        }
+    }
+
+    private func shareExportFile(_ url: URL) {
+        let activityVC = UIActivityViewController(
+            activityItems: [url],
+            applicationActivities: nil
+        )
+
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first,
+           let rootVC = window.rootViewController {
+            var topVC = rootVC
+            while let presented = topVC.presentedViewController {
+                topVC = presented
+            }
+            activityVC.popoverPresentationController?.sourceView = topVC.view
+            topVC.present(activityVC, animated: true)
+        }
+    }
+
+    private func resetApp() {
+        isResetting = true
+
+        Task { @MainActor in
+            await ReadingSessionActivityManager.shared.endActivity()
+            do {
+                try deleteAll(ActiveReadingSession.self)
+                try deleteAll(ReadingSession.self)
+                try deleteAll(BookPosition.self)
+                try deleteAll(Quote.self)
+                try deleteAll(ReadingGoal.self)
+                try deleteAll(Achievement.self)
+                try deleteAll(StreakEvent.self)
+                try deleteAll(Book.self)
+                try deleteAll(UserProfile.self)
+                try modelContext.save()
+                WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+                await ImageCacheManager.shared.clearCache()
+                isResetting = false
+            } catch {
+                resetErrorMessage = error.localizedDescription
+                showResetError = true
+                isResetting = false
+            }
+        }
+    }
+
+    private func deleteAll<T: PersistentModel>(_ type: T.Type) throws {
+        let items = try modelContext.fetch(FetchDescriptor<T>())
+        items.forEach { modelContext.delete($0) }
     }
 }
 
