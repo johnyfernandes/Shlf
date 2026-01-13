@@ -19,6 +19,7 @@ struct AppIconSettingsView: View {
     @State private var isUpdating = false
     @State private var showError = false
     @State private var errorMessage = ""
+    @State private var showUpgradeSheet = false
 
     private let columns = [
         GridItem(.adaptive(minimum: 90), spacing: 16)
@@ -91,7 +92,7 @@ struct AppIconSettingsView: View {
                                     isLocked: !isProUser && !option.isDefault,
                                     onSelect: { select(option) }
                                 )
-                                .disabled(!supportsAlternateIcons || isUpdating || (!isProUser && !option.isDefault))
+                                .disabled(!supportsAlternateIcons || isUpdating)
                             }
                         }
                     }
@@ -114,6 +115,9 @@ struct AppIconSettingsView: View {
         } message: {
             Text(errorMessage.isEmpty ? "Please try again." : errorMessage)
         }
+        .sheet(isPresented: $showUpgradeSheet) {
+            PaywallView()
+        }
     }
 
     private func isSelected(_ option: AppIconOption) -> Bool {
@@ -122,7 +126,10 @@ struct AppIconSettingsView: View {
 
     private func select(_ option: AppIconOption) {
         guard supportsAlternateIcons else { return }
-        guard isProUser || option.isDefault else { return }
+        guard isProUser || option.isDefault else {
+            showUpgradeSheet = true
+            return
+        }
         guard currentIconName != option.iconName else { return }
 
         isUpdating = true

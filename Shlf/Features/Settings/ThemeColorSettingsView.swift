@@ -11,10 +11,15 @@ import SwiftData
 struct ThemeColorSettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Bindable var profile: UserProfile
+    @State private var showUpgradeSheet = false
 
     private let columns = [
         GridItem(.adaptive(minimum: 80), spacing: 16)
     ]
+
+    private var isProUser: Bool {
+        ProAccess.isProUser(profile: profile)
+    }
 
     /// Update Live Activity with new theme color by restarting it
     /// Seamlessly restarts the Live Activity preserving all state except color
@@ -96,6 +101,10 @@ struct ThemeColorSettingsView: View {
                                     isSelected: profile.themeColor == themeColor,
                                     onSelect: {
                                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                            guard isProUser else {
+                                                showUpgradeSheet = true
+                                                return
+                                            }
                                             profile.themeColor = themeColor
                                             try? modelContext.save()
 
@@ -124,6 +133,9 @@ struct ThemeColorSettingsView: View {
         }
         .navigationTitle("Theme Color")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showUpgradeSheet) {
+            PaywallView()
+        }
     }
 }
 

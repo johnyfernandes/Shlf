@@ -17,9 +17,14 @@ struct HomeCardSettingsView: View {
     @State private var saveErrorMessage = ""
     @State private var editMode: EditMode = .inactive
     @State private var draggedCard: StatCardType?
+    @State private var showUpgradeSheet = false
 
     private var engine: GamificationEngine {
         GamificationEngine(modelContext: modelContext)
+    }
+
+    private var isProUser: Bool {
+        ProAccess.isProUser(profile: profile)
     }
 
     private var availableCards: [StatCardType] {
@@ -141,6 +146,10 @@ struct HomeCardSettingsView: View {
                                     .overlay(alignment: .topTrailing) {
                                         if editMode == .active {
                                             Button {
+                                                guard isProUser else {
+                                                    showUpgradeSheet = true
+                                                    return
+                                                }
                                                 withAnimation {
                                                     profile.removeHomeCard(cardType)
                                                     do {
@@ -160,6 +169,10 @@ struct HomeCardSettingsView: View {
                                         }
                                     }
                                     .onDrag {
+                                        guard isProUser else {
+                                            showUpgradeSheet = true
+                                            return NSItemProvider()
+                                        }
                                         self.draggedCard = cardType
                                         return NSItemProvider(object: cardType.rawValue as NSString)
                                     }
@@ -192,6 +205,10 @@ struct HomeCardSettingsView: View {
                             VStack(spacing: 10) {
                                 ForEach(availableCards) { cardType in
                                     Button {
+                                        guard isProUser else {
+                                            showUpgradeSheet = true
+                                            return
+                                        }
                                         if profile.homeCards.count < 3 {
                                             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                                                 profile.addHomeCard(cardType)
@@ -248,6 +265,10 @@ struct HomeCardSettingsView: View {
                     // Remove All Button
                     if !profile.homeCards.isEmpty {
                         Button {
+                            guard isProUser else {
+                                showUpgradeSheet = true
+                                return
+                            }
                             withAnimation {
                                 profile.homeCardOrder.removeAll()
                                 do {
@@ -283,6 +304,10 @@ struct HomeCardSettingsView: View {
             if !profile.homeCards.isEmpty {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
+                        guard isProUser else {
+                            showUpgradeSheet = true
+                            return
+                        }
                         withAnimation {
                             editMode = editMode == .active ? .inactive : .active
                         }
@@ -298,6 +323,9 @@ struct HomeCardSettingsView: View {
             Button("OK") {}
         } message: {
             Text(saveErrorMessage)
+        }
+        .sheet(isPresented: $showUpgradeSheet) {
+            PaywallView()
         }
     }
 }

@@ -13,9 +13,14 @@ struct StatsSettingsView: View {
     @Query private var profiles: [UserProfile]
     @State private var showSaveError = false
     @State private var saveErrorMessage = ""
+    @State private var showUpgradeSheet = false
 
     private var profile: UserProfile? {
         profiles.first
+    }
+
+    private var isProUser: Bool {
+        ProAccess.isProUser(profile: profile)
     }
 
     var body: some View {
@@ -70,6 +75,10 @@ struct StatsSettingsView: View {
                             VStack(spacing: 10) {
                                 ForEach(ChartType.allCases, id: \.self) { chartType in
                                     Button {
+                                        guard isProUser else {
+                                            showUpgradeSheet = true
+                                            return
+                                        }
                                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                                             profile.chartType = chartType
                                             do {
@@ -138,6 +147,10 @@ struct StatsSettingsView: View {
                                 VStack(spacing: 10) {
                                     ForEach(HeatmapPeriod.allCases, id: \.self) { period in
                                         Button {
+                                            guard isProUser else {
+                                                showUpgradeSheet = true
+                                                return
+                                            }
                                             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                                                 profile.heatmapPeriod = period
                                                 do {
@@ -204,6 +217,9 @@ struct StatsSettingsView: View {
             Button("OK") {}
         } message: {
             Text(saveErrorMessage)
+        }
+        .sheet(isPresented: $showUpgradeSheet) {
+            PaywallView()
         }
     }
 }

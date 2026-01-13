@@ -17,6 +17,11 @@ struct BookDetailCustomizationView: View {
     @State private var saveErrorMessage = ""
     @State private var editMode: EditMode = .inactive
     @State private var draggedSection: BookDetailSection?
+    @State private var showUpgradeSheet = false
+
+    private var isProUser: Bool {
+        ProAccess.isProUser(profile: profile)
+    }
 
     private var activeSectionCount: Int {
         let count = profile.bookDetailSections.filter { section in
@@ -42,6 +47,9 @@ struct BookDetailCustomizationView: View {
             Button("OK") {}
         } message: {
             Text(saveErrorMessage)
+        }
+        .sheet(isPresented: $showUpgradeSheet) {
+            PaywallView()
         }
     }
 
@@ -120,6 +128,10 @@ struct BookDetailCustomizationView: View {
                 ForEach(profile.bookDetailSections) { section in
                     sectionRow(section)
                         .onDrag {
+                            guard isProUser else {
+                                showUpgradeSheet = true
+                                return NSItemProvider()
+                            }
                             self.draggedSection = section
                             return NSItemProvider(object: section.rawValue as NSString)
                         }
@@ -174,6 +186,10 @@ struct BookDetailCustomizationView: View {
 
     private var resetButton: some View {
         Button {
+            guard isProUser else {
+                showUpgradeSheet = true
+                return
+            }
             resetToDefault()
         } label: {
             HStack(spacing: 8) {
@@ -194,6 +210,10 @@ struct BookDetailCustomizationView: View {
 
     private var editButton: some View {
         Button {
+            guard isProUser else {
+                showUpgradeSheet = true
+                return
+            }
             withAnimation {
                 editMode = editMode == .active ? .inactive : .active
             }
@@ -220,6 +240,10 @@ struct BookDetailCustomizationView: View {
                 }
             },
             set: { newValue in
+                guard isProUser else {
+                    showUpgradeSheet = true
+                    return
+                }
                 withAnimation {
                     switch section {
                     case .description:

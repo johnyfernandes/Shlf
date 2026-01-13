@@ -65,59 +65,27 @@ struct SettingsView: View {
                     proSection
 
                     Section("Customization") {
-                        if isProUser {
-                            NavigationLink {
-                                ThemeColorSettingsView(profile: profile)
-                            } label: {
-                                Label {
-                                    Text("Theme Color")
-                                } icon: {
-                                    Image(systemName: "paintbrush.fill")
-                                        .foregroundStyle(profile.themeColor.gradient)
-                                }
+                        NavigationLink {
+                            ThemeColorSettingsView(profile: profile)
+                        } label: {
+                            Label {
+                                Text("Theme Color")
+                            } icon: {
+                                Image(systemName: "paintbrush.fill")
+                                    .foregroundStyle(profile.themeColor.gradient)
                             }
-                        } else {
-                            Button {
-                                showUpgradeSheet = true
-                            } label: {
-                                Label {
-                                    Text("Theme Color")
-                                } icon: {
-                                    Image(systemName: "paintbrush.fill")
-                                        .foregroundStyle(profile.themeColor.gradient)
-                                }
-                            }
-                            .buttonStyle(.plain)
                         }
 
-                        if isProUser {
-                            NavigationLink {
-                                AppIconSettingsView(profile: profile)
-                            } label: {
-                                Label("App Icon", systemImage: "app")
-                            }
-                        } else {
-                            Button {
-                                showUpgradeSheet = true
-                            } label: {
-                                Label("App Icon", systemImage: "app")
-                            }
-                            .buttonStyle(.plain)
+                        NavigationLink {
+                            AppIconSettingsView(profile: profile)
+                        } label: {
+                            Label("App Icon", systemImage: "app")
                         }
 
-                        if isProUser {
-                            NavigationLink {
-                                HomeCardSettingsView(profile: profile)
-                            } label: {
-                                Label("Home Screen", systemImage: "square.grid.3x3")
-                            }
-                        } else {
-                            Button {
-                                showUpgradeSheet = true
-                            } label: {
-                                Label("Home Screen", systemImage: "square.grid.3x3")
-                            }
-                            .buttonStyle(.plain)
+                        NavigationLink {
+                            HomeCardSettingsView(profile: profile)
+                        } label: {
+                            Label("Home Screen", systemImage: "square.grid.3x3")
                         }
 
                         NavigationLink {
@@ -138,36 +106,18 @@ struct SettingsView: View {
                             Label("Streaks", systemImage: "flame.fill")
                         }
 
-                        if isProUser {
-                            NavigationLink {
-                                BookDetailCustomizationView(profile: profile)
-                            } label: {
-                                Label("Book Details", systemImage: "slider.horizontal.3")
-                            }
-                        } else {
-                            Button {
-                                showUpgradeSheet = true
-                            } label: {
-                                Label("Book Details", systemImage: "slider.horizontal.3")
-                            }
-                            .buttonStyle(.plain)
+                        NavigationLink {
+                            BookDetailCustomizationView(profile: profile)
+                        } label: {
+                            Label("Book Details", systemImage: "slider.horizontal.3")
                         }
 
-                        if isProUser {
-                            NavigationLink {
-                                StatsSettingsView()
-                            } label: {
-                                Label("Stats", systemImage: "chart.xyaxis.line")
-                            }
-                        } else {
-                            Button {
-                                showUpgradeSheet = true
-                            } label: {
-                                Label("Stats", systemImage: "chart.xyaxis.line")
-                            }
-                            .buttonStyle(.plain)
+                        NavigationLink {
+                            StatsSettingsView()
+                        } label: {
+                            Label("Stats", systemImage: "chart.xyaxis.line")
+                        }
                     }
-                }
 
                 Section("Apple Watch") {
                     NavigationLink {
