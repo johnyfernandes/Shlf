@@ -52,6 +52,11 @@
 				<string>AppIcon-Yellow</string>
 			</dict>
 		</dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconName</key>
+			<string>AppIcon</string>
+		</dict>
 	</dict>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
