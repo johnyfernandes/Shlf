@@ -514,6 +514,22 @@ struct AboutView: View {
                     .foregroundStyle(Theme.Colors.secondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, Theme.Spacing.xl)
+
+                VStack(spacing: Theme.Spacing.sm) {
+                    Link(destination: URL(string: "https://shlf.app/privacy")!) {
+                        Label("Privacy Policy", systemImage: "hand.raised")
+                    }
+
+                    Link(destination: URL(string: "https://shlf.app/support")!) {
+                        Label("Support", systemImage: "questionmark.circle")
+                    }
+
+                    Link(destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!) {
+                        Label("EULA", systemImage: "doc.text")
+                    }
+                }
+                .font(Theme.Typography.body)
+                .foregroundStyle(themeColor.color)
             }
             .padding(Theme.Spacing.xl)
         }
