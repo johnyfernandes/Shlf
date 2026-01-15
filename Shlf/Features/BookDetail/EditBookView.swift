@@ -51,7 +51,6 @@ struct EditBookView: View {
                             essentialInfoSection
                             progressSection
                             typeStatusSection
-                            ratingSection
                             publishingDetailsSection
                             descriptionSection
                             notesSection
@@ -116,7 +115,7 @@ struct EditBookView: View {
     // MARK: - Hero Section
 
     private var heroSectionContent: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 16) {
             // Cover Image
             PhotosPicker(selection: $selectedPhoto, matching: .images) {
                 ZStack {
@@ -162,6 +161,8 @@ struct EditBookView: View {
                     }
                 }
             }
+
+            ratingCompactSection
         }
         .frame(maxWidth: .infinity)
     }
@@ -323,28 +324,20 @@ struct EditBookView: View {
         }
     }
 
-    // MARK: - Rating Section
+    // MARK: - Rating Compact
 
-    private var ratingSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
-                Image(systemName: "star.fill")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(themeColor.color)
-                    .frame(width: 20)
+    private var ratingCompactSection: some View {
+        VStack(spacing: 8) {
+            Text("Rating")
+                .font(.caption.weight(.medium))
+                .foregroundStyle(Theme.Colors.secondaryText)
 
-                Text("Rating")
-                    .font(Theme.Typography.headline)
-                    .foregroundStyle(Theme.Colors.text)
-            }
-            .padding(.leading, 4)
-
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 ForEach(1...5, id: \.self) { rating in
                     Button {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
                             if book.rating == rating {
-                                book.rating = nil // Tap again to clear
+                                book.rating = nil
                             } else {
                                 book.rating = rating
                             }
@@ -352,30 +345,15 @@ struct EditBookView: View {
                         }
                     } label: {
                         Image(systemName: (book.rating ?? 0) >= rating ? "star.fill" : "star")
-                            .font(.title2)
+                            .font(.subheadline)
                             .foregroundStyle((book.rating ?? 0) >= rating ? themeColor.color : Theme.Colors.tertiaryText)
-                            .symbolEffect(.bounce, value: book.rating)
                     }
                     .buttonStyle(.plain)
                 }
-
-                if book.rating != nil {
-                    Spacer()
-
-                    Button {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            book.rating = nil
-                            hasUnsavedChanges = true
-                        }
-                    } label: {
-                        Text("Clear")
-                            .font(.caption.weight(.medium))
-                            .foregroundStyle(Theme.Colors.tertiaryText)
-                    }
-                }
             }
-            .padding(16)
-            .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .padding(.vertical, 8)
+            .padding(.horizontal, 12)
+            .background(Theme.Colors.secondaryBackground, in: Capsule())
         }
     }
 
@@ -573,48 +551,6 @@ struct ModernTextField<Field: Hashable>: View {
                 .foregroundStyle(Theme.Colors.text)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
-                .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .strokeBorder(focused == field ? themeColor.color : .clear, lineWidth: 2)
-                )
-                .focused($focused, equals: field)
-        }
-    }
-}
-
-// MARK: - Modern Number Field
-
-struct ModernNumberField<Field: Hashable>: View {
-    let title: String
-    @Binding var value: Int
-    let icon: String
-    @FocusState.Binding var focused: Field?
-    let field: Field
-    @Environment(\.themeColor) private var themeColor
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 6) {
-                Image(systemName: icon)
-                    .font(.caption2)
-                    .foregroundStyle(themeColor.color)
-                    .frame(width: 14)
-
-                Text(title)
-                    .font(.caption2.weight(.medium))
-                    .foregroundStyle(Theme.Colors.secondaryText)
-            }
-            .padding(.leading, 4)
-
-            TextField("0", value: $value, format: .number)
-                .font(Theme.Typography.title3)
-                .fontWeight(.semibold)
-                .foregroundStyle(Theme.Colors.text)
-                .keyboardType(.numberPad)
-                .multilineTextAlignment(.center)
-                .padding(.vertical, 16)
-                .frame(maxWidth: .infinity)
                 .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
