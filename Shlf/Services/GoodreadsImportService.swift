@@ -539,6 +539,7 @@ enum GoodreadsImportService {
         var missingWorkDescriptions: Set<String> = []
         var editionCache: [String: EditionDetails] = [:]
         var missingEditions: Set<String> = []
+        var searchCache: [String: BookInfo?] = [:]
         let total = books.count
         var index = 0
 
@@ -561,6 +562,27 @@ enum GoodreadsImportService {
                 }
                 if let editionDetails = editionCache[normalizedISBN], workID == nil {
                     workID = editionDetails.workID
+                }
+            }
+
+            if normalizedISBN == nil, workID == nil {
+                let query = "\(book.title) \(book.author)"
+                if searchCache[query] == nil {
+                    let match = await bestSearchMatch(
+                        query: query,
+                        title: book.title,
+                        author: book.author,
+                        bookAPI: bookAPI
+                    )
+                    searchCache[query] = match
+                }
+                if let match = searchCache[query] ?? nil {
+                    if book.coverImageURL == nil, let cover = match.coverImageURL {
+                        book.coverImageURL = cover
+                    }
+                    if workID == nil {
+                        workID = match.workID
+                    }
                 }
             }
 
@@ -633,7 +655,12 @@ enum GoodreadsImportService {
             }
 
             let query = "\(title) \(author)"
-            if let match = try? await bookAPI.searchBooks(query: query).first(where: { $0.coverImageURL != nil }),
+            if let match = await bestSearchMatch(
+                query: query,
+                title: title,
+                author: author,
+                bookAPI: bookAPI
+            ),
                let coverURL = match.coverImageURL {
                 cache.values[cacheKey] = .found(coverURL)
                 return coverURL
@@ -659,6 +686,130 @@ enum GoodreadsImportService {
 
     private final class CoverCache {
         var values: [String: CoverLookup] = [:]
+    }
+
+    private static func bestSearchMatch(
+        query: String,
+        title: String,
+        author: String,
+        bookAPI: BookAPIService
+    ) async -> BookInfo? {
+        guard let results = try? await bookAPI.searchBooks(query: query),
+              !results.isEmpty else {
+            return nil
+        }
+
+        let nonSummaryResults = results.filter { !isSummaryTitle($0.title) }
+        let candidates = nonSummaryResults.isEmpty ? results : nonSummaryResults
+
+        let baseTitle = normalizeBaseTitle(title)
+        let normalizedAuthor = normalizeAuthorKey(author)
+
+        let authorFiltered = candidates.filter { authorMatches(resultAuthor: $0.author, targetAuthor: normalizedAuthor) }
+        let filtered = authorFiltered.isEmpty ? candidates : authorFiltered
+
+        return filtered
+            .map { result in
+                (scoreSearchResult(result, baseTitle: baseTitle, author: normalizedAuthor), result)
+            }
+            .sorted { $0.0 > $1.0 }
+            .first
+            .map { $0.1 }
+    }
+
+    private static func scoreSearchResult(_ result: BookInfo, baseTitle: String, author: String) -> Int {
+        var score = 0
+        let resultTitle = normalizeTitleKey(result.title)
+        let resultAuthor = normalizeAuthorKey(result.author)
+
+        if resultTitle == baseTitle {
+            score += 120
+        } else if resultTitle.hasPrefix(baseTitle) {
+            score += 90
+        } else if resultTitle.contains(baseTitle) {
+            score += 60
+        }
+
+        if !author.isEmpty, authorMatches(resultAuthor: resultAuthor, targetAuthor: author) {
+            score += 70
+        } else if !author.isEmpty {
+            score -= 40
+        }
+
+        if result.coverImageURL != nil {
+            score += 20
+        }
+
+        if let pages = result.totalPages, pages > 0 {
+            score += 10
+        }
+
+        if isSummaryTitle(result.title) {
+            score -= 200
+        }
+
+        return score
+    }
+
+    private static func normalizeBaseTitle(_ title: String) -> String {
+        let base = title.split(separator: ":").first.map(String.init) ?? title
+        let stripped = base.replacingOccurrences(of: #"\(.*?\)"#, with: "", options: .regularExpression)
+        return normalizeTitleKey(stripped)
+    }
+
+    private static func normalizeTitleKey(_ value: String) -> String {
+        let lower = value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        var scalars = String.UnicodeScalarView()
+        for scalar in lower.unicodeScalars {
+            if CharacterSet.alphanumerics.contains(scalar) || CharacterSet.whitespacesAndNewlines.contains(scalar) {
+                scalars.append(scalar)
+            } else if let space = UnicodeScalar(32) {
+                scalars.append(space)
+            }
+        }
+        let filtered = String(scalars)
+        return filtered.split { $0 == " " || $0 == "\n" || $0 == "\t" }.joined(separator: " ")
+    }
+
+    private static func normalizeAuthorKey(_ value: String) -> String {
+        normalizeTitleKey(value)
+    }
+
+    private static func authorMatches(resultAuthor: String, targetAuthor: String) -> Bool {
+        guard !resultAuthor.isEmpty, !targetAuthor.isEmpty else { return false }
+        if resultAuthor.contains(targetAuthor) || targetAuthor.contains(resultAuthor) {
+            return true
+        }
+
+        let targetLast = targetAuthor.split(separator: " ").last.map(String.init) ?? ""
+        if !targetLast.isEmpty, resultAuthor.contains(targetLast) {
+            return true
+        }
+
+        return false
+    }
+
+    private static func isSummaryTitle(_ title: String) -> Bool {
+        let lower = title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let keywords = [
+            "summary",
+            "summaries",
+            "analysis",
+            "workbook",
+            "study guide",
+            "guide",
+            "cheat sheet",
+            "key takeaways",
+            "book summary",
+            "summary of",
+            "shortform",
+            "notes on",
+            "sparknotes",
+            "cliffnotes",
+            "highlights",
+            "digest"
+        ]
+        return keywords.contains { lower.contains($0) }
     }
 
     private static func sanitizeISBN(_ value: String?) -> String? {
