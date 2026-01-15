@@ -131,9 +131,6 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
         (() => {
           if (document.readyState !== 'complete') { return 'loading'; }
           const bodyText = document.body ? document.body.innerText.toLowerCase() : '';
-          if (bodyText.includes('continue with amazon') || bodyText.includes('continue with apple')) { return 'login_required'; }
-          if (bodyText.includes('already a member') && bodyText.includes('sign in')) { return 'login_required'; }
-
           const exportButton = document.querySelector('.js-LibraryExport') || [...document.querySelectorAll('input[type="submit"], button')].find(el => {
             const text = ((el.value || '') + ' ' + (el.textContent || '')).toLowerCase();
             return text.includes('export');
@@ -143,6 +140,11 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
           const statusText = statusEl ? statusEl.textContent.toLowerCase() : '';
           const loginForm = document.querySelector('form#sign_in, form[action*="sign_in"], input[name="user[email]"], input[name="user[password]"]');
           if (loginForm) { return 'login_required'; }
+          const loginLink = [...document.querySelectorAll('a')].find(el => {
+            const href = (el.getAttribute('href') || '').toLowerCase();
+            return href.includes('sign_in') || href.includes('signin');
+          });
+          if (!exportButton && loginLink) { return 'login_required'; }
 
           if (!window.__shlfExportClicked && exportButton) {
             exportButton.click();

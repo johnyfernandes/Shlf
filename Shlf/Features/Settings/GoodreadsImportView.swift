@@ -147,8 +147,9 @@ struct GoodreadsImportView: View {
             }
         }
         .onChange(of: coordinator.isConnected) { _, isConnected in
-            guard !forceGoodreadsDisconnected else { return }
-            storedGoodreadsConnected = isConnected
+            guard isConnected else { return }
+            forceGoodreadsDisconnected = false
+            storedGoodreadsConnected = true
         }
         .onChange(of: coordinator.downloadedData) { _, data in
             guard let data else { return }
@@ -161,6 +162,8 @@ struct GoodreadsImportView: View {
         }
         .onChange(of: coordinator.requiresLogin) { _, requiresLogin in
             if requiresLogin {
+                forceGoodreadsDisconnected = false
+                storedGoodreadsConnected = false
                 showWebImport = true
             }
         }
@@ -192,7 +195,7 @@ struct GoodreadsImportView: View {
     }
 
     private var automatedImportSection: some View {
-        let displayConnected = (coordinator.isConnected || storedGoodreadsConnected) && !forceGoodreadsDisconnected
+        let displayConnected = storedGoodreadsConnected && !forceGoodreadsDisconnected
         return VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 6) {
                 Image(systemName: "arrow.down.doc")
@@ -246,7 +249,7 @@ struct GoodreadsImportView: View {
     }
 
     private var connectionPill: some View {
-        let connected = (coordinator.isConnected || storedGoodreadsConnected) && !forceGoodreadsDisconnected
+        let connected = storedGoodreadsConnected && !forceGoodreadsDisconnected
         return HStack(spacing: 6) {
             ZStack {
                 if connected {
