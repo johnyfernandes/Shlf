@@ -45,6 +45,13 @@ struct EditionInfo: Identifiable, Hashable {
     var id: String { olid }
 }
 
+struct WorkDetails {
+    let description: String?
+    let subjects: [String]?
+    let firstPublishDate: String?
+    let coverImageURL: URL?
+}
+
 enum BookAPIError: Error {
     case networkError
     case invalidResponse
@@ -106,6 +113,10 @@ final class BookAPIService {
 
     func fetchEditions(workID: String) async throws -> [EditionInfo] {
         try await fetchEditionsOLID(workID: workID)
+    }
+
+    func fetchWorkDetails(workID: String) async throws -> WorkDetails {
+        try await fetchWorkDetailsOLID(workID: workID)
     }
 
     func resolveWorkID(isbn: String) async throws -> String? {
@@ -474,6 +485,33 @@ final class BookAPIService {
         )
     }
 
+    private func parseWorkDetails(_ json: [String: Any]) -> WorkDetails {
+        let description: String?
+        if let desc = json["description"] as? String {
+            description = desc
+        } else if let descDict = json["description"] as? [String: Any],
+                  let value = descDict["value"] as? String {
+            description = value
+        } else {
+            description = nil
+        }
+
+        let subjects = (json["subjects"] as? [String])?.prefix(12).map { String($0) }
+        let firstPublishDate = json["first_publish_date"] as? String
+
+        var coverURL: URL?
+        if let covers = json["covers"] as? [Any] {
+            coverURL = makeCoverURL(from: covers)
+        }
+
+        return WorkDetails(
+            description: description,
+            subjects: subjects,
+            firstPublishDate: firstPublishDate,
+            coverImageURL: coverURL
+        )
+    }
+
     // MARK: - Best Edition Selection
 
     private func fetchBestEditionOLID(workID: String, originalTitle: String) async throws -> String? {
@@ -534,6 +572,29 @@ final class BookAPIService {
 
         let editions = entries.compactMap { parseEditionEntry($0) }
         return sortEditions(editions)
+    }
+
+    private func fetchWorkDetailsOLID(workID: String) async throws -> WorkDetails {
+        try await retryPolicy.execute {
+            let urlString = "https://openlibrary.org/works/\(workID).json"
+            guard let url = URL(string: urlString) else {
+                throw BookAPIError.invalidResponse
+            }
+
+            await self.rateLimiter.waitForToken()
+            let (data, response) = try await self.urlSession.data(from: url)
+
+            guard let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200 else {
+                throw BookAPIError.networkError
+            }
+
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                throw BookAPIError.invalidResponse
+            }
+
+            return self.parseWorkDetails(json)
+        }
     }
 
     private func parseEditionEntry(_ entry: [String: Any]) -> EditionInfo? {

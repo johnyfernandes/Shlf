@@ -122,7 +122,7 @@ enum GoodreadsImportService {
         var reachedLimit = false
         let totalRows = document.rows.count
         let bookAPI = BookAPIService()
-        let coverCache = CoverCache()
+        let metadataCache = MetadataCache()
 
         let existingCount = (try? modelContext.fetch(FetchDescriptor<Book>()).count) ?? 0
         var currentCount = existingCount
@@ -192,42 +192,69 @@ enum GoodreadsImportService {
                     options: options
                 )
 
-                var didUpdateWithCover = didUpdate
-                if existingBook.coverImageURL == nil {
-                    if let coverURL = await resolveCoverURL(
-                        isbn: isbn,
-                        title: title,
-                        author: author,
-                        bookAPI: bookAPI,
-                        cache: coverCache
-                    ) {
-                        existingBook.coverImageURL = coverURL
-                        didUpdateWithCover = true
-                    }
+                let metadata = await resolveMetadata(
+                    isbn: isbn,
+                    title: title,
+                    author: author,
+                    bookAPI: bookAPI,
+                    cache: metadataCache
+                )
+
+                var didUpdateWithMetadata = didUpdate
+                if existingBook.coverImageURL == nil, let coverURL = metadata?.coverURL {
+                    existingBook.coverImageURL = coverURL
+                    didUpdateWithMetadata = true
+                }
+                if (existingBook.bookDescription?.isEmpty != false),
+                   let description = metadata?.description, !description.isEmpty {
+                    existingBook.bookDescription = description
+                    didUpdateWithMetadata = true
+                }
+                if (existingBook.subjects?.isEmpty != false),
+                   let subjects = metadata?.subjects, !subjects.isEmpty {
+                    existingBook.subjects = subjects
+                    didUpdateWithMetadata = true
+                }
+                if existingBook.language == nil, let language = metadata?.language {
+                    existingBook.language = language
+                    didUpdateWithMetadata = true
+                }
+                if existingBook.publisher == nil, let metaPublisher = metadata?.publisher {
+                    existingBook.publisher = metaPublisher
+                    didUpdateWithMetadata = true
+                }
+                if existingBook.publishedDate == nil, let metaDate = metadata?.publishedDate {
+                    existingBook.publishedDate = metaDate
+                    didUpdateWithMetadata = true
+                }
+                if existingBook.totalPages == nil, let metaPages = metadata?.totalPages {
+                    existingBook.totalPages = metaPages
+                    didUpdateWithMetadata = true
                 }
 
-                if didUpdateWithCover {
+                if didUpdateWithMetadata {
                     updated += 1
                 } else {
                     skipped += 1
                 }
 
             case .noDuplicate:
-                let maxPages = pages ?? 0
-                let currentPage = status == .finished ? maxPages : 0
-                let coverURL = await resolveCoverURL(
+                let metadata = await resolveMetadata(
                     isbn: isbn,
                     title: title,
                     author: author,
                     bookAPI: bookAPI,
-                    cache: coverCache
+                    cache: metadataCache
                 )
+                let resolvedPages = pages ?? metadata?.totalPages
+                let maxPages = resolvedPages ?? 0
+                let currentPage = status == .finished ? maxPages : 0
                 let book = Book(
                     title: title,
                     author: author,
                     isbn: isbn,
-                    coverImageURL: coverURL,
-                    totalPages: pages,
+                    coverImageURL: metadata?.coverURL,
+                    totalPages: resolvedPages,
                     currentPage: currentPage,
                     bookType: bookType,
                     readingStatus: status,
@@ -236,9 +263,13 @@ enum GoodreadsImportService {
 
                 if let publisher, !publisher.isEmpty {
                     book.publisher = publisher
+                } else if let metaPublisher = metadata?.publisher {
+                    book.publisher = metaPublisher
                 }
                 if let yearPublished, !yearPublished.isEmpty {
                     book.publishedDate = yearPublished
+                } else if let metaDate = metadata?.publishedDate {
+                    book.publishedDate = metaDate
                 }
                 if options.importRatingsAndNotes, let rating, rating > 0 {
                     book.rating = rating
@@ -269,6 +300,17 @@ enum GoodreadsImportService {
                     } else if let dateAdded {
                         book.dateFinished = dateAdded
                     }
+                }
+                if (book.bookDescription?.isEmpty != false),
+                   let description = metadata?.description, !description.isEmpty {
+                    book.bookDescription = description
+                }
+                if (book.subjects?.isEmpty != false),
+                   let subjects = metadata?.subjects, !subjects.isEmpty {
+                    book.subjects = subjects
+                }
+                if book.language == nil, let language = metadata?.language {
+                    book.language = language
                 }
 
                 modelContext.insert(book)
@@ -514,13 +556,13 @@ enum GoodreadsImportService {
         return notes.joined(separator: "\n\n")
     }
 
-    private static func resolveCoverURL(
+    private static func resolveMetadata(
         isbn: String?,
         title: String,
         author: String,
         bookAPI: BookAPIService,
-        cache: CoverCache
-    ) async -> URL? {
+        cache: MetadataCache
+    ) async -> ResolvedMetadata? {
         let normalizedISBN = sanitizeISBN(isbn)
         let titleKey = normalizeKey(title)
         let authorKey = normalizeKey(author)
@@ -531,11 +573,32 @@ enum GoodreadsImportService {
                 return cached.value
             }
 
-            if let bookInfo = try? await bookAPI.fetchBook(isbn: normalizedISBN),
-               let cover = bookInfo.coverImageURL {
-                cache.values[cacheKey] = .found(cover)
-                return cover
+            if let bookInfo = try? await bookAPI.fetchBook(isbn: normalizedISBN) {
+                var metadata = ResolvedMetadata(
+                    coverURL: bookInfo.coverImageURL,
+                    description: bookInfo.description,
+                    subjects: bookInfo.subjects,
+                    language: bookInfo.language,
+                    publisher: bookInfo.publisher,
+                    publishedDate: bookInfo.publishedDate,
+                    totalPages: bookInfo.totalPages
+                )
+
+                if needsWorkDetails(metadata) {
+                    var workID = bookInfo.workID
+                    if workID == nil {
+                        workID = try? await bookAPI.resolveWorkID(isbn: normalizedISBN)
+                    }
+                    if let workID,
+                       let workMetadata = await resolveWorkMetadata(workID: workID, bookAPI: bookAPI, cache: cache) {
+                        metadata = mergeMetadata(primary: metadata, fallback: workMetadata)
+                    }
+                }
+
+                cache.values[cacheKey] = .found(metadata)
+                return metadata
             }
+
             cache.values[cacheKey] = .missing
         }
 
@@ -546,10 +609,25 @@ enum GoodreadsImportService {
             }
 
             let query = "\(title) \(author)"
-            if let match = try? await bookAPI.searchBooks(query: query).first(where: { $0.coverImageURL != nil }),
-               let cover = match.coverImageURL {
-                cache.values[cacheKey] = .found(cover)
-                return cover
+            if let match = try? await bookAPI.searchBooks(query: query).first {
+                var metadata = ResolvedMetadata(
+                    coverURL: match.coverImageURL,
+                    description: match.description,
+                    subjects: match.subjects,
+                    language: match.language,
+                    publisher: match.publisher,
+                    publishedDate: match.publishedDate,
+                    totalPages: match.totalPages
+                )
+
+                if needsWorkDetails(metadata),
+                   let workID = match.workID,
+                   let workMetadata = await resolveWorkMetadata(workID: workID, bookAPI: bookAPI, cache: cache) {
+                    metadata = mergeMetadata(primary: metadata, fallback: workMetadata)
+                }
+
+                cache.values[cacheKey] = .found(metadata)
+                return metadata
             }
 
             cache.values[cacheKey] = .missing
@@ -558,20 +636,74 @@ enum GoodreadsImportService {
         return nil
     }
 
-    private enum CoverLookup {
-        case found(URL)
+    private struct ResolvedMetadata {
+        let coverURL: URL?
+        let description: String?
+        let subjects: [String]?
+        let language: String?
+        let publisher: String?
+        let publishedDate: String?
+        let totalPages: Int?
+    }
+
+    private static func needsWorkDetails(_ metadata: ResolvedMetadata) -> Bool {
+        metadata.description?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true
+    }
+
+    private static func mergeMetadata(primary: ResolvedMetadata, fallback: ResolvedMetadata) -> ResolvedMetadata {
+        ResolvedMetadata(
+            coverURL: primary.coverURL ?? fallback.coverURL,
+            description: primary.description ?? fallback.description,
+            subjects: primary.subjects ?? fallback.subjects,
+            language: primary.language ?? fallback.language,
+            publisher: primary.publisher ?? fallback.publisher,
+            publishedDate: primary.publishedDate ?? fallback.publishedDate,
+            totalPages: primary.totalPages ?? fallback.totalPages
+        )
+    }
+
+    private static func resolveWorkMetadata(
+        workID: String,
+        bookAPI: BookAPIService,
+        cache: MetadataCache
+    ) async -> ResolvedMetadata? {
+        let workKey = "work:\(workID)"
+        if let cached = cache.values[workKey] {
+            return cached.value
+        }
+
+        if let workDetails = try? await bookAPI.fetchWorkDetails(workID: workID) {
+            let metadata = ResolvedMetadata(
+                coverURL: workDetails.coverImageURL,
+                description: workDetails.description,
+                subjects: workDetails.subjects,
+                language: nil,
+                publisher: nil,
+                publishedDate: workDetails.firstPublishDate,
+                totalPages: nil
+            )
+            cache.values[workKey] = .found(metadata)
+            return metadata
+        }
+
+        cache.values[workKey] = .missing
+        return nil
+    }
+
+    private enum MetadataLookup {
+        case found(ResolvedMetadata)
         case missing
 
-        var value: URL? {
+        var value: ResolvedMetadata? {
             switch self {
-            case .found(let url): return url
+            case .found(let metadata): return metadata
             case .missing: return nil
             }
         }
     }
 
-    private final class CoverCache {
-        var values: [String: CoverLookup] = [:]
+    private final class MetadataCache {
+        var values: [String: MetadataLookup] = [:]
     }
 
     private static func sanitizeISBN(_ value: String?) -> String? {
