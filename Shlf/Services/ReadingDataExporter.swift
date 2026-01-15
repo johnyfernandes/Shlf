@@ -78,6 +78,7 @@ enum ReadingDataExporter {
         let dateFinished: Date?
         let notes: String
         let rating: Int?
+        let goodreadsShelves: [String]?
         let bookDescription: String?
         let subjects: [String]?
         let publisher: String?
@@ -233,6 +234,7 @@ enum ReadingDataExporter {
                     dateFinished: book.dateFinished,
                     notes: book.notes,
                     rating: book.rating,
+                    goodreadsShelves: book.goodreadsShelves,
                     bookDescription: book.bookDescription,
                     subjects: book.subjects,
                     publisher: book.publisher,

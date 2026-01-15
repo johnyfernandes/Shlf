@@ -26,6 +26,7 @@ final class Book {
     var dateFinished: Date?
     var notes: String = ""
     var rating: Int?
+    var goodreadsShelves: [String]?
 
     // Additional metadata
     var bookDescription: String?
@@ -79,7 +80,8 @@ final class Book {
         publishedDate: String? = nil,
         language: String? = nil,
         openLibraryWorkID: String? = nil,
-        openLibraryEditionID: String? = nil
+        openLibraryEditionID: String? = nil,
+        goodreadsShelves: [String]? = nil
     ) {
         self.id = id
         self.title = title
@@ -95,6 +97,7 @@ final class Book {
         self.dateFinished = dateFinished
         self.notes = notes
         self.rating = rating
+        self.goodreadsShelves = goodreadsShelves
         self.bookDescription = bookDescription
         self.subjects = subjects
         self.publisher = publisher

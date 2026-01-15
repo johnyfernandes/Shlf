@@ -169,6 +169,14 @@ struct SettingsView: View {
                     }
                 }
 
+                Section("Integrations") {
+                    NavigationLink {
+                        GoodreadsImportView(profile: profile)
+                    } label: {
+                        Label("Goodreads", systemImage: "books.vertical")
+                    }
+                }
+
                 Section("Data") {
                     NavigationLink {
                         DataManagementView()
