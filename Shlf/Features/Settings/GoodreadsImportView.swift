@@ -33,8 +33,6 @@ struct GoodreadsImportView: View {
     @State private var descriptionProgressTotal = 0
     @State private var descriptionProgressTitle: String?
     @State private var pendingDocument: GoodreadsImportDocument?
-    @State private var duplicateCount: Int = 0
-    @State private var showDuplicateAlert = false
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var showUpgradeSheet = false
@@ -114,16 +112,6 @@ struct GoodreadsImportView: View {
             Button(String(localized: "OK")) {}
         } message: {
             Text(errorMessage)
-        }
-        .alert(String(localized: "Duplicates Found"), isPresented: $showDuplicateAlert) {
-            Button(String(localized: "Keep My Data")) {
-                startImport(preferGoodreadsData: false)
-            }
-            Button(String(localized: "Prefer Goodreads Data")) {
-                startImport(preferGoodreadsData: true)
-            }
-        } message: {
-            Text(String.localizedStringWithFormat(String(localized: "We found %lld existing books. How should we handle conflicts?"), duplicateCount))
         }
         .sheet(isPresented: $showWebImport) {
             GoodreadsWebImportView(coordinator: coordinator)
@@ -500,24 +488,8 @@ struct GoodreadsImportView: View {
     private func handleParsedDocument(_ parsed: GoodreadsImportDocument) {
         guard !isImporting else { return }
 
-        Task { @MainActor in
-            do {
-                let duplicates = try GoodreadsImportService.duplicateCount(
-                    document: parsed,
-                    modelContext: modelContext
-                )
-                if duplicates > 0 {
-                    duplicateCount = duplicates
-                    pendingDocument = parsed
-                    showDuplicateAlert = true
-                } else {
-                    startImport(preferGoodreadsData: false)
-                }
-            } catch {
-                errorMessage = error.localizedDescription
-                showError = true
-            }
-        }
+        pendingDocument = parsed
+        startImport(preferGoodreadsData: false)
     }
 
     private func startImport(preferGoodreadsData: Bool) {
