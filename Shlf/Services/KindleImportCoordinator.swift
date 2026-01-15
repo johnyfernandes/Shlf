@@ -74,17 +74,8 @@ final class KindleImportCoordinator: NSObject, ObservableObject {
         phase = .idle
         statusText = String(localized: "Loading Kindle...")
         didStartScrape = false
-
-        let store = webView.configuration.websiteDataStore
-        store.httpCookieStore.getAllCookies { cookies in
-            for cookie in cookies where cookie.domain.lowercased().contains("amazon") {
-                store.httpCookieStore.delete(cookie)
-            }
-        }
-
-        let types = WKWebsiteDataStore.allWebsiteDataTypes()
-        store.fetchDataRecords(ofTypes: types) { records in
-            store.removeData(ofTypes: types, for: records) {}
+        Task {
+            await WebSessionCleaner.clear(domains: ["amazon"])
         }
     }
 

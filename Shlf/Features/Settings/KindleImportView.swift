@@ -104,13 +104,19 @@ struct KindleImportView: View {
         }
         .onAppear {
             Task {
-                await coordinator.refreshConnectionStatus()
+                if !forceKindleDisconnected {
+                    await coordinator.refreshConnectionStatus()
+                } else {
+                    coordinator.isConnected = false
+                }
             }
         }
         .onChange(of: coordinator.isConnected) { _, isConnected in
-            guard isConnected else { return }
-            forceKindleDisconnected = false
-            storedKindleConnected = true
+            guard !forceKindleDisconnected else { return }
+            storedKindleConnected = isConnected
+            if isConnected {
+                forceKindleDisconnected = false
+            }
         }
         .onChange(of: coordinator.requiresLogin) { _, requiresLogin in
             if requiresLogin {
@@ -233,7 +239,10 @@ struct KindleImportView: View {
             updatePulse(for: connected)
         }
         .onChange(of: storedKindleConnected) { _, newValue in
-            updatePulse(for: newValue)
+            updatePulse(for: connected)
+        }
+        .onChange(of: forceKindleDisconnected) { _, _ in
+            updatePulse(for: connected)
         }
     }
 

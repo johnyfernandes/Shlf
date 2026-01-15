@@ -131,13 +131,19 @@ struct GoodreadsImportView: View {
         }
         .onAppear {
             Task {
-                await refreshConnectionWithRetry()
+                if !forceGoodreadsDisconnected {
+                    await refreshConnectionWithRetry()
+                } else {
+                    coordinator.isConnected = false
+                }
             }
         }
         .onChange(of: coordinator.isConnected) { _, isConnected in
-            guard isConnected else { return }
-            forceGoodreadsDisconnected = false
-            storedGoodreadsConnected = true
+            guard !forceGoodreadsDisconnected else { return }
+            storedGoodreadsConnected = isConnected
+            if isConnected {
+                forceGoodreadsDisconnected = false
+            }
         }
         .onChange(of: coordinator.downloadedData) { _, data in
             guard let data else { return }
@@ -262,8 +268,11 @@ struct GoodreadsImportView: View {
         .onAppear {
             updatePulse(for: connected)
         }
-        .onChange(of: coordinator.isConnected) { _, newValue in
-            updatePulse(for: newValue)
+        .onChange(of: storedGoodreadsConnected) { _, _ in
+            updatePulse(for: connected)
+        }
+        .onChange(of: forceGoodreadsDisconnected) { _, _ in
+            updatePulse(for: connected)
         }
     }
 

@@ -73,18 +73,10 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
         requiresLogin = false
         phase = .idle
         statusText = String(localized: "Loading Goodreads...")
-
-        let types = WKWebsiteDataStore.allWebsiteDataTypes()
-        let store = webView.configuration.websiteDataStore
-        store.httpCookieStore.getAllCookies { cookies in
-            for cookie in cookies where cookie.domain.lowercased().contains("goodreads.com") {
-                store.httpCookieStore.delete(cookie)
-            }
-        }
-        store.fetchDataRecords(ofTypes: types) { [weak self] records in
-            store.removeData(ofTypes: types, for: records) {
-                GoodreadsImportCoordinator.clearWebsiteData()
-                if let signInURL = self?.signInURL {
+        Task { [weak self] in
+            await WebSessionCleaner.clear(domains: ["goodreads"])
+            if let signInURL = self?.signInURL {
+                await MainActor.run {
                     self?.webView.load(URLRequest(url: signInURL))
                 }
             }
@@ -114,16 +106,6 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
         pollTimer?.invalidate()
         pollTimer = nil
         exportPollCount = 0
-    }
-
-    static func clearWebsiteData(completion: (() -> Void)? = nil) {
-        let types = WKWebsiteDataStore.allWebsiteDataTypes()
-        let store = WKWebsiteDataStore.default()
-        store.fetchDataRecords(ofTypes: types) { records in
-            store.removeData(ofTypes: types, for: records) {
-                completion?()
-            }
-        }
     }
 
     private func handleExportPage() {
