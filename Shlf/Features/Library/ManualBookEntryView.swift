@@ -262,74 +262,40 @@ struct ManualBookEntryView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
                 Image(systemName: "chart.line.uptrend.xyaxis")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(themeColor.color)
-                    .frame(width: 20)
+                    .frame(width: 16)
 
                 Text("Reading Progress")
-                    .font(Theme.Typography.headline)
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.Colors.text)
             }
-            .padding(.leading, 4)
+            .padding(.leading, 2)
 
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "book.pages")
-                            .font(.caption2)
-                            .foregroundStyle(themeColor.color)
-                            .frame(width: 14)
+            Text("Update your current page and total pages.")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .padding(.leading, 2)
 
-                        Text("Total Pages")
-                            .font(.caption2.weight(.medium))
-                            .foregroundStyle(Theme.Colors.secondaryText)
-                    }
-                    .padding(.leading, 4)
+            HStack(spacing: 10) {
+                CompactNumberField(
+                    title: "Current Page",
+                    value: $currentPage,
+                    icon: "bookmark.fill",
+                    focused: $focusedField,
+                    field: .currentPage
+                )
 
-                    TextField("0", text: $totalPages)
-                        .font(Theme.Typography.title3)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Theme.Colors.text)
-                        .keyboardType(.numberPad)
-                        .multilineTextAlignment(.center)
-                        .padding(.vertical, 16)
-                        .frame(maxWidth: .infinity)
-                        .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .strokeBorder(focusedField == .totalPages ? themeColor.color : .clear, lineWidth: 2)
-                        )
-                        .focused($focusedField, equals: .totalPages)
-                }
-
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "bookmark.fill")
-                            .font(.caption2)
-                            .foregroundStyle(themeColor.color)
-                            .frame(width: 14)
-
-                        Text("Current Page")
-                            .font(.caption2.weight(.medium))
-                            .foregroundStyle(Theme.Colors.secondaryText)
-                    }
-                    .padding(.leading, 4)
-
-                    TextField("0", value: $currentPage, format: .number)
-                        .font(Theme.Typography.title3)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Theme.Colors.text)
-                        .keyboardType(.numberPad)
-                        .multilineTextAlignment(.center)
-                        .padding(.vertical, 16)
-                        .frame(maxWidth: .infinity)
-                        .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .strokeBorder(focusedField == .currentPage ? themeColor.color : .clear, lineWidth: 2)
-                        )
-                        .focused($focusedField, equals: .currentPage)
-                }
+                CompactNumberField(
+                    title: "Total Pages",
+                    value: Binding(
+                        get: { Int(totalPages) ?? 0 },
+                        set: { totalPages = $0 == 0 ? "" : "\($0)" }
+                    ),
+                    icon: "book.pages",
+                    focused: $focusedField,
+                    field: .totalPages
+                )
             }
 
             if let total = Int(totalPages), total > 0 {
@@ -360,10 +326,13 @@ struct ManualBookEntryView: View {
 
     private var typeStatusSection: some View {
         VStack(spacing: 16) {
-            ModernPicker(
+            OutlineMenuField(
                 title: "Book Type",
                 icon: "books.vertical.fill",
-                selection: $bookType
+                selection: $bookType,
+                label: {
+                    Label(bookType.displayNameKey, systemImage: bookType.icon)
+                }
             ) {
                 ForEach(BookType.allCases, id: \.self) { type in
                     Label(type.displayNameKey, systemImage: type.icon)
@@ -371,10 +340,13 @@ struct ManualBookEntryView: View {
                 }
             }
 
-            ModernPicker(
+            OutlineMenuField(
                 title: "Reading Status",
                 icon: "book.fill",
-                selection: $readingStatus
+                selection: $readingStatus,
+                label: {
+                    Label(readingStatus.displayNameKey, systemImage: readingStatus.icon)
+                }
             ) {
                 ForEach(ReadingStatus.allCases, id: \.self) { status in
                     Label(status.displayNameKey, systemImage: status.icon)

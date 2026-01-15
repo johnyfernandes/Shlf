@@ -298,10 +298,13 @@ struct EditBookView: View {
 
     private var typeStatusSection: some View {
         VStack(spacing: 16) {
-            ModernPicker(
+            OutlineMenuField(
                 title: "Book Type",
                 icon: "books.vertical.fill",
-                selection: $book.bookType
+                selection: $book.bookType,
+                label: {
+                    Label(book.bookType.displayNameKey, systemImage: book.bookType.icon)
+                }
             ) {
                 ForEach(BookType.allCases, id: \.self) { type in
                     Label(type.displayNameKey, systemImage: type.icon)
@@ -310,10 +313,13 @@ struct EditBookView: View {
             }
             .onChange(of: book.bookType) { _, _ in hasUnsavedChanges = true }
 
-            ModernPicker(
+            OutlineMenuField(
                 title: "Reading Status",
                 icon: "book.fill",
-                selection: $book.readingStatus
+                selection: $book.readingStatus,
+                label: {
+                    Label(book.readingStatus.displayNameKey, systemImage: book.readingStatus.icon)
+                }
             ) {
                 ForEach(ReadingStatus.allCases, id: \.self) { status in
                     Label(status.displayNameKey, systemImage: status.icon)
@@ -550,7 +556,7 @@ struct ModernTextField<Field: Hashable>: View {
                 .font(Theme.Typography.body)
                 .foregroundStyle(Theme.Colors.text)
                 .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                .padding(.vertical, 10)
                 .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -602,38 +608,52 @@ struct CompactNumberField<Field: Hashable>: View {
     }
 }
 
-// MARK: - Modern Picker
+// MARK: - Outline Menu Field
 
-struct ModernPicker<Selection: Hashable, Content: View>: View {
+struct OutlineMenuField<Selection: Hashable, LabelContent: View, Content: View>: View {
     let title: LocalizedStringKey
     let icon: String
     @Binding var selection: Selection
+    @ViewBuilder let label: () -> LabelContent
     @ViewBuilder let content: () -> Content
     @Environment(\.themeColor) private var themeColor
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 8) {
                 Image(systemName: icon)
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
                 Text(title)
-                    .font(.caption.weight(.medium))
+                    .font(.caption2.weight(.medium))
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
-            .padding(.leading, 4)
+            .padding(.leading, 2)
 
-            Picker(title, selection: $selection) {
-                content()
+            Menu {
+                Picker("", selection: $selection) {
+                    content()
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    label()
+                        .font(.subheadline.weight(.semibold))
+                    Spacer()
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.caption2)
+                        .symbolRenderingMode(.hierarchical)
+                }
+                .foregroundStyle(themeColor.color)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(themeColor.color.opacity(0.25), lineWidth: 1)
+                )
             }
-            .pickerStyle(.menu)
-            .labelsHidden()
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
     }
 }
