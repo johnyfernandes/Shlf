@@ -331,7 +331,11 @@ struct ManualBookEntryView: View {
                 icon: "books.vertical.fill",
                 selection: $bookType,
                 label: {
-                    Label(bookType.displayNameKey, systemImage: bookType.icon)
+                    HStack(spacing: 6) {
+                        Image(systemName: bookType.icon)
+                            .frame(width: 14)
+                        Text(bookType.displayNameKey)
+                    }
                 }
             ) {
                 ForEach(BookType.allCases, id: \.self) { type in
@@ -345,7 +349,11 @@ struct ManualBookEntryView: View {
                 icon: "book.fill",
                 selection: $readingStatus,
                 label: {
-                    Label(readingStatus.displayNameKey, systemImage: readingStatus.icon)
+                    HStack(spacing: 6) {
+                        Image(systemName: readingStatus.icon)
+                            .frame(width: 14)
+                        Text(readingStatus.displayNameKey)
+                    }
                 }
             ) {
                 ForEach(ReadingStatus.allCases, id: \.self) { status in

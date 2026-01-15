@@ -303,7 +303,11 @@ struct EditBookView: View {
                 icon: "books.vertical.fill",
                 selection: $book.bookType,
                 label: {
-                    Label(book.bookType.displayNameKey, systemImage: book.bookType.icon)
+                    HStack(spacing: 6) {
+                        Image(systemName: book.bookType.icon)
+                            .frame(width: 14)
+                        Text(book.bookType.displayNameKey)
+                    }
                 }
             ) {
                 ForEach(BookType.allCases, id: \.self) { type in
@@ -318,7 +322,11 @@ struct EditBookView: View {
                 icon: "book.fill",
                 selection: $book.readingStatus,
                 label: {
-                    Label(book.readingStatus.displayNameKey, systemImage: book.readingStatus.icon)
+                    HStack(spacing: 6) {
+                        Image(systemName: book.readingStatus.icon)
+                            .frame(width: 14)
+                        Text(book.readingStatus.displayNameKey)
+                    }
                 }
             ) {
                 ForEach(ReadingStatus.allCases, id: \.self) { status in
@@ -639,20 +647,22 @@ struct OutlineMenuField<Selection: Hashable, LabelContent: View, Content: View>:
             } label: {
                 HStack(spacing: 8) {
                     label()
-                        .font(.subheadline.weight(.semibold))
+                        .font(.caption.weight(.semibold))
+                        .lineLimit(1)
                     Spacer()
-                    Image(systemName: "chevron.up.chevron.down")
+                    Image(systemName: "chevron.down.circle.fill")
                         .font(.caption2)
                         .symbolRenderingMode(.hierarchical)
                 }
                 .foregroundStyle(themeColor.color)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .strokeBorder(themeColor.color.opacity(0.25), lineWidth: 1)
+                    Capsule()
+                        .strokeBorder(themeColor.color.opacity(0.6), lineWidth: 1)
                 )
+                .contentShape(Capsule())
             }
         }
     }
