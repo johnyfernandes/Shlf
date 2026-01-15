@@ -21,6 +21,7 @@ struct StatsView: View {
     @State private var selectedAchievement: AchievementEntry?
     @State private var showAllAchievements = false
     @State private var showShareSheet = false
+    @State private var showSettings = false
     @State private var showUpgradeSheet = false
     @State private var showStreakDetail = false
 
@@ -150,11 +151,18 @@ struct StatsView: View {
             }
             .navigationTitle("Stats")
             .toolbar {
-                ToolbarItem(placement: .primaryAction) {
+                ToolbarItemGroup(placement: .primaryAction) {
                     Button {
                         showShareSheet = true
                     } label: {
                         Image(systemName: "square.and.arrow.up")
+                            .foregroundStyle(themeColor.color)
+                    }
+
+                    Button {
+                        showSettings = true
+                    } label: {
+                        Image(systemName: "gearshape")
                             .foregroundStyle(themeColor.color)
                     }
                 }
@@ -182,6 +190,9 @@ struct StatsView: View {
             }
             .sheet(isPresented: $showShareSheet) {
                 ShareSheetView()
+            }
+            .sheet(isPresented: $showSettings) {
+                SettingsView()
             }
             .sheet(isPresented: $showStreakDetail) {
                 StreakDetailView(profile: profile)

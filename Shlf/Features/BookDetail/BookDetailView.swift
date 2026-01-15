@@ -14,6 +14,7 @@ struct BookDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(\.themeColor) private var themeColor
+    @EnvironmentObject private var quickActionRouter: QuickActionRouter
     @Bindable var book: Book
     @Query private var profiles: [UserProfile]
     @Query private var activeSessions: [ActiveReadingSession]
@@ -101,6 +102,14 @@ struct BookDetailView: View {
         }
         .confetti(isActive: $showConfetti)
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            quickActionRouter.activeBook = book
+        }
+        .onDisappear {
+            if quickActionRouter.activeBook?.id == book.id {
+                quickActionRouter.activeBook = nil
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .principal) {
                 VStack(spacing: 2) {
