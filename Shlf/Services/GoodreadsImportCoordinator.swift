@@ -31,7 +31,9 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
 
     private var pollTimer: Timer?
     private var downloadURL: URL?
+    private var didRequestExport = false
 
+    private let signInURL = URL(string: "https://www.goodreads.com/user/sign_in")!
     private let exportPageURL = URL(string: "https://www.goodreads.com/review/import")!
 
     override init() {
@@ -51,7 +53,8 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
         statusText = String(localized: "Loading Goodreads...")
         downloadedData = nil
         errorMessage = nil
-        let request = URLRequest(url: exportPageURL)
+        didRequestExport = false
+        let request = URLRequest(url: signInURL)
         webView.load(request)
     }
 
@@ -60,7 +63,9 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
         webView.configuration.websiteDataStore.fetchDataRecords(ofTypes: types) { [weak self] records in
             self?.webView.configuration.websiteDataStore.removeData(ofTypes: types, for: records) {
                 GoodreadsImportCoordinator.clearWebsiteData()
-                self?.webView.load(URLRequest(url: self?.exportPageURL ?? URL(string: "https://www.goodreads.com")!))
+                if let signInURL = self?.signInURL {
+                    self?.webView.load(URLRequest(url: signInURL))
+                }
             }
         }
     }
@@ -114,7 +119,9 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
             if let link = result as? String, link.hasPrefix("http"), let url = URL(string: link) {
                 self.phase = .downloading
                 self.statusText = String(localized: "Downloading CSV...")
-                self.webView.load(URLRequest(url: url))
+                Task {
+                    await self.downloadCSV(from: url)
+                }
                 return
             }
 
@@ -149,6 +156,53 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
         phase = .failed(message)
         errorMessage = message
     }
+
+    private func triggerExportIfNeeded() {
+        guard !didRequestExport else { return }
+        didRequestExport = true
+        phase = .exporting
+        statusText = String(localized: "Preparing export...")
+        webView.load(URLRequest(url: exportPageURL))
+    }
+
+    private func downloadCSV(from url: URL) async {
+        do {
+            let cookies = await cookies(for: url)
+            var request = URLRequest(url: url)
+            let headerFields = HTTPCookie.requestHeaderFields(with: cookies)
+            for (header, value) in headerFields {
+                request.setValue(value, forHTTPHeaderField: header)
+            }
+
+            let session = URLSession(configuration: .ephemeral)
+            let (data, response) = try await session.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200..<300).contains(httpResponse.statusCode) else {
+                throw GoodreadsImportError.unreadableFile
+            }
+
+            phase = .finished
+            statusText = String(localized: "Export complete")
+            downloadedData = data
+            stop()
+            Self.clearWebsiteData()
+        } catch {
+            fail(with: error.localizedDescription)
+        }
+    }
+
+    private func cookies(for url: URL) async -> [HTTPCookie] {
+        await withCheckedContinuation { continuation in
+            webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { cookies in
+                let host = url.host?.lowercased() ?? ""
+                let filtered = cookies.filter { cookie in
+                    let domain = cookie.domain.trimmingCharacters(in: CharacterSet(charactersIn: ".")).lowercased()
+                    return host.hasSuffix(domain)
+                }
+                continuation.resume(returning: filtered)
+            }
+        }
+    }
 }
 
 extension GoodreadsImportCoordinator: WKNavigationDelegate, WKUIDelegate {
@@ -156,9 +210,10 @@ extension GoodreadsImportCoordinator: WKNavigationDelegate, WKUIDelegate {
         guard let url = webView.url else { return }
         let path = url.path.lowercased()
 
-        if path.contains("sign_in") || path.contains("signin") {
+        if path.contains("sign_in") || path.contains("signin") || path.contains("sign_up") || path.contains("signup") {
             phase = .waitingForLogin
             statusText = String(localized: "Sign in to Goodreads")
+            didRequestExport = false
             return
         }
 
@@ -166,7 +221,33 @@ extension GoodreadsImportCoordinator: WKNavigationDelegate, WKUIDelegate {
             phase = .exporting
             statusText = String(localized: "Preparing export...")
             handleExportPage()
+        } else {
+            triggerExportIfNeeded()
         }
+    }
+
+    func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse, decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
+        if let response = navigationResponse.response as? HTTPURLResponse,
+           let url = response.url {
+            let mimeType = response.mimeType?.lowercased() ?? ""
+            let disposition = (response.allHeaderFields["Content-Disposition"] as? String)?.lowercased() ?? ""
+            let isCSV = mimeType.contains("text/csv") ||
+                mimeType.contains("application/csv") ||
+                url.path.lowercased().hasSuffix(".csv") ||
+                disposition.contains(".csv") ||
+                disposition.contains("csv")
+
+            if isCSV {
+                phase = .downloading
+                statusText = String(localized: "Downloading CSV...")
+                decisionHandler(.cancel)
+                Task {
+                    await downloadCSV(from: url)
+                }
+                return
+            }
+        }
+        decisionHandler(.allow)
     }
 
     func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) {
