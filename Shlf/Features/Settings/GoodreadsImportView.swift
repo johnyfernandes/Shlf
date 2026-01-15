@@ -14,6 +14,7 @@ struct GoodreadsImportView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
     @Bindable var profile: UserProfile
+    @AppStorage("goodreads_is_connected") private var storedGoodreadsConnected = false
 
     @StateObject private var coordinator = GoodreadsImportCoordinator()
     @State private var showWebImport = false
@@ -36,6 +37,7 @@ struct GoodreadsImportView: View {
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var showUpgradeSheet = false
+    @State private var pulseConnected = false
 
     @State private var options = GoodreadsImportOptions()
 
@@ -127,8 +129,13 @@ struct GoodreadsImportView: View {
         .sheet(isPresented: $showUpgradeSheet) {
             PaywallView()
         }
-        .task {
-            await coordinator.refreshConnectionStatus()
+        .onAppear {
+            Task {
+                await refreshConnectionWithRetry()
+            }
+        }
+        .onChange(of: coordinator.isConnected) { _, isConnected in
+            storedGoodreadsConnected = isConnected
         }
         .onChange(of: coordinator.downloadedData) { _, data in
             guard let data else { return }
@@ -181,6 +188,10 @@ struct GoodreadsImportView: View {
 
                 Text(String(localized: "Import from Goodreads"))
                     .font(.headline)
+
+                Spacer()
+
+                connectionPill
             }
 
             Text(String(localized: "We'll import your library using Goodreads' official export. If Goodreads blocks it, you can upload the export CSV."))
@@ -194,7 +205,7 @@ struct GoodreadsImportView: View {
                     showWebImport = true
                 }
             } label: {
-                Text(String(localized: "Import from Goodreads"))
+                Text(String(localized: coordinator.isConnected ? "Sync now" : "Import from Goodreads"))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
@@ -203,18 +214,70 @@ struct GoodreadsImportView: View {
             }
             .disabled(showCoordinatorProgress || isParsing || isImporting)
 
-            Button {
-                coordinator.disconnect()
-            } label: {
-                Text(String(localized: "Disconnect Goodreads"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            if coordinator.isConnected {
+                Button {
+                    coordinator.disconnect()
+                } label: {
+                    Text(String(localized: "Disconnect Goodreads"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private var connectionPill: some View {
+        let connected = coordinator.isConnected || storedGoodreadsConnected
+        return HStack(spacing: 6) {
+            ZStack {
+                if connected {
+                    Circle()
+                        .fill(Color.green.opacity(0.25))
+                        .frame(width: 12, height: 12)
+                        .scaleEffect(pulseConnected ? 1.6 : 0.9)
+                        .opacity(pulseConnected ? 0.0 : 1.0)
+                }
+
+                Circle()
+                    .fill(connected ? Color.green : Color.secondary)
+                    .frame(width: 7, height: 7)
+            }
+            Text(String(localized: connected ? "Connected" : "Not Connected"))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(connected ? Color.green : Color.secondary)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background((connected ? Color.green.opacity(0.12) : Color.secondary.opacity(0.12)), in: Capsule())
+        .onAppear {
+            updatePulse(for: connected)
+        }
+        .onChange(of: coordinator.isConnected) { _, newValue in
+            updatePulse(for: newValue)
+        }
+    }
+
+    private func updatePulse(for connected: Bool) {
+        guard connected else {
+            pulseConnected = false
+            return
+        }
+
+        pulseConnected = false
+        withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
+            pulseConnected = true
+        }
+    }
+
+    private func refreshConnectionWithRetry() async {
+        await coordinator.refreshConnectionStatus()
+        guard !coordinator.isConnected else { return }
+        try? await Task.sleep(for: .milliseconds(650))
+        await coordinator.refreshConnectionStatus()
     }
 
     private var manualImportSection: some View {
