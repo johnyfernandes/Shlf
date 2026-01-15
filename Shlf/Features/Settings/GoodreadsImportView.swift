@@ -179,7 +179,8 @@ struct GoodreadsImportView: View {
     }
 
     private var automatedImportSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        let displayConnected = coordinator.isConnected || storedGoodreadsConnected
+        return VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 6) {
                 Image(systemName: "arrow.down.doc")
                     .font(.caption)
@@ -199,13 +200,13 @@ struct GoodreadsImportView: View {
                 .foregroundStyle(.secondary)
 
             Button {
-                if coordinator.isConnected {
+                if displayConnected {
                     coordinator.start(syncOnly: true)
                 } else {
                     showWebImport = true
                 }
             } label: {
-                Text(String(localized: coordinator.isConnected ? "Sync now" : "Import from Goodreads"))
+                Text(String(localized: displayConnected ? "Sync now" : "Import from Goodreads"))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
@@ -214,9 +215,10 @@ struct GoodreadsImportView: View {
             }
             .disabled(showCoordinatorProgress || isParsing || isImporting)
 
-            if coordinator.isConnected {
+            if displayConnected {
                 Button {
                     coordinator.disconnect()
+                    storedGoodreadsConnected = false
                 } label: {
                     Text(String(localized: "Disconnect Goodreads"))
                         .font(.caption)
