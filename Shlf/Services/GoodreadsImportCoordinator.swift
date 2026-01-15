@@ -32,6 +32,8 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
     private var pollTimer: Timer?
     private var downloadURL: URL?
     private var didRequestExport = false
+    private var didAutoClickExport = false
+    private var exportPollCount = 0
 
     private let signInURL = URL(string: "https://www.goodreads.com/user/sign_in")!
     private let exportPageURL = URL(string: "https://www.goodreads.com/review/import")!
@@ -54,6 +56,8 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
         downloadedData = nil
         errorMessage = nil
         didRequestExport = false
+        didAutoClickExport = false
+        exportPollCount = 0
         let request = URLRequest(url: signInURL)
         webView.load(request)
     }
@@ -73,6 +77,7 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
     func stop() {
         pollTimer?.invalidate()
         pollTimer = nil
+        exportPollCount = 0
     }
 
     static func clearWebsiteData(completion: (() -> Void)? = nil) {
@@ -88,28 +93,32 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
     private func handleExportPage() {
         let script = #"""
         (() => {
-          const link = [...document.querySelectorAll('a')].find(a => {
-            if (!a.href) return false;
-            const href = a.href.toLowerCase();
-            const text = (a.textContent || '').toLowerCase();
-            return (href.includes('export') || href.includes('review/import')) && (href.includes('.csv') || text.includes('csv'));
-          });
-          if (link) { return link.href; }
-
-          const exportButton = [...document.querySelectorAll('input[type="submit"], button')].find(el => {
+          const exportButton = document.querySelector('.js-LibraryExport') || [...document.querySelectorAll('input[type="submit"], button')].find(el => {
             const text = ((el.value || '') + ' ' + (el.textContent || '')).toLowerCase();
             return text.includes('export');
           });
-          if (exportButton) { exportButton.click(); return 'export_clicked'; }
-
+          const statusEl = document.getElementById('exportStatusText');
+          const fileList = document.getElementById('exportFile');
+          const statusText = statusEl ? statusEl.textContent.toLowerCase() : '';
           const bodyText = document.body ? document.body.innerText.toLowerCase() : '';
-          if (bodyText.includes('export is in progress') || bodyText.includes('export in progress') || bodyText.includes('exporting')) {
+
+          if (!window.__shlfExportClicked && exportButton) {
+            exportButton.click();
+            window.__shlfExportClicked = true;
+            return 'export_clicked';
+          }
+
+          if (statusText.includes('generating') || statusText.includes('export is in progress') || statusText.includes('export in progress') || bodyText.includes('export is in progress')) {
             return 'export_pending';
           }
+
+          const link = fileList ? fileList.querySelector('a[href*=\".csv\"], a[href*=\"goodreads_export.csv\"]') : null;
+          if (link && link.href) { return link.href; }
+
           if (bodyText.includes('captcha') || bodyText.includes('robot')) {
             return 'captcha';
           }
-          return 'no_action';
+          return 'waiting';
         })();
         """#
 
@@ -128,6 +137,7 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
             if let resultString = result as? String {
                 switch resultString {
                 case "export_clicked":
+                    self.didAutoClickExport = true
                     self.phase = .waitingForExport
                     self.statusText = String(localized: "Export started. Waiting for file...")
                     self.startPolling()
@@ -137,6 +147,10 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
                     self.startPolling()
                 case "captcha":
                     self.fail(with: String(localized: "Goodreads blocked automated export. Please use manual CSV upload."))
+                case "waiting":
+                    self.phase = .waitingForExport
+                    self.statusText = String(localized: "Waiting for export to finish...")
+                    self.startPolling()
                 default:
                     self.fail(with: String(localized: "We couldn't find the Export Library page. Goodreads may have changed something."))
                 }
@@ -147,7 +161,13 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
     private func startPolling() {
         guard pollTimer == nil else { return }
         pollTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { [weak self] _ in
-            self?.handleExportPage()
+            guard let self else { return }
+            self.exportPollCount += 1
+            if self.exportPollCount > 60 {
+                self.fail(with: String(localized: "Export is taking too long. Please try manual CSV upload."))
+                return
+            }
+            self.handleExportPage()
         }
     }
 
@@ -214,6 +234,7 @@ extension GoodreadsImportCoordinator: WKNavigationDelegate, WKUIDelegate {
             phase = .waitingForLogin
             statusText = String(localized: "Sign in to Goodreads")
             didRequestExport = false
+            didAutoClickExport = false
             return
         }
 

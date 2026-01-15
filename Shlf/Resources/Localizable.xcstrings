@@ -24774,6 +24774,40 @@
           }
         }
       }
+    },
+    "Export is taking too long. Please try manual CSV upload." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Export dauert zu lange. Bitte nutze den manuellen CSV-Upload."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export is taking too long. Please try manual CSV upload."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La exportación está tardando demasiado. Usa la subida manual del CSV."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’export prend trop de temps. Utilise le téléversement CSV manuel."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A exportação está a demorar demasiado. Usa o envio manual do CSV."
+          }
+        }
+      }
     }
   },
   "version" : "1.1"
