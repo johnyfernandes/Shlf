@@ -25254,6 +25254,34 @@
           }
         }
       }
+    },
+    "Disconnecting will remove the Goodreads session from this device. You can reconnect anytime.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Durch das Trennen wird die Goodreads-Sitzung von diesem Gerät entfernt. Du kannst jederzeit erneut verbinden."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Al desconectar se eliminará la sesión de Goodreads de este dispositivo. Puedes reconectar en cualquier momento."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La déconnexion supprimera la session Goodreads de cet appareil. Vous pouvez vous reconnecter à tout moment."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ao desligar, a sessão do Goodreads será removida deste dispositivo. Pode voltar a ligar a qualquer momento."
+          }
+        }
+      }
     }
   },
   "version": "1.1"

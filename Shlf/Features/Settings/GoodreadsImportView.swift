@@ -15,6 +15,7 @@ struct GoodreadsImportView: View {
     @Environment(\.themeColor) private var themeColor
     @Bindable var profile: UserProfile
     @AppStorage("goodreads_is_connected") private var storedGoodreadsConnected = false
+    @AppStorage("goodreads_force_disconnected") private var forceGoodreadsDisconnected = false
 
     @StateObject private var coordinator = GoodreadsImportCoordinator()
     @State private var showWebImport = false
@@ -37,6 +38,7 @@ struct GoodreadsImportView: View {
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var showUpgradeSheet = false
+    @State private var showDisconnectAlert = false
     @State private var pulseConnected = false
 
     @State private var options = GoodreadsImportOptions()
@@ -129,12 +131,23 @@ struct GoodreadsImportView: View {
         .sheet(isPresented: $showUpgradeSheet) {
             PaywallView()
         }
+        .alert(String(localized: "Disconnect Goodreads"), isPresented: $showDisconnectAlert) {
+            Button(String(localized: "Cancel"), role: .cancel) {}
+            Button(String(localized: "Disconnect"), role: .destructive) {
+                forceGoodreadsDisconnected = true
+                coordinator.disconnect()
+                storedGoodreadsConnected = false
+            }
+        } message: {
+            Text(String(localized: "Disconnecting will remove the Goodreads session from this device. You can reconnect anytime."))
+        }
         .onAppear {
             Task {
                 await refreshConnectionWithRetry()
             }
         }
         .onChange(of: coordinator.isConnected) { _, isConnected in
+            guard !forceGoodreadsDisconnected else { return }
             storedGoodreadsConnected = isConnected
         }
         .onChange(of: coordinator.downloadedData) { _, data in
@@ -179,7 +192,7 @@ struct GoodreadsImportView: View {
     }
 
     private var automatedImportSection: some View {
-        let displayConnected = coordinator.isConnected || storedGoodreadsConnected
+        let displayConnected = (coordinator.isConnected || storedGoodreadsConnected) && !forceGoodreadsDisconnected
         return VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 6) {
                 Image(systemName: "arrow.down.doc")
@@ -203,6 +216,7 @@ struct GoodreadsImportView: View {
                 if displayConnected {
                     coordinator.start(syncOnly: true)
                 } else {
+                    forceGoodreadsDisconnected = false
                     showWebImport = true
                 }
             } label: {
@@ -217,8 +231,7 @@ struct GoodreadsImportView: View {
 
             if displayConnected {
                 Button {
-                    coordinator.disconnect()
-                    storedGoodreadsConnected = false
+                    showDisconnectAlert = true
                 } label: {
                     Text(String(localized: "Disconnect Goodreads"))
                         .font(.caption)
@@ -233,7 +246,7 @@ struct GoodreadsImportView: View {
     }
 
     private var connectionPill: some View {
-        let connected = coordinator.isConnected || storedGoodreadsConnected
+        let connected = (coordinator.isConnected || storedGoodreadsConnected) && !forceGoodreadsDisconnected
         return HStack(spacing: 6) {
             ZStack {
                 if connected {
