@@ -82,7 +82,7 @@ struct GoodreadsImportView: View {
             }
             .scrollIndicators(.hidden)
 
-            if !showWebImport, coordinator.phase != .idle {
+            if !showWebImport {
                 GoodreadsWebView(webView: coordinator.webView)
                     .frame(width: 1, height: 1)
                     .opacity(0.01)
@@ -127,6 +127,9 @@ struct GoodreadsImportView: View {
         .sheet(isPresented: $showUpgradeSheet) {
             PaywallView()
         }
+        .task {
+            await coordinator.refreshConnectionStatus()
+        }
         .onChange(of: coordinator.downloadedData) { _, data in
             guard let data else { return }
             handleCSVData(data, fileName: "goodreads_library_export.csv")
@@ -135,6 +138,18 @@ struct GoodreadsImportView: View {
             guard let message else { return }
             errorMessage = message
             showError = true
+        }
+        .onChange(of: coordinator.requiresLogin) { _, requiresLogin in
+            if requiresLogin {
+                showWebImport = true
+            }
+        }
+        .onChange(of: coordinator.phase) { _, newPhase in
+            if case .finished = newPhase {
+                Task { @MainActor in
+                    await coordinator.refreshConnectionStatus()
+                }
+            }
         }
     }
 
@@ -173,7 +188,11 @@ struct GoodreadsImportView: View {
                 .foregroundStyle(.secondary)
 
             Button {
-                showWebImport = true
+                if coordinator.isConnected {
+                    coordinator.start(syncOnly: true)
+                } else {
+                    showWebImport = true
+                }
             } label: {
                 Text(String(localized: "Import from Goodreads"))
                     .font(.subheadline.weight(.semibold))

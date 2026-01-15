@@ -26,6 +26,8 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
     @Published var statusText: String = String(localized: "Loading Goodreads...")
     @Published var downloadedData: Data?
     @Published var errorMessage: String?
+    @Published var isConnected: Bool = false
+    @Published var requiresLogin: Bool = false
 
     let webView: WKWebView
 
@@ -34,13 +36,14 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
     private var didRequestExport = false
     private var didAutoClickExport = false
     private var exportPollCount = 0
+    private var isSyncOnly = false
 
     private let signInURL = URL(string: "https://www.goodreads.com/user/sign_in")!
     private let exportPageURL = URL(string: "https://www.goodreads.com/review/import")!
 
     override init() {
         let config = WKWebViewConfiguration()
-        config.websiteDataStore = .nonPersistent()
+        config.websiteDataStore = .default()
         config.defaultWebpagePreferences.allowsContentJavaScript = true
         self.webView = WKWebView(frame: .zero, configuration: config)
 
@@ -50,7 +53,9 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
         webView.uiDelegate = self
     }
 
-    func start() {
+    func start(syncOnly: Bool = false) {
+        isSyncOnly = syncOnly
+        requiresLogin = false
         phase = .idle
         statusText = String(localized: "Loading Goodreads...")
         downloadedData = nil
@@ -58,7 +63,7 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
         didRequestExport = false
         didAutoClickExport = false
         exportPollCount = 0
-        let request = URLRequest(url: signInURL)
+        let request = URLRequest(url: syncOnly ? exportPageURL : signInURL)
         webView.load(request)
     }
 
@@ -67,9 +72,31 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
         webView.configuration.websiteDataStore.fetchDataRecords(ofTypes: types) { [weak self] records in
             self?.webView.configuration.websiteDataStore.removeData(ofTypes: types, for: records) {
                 GoodreadsImportCoordinator.clearWebsiteData()
+                Task { @MainActor in
+                    self?.isConnected = false
+                }
                 if let signInURL = self?.signInURL {
                     self?.webView.load(URLRequest(url: signInURL))
                 }
+            }
+        }
+    }
+
+    func refreshConnectionStatus() async {
+        isConnected = await Self.hasGoodreadsSession()
+    }
+
+    static func hasGoodreadsSession() async -> Bool {
+        await withCheckedContinuation { continuation in
+            WKWebsiteDataStore.default().httpCookieStore.getAllCookies { cookies in
+                let now = Date()
+                let connected = cookies.contains { cookie in
+                    let domain = cookie.domain.lowercased()
+                    let isGoodreads = domain.contains("goodreads.com")
+                    let expires = cookie.expiresDate ?? now.addingTimeInterval(3600)
+                    return isGoodreads && expires > now
+                }
+                continuation.resume(returning: connected)
             }
         }
     }
@@ -93,6 +120,11 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
     private func handleExportPage() {
         let script = #"""
         (() => {
+          if (document.readyState !== 'complete') { return 'loading'; }
+          const bodyText = document.body ? document.body.innerText.toLowerCase() : '';
+          if (bodyText.includes('continue with amazon') || bodyText.includes('continue with apple')) { return 'login_required'; }
+          if (bodyText.includes('already a member') && bodyText.includes('sign in')) { return 'login_required'; }
+
           const exportButton = document.querySelector('.js-LibraryExport') || [...document.querySelectorAll('input[type="submit"], button')].find(el => {
             const text = ((el.value || '') + ' ' + (el.textContent || '')).toLowerCase();
             return text.includes('export');
@@ -100,7 +132,8 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
           const statusEl = document.getElementById('exportStatusText');
           const fileList = document.getElementById('exportFile');
           const statusText = statusEl ? statusEl.textContent.toLowerCase() : '';
-          const bodyText = document.body ? document.body.innerText.toLowerCase() : '';
+          const loginForm = document.querySelector('form#sign_in, form[action*="sign_in"], input[name="user[email]"], input[name="user[password]"]');
+          if (loginForm) { return 'login_required'; }
 
           if (!window.__shlfExportClicked && exportButton) {
             exportButton.click();
@@ -122,8 +155,15 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
         })();
         """#
 
-        webView.evaluateJavaScript(script) { [weak self] result, _ in
+        webView.evaluateJavaScript(script) { [weak self] result, error in
             guard let self else { return }
+
+            if error != nil {
+                self.phase = .waitingForExport
+                self.statusText = String(localized: "Loading export page...")
+                self.startPolling()
+                return
+            }
 
             if let link = result as? String, link.hasPrefix("http"), let url = URL(string: link) {
                 self.phase = .downloading
@@ -136,6 +176,18 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
 
             if let resultString = result as? String {
                 switch resultString {
+                case "loading":
+                    self.phase = .waitingForExport
+                    self.statusText = String(localized: "Loading export page...")
+                    self.startPolling()
+                case "login_required":
+                    self.stop()
+                    self.phase = .waitingForLogin
+                    self.statusText = String(localized: "Sign in to Goodreads")
+                    if self.isSyncOnly {
+                        self.requiresLogin = true
+                    }
+                    self.webView.load(URLRequest(url: self.signInURL))
                 case "export_clicked":
                     self.didAutoClickExport = true
                     self.phase = .waitingForExport
@@ -154,6 +206,10 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
                 default:
                     self.fail(with: String(localized: "We couldn't find the Export Library page. Goodreads may have changed something."))
                 }
+            } else {
+                self.phase = .waitingForExport
+                self.statusText = String(localized: "Loading export page...")
+                self.startPolling()
             }
         }
     }
@@ -205,7 +261,6 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
             statusText = String(localized: "Export complete")
             downloadedData = data
             stop()
-            Self.clearWebsiteData()
         } catch {
             fail(with: error.localizedDescription)
         }
@@ -235,12 +290,18 @@ extension GoodreadsImportCoordinator: WKNavigationDelegate, WKUIDelegate {
             statusText = String(localized: "Sign in to Goodreads")
             didRequestExport = false
             didAutoClickExport = false
+            isConnected = false
+            if isSyncOnly {
+                requiresLogin = true
+            }
             return
         }
 
         if path.contains("/review/import") {
+            isConnected = true
             phase = .exporting
             statusText = String(localized: "Preparing export...")
+            requiresLogin = false
             handleExportPage()
         } else {
             triggerExportIfNeeded()
@@ -304,7 +365,6 @@ extension GoodreadsImportCoordinator: WKDownloadDelegate {
             statusText = String(localized: "Export complete")
             downloadedData = data
             stop()
-            Self.clearWebsiteData()
         } catch {
             fail(with: error.localizedDescription)
         }
