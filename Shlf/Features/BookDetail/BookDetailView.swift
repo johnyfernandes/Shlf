@@ -45,6 +45,11 @@ struct BookDetailView: View {
         (book.readingSessions ?? []).contains { $0.countsTowardStats }
     }
 
+    private var needsPageCount: Bool {
+        guard let totalPages = book.totalPages else { return true }
+        return totalPages <= 0
+    }
+
     var body: some View {
         ZStack(alignment: .top) {
             // Dynamic gradient background that follows theme
@@ -74,6 +79,10 @@ struct BookDetailView: View {
                         // Progress interface (when currently reading)
                         if book.readingStatus == .currentlyReading {
                             progressInterface
+                        }
+
+                        if needsPageCount {
+                            missingPagesCard
                         }
 
                         // Compact stats overview
@@ -482,6 +491,36 @@ struct BookDetailView: View {
             insertion: .scale.combined(with: .opacity),
             removal: .scale(scale: 0.95).combined(with: .opacity)
         ))
+    }
+
+    private var missingPagesCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "number.circle")
+                    .font(.caption)
+                    .foregroundStyle(themeColor.color)
+                    .frame(width: 16)
+
+                Text(String(localized: "Add total pages"))
+                    .font(.headline)
+            }
+
+            Text(String(localized: "Add pages to track progress and sessions."))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Button {
+                showEditBook = true
+            } label: {
+                Text(String(localized: "Add pages"))
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(themeColor.color)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     // MARK: - Stats Overview
