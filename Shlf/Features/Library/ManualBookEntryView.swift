@@ -88,7 +88,6 @@ struct ManualBookEntryView: View {
                             essentialInfoSection
                             progressSection
                             typeStatusSection
-                            ratingSection
                             publishingDetailsSection
                             descriptionSection
                             notesSection
@@ -219,6 +218,8 @@ struct ManualBookEntryView: View {
                     }
                 }
             }
+
+            ratingCompactSection
         }
         .frame(maxWidth: .infinity)
     }
@@ -379,24 +380,16 @@ struct ManualBookEntryView: View {
 
     // MARK: - Rating Section
 
-    private var ratingSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
-                Image(systemName: "star.fill")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(themeColor.color)
-                    .frame(width: 20)
+    private var ratingCompactSection: some View {
+        VStack(spacing: 8) {
+            Text("Rating")
+                .font(.caption.weight(.medium))
+                .foregroundStyle(Theme.Colors.secondaryText)
 
-                Text("Rating")
-                    .font(Theme.Typography.headline)
-                    .foregroundStyle(Theme.Colors.text)
-            }
-            .padding(.leading, 4)
-
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 ForEach(1...5, id: \.self) { starRating in
                     Button {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
                             if rating == starRating {
                                 rating = nil
                             } else {
@@ -405,29 +398,15 @@ struct ManualBookEntryView: View {
                         }
                     } label: {
                         Image(systemName: (rating ?? 0) >= starRating ? "star.fill" : "star")
-                            .font(.title2)
+                            .font(.subheadline)
                             .foregroundStyle((rating ?? 0) >= starRating ? themeColor.color : Theme.Colors.tertiaryText)
-                            .symbolEffect(.bounce, value: rating)
                     }
                     .buttonStyle(.plain)
                 }
-
-                if rating != nil {
-                    Spacer()
-
-                    Button {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            rating = nil
-                        }
-                    } label: {
-                        Text("Clear")
-                            .font(.caption.weight(.medium))
-                            .foregroundStyle(Theme.Colors.tertiaryText)
-                    }
-                }
             }
-            .padding(16)
-            .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .padding(.vertical, 8)
+            .padding(.horizontal, 16)
+            .background(Theme.Colors.secondaryBackground, in: Capsule())
         }
     }
 
