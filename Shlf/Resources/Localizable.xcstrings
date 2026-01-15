@@ -25678,6 +25678,34 @@
           }
         }
       }
+    },
+    "Update your current page and total pages.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktualisiere deine aktuelle Seite und die Gesamtseiten."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actualiza tu página actual y el total de páginas."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mettez à jour votre page actuelle et le total de pages."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Atualiza a tua página atual e o total de páginas."
+          }
+        }
+      }
     }
   },
   "version": "1.1"

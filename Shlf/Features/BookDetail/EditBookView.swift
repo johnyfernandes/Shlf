@@ -234,18 +234,31 @@ struct EditBookView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
                 Image(systemName: "chart.line.uptrend.xyaxis")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(themeColor.color)
-                    .frame(width: 20)
+                    .frame(width: 16)
 
                 Text("Reading Progress")
-                    .font(Theme.Typography.headline)
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.Colors.text)
             }
-            .padding(.leading, 4)
+            .padding(.leading, 2)
 
-            HStack(spacing: 12) {
-                ModernNumberField(
+            Text("Update your current page and total pages.")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .padding(.leading, 2)
+
+            HStack(spacing: 10) {
+                CompactNumberField(
+                    title: "Current Page",
+                    value: $book.currentPage,
+                    icon: "bookmark.fill",
+                    focused: $focusedField,
+                    field: .currentPage
+                )
+
+                CompactNumberField(
                     title: "Total Pages",
                     value: Binding(
                         get: { book.totalPages ?? 0 },
@@ -254,14 +267,6 @@ struct EditBookView: View {
                     icon: "book.pages",
                     focused: $focusedField,
                     field: .totalPages
-                )
-
-                ModernNumberField(
-                    title: "Current Page",
-                    value: $book.currentPage,
-                    icon: "bookmark.fill",
-                    focused: $focusedField,
-                    field: .currentPage
                 )
             }
 
@@ -609,6 +614,47 @@ struct ModernNumberField<Field: Hashable>: View {
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.center)
                 .padding(.vertical, 16)
+                .frame(maxWidth: .infinity)
+                .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(focused == field ? themeColor.color : .clear, lineWidth: 2)
+                )
+                .focused($focused, equals: field)
+        }
+    }
+}
+
+// MARK: - Compact Number Field
+
+struct CompactNumberField<Field: Hashable>: View {
+    let title: String
+    @Binding var value: Int
+    let icon: String
+    @FocusState.Binding var focused: Field?
+    let field: Field
+    @Environment(\.themeColor) private var themeColor
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.caption2)
+                    .foregroundStyle(themeColor.color)
+                    .frame(width: 14)
+
+                Text(title)
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(Theme.Colors.secondaryText)
+            }
+            .padding(.leading, 2)
+
+            TextField("0", value: $value, format: .number)
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(Theme.Colors.text)
+                .keyboardType(.numberPad)
+                .multilineTextAlignment(.center)
+                .padding(.vertical, 10)
                 .frame(maxWidth: .infinity)
                 .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .overlay(
