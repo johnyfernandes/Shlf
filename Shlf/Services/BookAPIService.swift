@@ -52,6 +52,13 @@ struct WorkDetails {
     let coverImageURL: URL?
 }
 
+struct EditionDetails {
+    let workID: String?
+    let description: String?
+    let notes: String?
+    let firstSentence: String?
+}
+
 enum BookAPIError: Error {
     case networkError
     case invalidResponse
@@ -119,11 +126,19 @@ final class BookAPIService {
         try await fetchWorkDetailsOLID(workID: workID)
     }
 
+    func fetchEditionDetails(isbn: String) async throws -> EditionDetails {
+        try await fetchEditionDetailsByISBN(isbn: isbn)
+    }
+
     func resolveWorkID(isbn: String) async throws -> String? {
         let cleanISBN = sanitizeISBN(isbn)
 
         guard cleanISBN.count == 10 || cleanISBN.count == 13 else {
             throw BookAPIError.invalidISBN
+        }
+
+        if let workID = try? await fetchEditionDetailsByISBN(isbn: cleanISBN).workID {
+            return workID
         }
 
         var components = URLComponents()
@@ -512,6 +527,20 @@ final class BookAPIService {
         )
     }
 
+    private func parseEditionDetails(_ json: [String: Any]) -> EditionDetails {
+        let description = extractText(from: json["description"])
+        let notes = extractText(from: json["notes"])
+        let firstSentence = extractText(from: json["first_sentence"])
+        let workID = extractWorkID(from: json)
+
+        return EditionDetails(
+            workID: workID,
+            description: description,
+            notes: notes,
+            firstSentence: firstSentence
+        )
+    }
+
     // MARK: - Best Edition Selection
 
     private func fetchBestEditionOLID(workID: String, originalTitle: String) async throws -> String? {
@@ -594,6 +623,29 @@ final class BookAPIService {
             }
 
             return self.parseWorkDetails(json)
+        }
+    }
+
+    private func fetchEditionDetailsByISBN(isbn: String) async throws -> EditionDetails {
+        try await retryPolicy.execute {
+            let urlString = "https://openlibrary.org/isbn/\(isbn).json"
+            guard let url = URL(string: urlString) else {
+                throw BookAPIError.invalidResponse
+            }
+
+            await self.rateLimiter.waitForToken()
+            let (data, response) = try await self.urlSession.data(from: url)
+
+            guard let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200 else {
+                throw BookAPIError.networkError
+            }
+
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                throw BookAPIError.invalidResponse
+            }
+
+            return self.parseEditionDetails(json)
         }
     }
 
@@ -780,6 +832,19 @@ final class BookAPIService {
            let key = firstLang["key"] as? String {
             let code = key.replacingOccurrences(of: "/languages/", with: "")
             return formatLanguageCode(code)
+        }
+        return nil
+    }
+
+    private func extractText(from value: Any?) -> String? {
+        if let text = value as? String {
+            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty ? nil : trimmed
+        }
+        if let dict = value as? [String: Any],
+           let text = dict["value"] as? String {
+            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty ? nil : trimmed
         }
         return nil
     }

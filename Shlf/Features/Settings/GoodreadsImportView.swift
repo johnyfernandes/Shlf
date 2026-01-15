@@ -23,9 +23,13 @@ struct GoodreadsImportView: View {
     @State private var result: GoodreadsImportResult?
     @State private var isParsing = false
     @State private var isImporting = false
+    @State private var isEnrichingDescriptions = false
     @State private var importProgressCurrent = 0
     @State private var importProgressTotal = 0
     @State private var importProgressTitle: String?
+    @State private var descriptionProgressCurrent = 0
+    @State private var descriptionProgressTotal = 0
+    @State private var descriptionProgressTitle: String?
     @State private var pendingDocument: GoodreadsImportDocument?
     @State private var duplicateCount: Int = 0
     @State private var showDuplicateAlert = false
@@ -245,6 +249,10 @@ struct GoodreadsImportView: View {
                 importProgressView
             }
 
+            if isEnrichingDescriptions {
+                descriptionProgressView
+            }
+
             if let result {
                 Divider()
 
@@ -294,6 +302,25 @@ struct GoodreadsImportView: View {
 
             if let title = importProgressTitle, !title.isEmpty {
                 Text(String.localizedStringWithFormat(String(localized: "Adding %@"), title))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var descriptionProgressView: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            let total = max(descriptionProgressTotal, 1)
+            let current = min(descriptionProgressCurrent, total)
+            ProgressView(value: Double(current), total: Double(total))
+                .progressViewStyle(.linear)
+
+            Text(String.localizedStringWithFormat(String(localized: "Fetching descriptions %lld of %lld"), current, total))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            if let title = descriptionProgressTitle, !title.isEmpty {
+                Text(String.localizedStringWithFormat(String(localized: "Adding description for %@"), title))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
@@ -400,6 +427,10 @@ struct GoodreadsImportView: View {
         importProgressCurrent = 0
         importProgressTotal = document.rows.count
         importProgressTitle = nil
+        isEnrichingDescriptions = false
+        descriptionProgressCurrent = 0
+        descriptionProgressTotal = 0
+        descriptionProgressTitle = nil
         pendingDocument = document
 
         options.preferGoodreadsData = preferGoodreadsData
@@ -430,6 +461,27 @@ struct GoodreadsImportView: View {
             isImporting = false
             importProgressTitle = nil
             pendingDocument = nil
+
+            if let importResult = result, !importResult.booksNeedingDescriptions.isEmpty {
+                isEnrichingDescriptions = true
+                descriptionProgressTotal = importResult.booksNeedingDescriptions.count
+                descriptionProgressCurrent = 0
+                descriptionProgressTitle = nil
+                let booksToEnrich = importResult.booksNeedingDescriptions
+
+                Task { @MainActor in
+                    await GoodreadsImportService.enrichDescriptions(
+                        books: booksToEnrich,
+                        modelContext: modelContext
+                    ) { current, total, title in
+                        descriptionProgressCurrent = current
+                        descriptionProgressTotal = total
+                        descriptionProgressTitle = title
+                    }
+                    isEnrichingDescriptions = false
+                    descriptionProgressTitle = nil
+                }
+            }
         }
     }
 }
