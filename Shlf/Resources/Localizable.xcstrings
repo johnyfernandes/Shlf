@@ -2280,6 +2280,40 @@
         }
       }
     },
+    "Adding %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hinzufügen: %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adding %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadiendo %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajout de %@"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A adicionar %@"
+          }
+        }
+      }
+    },
     "Adjust Pages" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3851,6 +3885,41 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancelar"
+          }
+        }
+      }
+    },
+    "Cancel Import" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import abbrechen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel Import"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar importación"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler l’importation"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar importação"
           }
         }
       }
@@ -7846,6 +7915,40 @@
         }
       }
     },
+    "Export is taking too long. Please try manual CSV upload." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Export dauert zu lange. Bitte nutze den manuellen CSV-Upload."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export is taking too long. Please try manual CSV upload."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La exportación está tardando demasiado. Usa la subida manual del CSV."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’export prend trop de temps. Utilise le téléversement CSV manuel."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A exportação está a demorar demasiado. Usa o envio manual do CSV."
+          }
+        }
+      }
+    },
     "Export Reading Data" : {
       "localizations" : {
         "de" : {
@@ -10178,7 +10281,77 @@
         }
       }
     },
+    "Importing %lld of %lld books" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importiere %lld von %lld Büchern"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importing %lld of %lld books"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importando %lld de %lld libros"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importation de %lld sur %lld livres"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A importar %lld de %lld livros"
+          }
+        }
+      }
+    },
+    "Importing your library..." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bibliothek wird importiert..."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importing your library..."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importando tu biblioteca..."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importation de ta bibliothèque..."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A importar a tua biblioteca..."
+          }
+        }
+      }
+    },
     "Importing..." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -10738,6 +10911,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Continuar a ler"
+          }
+        }
+      }
+    },
+    "Keep this screen open while we import." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lass diesen Bildschirm geöffnet, während wir importieren."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep this screen open while we import."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantén esta pantalla abierta mientras importamos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garde cet écran ouvert pendant l’import."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantém este ecrã aberto enquanto importamos."
           }
         }
       }
@@ -24771,40 +24978,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "A tua sessão ainda está ativa. Sair não a termina, mas não poderás acompanhar páginas até voltares."
-          }
-        }
-      }
-    },
-    "Export is taking too long. Please try manual CSV upload." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Der Export dauert zu lange. Bitte nutze den manuellen CSV-Upload."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Export is taking too long. Please try manual CSV upload."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La exportación está tardando demasiado. Usa la subida manual del CSV."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "L’export prend trop de temps. Utilise le téléversement CSV manuel."
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A exportação está a demorar demasiado. Usa o envio manual do CSV."
           }
         }
       }

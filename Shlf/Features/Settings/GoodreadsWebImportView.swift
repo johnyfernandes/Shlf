@@ -7,19 +7,18 @@
 
 #if os(iOS) && !WIDGET_EXTENSION
 import SwiftUI
-import WebKit
 
 struct GoodreadsWebImportView: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var coordinator: GoodreadsImportCoordinator
+    @ObservedObject var coordinator: GoodreadsImportCoordinator
 
-    let onCSVData: (Data) -> Void
-    let onError: (String) -> Void
-
-    init(onCSVData: @escaping (Data) -> Void, onError: @escaping (String) -> Void) {
-        self.onCSVData = onCSVData
-        self.onError = onError
-        _coordinator = StateObject(wrappedValue: GoodreadsImportCoordinator())
+    private var showsWebView: Bool {
+        switch coordinator.phase {
+        case .idle, .waitingForLogin:
+            return true
+        default:
+            return false
+        }
     }
 
     var body: some View {
@@ -45,6 +44,9 @@ struct GoodreadsWebImportView: View {
 
                 GoodreadsWebView(webView: coordinator.webView)
                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .opacity(showsWebView ? 1 : 0.01)
+                    .frame(height: showsWebView ? nil : 1)
+                    .allowsHitTesting(showsWebView)
             }
             .padding(16)
             .navigationTitle(String(localized: "Goodreads"))
@@ -52,6 +54,7 @@ struct GoodreadsWebImportView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button(String(localized: "Close")) {
+                        coordinator.stop()
                         dismiss()
                     }
                 }
@@ -64,30 +67,15 @@ struct GoodreadsWebImportView: View {
             .onAppear {
                 coordinator.start()
             }
-            .onDisappear {
-                coordinator.stop()
-            }
-            .onChange(of: coordinator.downloadedData) { _, data in
-                guard let data else { return }
-                onCSVData(data)
-                dismiss()
-            }
-            .onChange(of: coordinator.errorMessage) { _, message in
-                guard let message else { return }
-                onError(message)
-                dismiss()
+            .onChange(of: coordinator.phase) { _, newPhase in
+                switch newPhase {
+                case .exporting, .waitingForExport, .downloading, .finished, .failed:
+                    dismiss()
+                case .idle, .waitingForLogin:
+                    break
+                }
             }
         }
     }
-}
-
-private struct GoodreadsWebView: UIViewRepresentable {
-    let webView: WKWebView
-
-    func makeUIView(context: Context) -> WKWebView {
-        webView
-    }
-
-    func updateUIView(_ uiView: WKWebView, context: Context) {}
 }
 #endif

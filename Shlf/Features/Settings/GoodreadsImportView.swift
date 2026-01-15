@@ -15,6 +15,7 @@ struct GoodreadsImportView: View {
     @Environment(\.themeColor) private var themeColor
     @Bindable var profile: UserProfile
 
+    @StateObject private var coordinator = GoodreadsImportCoordinator()
     @State private var showWebImport = false
     @State private var showImporter = false
     @State private var selectedFileName: String?
@@ -22,6 +23,9 @@ struct GoodreadsImportView: View {
     @State private var result: GoodreadsImportResult?
     @State private var isParsing = false
     @State private var isImporting = false
+    @State private var importProgressCurrent = 0
+    @State private var importProgressTotal = 0
+    @State private var importProgressTitle: String?
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var showUpgradeSheet = false
@@ -30,6 +34,15 @@ struct GoodreadsImportView: View {
 
     private var isProUser: Bool {
         ProAccess.isProUser(profile: profile)
+    }
+
+    private var showCoordinatorProgress: Bool {
+        switch coordinator.phase {
+        case .exporting, .waitingForExport, .downloading:
+            return true
+        default:
+            return false
+        }
     }
 
     var body: some View {
@@ -47,6 +60,9 @@ struct GoodreadsImportView: View {
 
             ScrollView {
                 VStack(spacing: 20) {
+                    if showCoordinatorProgress {
+                        coordinatorProgressCard
+                    }
                     automatedImportSection
                     manualImportSection
                     optionsSection
@@ -57,6 +73,14 @@ struct GoodreadsImportView: View {
                 .padding(.bottom, 40)
             }
             .scrollIndicators(.hidden)
+
+            if !showWebImport, coordinator.phase != .idle {
+                GoodreadsWebView(webView: coordinator.webView)
+                    .frame(width: 1, height: 1)
+                    .opacity(0.01)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+            }
         }
         .navigationTitle(String(localized: "Goodreads"))
         .navigationBarTitleDisplayMode(.inline)
@@ -80,16 +104,38 @@ struct GoodreadsImportView: View {
             Text(errorMessage)
         }
         .sheet(isPresented: $showWebImport) {
-            GoodreadsWebImportView { data in
-                handleCSVData(data, fileName: "goodreads_library_export.csv")
-            } onError: { message in
-                errorMessage = message
-                showError = true
-            }
+            GoodreadsWebImportView(coordinator: coordinator)
         }
         .sheet(isPresented: $showUpgradeSheet) {
             PaywallView()
         }
+        .onChange(of: coordinator.downloadedData) { _, data in
+            guard let data else { return }
+            handleCSVData(data, fileName: "goodreads_library_export.csv", autoImport: true)
+        }
+        .onChange(of: coordinator.errorMessage) { _, message in
+            guard let message else { return }
+            errorMessage = message
+            showError = true
+        }
+    }
+
+    private var coordinatorProgressCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                ProgressView()
+                Text(coordinator.statusText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Text(String(localized: "Keep this screen open while we import."))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private var automatedImportSection: some View {
@@ -118,9 +164,10 @@ struct GoodreadsImportView: View {
                     .padding(.vertical, 12)
                     .background(themeColor.color, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
+            .disabled(showCoordinatorProgress || isParsing || isImporting)
 
             Button {
-                GoodreadsImportCoordinator.clearWebsiteData()
+                coordinator.disconnect()
             } label: {
                 Text(String(localized: "Disconnect Goodreads"))
                     .font(.caption)
@@ -220,12 +267,7 @@ struct GoodreadsImportView: View {
                 summaryRow(title: String(localized: "Custom shelves"), value: "\(document.summary.customShelvesCount)")
 
                 if isImporting {
-                    HStack(spacing: 8) {
-                        ProgressView()
-                        Text(String(localized: "Importing..."))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+                    importProgressView
                 } else {
                     Button {
                         importBooks()
@@ -276,6 +318,25 @@ struct GoodreadsImportView: View {
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
+    private var importProgressView: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            let total = max(importProgressTotal, 1)
+            let current = min(importProgressCurrent, total)
+            ProgressView(value: Double(current), total: Double(total))
+                .progressViewStyle(.linear)
+
+            Text(String.localizedStringWithFormat(String(localized: "Importing %lld of %lld books"), current, total))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            if let title = importProgressTitle, !title.isEmpty {
+                Text(String.localizedStringWithFormat(String(localized: "Adding %@"), title))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
     private func summaryRow(title: String, value: String?) -> some View {
         HStack {
             Text(title)
@@ -309,7 +370,7 @@ struct GoodreadsImportView: View {
             do {
                 let data = try Data(contentsOf: url)
                 await MainActor.run {
-                    handleCSVData(data, fileName: url.lastPathComponent)
+                    handleCSVData(data, fileName: url.lastPathComponent, autoImport: false)
                 }
             } catch {
                 await MainActor.run {
@@ -321,7 +382,7 @@ struct GoodreadsImportView: View {
         }
     }
 
-    private func handleCSVData(_ data: Data, fileName: String?) {
+    private func handleCSVData(_ data: Data, fileName: String?, autoImport: Bool) {
         isParsing = true
         selectedFileName = fileName
         document = nil
@@ -333,6 +394,9 @@ struct GoodreadsImportView: View {
                 await MainActor.run {
                     document = parsed
                     isParsing = false
+                    if autoImport {
+                        importBooks()
+                    }
                 }
             } catch {
                 await MainActor.run {
@@ -348,6 +412,9 @@ struct GoodreadsImportView: View {
         guard let document else { return }
         isImporting = true
         result = nil
+        importProgressCurrent = 0
+        importProgressTotal = document.rows.count
+        importProgressTitle = nil
 
         Task { @MainActor in
             do {
@@ -355,7 +422,12 @@ struct GoodreadsImportView: View {
                     document: document,
                     options: options,
                     modelContext: modelContext,
-                    isProUser: isProUser
+                    isProUser: isProUser,
+                    progress: { progress in
+                        importProgressCurrent = progress.current
+                        importProgressTotal = progress.total
+                        importProgressTitle = progress.title
+                    }
                 )
                 result = importResult
 
@@ -368,6 +440,7 @@ struct GoodreadsImportView: View {
                 showError = true
             }
             isImporting = false
+            importProgressTitle = nil
         }
     }
 }

@@ -43,6 +43,12 @@ struct GoodreadsImportResult {
     let reachedFreeLimit: Bool
 }
 
+struct GoodreadsImportProgress: Sendable {
+    let current: Int
+    let total: Int
+    let title: String?
+}
+
 enum GoodreadsImportService {
     static func parse(data: Data) throws -> GoodreadsImportDocument {
         try GoodreadsCSVParser.parse(data: data)
@@ -53,18 +59,23 @@ enum GoodreadsImportService {
         document: GoodreadsImportDocument,
         options: GoodreadsImportOptions,
         modelContext: ModelContext,
-        isProUser: Bool
+        isProUser: Bool,
+        progress: ((GoodreadsImportProgress) -> Void)? = nil
     ) throws -> GoodreadsImportResult {
         var imported = 0
         var updated = 0
         var skipped = 0
         var createdSessions = 0
         var reachedLimit = false
+        let totalRows = document.rows.count
 
         let existingCount = (try? modelContext.fetch(FetchDescriptor<Book>()).count) ?? 0
         var currentCount = existingCount
 
-        for row in document.rows {
+        for (index, row) in document.rows.enumerated() {
+            let titleForProgress = row.value(for: ["title"])
+            progress?(GoodreadsImportProgress(current: index + 1, total: totalRows, title: titleForProgress))
+
             if !isProUser && currentCount >= 5 {
                 reachedLimit = true
                 break
