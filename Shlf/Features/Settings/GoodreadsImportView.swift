@@ -406,7 +406,7 @@ struct GoodreadsImportView: View {
 
         Task { @MainActor in
             do {
-                let importResult = try GoodreadsImportService.import(
+                let importResult = try await GoodreadsImportService.import(
                     document: document,
                     options: options,
                     modelContext: modelContext,

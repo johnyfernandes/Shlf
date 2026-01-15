@@ -160,22 +160,43 @@ enum GoodreadsCSVParser {
     }
 
     private static func removeDefaultShelves(_ shelves: [String], exclusiveShelf: String?) -> [String] {
-        let exclusiveLower = exclusiveShelf?.lowercased()
-        let reserved: Set<String> = [
+        return shelves.filter { shelf in
+            !isDefaultShelf(shelf, exclusiveShelf: exclusiveShelf)
+        }
+    }
+
+    private static func isDefaultShelf(_ shelf: String, exclusiveShelf: String?) -> Bool {
+        let lower = shelf.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !lower.isEmpty else { return true }
+        if let exclusiveLower = exclusiveShelf?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+           lower == exclusiveLower {
+            return true
+        }
+
+        let reserved = [
             "read",
             "currently-reading",
+            "currently reading",
             "to-read",
+            "to read",
             "want-to-read",
+            "want to read",
             "dnf",
             "did-not-finish",
             "did not finish"
         ]
 
-        return shelves.filter { shelf in
-            let lower = shelf.lowercased()
-            if let exclusiveLower, lower == exclusiveLower { return false }
-            return !reserved.contains(lower)
+        for key in reserved {
+            if lower == key { return true }
+            if lower.hasPrefix(key + " ") ||
+                lower.hasPrefix(key + "(") ||
+                lower.hasPrefix(key + " (") ||
+                lower.hasPrefix(key + " #") ||
+                lower.hasPrefix(key + " (#") {
+                return true
+            }
         }
+        return false
     }
 
     private static func parseCSV(_ text: String) -> [[String]] {
