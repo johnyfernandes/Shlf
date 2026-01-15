@@ -74,7 +74,7 @@ struct AppIconSettingsView: View {
                         }
 
                         if !isProUser {
-                            Text("App icon customization is available with Shlf Pro.")
+                            Text("More app icons are available with Shlf Pro.")
                                 .font(.subheadline)
                                 .foregroundStyle(Theme.Colors.secondaryText)
                         }
@@ -89,7 +89,7 @@ struct AppIconSettingsView: View {
                                 AppIconOptionView(
                                     option: option,
                                     isSelected: isSelected(option),
-                                    isLocked: !isProUser && !option.isDefault,
+                                    isLocked: !isProUser && !option.isFree,
                                     onSelect: { select(option) }
                                 )
                                 .disabled(!supportsAlternateIcons || isUpdating)
@@ -126,7 +126,7 @@ struct AppIconSettingsView: View {
 
     private func select(_ option: AppIconOption) {
         guard supportsAlternateIcons else { return }
-        guard isProUser || option.isDefault else {
+        guard isProUser || option.isFree else {
             showUpgradeSheet = true
             return
         }
@@ -170,7 +170,7 @@ private struct AppIconOptionView: View {
     var body: some View {
         Button(action: onSelect) {
             VStack(spacing: 8) {
-                ZStack {
+                ZStack(alignment: .topTrailing) {
                     RoundedRectangle(cornerRadius: 18, style: .continuous)
                         .fill(option.previewTint.opacity(0.18))
                         .frame(width: 64, height: 64)
@@ -198,6 +198,13 @@ private struct AppIconOptionView: View {
                             .foregroundStyle(.white)
                             .symbolRenderingMode(.hierarchical)
                     }
+
+                    OptionBadge(
+                        text: option.isFree ? "Free" : "Pro",
+                        icon: option.isFree ? nil : "crown.fill",
+                        tint: option.isFree ? Theme.Colors.success : Color.yellow
+                    )
+                    .offset(x: 6, y: -6)
                 }
                 .shadow(
                     color: isSelected ? option.previewTint.opacity(0.4) : .black.opacity(0.08),
@@ -211,24 +218,9 @@ private struct AppIconOptionView: View {
                     .font(.caption)
                     .foregroundStyle(isSelected ? option.previewTint : .primary)
                     .fontWeight(isSelected ? .semibold : .regular)
-
-                Text(statusLabel ?? "Default")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .opacity(statusLabel == nil ? 0 : 1)
             }
         }
         .buttonStyle(.plain)
-    }
-
-    private var statusLabel: String? {
-        if option.isDefault {
-            return "Default"
-        }
-        if isLocked {
-            return "Pro"
-        }
-        return nil
     }
 }
 
@@ -300,6 +292,15 @@ private enum AppIconOption: String, CaseIterable, Identifiable {
         self == .orange
     }
 
+    var isFree: Bool {
+        switch self {
+        case .orange, .blue, .green:
+            return true
+        default:
+            return false
+        }
+    }
+
     var previewAssetName: String {
         switch self {
         case .orange:
@@ -356,6 +357,28 @@ private enum AppIconOption: String, CaseIterable, Identifiable {
         #else
         return nil
         #endif
+    }
+}
+
+private struct OptionBadge: View {
+    let text: LocalizedStringKey
+    let icon: String?
+    let tint: Color
+
+    var body: some View {
+        HStack(spacing: 4) {
+            if let icon {
+                Image(systemName: icon)
+                    .font(.system(size: 9, weight: .semibold))
+            }
+            Text(text)
+                .font(.system(size: 9, weight: .semibold))
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .background(tint, in: Capsule())
+        .shadow(color: tint.opacity(0.25), radius: 4, y: 2)
     }
 }
 

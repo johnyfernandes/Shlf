@@ -17,6 +17,8 @@ struct ThemeColorSettingsView: View {
         GridItem(.adaptive(minimum: 80), spacing: 16)
     ]
 
+    private let freeColors: Set<ThemeColor> = [.orange, .blue, .green]
+
     private var isProUser: Bool {
         ProAccess.isProUser(profile: profile)
     }
@@ -87,6 +89,12 @@ struct ThemeColorSettingsView: View {
                         Text("Choose your preferred accent color. It will be applied throughout the app and synced to your Apple Watch.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
+
+                        if !isProUser {
+                            Text("More colors are available with Shlf Pro.")
+                                .font(.subheadline)
+                                .foregroundStyle(Theme.Colors.secondaryText)
+                        }
                     }
                     .padding(16)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -99,9 +107,10 @@ struct ThemeColorSettingsView: View {
                                 ColorOption(
                                     themeColor: themeColor,
                                     isSelected: profile.themeColor == themeColor,
+                                    isFree: freeColors.contains(themeColor),
                                     onSelect: {
                                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                            guard isProUser else {
+                                            guard isProUser || freeColors.contains(themeColor) else {
                                                 showUpgradeSheet = true
                                                 return
                                             }
@@ -142,6 +151,7 @@ struct ThemeColorSettingsView: View {
 struct ColorOption: View {
     let themeColor: ThemeColor
     let isSelected: Bool
+    let isFree: Bool
     let onSelect: () -> Void
 
     var body: some View {
@@ -149,7 +159,7 @@ struct ColorOption: View {
             onSelect()
         } label: {
             VStack(spacing: 8) {
-                ZStack {
+                ZStack(alignment: .topTrailing) {
                     Circle()
                         .fill(themeColor.gradient)
                         .frame(width: 64, height: 64)
@@ -173,6 +183,13 @@ struct ColorOption: View {
                             .foregroundStyle(.white)
                             .symbolRenderingMode(.hierarchical)
                     }
+
+                    OptionBadge(
+                        text: isFree ? "Free" : "Pro",
+                        icon: isFree ? nil : "crown.fill",
+                        tint: isFree ? Theme.Colors.success : Color.yellow
+                    )
+                    .offset(x: 6, y: -6)
                 }
                 .scaleEffect(isSelected ? 1.05 : 1.0)
                 .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
@@ -184,6 +201,28 @@ struct ColorOption: View {
             }
         }
         .buttonStyle(.plain)
+    }
+}
+
+private struct OptionBadge: View {
+    let text: LocalizedStringKey
+    let icon: String?
+    let tint: Color
+
+    var body: some View {
+        HStack(spacing: 4) {
+            if let icon {
+                Image(systemName: icon)
+                    .font(.system(size: 9, weight: .semibold))
+            }
+            Text(text)
+                .font(.system(size: 9, weight: .semibold))
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .background(tint, in: Capsule())
+        .shadow(color: tint.opacity(0.25), radius: 4, y: 2)
     }
 }
 
