@@ -559,13 +559,8 @@ enum GoodreadsImportService {
                         missingEditions.insert(normalizedISBN)
                     }
                 }
-                if let editionDetails = editionCache[normalizedISBN] {
-                    if let text = firstNonEmpty(editionDetails.description, editionDetails.notes, editionDetails.firstSentence) {
-                        book.bookDescription = text
-                    }
-                    if workID == nil {
-                        workID = editionDetails.workID
-                    }
+                if let editionDetails = editionCache[normalizedISBN], workID == nil {
+                    workID = editionDetails.workID
                 }
             }
 
@@ -592,15 +587,6 @@ enum GoodreadsImportService {
         try? modelContext.save()
     }
 
-    private static func firstNonEmpty(_ values: String?...) -> String? {
-        for value in values {
-            if let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines),
-               !trimmed.isEmpty {
-                return trimmed
-            }
-        }
-        return nil
-    }
 
     private static func resolveCoverURL(
         isbn: String?,
@@ -619,8 +605,20 @@ enum GoodreadsImportService {
                 return cached.value
             }
 
+            if let isbnCover = await bookAPI.resolveISBNPreferredCover(isbn: normalizedISBN) {
+                cache.values[cacheKey] = .found(isbnCover)
+                return isbnCover
+            }
+
             if let bookInfo = try? await bookAPI.fetchBook(isbn: normalizedISBN),
                let coverURL = bookInfo.coverImageURL {
+                cache.values[cacheKey] = .found(coverURL)
+                return coverURL
+            }
+
+            if let workID = (try? await bookAPI.resolveWorkID(isbn: normalizedISBN)),
+               let workDetails = try? await bookAPI.fetchWorkDetails(workID: workID),
+               let coverURL = workDetails.coverImageURL {
                 cache.values[cacheKey] = .found(coverURL)
                 return coverURL
             }

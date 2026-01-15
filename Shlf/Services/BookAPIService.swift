@@ -130,6 +130,18 @@ final class BookAPIService {
         try await fetchEditionDetailsByISBN(isbn: isbn)
     }
 
+    func resolveISBNPreferredCover(isbn: String) async -> URL? {
+        let cleanISBN = sanitizeISBN(isbn)
+        guard cleanISBN.count == 10 || cleanISBN.count == 13 else { return nil }
+        let urlString = "https://covers.openlibrary.org/b/isbn/\(cleanISBN)-L.jpg?default=false"
+        guard let url = URL(string: urlString) else { return nil }
+
+        if await urlExists(url) {
+            return url
+        }
+        return nil
+    }
+
     func resolveWorkID(isbn: String) async throws -> String? {
         let cleanISBN = sanitizeISBN(isbn)
 
@@ -137,7 +149,8 @@ final class BookAPIService {
             throw BookAPIError.invalidISBN
         }
 
-        if let workID = try? await fetchEditionDetailsByISBN(isbn: cleanISBN).workID {
+        if let editionDetails = try? await fetchEditionDetailsByISBN(isbn: cleanISBN),
+           let workID = editionDetails.workID {
             return workID
         }
 
@@ -834,6 +847,23 @@ final class BookAPIService {
             return formatLanguageCode(code)
         }
         return nil
+    }
+
+    private func urlExists(_ url: URL) async -> Bool {
+        var request = URLRequest(url: url)
+        request.httpMethod = "HEAD"
+
+        do {
+            await rateLimiter.waitForToken()
+            let (_, response) = try await urlSession.data(for: request)
+            if let httpResponse = response as? HTTPURLResponse {
+                return (200..<300).contains(httpResponse.statusCode)
+            }
+        } catch {
+            return false
+        }
+
+        return false
     }
 
     private func extractText(from value: Any?) -> String? {
