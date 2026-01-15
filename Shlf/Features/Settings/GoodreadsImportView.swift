@@ -26,6 +26,9 @@ struct GoodreadsImportView: View {
     @State private var importProgressCurrent = 0
     @State private var importProgressTotal = 0
     @State private var importProgressTitle: String?
+    @State private var pendingDocument: GoodreadsImportDocument?
+    @State private var duplicateCount: Int = 0
+    @State private var showDuplicateAlert = false
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var showUpgradeSheet = false
@@ -65,8 +68,9 @@ struct GoodreadsImportView: View {
                     }
                     automatedImportSection
                     manualImportSection
-                    optionsSection
-                    summarySection
+                    if isImporting || result != nil {
+                        importStatusSection
+                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
@@ -103,6 +107,16 @@ struct GoodreadsImportView: View {
         } message: {
             Text(errorMessage)
         }
+        .alert(String(localized: "Duplicates Found"), isPresented: $showDuplicateAlert) {
+            Button(String(localized: "Keep My Data")) {
+                startImport(preferGoodreadsData: false)
+            }
+            Button(String(localized: "Prefer Goodreads Data")) {
+                startImport(preferGoodreadsData: true)
+            }
+        } message: {
+            Text(String.localizedStringWithFormat(String(localized: "We found %lld existing books. How should we handle conflicts?"), duplicateCount))
+        }
         .sheet(isPresented: $showWebImport) {
             GoodreadsWebImportView(coordinator: coordinator)
         }
@@ -111,7 +125,7 @@ struct GoodreadsImportView: View {
         }
         .onChange(of: coordinator.downloadedData) { _, data in
             guard let data else { return }
-            handleCSVData(data, fileName: "goodreads_library_export.csv", autoImport: true)
+            handleCSVData(data, fileName: "goodreads_library_export.csv")
         }
         .onChange(of: coordinator.errorMessage) { _, message in
             guard let message else { return }
@@ -225,62 +239,10 @@ struct GoodreadsImportView: View {
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
-    private var optionsSection: some View {
+    private var importStatusSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 6) {
-                Image(systemName: "slider.horizontal.3")
-                    .font(.caption)
-                    .foregroundStyle(themeColor.color)
-                    .frame(width: 16)
-
-                Text(String(localized: "Import Options"))
-                    .font(.headline)
-            }
-
-            VStack(spacing: 10) {
-                Toggle(String(localized: "Use shelves for reading status"), isOn: $options.applyShelvesToStatus)
-                Toggle(String(localized: "Import ratings & reviews"), isOn: $options.importRatingsAndNotes)
-                Toggle(String(localized: "Use Goodreads dates"), isOn: $options.useDates)
-                Toggle(String(localized: "Prefer Goodreads data for duplicates"), isOn: $options.preferGoodreadsData)
-                Toggle(String(localized: "Create imported sessions (excluded from stats)"), isOn: $options.createImportedSessions)
-            }
-            .toggleStyle(SwitchToggleStyle(tint: themeColor.color))
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-    }
-
-    private var summarySection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            if let document {
-                Text(String(localized: "Ready to import"))
-                    .font(.headline)
-
-                summaryRow(title: String(localized: "Total books"), value: "\(document.summary.totalRows)")
-                summaryRow(title: String(localized: "Finished"), value: "\(document.summary.finishedCount)")
-                summaryRow(title: String(localized: "Reading"), value: "\(document.summary.currentlyReadingCount)")
-                summaryRow(title: String(localized: "Want to Read"), value: "\(document.summary.wantToReadCount)")
-                summaryRow(title: String(localized: "DNF"), value: "\(document.summary.didNotFinishCount)")
-                summaryRow(title: String(localized: "Ratings"), value: "\(document.summary.ratingsCount)")
-                summaryRow(title: String(localized: "Dates read"), value: "\(document.summary.datesReadCount)")
-                summaryRow(title: String(localized: "Custom shelves"), value: "\(document.summary.customShelvesCount)")
-
-                if isImporting {
-                    importProgressView
-                } else {
-                    Button {
-                        importBooks()
-                    } label: {
-                        Text(String(localized: "Import Books"))
-                            .font(.headline)
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(themeColor.color, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    }
-                    .disabled(isParsing || isImporting)
-                }
+            if isImporting {
+                importProgressView
             }
 
             if let result {
@@ -316,6 +278,7 @@ struct GoodreadsImportView: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .opacity((isImporting || result != nil) ? 1 : 0)
     }
 
     private var importProgressView: some View {
@@ -370,7 +333,7 @@ struct GoodreadsImportView: View {
             do {
                 let data = try Data(contentsOf: url)
                 await MainActor.run {
-                    handleCSVData(data, fileName: url.lastPathComponent, autoImport: false)
+                    handleCSVData(data, fileName: url.lastPathComponent)
                 }
             } catch {
                 await MainActor.run {
@@ -382,11 +345,12 @@ struct GoodreadsImportView: View {
         }
     }
 
-    private func handleCSVData(_ data: Data, fileName: String?, autoImport: Bool) {
+    private func handleCSVData(_ data: Data, fileName: String?) {
         isParsing = true
         selectedFileName = fileName
         document = nil
         result = nil
+        pendingDocument = nil
 
         Task {
             do {
@@ -394,9 +358,7 @@ struct GoodreadsImportView: View {
                 await MainActor.run {
                     document = parsed
                     isParsing = false
-                    if autoImport {
-                        importBooks()
-                    }
+                    handleParsedDocument(parsed)
                 }
             } catch {
                 await MainActor.run {
@@ -408,13 +370,39 @@ struct GoodreadsImportView: View {
         }
     }
 
-    private func importBooks() {
-        guard let document else { return }
+    private func handleParsedDocument(_ parsed: GoodreadsImportDocument) {
+        guard !isImporting else { return }
+
+        Task { @MainActor in
+            do {
+                let duplicates = try GoodreadsImportService.duplicateCount(
+                    document: parsed,
+                    modelContext: modelContext
+                )
+                if duplicates > 0 {
+                    duplicateCount = duplicates
+                    pendingDocument = parsed
+                    showDuplicateAlert = true
+                } else {
+                    startImport(preferGoodreadsData: false)
+                }
+            } catch {
+                errorMessage = error.localizedDescription
+                showError = true
+            }
+        }
+    }
+
+    private func startImport(preferGoodreadsData: Bool) {
+        guard let document = pendingDocument ?? document else { return }
         isImporting = true
         result = nil
         importProgressCurrent = 0
         importProgressTotal = document.rows.count
         importProgressTitle = nil
+        pendingDocument = document
+
+        options.preferGoodreadsData = preferGoodreadsData
 
         Task { @MainActor in
             do {
@@ -441,6 +429,7 @@ struct GoodreadsImportView: View {
             }
             isImporting = false
             importProgressTitle = nil
+            pendingDocument = nil
         }
     }
 }

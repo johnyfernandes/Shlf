@@ -5075,6 +5075,7 @@
       }
     },
     "Create imported sessions (excluded from stats)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -5514,6 +5515,7 @@
       }
     },
     "Custom shelves" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -5950,6 +5952,7 @@
       }
     },
     "Dates read" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -7059,6 +7062,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Arrasta para reordenar. Os blocos desativados permanecem ocultos."
+          }
+        }
+      }
+    },
+    "Duplicates Found" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplikate gefunden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicates Found"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicados encontrados"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doublons trouvés"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicados encontrados"
           }
         }
       }
@@ -9907,6 +9944,7 @@
       }
     },
     "Import Books" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -10043,6 +10081,7 @@
       }
     },
     "Import Options" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -10077,6 +10116,7 @@
       }
     },
     "Import ratings & reviews" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -10877,6 +10917,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Continua →"
+          }
+        }
+      }
+    },
+    "Keep My Data" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meine Daten behalten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep My Data"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantener mis datos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conserver mes données"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manter os meus dados"
           }
         }
       }
@@ -15479,7 +15553,42 @@
         }
       }
     },
+    "Prefer Goodreads Data" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Goodreads-Daten bevorzugen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prefer Goodreads Data"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preferir datos de Goodreads"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préférer les données Goodreads"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preferir dados do Goodreads"
+          }
+        }
+      }
+    },
     "Prefer Goodreads data for duplicates" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -16392,6 +16501,7 @@
       }
     },
     "Ratings" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -16893,6 +17003,7 @@
       }
     },
     "Ready to import" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -22274,6 +22385,7 @@
       }
     },
     "Total books" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -23325,6 +23437,7 @@
       }
     },
     "Use Goodreads dates" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -23461,6 +23574,7 @@
       }
     },
     "Use shelves for reading status" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -24001,6 +24115,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Não foi possível encontrar a página Export Library. O Goodreads pode ter mudado algo."
+          }
+        }
+      }
+    },
+    "We found %lld existing books. How should we handle conflicts?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wir haben %lld vorhandene Bücher gefunden. Wie sollen wir Konflikte behandeln?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We found %lld existing books. How should we handle conflicts?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encontramos %lld libros existentes. ¿Cómo debemos gestionar los conflictos?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nous avons trouvé %lld livres existants. Comment devons-nous gérer les conflits ?"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encontrámos %lld livros existentes. Como devemos gerir os conflitos?"
           }
         }
       }

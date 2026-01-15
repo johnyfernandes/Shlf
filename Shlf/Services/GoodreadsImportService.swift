@@ -55,6 +55,59 @@ enum GoodreadsImportService {
     }
 
     @MainActor
+    static func duplicateCount(
+        document: GoodreadsImportDocument,
+        modelContext: ModelContext
+    ) throws -> Int {
+        let existingBooks = try modelContext.fetch(FetchDescriptor<Book>())
+        var isbnIndex = Set<String>()
+        var titleAuthorIndex = Set<String>()
+
+        for book in existingBooks {
+            if let isbn = sanitizeISBN(book.isbn) {
+                isbnIndex.insert(isbn)
+            }
+            let titleKey = normalizeKey(book.title)
+            let authorKey = normalizeKey(book.author)
+            if !titleKey.isEmpty, !authorKey.isEmpty {
+                titleAuthorIndex.insert("\(titleKey)|\(authorKey)")
+            }
+        }
+
+        var matchedKeys = Set<String>()
+        var duplicates = 0
+
+        for row in document.rows {
+            guard let title = row.value(for: ["title"]),
+                  let author = row.value(for: ["author"]) else {
+                continue
+            }
+
+            let isbn = sanitizeISBN(row.value(for: ["isbn13"])) ?? sanitizeISBN(row.value(for: ["isbn"]))
+            let titleKey = normalizeKey(title)
+            let authorKey = normalizeKey(author)
+            let titleAuthorKey = (!titleKey.isEmpty && !authorKey.isEmpty) ? "\(titleKey)|\(authorKey)" : nil
+
+            let matchKey = isbn ?? titleAuthorKey
+            guard let matchKey else { continue }
+            if matchedKeys.contains(matchKey) { continue }
+
+            if let isbn, isbnIndex.contains(isbn) {
+                duplicates += 1
+                matchedKeys.insert(matchKey)
+                continue
+            }
+
+            if let titleAuthorKey, titleAuthorIndex.contains(titleAuthorKey) {
+                duplicates += 1
+                matchedKeys.insert(matchKey)
+            }
+        }
+
+        return duplicates
+    }
+
+    @MainActor
     static func `import`(
         document: GoodreadsImportDocument,
         options: GoodreadsImportOptions,
@@ -421,6 +474,10 @@ enum GoodreadsImportService {
         guard let value else { return nil }
         let sanitized = value.uppercased().filter { $0.isNumber || $0 == "X" }
         return sanitized.isEmpty ? nil : sanitized
+    }
+
+    private static func normalizeKey(_ value: String) -> String {
+        value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
     private static func parseInt(_ value: String?) -> Int? {
