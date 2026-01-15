@@ -6862,6 +6862,34 @@
         }
       }
     },
+    "Disconnecting will remove the Goodreads session from this device. You can reconnect anytime.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Durch das Trennen wird die Goodreads-Sitzung von diesem Gerät entfernt. Du kannst jederzeit erneut verbinden."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Al desconectar se eliminará la sesión de Goodreads de este dispositivo. Puedes reconectar en cualquier momento."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La déconnexion supprimera la session Goodreads de cet appareil. Vous pouvez vous reconnecter à tout moment."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ao desligar, a sessão do Goodreads será removida deste dispositivo. Pode voltar a ligar a qualquer momento."
+          }
+        }
+      }
+    },
     "Display reading activity as vertical bars": {
       "localizations": {
         "de": {
@@ -7101,6 +7129,7 @@
       }
     },
     "Duplicates Found": {
+      "extractionState": "stale",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -10990,6 +11019,7 @@
       }
     },
     "Keep My Data": {
+      "extractionState": "stale",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -15650,6 +15680,7 @@
       }
     },
     "Prefer Goodreads Data": {
+      "extractionState": "stale",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -24245,6 +24276,7 @@
       }
     },
     "We found %lld existing books. How should we handle conflicts?": {
+      "extractionState": "stale",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -25255,30 +25287,310 @@
         }
       }
     },
-    "Disconnecting will remove the Goodreads session from this device. You can reconnect anytime.": {
+    "Kindle": {
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Durch das Trennen wird die Goodreads-Sitzung von diesem Gerät entfernt. Du kannst jederzeit erneut verbinden."
+            "value": "Kindle"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Al desconectar se eliminará la sesión de Goodreads de este dispositivo. Puedes reconectar en cualquier momento."
+            "value": "Kindle"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "La déconnexion supprimera la session Goodreads de cet appareil. Vous pouvez vous reconnecter à tout moment."
+            "value": "Kindle"
           }
         },
         "pt-PT": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ao desligar, a sessão do Goodreads será removida deste dispositivo. Pode voltar a ligar a qualquer momento."
+            "value": "Kindle"
+          }
+        }
+      }
+    },
+    "Import from Kindle": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aus Kindle importieren"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importar desde Kindle"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importer depuis Kindle"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Importar do Kindle"
+          }
+        }
+      }
+    },
+    "Sign in with your Amazon account and we'll import your Kindle library.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Melde dich mit deinem Amazon‑Konto an und wir importieren deine Kindle‑Bibliothek."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inicia sesión con tu cuenta de Amazon y importaremos tu biblioteca Kindle."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connectez‑vous avec votre compte Amazon et nous importerons votre bibliothèque Kindle."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inicia sessão com a tua conta Amazon e iremos importar a tua biblioteca Kindle."
+          }
+        }
+      }
+    },
+    "Kindle only provides your library list. Reading status and dates aren't available.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kindle stellt nur deine Bibliotheksliste bereit. Lesestatus und Daten sind nicht verfügbar."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kindle solo proporciona la lista de tu biblioteca. El estado de lectura y las fechas no están disponibles."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kindle ne fournit que la liste de votre bibliothèque. L’état de lecture et les dates ne sont pas disponibles."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O Kindle apenas fornece a lista da tua biblioteca. O estado de leitura e as datas não estão disponíveis."
+          }
+        }
+      }
+    },
+    "Disconnect Kindle": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kindle trennen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desconectar Kindle"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déconnecter Kindle"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desligar Kindle"
+          }
+        }
+      }
+    },
+    "Disconnecting will remove the Kindle session from this device. You can reconnect anytime.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Durch das Trennen wird die Kindle‑Sitzung von diesem Gerät entfernt. Du kannst jederzeit erneut verbinden."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Al desconectar se eliminará la sesión de Kindle de este dispositivo. Puedes reconectar en cualquier momento."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La déconnexion supprimera la session Kindle de cet appareil. Vous pouvez vous reconnecter à tout moment."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ao desligar, a sessão do Kindle será removida deste dispositivo. Pode voltar a ligar a qualquer momento."
+          }
+        }
+      }
+    },
+    "Loading Kindle...": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kindle wird geladen..."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cargando Kindle..."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chargement de Kindle..."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A carregar Kindle..."
+          }
+        }
+      }
+    },
+    "Scanning Kindle library...": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kindle‑Bibliothek wird gescannt..."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escaneando la biblioteca Kindle..."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Analyse de la bibliothèque Kindle..."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A analisar a biblioteca Kindle..."
+          }
+        }
+      }
+    },
+    "Sign in to Amazon": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bei Amazon anmelden"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inicia sesión en Amazon"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se connecter à Amazon"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Iniciar sessão na Amazon"
+          }
+        }
+      }
+    },
+    "We couldn't read your Kindle library. Please try again.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wir konnten deine Kindle‑Bibliothek nicht lesen. Bitte versuche es erneut."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No pudimos leer tu biblioteca Kindle. Inténtalo de nuevo."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de lire votre bibliothèque Kindle. Veuillez réessayer."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível ler a tua biblioteca Kindle. Tenta novamente."
+          }
+        }
+      }
+    },
+    "Found %lld books": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld Bücher gefunden"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld libros encontrados"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld livres trouvés"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld livros encontrados"
           }
         }
       }

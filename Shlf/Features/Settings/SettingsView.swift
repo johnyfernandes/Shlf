@@ -175,6 +175,12 @@ struct SettingsView: View {
                     } label: {
                         Label("Goodreads", systemImage: "books.vertical")
                     }
+
+                    NavigationLink {
+                        KindleImportView(profile: profile)
+                    } label: {
+                        Label("Kindle", systemImage: "book.closed")
+                    }
                 }
 
                 Section("Data") {
