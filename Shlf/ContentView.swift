@@ -38,7 +38,7 @@ struct ContentView: View {
             }
 
             Tab("Search", systemImage: "magnifyingglass", value: 3, role: .search) {
-                Color.clear
+                SearchTabView(selectedTab: $selectedTab)
             }
         }
         .tint(currentThemeColor.color)
