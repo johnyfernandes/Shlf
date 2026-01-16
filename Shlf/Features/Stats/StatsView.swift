@@ -832,7 +832,13 @@ private struct TrendCard: View {
 
                 Spacer()
 
-                TrendSpark(icon: icon, accent: accent)
+                HStack(spacing: 10) {
+                    TrendSpark(icon: icon, accent: accent)
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(Theme.Colors.tertiaryText)
+                }
             }
             .padding(14)
             .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
