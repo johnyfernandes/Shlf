@@ -1238,10 +1238,12 @@ private struct CalendarCoverStack: View {
                 coverView(urls[1])
                     .offset(x: -5, y: -4)
                     .opacity(0.9)
-            }
 
-            coverView(urls[0])
-                .offset(x: 4, y: 4)
+                coverView(urls[0])
+                    .offset(x: 4, y: 4)
+            } else if let url = urls.first {
+                coverView(url)
+            }
         }
     }
 
