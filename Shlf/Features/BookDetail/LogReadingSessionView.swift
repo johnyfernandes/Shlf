@@ -480,15 +480,21 @@ struct LogReadingSessionView: View {
                 .font(.caption2.weight(.medium))
                 .foregroundStyle(Theme.Colors.secondaryText)
 
-            TextField("End", text: text)
-                .keyboardType(.numberPad)
-                .font(.title3.weight(.semibold))
-                .multilineTextAlignment(.leading)
-                .focused($focusedField, equals: .endPage)
-                .onChange(of: text.wrappedValue) { _, newValue in
-                    handleEndPageInput(newValue)
-                }
-                .monospacedDigit()
+            HStack(spacing: 6) {
+                TextField("End", text: text)
+                    .keyboardType(.numberPad)
+                    .font(.title3.weight(.semibold))
+                    .multilineTextAlignment(.leading)
+                    .focused($focusedField, equals: .endPage)
+                    .onChange(of: text.wrappedValue) { _, newValue in
+                        handleEndPageInput(newValue)
+                    }
+                    .monospacedDigit()
+
+                Image(systemName: "pencil.line")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(focusedField == .endPage ? themeColor.color : Theme.Colors.tertiaryText)
+            }
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
