@@ -428,7 +428,8 @@ struct StatsView: View {
     }
 
     private var calendarSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+        let cellSize: CGFloat = 46
+        return VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             Text("Calendar")
                 .font(Theme.Typography.title3)
                 .foregroundStyle(Theme.Colors.text)
@@ -490,15 +491,15 @@ struct StatsView: View {
                             CalendarDayCell(
                                 date: date,
                                 summary: calendarDaySummaries[dayStart],
-                                isToday: Calendar.current.isDateInToday(date)
+                                isToday: Calendar.current.isDateInToday(date),
+                                size: cellSize
                             ) {
                                 if let summary = calendarDaySummaries[dayStart], summary.pages > 0 {
                                     selectedCalendarDate = date
                                 }
                             }
                         } else {
-                            Color.clear
-                                .frame(height: 46)
+                            CalendarEmptyCell(size: cellSize)
                         }
                     }
                 }
@@ -1078,6 +1079,7 @@ private struct CalendarDayCell: View {
     let date: Date
     let summary: CalendarDaySummary?
     let isToday: Bool
+    let size: CGFloat
     let onSelect: () -> Void
 
     private var dayNumber: String {
@@ -1098,24 +1100,37 @@ private struct CalendarDayCell: View {
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .fill(hasActivity ? themeColor.color.opacity(0.18) : Theme.Colors.tertiaryBackground)
 
-                if let coverURL = summary?.coverURL {
-                    AsyncImage(url: coverURL) { image in
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    } placeholder: {
-                        Color.clear
-                    }
-                    .overlay(
+                if hasActivity {
+                    if let coverURL = summary?.coverURL {
+                        AsyncImage(url: coverURL) { image in
+                            image
+                                .resizable()
+                                .scaledToFill()
+                        } placeholder: {
+                            themeColor.color.opacity(0.12)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .clipped()
+                        .overlay(
+                            LinearGradient(
+                                colors: [
+                                    Theme.Colors.background.opacity(0.05),
+                                    Theme.Colors.background.opacity(0.35)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                    } else {
                         LinearGradient(
                             colors: [
-                                Theme.Colors.background.opacity(0.05),
-                                Theme.Colors.background.opacity(0.35)
+                                themeColor.color.opacity(0.25),
+                                themeColor.color.opacity(0.08)
                             ],
-                            startPoint: .top,
-                            endPoint: .bottom
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
                         )
-                    )
+                    }
                 }
 
                 Text(dayNumber)
@@ -1133,9 +1148,19 @@ private struct CalendarDayCell: View {
             )
         }
         .buttonStyle(.plain)
-        .frame(height: 46)
+        .frame(maxWidth: .infinity, minHeight: size, maxHeight: size)
         .opacity(hasActivity ? 1 : 0.55)
         .accessibilityLabel(Text(dayNumber))
+    }
+}
+
+private struct CalendarEmptyCell: View {
+    let size: CGFloat
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 10, style: .continuous)
+            .fill(Color.clear)
+            .frame(maxWidth: .infinity, minHeight: size, maxHeight: size)
     }
 }
 
