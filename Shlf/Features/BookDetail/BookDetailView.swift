@@ -519,8 +519,9 @@ struct BookDetailView: View {
         }
         .buttonStyle(.plain)
         .onAppear {
-            withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) {
-                playShimmer = 40
+            playShimmer = -50
+            withAnimation(.linear(duration: 2.6).repeatForever(autoreverses: false)) {
+                playShimmer = 50
             }
         }
     }
