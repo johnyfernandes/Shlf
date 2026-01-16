@@ -32,6 +32,7 @@ struct BookDetailView: View {
     @State private var showFinishOptions = false
     @State private var showFinishLog = false
     @State private var showShareSheet = false
+    @State private var logSessionShimmer: CGFloat = -30
 
     private var profile: UserProfile? {
         profiles.first
@@ -114,14 +115,7 @@ struct BookDetailView: View {
                 }
             }
 
-            ToolbarItemGroup(placement: .primaryAction) {
-                Button {
-                    showLogSession = true
-                } label: {
-                    Image(systemName: "clock.badge.checkmark")
-                        .foregroundStyle(themeColor.color)
-                }
-
+            ToolbarItem(placement: .primaryAction) {
                 Menu {
                     if book.readingStatus == .currentlyReading {
                         Button {
@@ -382,6 +376,12 @@ struct BookDetailView: View {
             }
             .buttonStyle(.plain)
 
+            HStack {
+                Spacer()
+                logSessionChip
+                Spacer()
+            }
+
             // Type badge
             if book.bookType != .physical {
                 HStack(spacing: 4) {
@@ -530,6 +530,55 @@ struct BookDetailView: View {
         Group {
             if book.totalPages != nil {
                 EmptyView()
+            }
+        }
+    }
+
+    private var logSessionChip: some View {
+        Button {
+            showLogSession = true
+        } label: {
+            HStack(spacing: 8) {
+                ZStack {
+                    Image(systemName: "clock.badge.checkmark")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(themeColor.color)
+
+                    LinearGradient(
+                        colors: [
+                            .clear,
+                            .white.opacity(0.7),
+                            .clear
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .rotationEffect(.degrees(30))
+                    .offset(x: logSessionShimmer)
+                    .mask(
+                        Image(systemName: "clock.badge.checkmark")
+                            .font(.caption.weight(.semibold))
+                    )
+                    .blendMode(.overlay)
+                }
+
+                Text("Log Session")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(themeColor.color)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(themeColor.color.opacity(0.12), in: Capsule())
+            .overlay(
+                Capsule()
+                    .strokeBorder(themeColor.color.opacity(0.35), lineWidth: 1)
+            )
+            .fixedSize(horizontal: true, vertical: false)
+        }
+        .buttonStyle(.plain)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: false)) {
+                logSessionShimmer = 30
             }
         }
     }
