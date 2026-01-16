@@ -31,6 +31,7 @@ struct LogReadingSessionView: View {
     @State private var showActiveSessionAlert = false
     @State private var pendingActiveSession: ActiveReadingSession?
     @State private var activeSessionSnapshot = false
+    @State private var xpGradientPhase: CGFloat = -0.6
     @FocusState private var focusedField: FocusField?
 
     enum FocusField: Hashable {
@@ -127,6 +128,11 @@ struct LogReadingSessionView: View {
                 syncWithLiveActivity()
                 syncEndPageText(with: actualEndPage)
                 refreshActiveSessionSnapshot()
+                if xpGradientPhase < 0 {
+                    withAnimation(.linear(duration: 2.2).repeatForever(autoreverses: true)) {
+                        xpGradientPhase = 1.2
+                    }
+                }
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
                 syncWithLiveActivity()
@@ -216,48 +222,28 @@ struct LogReadingSessionView: View {
         sessionCard {
             cardHeader(title: "Reading Progress", icon: "book.pages")
 
-            VStack(spacing: 0) {
-                HStack {
-                    Text("From Page")
-                    Spacer()
-                    Text("\(actualStartPage)")
-                        .foregroundStyle(.secondary)
-                        .monospacedDigit()
-                }
-                .padding(.vertical, 10)
-
-                Divider()
-
-                HStack {
-                    Text("To Page")
-                    Spacer()
-                    TextField("End", text: $endPageText)
-                        .keyboardType(.numberPad)
-                        .multilineTextAlignment(.trailing)
-                        .frame(minWidth: 80, alignment: .trailing)
-                        .focused($focusedField, equals: .endPage)
-                        .onChange(of: endPageText) { _, newValue in
-                            handleEndPageInput(newValue)
-                        }
-                        .monospacedDigit()
-                }
-                .padding(.vertical, 10)
-
-                Divider()
-
-                HStack {
-                    Image(systemName: "book.pages")
-                        .foregroundStyle(themeColor.color)
-
-                    Text("Pages Read")
-                    Spacer()
-                    Text("\(pagesRead)")
-                        .font(.headline.weight(.semibold))
-                        .foregroundStyle(themeColor.color)
-                        .monospacedDigit()
-                }
-                .padding(.vertical, 10)
+            HStack(spacing: 12) {
+                progressValueChip(title: "From", value: "\(actualStartPage)")
+                progressInputChip(title: "To", text: $endPageText)
             }
+
+            HStack {
+                Image(systemName: "book.pages")
+                    .foregroundStyle(themeColor.color)
+
+                Text("Pages Read")
+                    .font(.subheadline.weight(.semibold))
+
+                Spacer()
+
+                Text("\(pagesRead)")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(themeColor.color)
+                    .monospacedDigit()
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(themeColor.color.opacity(0.08), in: Capsule())
         }
     }
 
@@ -437,16 +423,17 @@ struct LogReadingSessionView: View {
         sessionCard {
             HStack {
                 Image(systemName: "star.fill")
-                    .foregroundStyle(Theme.Colors.xpGradient)
+                    .foregroundStyle(xpGradient)
 
                 Text("Estimated XP")
                     .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(xpGradient)
 
                 Spacer()
 
                 Text("+\(estimatedXP)")
                     .font(Theme.Typography.headline)
-                    .foregroundStyle(Theme.Colors.xpGradient)
+                    .foregroundStyle(xpGradient)
                     .monospacedDigit()
             }
         }
@@ -467,15 +454,74 @@ struct LogReadingSessionView: View {
         }
     }
 
+    private func progressValueChip(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.caption2.weight(.medium))
+                .foregroundStyle(Theme.Colors.secondaryText)
+
+            Text(value)
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(Theme.Colors.text)
+                .monospacedDigit()
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Colors.tertiaryBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(themeColor.color.opacity(0.08), lineWidth: 1)
+        )
+    }
+
+    private func progressInputChip(title: String, text: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.caption2.weight(.medium))
+                .foregroundStyle(Theme.Colors.secondaryText)
+
+            TextField("End", text: text)
+                .keyboardType(.numberPad)
+                .font(.title3.weight(.semibold))
+                .multilineTextAlignment(.leading)
+                .focused($focusedField, equals: .endPage)
+                .onChange(of: text.wrappedValue) { _, newValue in
+                    handleEndPageInput(newValue)
+                }
+                .monospacedDigit()
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Colors.tertiaryBackground, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(themeColor.color.opacity(0.08), lineWidth: 1)
+        )
+    }
+
+    private var xpGradient: LinearGradient {
+        LinearGradient(
+            colors: [
+                themeColor.color.opacity(0.7),
+                themeColor.color,
+                themeColor.color.opacity(0.9)
+            ],
+            startPoint: UnitPoint(x: xpGradientPhase, y: 0),
+            endPoint: UnitPoint(x: xpGradientPhase + 1.0, y: 1.0)
+        )
+    }
+
     private func sessionCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        content()
-            .padding(16)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(themeColor.color.opacity(0.08), lineWidth: 1)
-            )
-            .shadow(color: Theme.Shadow.small, radius: 4, y: 2)
+        VStack(alignment: .leading, spacing: 12) {
+            content()
+        }
+        .padding(16)
+        .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(themeColor.color.opacity(0.06), lineWidth: 1)
+        )
+        .shadow(color: Theme.Shadow.small, radius: 3, y: 1)
     }
 
     private func statusPill(text: String, isPaused: Bool) -> some View {
