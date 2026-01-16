@@ -24,6 +24,8 @@ struct StatsView: View {
     @State private var showSettings = false
     @State private var showUpgradeSheet = false
     @State private var showStreakDetail = false
+    @State private var trendsRange: TrendsRange = .last7
+    @State private var selectedTrend: TrendMetric?
 
     private var profile: UserProfile {
         if let existing = profiles.first {
@@ -70,6 +72,116 @@ struct StatsView: View {
 
     private var totalBooksRead: Int {
         allBooks.filter { $0.readingStatus == .finished }.count
+    }
+
+    private var trendsStartDate: Date {
+        let calendar = Calendar.current
+        switch trendsRange {
+        case .year:
+            let year = calendar.component(.year, from: Date())
+            return calendar.date(from: DateComponents(year: year, month: 1, day: 1)) ?? calendar.startOfDay(for: Date())
+        default:
+            let end = calendar.startOfDay(for: Date())
+            let offset = max(1, trendsRange.days) - 1
+            return calendar.date(byAdding: .day, value: -offset, to: end) ?? end
+        }
+    }
+
+    private var trendsEndDate: Date {
+        Date()
+    }
+
+    private var trendSessions: [ReadingSession] {
+        statSessions.filter { session in
+            session.startDate >= trendsStartDate && session.startDate <= trendsEndDate
+        }
+    }
+
+    private var previousTrendSessions: [ReadingSession] {
+        let calendar = Calendar.current
+        let rangeDays = max(1, trendsRangeDays)
+        let previousEnd = calendar.date(byAdding: .day, value: -rangeDays, to: trendsStartDate) ?? trendsStartDate
+        let previousStart = calendar.date(byAdding: .day, value: -rangeDays + 1, to: previousEnd) ?? previousEnd
+        return statSessions.filter { session in
+            session.startDate >= previousStart && session.startDate <= previousEnd
+        }
+    }
+
+    private var trendsRangeDays: Int {
+        let calendar = Calendar.current
+        let days = calendar.dateComponents([.day], from: trendsStartDate, to: trendsEndDate).day ?? trendsRange.days
+        return max(1, days)
+    }
+
+    private var pagesReadInRange: Int {
+        max(0, trendSessions.reduce(0) { $0 + $1.pagesRead })
+    }
+
+    private var minutesReadInRange: Int {
+        max(0, trendSessions.reduce(0) { $0 + $1.durationMinutes })
+    }
+
+    private var booksFinishedInRange: Int {
+        let calendar = Calendar.current
+        return allBooks.filter { book in
+            guard book.readingStatus == .finished,
+                  let finished = book.dateFinished else { return false }
+            return finished >= trendsStartDate && finished <= trendsEndDate
+        }.count
+    }
+
+    private var topCategoryInRange: String? {
+        var counts: [String: Int] = [:]
+        for session in trendSessions {
+            guard let subjects = session.book?.subjects else { continue }
+            for subject in subjects {
+                let key = subject.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !key.isEmpty else { continue }
+                counts[key, default: 0] += 1
+            }
+        }
+        return counts.max(by: { $0.value < $1.value })?.key
+    }
+
+    private var averageSpeedText: String {
+        let minutes = minutesReadInRange
+        guard minutes > 0 else { return "—" }
+        let hours = Double(minutes) / 60.0
+        let speed = Double(pagesReadInRange) / max(0.1, hours)
+        return String(format: "%.1f", speed)
+    }
+
+    private var trendsDateRangeText: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d MMM"
+        let start = formatter.string(from: trendsStartDate)
+        let end = formatter.string(from: trendsEndDate)
+        return "\(start) – \(end)"
+    }
+
+    private func trendTitle(prefix: String, value: String, suffix: String, accent: Color) -> Text {
+        var text = Text(prefix + " ")
+            .foregroundStyle(Theme.Colors.text)
+
+        text = text + Text(value)
+            .foregroundStyle(accent)
+
+        if !suffix.isEmpty {
+            text = text + Text(" " + suffix)
+                .foregroundStyle(Theme.Colors.text)
+        }
+
+        return text
+    }
+
+    private func trendDelta(current: Int, previous: Int, unit: String) -> TrendDelta? {
+        guard previous > 0 || current > 0 else { return nil }
+        let delta = current - previous
+        guard delta != 0 else { return nil }
+        let isPositive = delta > 0
+        let deltaValue = abs(delta)
+        let text = "\(deltaValue) \(unit)"
+        return TrendDelta(text: text, isPositive: isPositive)
     }
 
     private var todayTrackedSessions: [ReadingSession] {
@@ -121,6 +233,18 @@ struct StatsView: View {
             guard book.readingStatus == .finished,
                   let finishDate = book.dateFinished else { return false }
             return calendar.isDate(finishDate, equalTo: now, toGranularity: .month)
+        }.count
+    }
+
+    private var previousBooksFinishedInRange: Int {
+        let calendar = Calendar.current
+        let rangeDays = max(1, trendsRangeDays)
+        let previousEnd = calendar.date(byAdding: .day, value: -rangeDays, to: trendsStartDate) ?? trendsStartDate
+        let previousStart = calendar.date(byAdding: .day, value: -rangeDays + 1, to: previousEnd) ?? previousEnd
+        return allBooks.filter { book in
+            guard book.readingStatus == .finished,
+                  let finished = book.dateFinished else { return false }
+            return finished >= previousStart && finished <= previousEnd
         }.count
     }
 
@@ -204,6 +328,21 @@ struct StatsView: View {
                     progress: selection.progress
                 )
             }
+            .sheet(item: $selectedTrend) { metric in
+                switch metric {
+                case .streak:
+                    StreakDetailView(profile: profile)
+                default:
+                    TrendDetailView(
+                        metric: metric,
+                        sessions: trendSessions,
+                        books: allBooks,
+                        range: trendsRange,
+                        startDate: trendsStartDate,
+                        endDate: trendsEndDate
+                    )
+                }
+            }
         }
     }
 
@@ -215,72 +354,99 @@ struct StatsView: View {
 
     private var overviewSection: some View {
         VStack(spacing: Theme.Spacing.md) {
-            Text("Overview")
-                .font(Theme.Typography.title3)
-                .foregroundStyle(Theme.Colors.text)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Trends")
+                        .font(Theme.Typography.title3)
+                        .foregroundStyle(Theme.Colors.text)
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Spacing.md) {
-                StatCard(
-                    title: "Level",
-                    value: "\(profile.currentLevel)",
-                    icon: "star.fill",
-                    gradient: Theme.Colors.xpGradient
-                )
-
-                StatCard(
-                    title: "Total XP",
-                    value: "\(profile.totalXP)",
-                    icon: "bolt.fill",
-                    gradient: Theme.Colors.xpGradient
-                )
-
-                if streaksEnabled {
-                    StatCard(
-                        title: "Current Streak",
-                        value: formatDays(profile.currentStreak),
-                        icon: "flame.fill",
-                        gradient: Theme.Colors.streakGradient
-                    )
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        showStreakDetail = true
-                    }
-
-                    StatCard(
-                        title: "Longest Streak",
-                        value: formatDays(profile.longestStreak),
-                        icon: "flame.circle.fill",
-                        gradient: Theme.Colors.streakGradient
-                    )
+                    Text(trendsDateRangeText)
+                        .font(.caption)
+                        .foregroundStyle(Theme.Colors.secondaryText)
                 }
 
-                StatCard(
-                    title: "Books Read",
-                    value: "\(totalBooksRead)",
-                    icon: "books.vertical.fill",
-                    gradient: Theme.Colors.successGradient
+                Spacer()
+
+                Menu {
+                    Picker("Range", selection: $trendsRange) {
+                        ForEach(TrendsRange.allCases) { range in
+                            Text(range.title)
+                                .tag(range)
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Text(trendsRange.title)
+                            .font(.caption.weight(.semibold))
+                        Image(systemName: "chevron.down")
+                            .font(.caption2)
+                    }
+                    .foregroundStyle(Theme.Colors.text)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Theme.Colors.secondaryBackground, in: Capsule())
+                }
+            }
+
+            VStack(spacing: 12) {
+                TrendCard(
+                    title: trendTitle(prefix: "You read", value: "\(pagesReadInRange)", suffix: "pages", accent: themeColor.color),
+                    delta: trendDelta(current: pagesReadInRange, previous: previousTrendSessions.reduce(0) { $0 + $1.pagesRead }, unit: "pages"),
+                    accent: themeColor.color,
+                    icon: .bars,
+                    onTap: { selectedTrend = .pages }
                 )
 
-                StatCard(
-                    title: "Pages Read",
-                    value: "\(totalPagesRead)",
-                    icon: "doc.text.fill",
-                    gradient: Theme.Colors.xpGradient
+                TrendCard(
+                    title: trendTitle(prefix: "You read for", value: "\(minutesReadInRange)", suffix: "min", accent: Theme.Colors.secondary),
+                    delta: trendDelta(current: minutesReadInRange, previous: previousTrendSessions.reduce(0) { $0 + $1.durationMinutes }, unit: "min"),
+                    accent: Theme.Colors.secondary,
+                    icon: .line,
+                    onTap: { selectedTrend = .minutes }
                 )
 
-                StatCard(
-                    title: "This Year",
-                    value: formatBooks(booksThisYear),
-                    icon: "calendar",
-                    gradient: Theme.Colors.successGradient
+                TrendCard(
+                    title: trendTitle(prefix: "You finished", value: "\(booksFinishedInRange)", suffix: "books", accent: Theme.Colors.success),
+                    delta: trendDelta(current: booksFinishedInRange, previous: previousBooksFinishedInRange, unit: "books"),
+                    accent: Theme.Colors.success,
+                    icon: .bars,
+                    onTap: { selectedTrend = .books }
                 )
 
-                StatCard(
-                    title: "This Month",
-                    value: formatBooks(booksThisMonth),
-                    icon: "calendar.circle",
-                    gradient: Theme.Colors.successGradient
+                TrendCard(
+                    title: trendTitle(
+                        prefix: "Your top category was",
+                        value: topCategoryInRange ?? "No categories yet",
+                        suffix: "",
+                        accent: topCategoryInRange == nil ? Theme.Colors.secondaryText : themeColor.color
+                    ),
+                    delta: nil,
+                    accent: themeColor.color,
+                    icon: .dot,
+                    onTap: { selectedTrend = .categories }
+                )
+
+                TrendCard(
+                    title: trendTitle(prefix: "Your longest streak was", value: formatDays(profile.longestStreak), suffix: "", accent: Theme.Colors.warning),
+                    delta: nil,
+                    accent: Theme.Colors.warning,
+                    icon: .flame,
+                    onTap: { selectedTrend = .streak }
+                )
+
+                let speedValue = averageSpeedText == "—" ? "—" : "\(averageSpeedText) pages/hour"
+                let speedAccent = averageSpeedText == "—" ? Theme.Colors.secondaryText : Theme.Colors.primary
+                TrendCard(
+                    title: trendTitle(
+                        prefix: "Your average reading speed was",
+                        value: speedValue,
+                        suffix: "",
+                        accent: speedAccent
+                    ),
+                    delta: nil,
+                    accent: Theme.Colors.primary,
+                    icon: .speed,
+                    onTap: { selectedTrend = .speed }
                 )
             }
         }
@@ -576,6 +742,662 @@ struct StatsView: View {
             } catch {
                 print("Failed to mark achievement as viewed: \(error.localizedDescription)")
             }
+        }
+    }
+}
+
+private enum TrendsRange: String, CaseIterable, Identifiable {
+    case last7
+    case last30
+    case year
+
+    var id: String { rawValue }
+
+    var days: Int {
+        switch self {
+        case .last7: return 7
+        case .last30: return 30
+        case .year: return 365
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .last7: return "7 Days"
+        case .last30: return "30 Days"
+        case .year: return "This Year"
+        }
+    }
+}
+
+private enum TrendMetric: String, Identifiable {
+    case pages
+    case minutes
+    case books
+    case categories
+    case streak
+    case speed
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .pages: return "Pages Read"
+        case .minutes: return "Reading Time"
+        case .books: return "Books Finished"
+        case .categories: return "Top Categories"
+        case .streak: return "Streak"
+        case .speed: return "Reading Speed"
+        }
+    }
+}
+
+private enum TrendIcon {
+    case bars
+    case line
+    case dot
+    case flame
+    case speed
+}
+
+private struct TrendCard: View {
+    @Environment(\.themeColor) private var themeColor
+    let title: Text
+    let delta: TrendDelta?
+    let accent: Color
+    let icon: TrendIcon
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(alignment: .center, spacing: 12) {
+                VStack(alignment: .leading, spacing: 6) {
+                    title
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.Colors.text)
+                        .lineLimit(2)
+
+                    if let delta {
+                        HStack(spacing: 4) {
+                            Image(systemName: delta.isPositive ? "arrow.up.right" : "arrow.down.right")
+                                .font(.caption2.weight(.bold))
+                                .foregroundStyle(delta.isPositive ? Theme.Colors.success : Theme.Colors.error)
+
+                            Text(delta.text)
+                                .font(.caption)
+                                .foregroundStyle(delta.isPositive ? Theme.Colors.success : Theme.Colors.error)
+                        }
+                    }
+                }
+
+                Spacer()
+
+                TrendSpark(icon: icon, accent: accent)
+            }
+            .padding(14)
+            .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(themeColor.color.opacity(0.06), lineWidth: 1)
+            )
+            .shadow(color: Theme.Shadow.small, radius: 3, y: 1)
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(.isButton)
+    }
+}
+
+private struct TrendSpark: View {
+    let icon: TrendIcon
+    let accent: Color
+
+    var body: some View {
+        switch icon {
+        case .bars:
+            HStack(spacing: 4) {
+                Capsule()
+                    .fill(accent.opacity(0.5))
+                    .frame(width: 4, height: 10)
+                Capsule()
+                    .fill(accent)
+                    .frame(width: 4, height: 18)
+                Capsule()
+                    .fill(accent.opacity(0.7))
+                    .frame(width: 4, height: 14)
+            }
+        case .line:
+            Image(systemName: "waveform.path.ecg")
+                .font(.title3)
+                .foregroundStyle(accent)
+        case .dot:
+            Circle()
+                .fill(accent.opacity(0.2))
+                .frame(width: 16, height: 16)
+                .overlay(
+                    Circle()
+                        .fill(accent)
+                        .frame(width: 8, height: 8)
+                )
+        case .flame:
+            Image(systemName: "flame.fill")
+                .font(.title3)
+                .foregroundStyle(accent)
+        case .speed:
+            Image(systemName: "speedometer")
+                .font(.title3)
+                .foregroundStyle(accent)
+        }
+    }
+}
+
+private struct TrendDelta {
+    let text: String
+    let isPositive: Bool
+}
+
+private struct TrendDetailView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.themeColor) private var themeColor
+    let metric: TrendMetric
+    let sessions: [ReadingSession]
+    let books: [Book]
+    let range: TrendsRange
+    let startDate: Date
+    let endDate: Date
+
+    private struct DailySnapshot: Identifiable {
+        let id = UUID()
+        let date: Date
+        let pages: Int
+        let minutes: Int
+        let sessions: Int
+        let finishedBooks: Int
+        let speed: Double
+    }
+
+    private var dailySnapshots: [DailySnapshot] {
+        let calendar = Calendar.current
+        let start = calendar.startOfDay(for: startDate)
+        let end = calendar.startOfDay(for: endDate)
+        let dayCount = calendar.dateComponents([.day], from: start, to: end).day ?? 0
+
+        var sessionsByDay: [Date: [ReadingSession]] = [:]
+        for session in sessions {
+            let key = calendar.startOfDay(for: session.startDate)
+            sessionsByDay[key, default: []].append(session)
+        }
+
+        var booksByDay: [Date: Int] = [:]
+        for book in books {
+            guard book.readingStatus == .finished,
+                  let finished = book.dateFinished else { continue }
+            let key = calendar.startOfDay(for: finished)
+            if finished >= start && finished <= end {
+                booksByDay[key, default: 0] += 1
+            }
+        }
+
+        return (0...dayCount).compactMap { offset in
+            guard let day = calendar.date(byAdding: .day, value: offset, to: start) else { return nil }
+            let daySessions = sessionsByDay[day] ?? []
+            let pages = max(0, daySessions.reduce(0) { $0 + $1.pagesRead })
+            let minutes = max(0, daySessions.reduce(0) { $0 + $1.durationMinutes })
+            let speed = minutes > 0 ? Double(pages) / (Double(minutes) / 60.0) : 0
+            return DailySnapshot(
+                date: day,
+                pages: pages,
+                minutes: minutes,
+                sessions: daySessions.count,
+                finishedBooks: booksByDay[day] ?? 0,
+                speed: speed
+            )
+        }
+    }
+
+    private var rangeLabel: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d MMM"
+        let start = formatter.string(from: startDate)
+        let end = formatter.string(from: endDate)
+        return "\(start) – \(end)"
+    }
+
+    private var totalPages: Int {
+        sessions.reduce(0) { $0 + $1.pagesRead }
+    }
+
+    private var totalMinutes: Int {
+        sessions.reduce(0) { $0 + $1.durationMinutes }
+    }
+
+    private var totalBooksFinished: Int {
+        books.filter { book in
+            guard book.readingStatus == .finished, let finished = book.dateFinished else { return false }
+            return finished >= startDate && finished <= endDate
+        }.count
+    }
+
+    private var categoryCounts: [(String, Int)] {
+        var counts: [String: Int] = [:]
+        for session in sessions {
+            guard let subjects = session.book?.subjects else { continue }
+            for subject in subjects {
+                let key = subject.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !key.isEmpty else { continue }
+                counts[key, default: 0] += 1
+            }
+        }
+        return counts.sorted { $0.value > $1.value }
+    }
+
+    private var bestDayPages: Int {
+        dailySnapshots.map(\.pages).max() ?? 0
+    }
+
+    private var bestDayMinutes: Int {
+        dailySnapshots.map(\.minutes).max() ?? 0
+    }
+
+    private var averagePagesPerDay: Int {
+        guard !dailySnapshots.isEmpty else { return 0 }
+        return totalPages / dailySnapshots.count
+    }
+
+    private var averageMinutesPerDay: Int {
+        guard !dailySnapshots.isEmpty else { return 0 }
+        return totalMinutes / dailySnapshots.count
+    }
+
+    private var averageSpeed: Double {
+        let minutes = totalMinutes
+        guard minutes > 0 else { return 0 }
+        return Double(totalPages) / (Double(minutes) / 60.0)
+    }
+
+    private var fastestSessionSpeed: Double {
+        let speeds = sessions.map { session -> Double in
+            guard session.durationMinutes > 0 else { return 0 }
+            return Double(session.pagesRead) / (Double(session.durationMinutes) / 60.0)
+        }
+        return speeds.max() ?? 0
+    }
+
+    private var finishedBooksInRange: [Book] {
+        books.filter { book in
+            guard book.readingStatus == .finished, let finished = book.dateFinished else { return false }
+            return finished >= startDate && finished <= endDate
+        }
+        .sorted { ($0.dateFinished ?? .distantPast) > ($1.dateFinished ?? .distantPast) }
+    }
+
+    private var accent: Color {
+        switch metric {
+        case .pages: return themeColor.color
+        case .minutes: return Theme.Colors.secondary
+        case .books: return Theme.Colors.success
+        case .categories: return themeColor.color
+        case .streak: return Theme.Colors.warning
+        case .speed: return Theme.Colors.primary
+        }
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: Theme.Spacing.lg) {
+                    summaryCard
+                    detailCard
+                }
+                .padding(Theme.Spacing.md)
+            }
+            .background(Theme.Colors.background)
+            .navigationTitle(metric.title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var summaryCard: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.sm) {
+                Text(summaryValue)
+                    .font(.system(size: 36, weight: .bold, design: .rounded))
+                    .foregroundStyle(Theme.Colors.text)
+
+                Text(summarySuffix)
+                    .font(.headline)
+                    .foregroundStyle(Theme.Colors.secondaryText)
+
+                Spacer()
+            }
+
+            Text(rangeLabel)
+                .font(.caption)
+                .foregroundStyle(Theme.Colors.secondaryText)
+
+            if !summaryHint.isEmpty {
+                Text(summaryHint)
+                    .font(.callout)
+                    .foregroundStyle(Theme.Colors.secondaryText)
+            }
+        }
+        .padding(Theme.Spacing.lg)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [accent.opacity(0.12), .clear],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                )
+        )
+    }
+
+    @ViewBuilder
+    private var detailCard: some View {
+        switch metric {
+        case .pages:
+            metricChartCard(
+                valueKeyPath: \.pages,
+                title: "Pages per day",
+                highlight: "Best day \(bestDayPages) pages • Avg \(averagePagesPerDay) per day"
+            )
+        case .minutes:
+            metricChartCard(
+                valueKeyPath: \.minutes,
+                title: "Minutes per day",
+                highlight: "Best day \(bestDayMinutes) min • Avg \(averageMinutesPerDay) min/day"
+            )
+        case .books:
+            booksDetailCard
+        case .categories:
+            categoriesDetailCard
+        case .streak:
+            EmptyView()
+        case .speed:
+            speedDetailCard
+        }
+    }
+
+    private func metricChartCard(valueKeyPath: KeyPath<DailySnapshot, Int>, title: String, highlight: String) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Text(title)
+                .font(Theme.Typography.headline)
+                .foregroundStyle(Theme.Colors.text)
+
+            if dailySnapshots.allSatisfy({ $0[keyPath: valueKeyPath] == 0 }) {
+                Text("No activity yet in this range.")
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(Theme.Colors.secondaryText)
+            } else {
+                Chart(dailySnapshots) { snapshot in
+                    BarMark(
+                        x: .value("Day", snapshot.date, unit: .day),
+                        y: .value("Value", snapshot[keyPath: valueKeyPath])
+                    )
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [accent, accent.opacity(0.6)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .cornerRadius(6)
+                }
+                .frame(height: 200)
+                .chartXAxis {
+                    AxisMarks(values: .stride(by: .day, count: max(1, range.days / 6))) { value in
+                        if let date = value.as(Date.self) {
+                            AxisValueLabel {
+                                Text(date.formatted(.dateTime.day()))
+                                    .font(.caption2)
+                                    .foregroundStyle(Theme.Colors.tertiaryText)
+                            }
+                        }
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(position: .leading) { value in
+                        AxisGridLine()
+                        AxisValueLabel()
+                    }
+                }
+            }
+
+            Text(highlight)
+                .font(.caption)
+                .foregroundStyle(Theme.Colors.secondaryText)
+        }
+        .padding(Theme.Spacing.lg)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    private var booksDetailCard: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Text("Books finished")
+                .font(Theme.Typography.headline)
+                .foregroundStyle(Theme.Colors.text)
+
+            if dailySnapshots.allSatisfy({ $0.finishedBooks == 0 }) {
+                Text("No finished books in this range.")
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(Theme.Colors.secondaryText)
+            } else {
+                Chart(dailySnapshots) { snapshot in
+                    BarMark(
+                        x: .value("Day", snapshot.date, unit: .day),
+                        y: .value("Books", snapshot.finishedBooks)
+                    )
+                    .foregroundStyle(accent)
+                    .cornerRadius(6)
+                }
+                .frame(height: 160)
+            }
+
+            if finishedBooksInRange.isEmpty {
+                EmptyView()
+            } else {
+                VStack(spacing: 8) {
+                    ForEach(finishedBooksInRange.prefix(6), id: \.id) { book in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(book.title)
+                                    .font(.callout.weight(.semibold))
+                                    .foregroundStyle(Theme.Colors.text)
+                                    .lineLimit(1)
+
+                                Text(book.author)
+                                    .font(.caption)
+                                    .foregroundStyle(Theme.Colors.secondaryText)
+                                    .lineLimit(1)
+                            }
+
+                            Spacer()
+
+                            if let finished = book.dateFinished {
+                                Text(finished.formatted(.dateTime.day().month(.abbreviated)))
+                                    .font(.caption2)
+                                    .foregroundStyle(Theme.Colors.secondaryText)
+                            }
+                        }
+                    }
+                }
+                .padding(.top, 4)
+            }
+        }
+        .padding(Theme.Spacing.lg)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    private var categoriesDetailCard: some View {
+        let topCategories = Array(categoryCounts.prefix(6))
+        let maxCount = max(topCategories.map(\.1).max() ?? 0, 1)
+
+        return VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Text("Categories")
+                .font(Theme.Typography.headline)
+                .foregroundStyle(Theme.Colors.text)
+
+            if topCategories.isEmpty {
+                Text("No categories logged in this range.")
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(Theme.Colors.secondaryText)
+            } else {
+                VStack(spacing: Theme.Spacing.sm) {
+                    ForEach(topCategories, id: \.0) { category, count in
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack {
+                                Text(category)
+                                    .font(.callout.weight(.semibold))
+                                    .foregroundStyle(Theme.Colors.text)
+                                    .lineLimit(1)
+
+                                Spacer()
+
+                                Text("\(count)")
+                                    .font(.caption)
+                                    .foregroundStyle(Theme.Colors.secondaryText)
+                            }
+
+                            ProgressView(value: Double(count), total: Double(maxCount))
+                                .tint(accent)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(Theme.Spacing.lg)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    private var speedDetailCard: some View {
+        let averageText = averageSpeed > 0 ? String(format: "%.1f", averageSpeed) : "—"
+        let fastestText = fastestSessionSpeed > 0 ? String(format: "%.1f", fastestSessionSpeed) : "—"
+
+        return VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Text("Pages per hour")
+                .font(Theme.Typography.headline)
+                .foregroundStyle(Theme.Colors.text)
+
+            if dailySnapshots.allSatisfy({ $0.speed == 0 }) {
+                Text("No timed sessions in this range.")
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(Theme.Colors.secondaryText)
+            } else {
+                Chart(dailySnapshots) { snapshot in
+                    LineMark(
+                        x: .value("Day", snapshot.date, unit: .day),
+                        y: .value("Speed", snapshot.speed)
+                    )
+                    .interpolationMethod(.catmullRom)
+                    .foregroundStyle(accent)
+
+                    AreaMark(
+                        x: .value("Day", snapshot.date, unit: .day),
+                        y: .value("Speed", snapshot.speed)
+                    )
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [accent.opacity(0.35), .clear],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                }
+                .frame(height: 180)
+            }
+
+            HStack(spacing: Theme.Spacing.md) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Average")
+                        .font(.caption)
+                        .foregroundStyle(Theme.Colors.secondaryText)
+                    Text(averageText)
+                        .font(.headline)
+                        .foregroundStyle(Theme.Colors.text)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Fastest")
+                        .font(.caption)
+                        .foregroundStyle(Theme.Colors.secondaryText)
+                    Text(fastestText)
+                        .font(.headline)
+                        .foregroundStyle(Theme.Colors.text)
+                }
+            }
+            .padding(.top, 4)
+        }
+        .padding(Theme.Spacing.lg)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    private var summaryValue: String {
+        switch metric {
+        case .pages:
+            return "\(totalPages)"
+        case .minutes:
+            return "\(totalMinutes)"
+        case .books:
+            return "\(totalBooksFinished)"
+        case .categories:
+            return categoryCounts.first?.0 ?? "—"
+        case .streak:
+            return "—"
+        case .speed:
+            let value = averageSpeed > 0 ? String(format: "%.1f", averageSpeed) : "—"
+            return value
+        }
+    }
+
+    private var summarySuffix: String {
+        switch metric {
+        case .pages:
+            return "pages"
+        case .minutes:
+            return "min"
+        case .books:
+            return "books"
+        case .categories:
+            return categoryCounts.isEmpty ? "" : "top category"
+        case .streak:
+            return ""
+        case .speed:
+            return "pages/hour"
+        }
+    }
+
+    private var summaryHint: String {
+        switch metric {
+        case .pages:
+            return "\(sessions.count) sessions logged"
+        case .minutes:
+            return "\(sessions.count) sessions logged"
+        case .books:
+            return "\(finishedBooksInRange.count) books finished"
+        case .categories:
+            return categoryCounts.isEmpty ? "" : "\(categoryCounts.first?.1 ?? 0) sessions tagged"
+        case .streak:
+            return ""
+        case .speed:
+            return sessions.isEmpty ? "" : "\(sessions.count) timed sessions"
         }
     }
 }
