@@ -6002,6 +6002,7 @@
       }
     },
     "Date" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -17177,6 +17178,7 @@
       }
     },
     "Reading Position (optional)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -17382,6 +17384,7 @@
       }
     },
     "Reading..." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -18518,6 +18521,7 @@
       }
     },
     "Save Quote" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {

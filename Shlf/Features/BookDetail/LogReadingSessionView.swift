@@ -96,194 +96,33 @@ struct LogReadingSessionView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Reading Progress") {
-                    HStack {
-                        Text("From Page")
-                        Spacer()
-                        Text("\(actualStartPage)")
-                            .foregroundStyle(.secondary)
-                            .frame(width: 80, alignment: .trailing)
-                    }
+            ZStack(alignment: .top) {
+                LinearGradient(
+                    colors: [
+                        themeColor.color.opacity(0.12),
+                        themeColor.color.opacity(0.04),
+                        Theme.Colors.background
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
 
-                    HStack {
-                        Text("To Page")
-                        Spacer()
-                        TextField("End", text: $endPageText)
-                            .keyboardType(.numberPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 80)
-                            .focused($focusedField, equals: .endPage)
-                            .onChange(of: endPageText) { _, newValue in
-                                handleEndPageInput(newValue)
-                            }
+                ScrollView {
+                    VStack(spacing: 16) {
+                        progressCard
+                        durationCard
+                        positionCard
+                        quoteCard
+                        sessionDetailsCard
+                        xpCard
                     }
-
-                    HStack {
-                        Image(systemName: "book.pages")
-                            .foregroundStyle(themeColor.color)
-
-                        Text("Pages Read")
-                        Spacer()
-                        Text("\(pagesRead)")
-                            .font(Theme.Typography.headline)
-                            .foregroundStyle(themeColor.color)
-                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+                    .padding(.bottom, 40)
                 }
-
-                Section("Duration") {
-                    if activeSessionForBook == nil {
-                        Toggle("Use Timer", isOn: $useTimer)
-                    }
-
-                    if let session = activeSessionForBook {
-                        VStack(spacing: Theme.Spacing.md) {
-                            Text(session.isPaused ? "Paused" : "Reading...")
-                                .font(Theme.Typography.headline)
-                                .foregroundStyle(session.isPaused ? .orange : themeColor.color)
-
-                            Text("Started on \(session.sourceDevice)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-
-                            ActiveSessionTimerView(activeSession: session)
-
-                            HStack(spacing: Theme.Spacing.sm) {
-                                Button(session.isPaused ? "Resume" : "Pause") {
-                                    session.isPaused.toggle()
-                                    if session.isPaused {
-                                        session.pausedAt = Date()
-                                    } else {
-                                        if let pausedAt = session.pausedAt {
-                                            session.totalPausedDuration += max(0, Date().timeIntervalSince(pausedAt))
-                                        }
-                                        session.pausedAt = nil
-                                    }
-                                    session.lastUpdated = Date()
-                                    try? modelContext.save()
-                                    WatchConnectivityManager.shared.sendActiveSessionToWatch(session)
-                                    WidgetDataExporter.exportSnapshot(modelContext: modelContext)
-                                    syncLiveActivity(with: session)
-                                }
-                                .buttonStyle(.bordered)
-                                .tint(themeColor.color)
-
-                                Button("Finish Session") {
-                                    finishActiveSession(session)
-                                }
-                                .buttonStyle(.borderedProminent)
-                                .tint(themeColor.color)
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, Theme.Spacing.sm)
-                    } else if useTimer {
-                        if let startTime = timerStartTime {
-                            VStack(spacing: Theme.Spacing.md) {
-                                Text(isPaused ? "Paused" : "Reading...")
-                                    .font(Theme.Typography.headline)
-                                    .foregroundStyle(isPaused ? .orange : themeColor.color)
-
-                                TimerView(startTime: startTime, isPaused: isPaused, pausedElapsedTime: pausedElapsedTime)
-
-                                HStack(spacing: Theme.Spacing.sm) {
-                                    Button(isPaused ? "Resume" : "Pause") {
-                                        if isPaused {
-                                            resumeTimer()
-                                        } else {
-                                            pauseTimer()
-                                        }
-                                    }
-                                    .buttonStyle(.bordered)
-                                    .tint(themeColor.color)
-
-                                    Button("Finish Session") {
-                                        finishSession()
-                                    }
-                                    .buttonStyle(.borderedProminent)
-                                    .tint(themeColor.color)
-                                }
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, Theme.Spacing.sm)
-                        } else {
-                            Button("Start Timer") {
-                                startTimer()
-                            }
-                            .primaryButton(color: themeColor.color)
-                            .frame(maxWidth: .infinity)
-                        }
-                    } else {
-                        DurationPickerView(minutes: $durationMinutes)
-                    }
-                }
-
-                Section("Reading Position (optional)") {
-                    Toggle("Save reading position", isOn: $shouldSavePosition)
-                        .onChange(of: shouldSavePosition) { oldValue, newValue in
-                            if newValue {
-                                positionPage = endPage
-                            }
-                        }
-                        .onChange(of: endPage) { oldValue, newValue in
-                            if shouldSavePosition {
-                                positionPage = newValue
-                            }
-                        }
-
-                    if shouldSavePosition {
-                        HStack {
-                            Text("Page")
-                            Spacer()
-                            TextField("Page", value: $positionPage, format: .number)
-                                .keyboardType(.numberPad)
-                                .multilineTextAlignment(.trailing)
-                                .frame(width: 80)
-                        }
-
-                        HStack {
-                            Text("Line")
-                            Spacer()
-                            TextField("Line (optional)", text: $positionLineText)
-                                .keyboardType(.numberPad)
-                                .multilineTextAlignment(.trailing)
-                                .frame(width: 80)
-                        }
-
-                        TextField("Note (optional)", text: $positionNote, axis: .vertical)
-                            .lineLimit(2...4)
-                    }
-                }
-
-                Section("Save Quote") {
-                    Button {
-                        showAddQuote = true
-                    } label: {
-                        Label("Add Quote from this Session", systemImage: "quote.bubble")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(themeColor.color)
-                }
-
-                Section("Date") {
-                    DatePicker("Session Date", selection: $sessionDate, displayedComponents: [.date, .hourAndMinute])
-                }
-
-                Section {
-                    HStack {
-                        Image(systemName: "star.fill")
-                            .foregroundStyle(Theme.Colors.xpGradient)
-
-                        Text("Estimated XP")
-                        Spacer()
-                        Text("+\(estimatedXP)")
-                            .font(Theme.Typography.headline)
-                            .foregroundStyle(Theme.Colors.xpGradient)
-                    }
-                }
+                .scrollDismissesKeyboard(.interactively)
             }
-            .scrollDismissesKeyboard(.interactively)
             .onAppear {
                 syncWithLiveActivity()
                 syncEndPageText(with: actualEndPage)
@@ -371,6 +210,268 @@ struct LogReadingSessionView: View {
                 AddQuoteView(book: book, prefillPage: endPage)
             }
         }
+    }
+
+    private var progressCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            cardHeader(title: "Reading Progress", icon: "book.pages")
+
+            VStack(spacing: 0) {
+                HStack {
+                    Text("From Page")
+                    Spacer()
+                    Text("\(actualStartPage)")
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                }
+                .padding(.vertical, 10)
+
+                Divider()
+
+                HStack {
+                    Text("To Page")
+                    Spacer()
+                    TextField("End", text: $endPageText)
+                        .keyboardType(.numberPad)
+                        .multilineTextAlignment(.trailing)
+                        .frame(minWidth: 80, alignment: .trailing)
+                        .focused($focusedField, equals: .endPage)
+                        .onChange(of: endPageText) { _, newValue in
+                            handleEndPageInput(newValue)
+                        }
+                        .monospacedDigit()
+                }
+                .padding(.vertical, 10)
+
+                Divider()
+
+                HStack {
+                    Image(systemName: "book.pages")
+                        .foregroundStyle(themeColor.color)
+
+                    Text("Pages Read")
+                    Spacer()
+                    Text("\(pagesRead)")
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(themeColor.color)
+                        .monospacedDigit()
+                }
+                .padding(.vertical, 10)
+            }
+            .padding(.horizontal, 12)
+            .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+    }
+
+    private var durationCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            cardHeader(title: "Duration", icon: "timer")
+
+            VStack(spacing: 12) {
+                if activeSessionForBook == nil {
+                    Toggle("Use Timer", isOn: $useTimer)
+                        .tint(themeColor.color)
+                }
+
+                if let session = activeSessionForBook {
+                    VStack(spacing: 12) {
+                        statusPill(text: session.isPaused ? "Paused" : "Reading...", isPaused: session.isPaused)
+
+                        Text("Started on \(session.sourceDevice)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        ActiveSessionTimerView(activeSession: session)
+
+                        HStack(spacing: 10) {
+                            Button(session.isPaused ? "Resume" : "Pause") {
+                                session.isPaused.toggle()
+                                if session.isPaused {
+                                    session.pausedAt = Date()
+                                } else {
+                                    if let pausedAt = session.pausedAt {
+                                        session.totalPausedDuration += max(0, Date().timeIntervalSince(pausedAt))
+                                    }
+                                    session.pausedAt = nil
+                                }
+                                session.lastUpdated = Date()
+                                try? modelContext.save()
+                                WatchConnectivityManager.shared.sendActiveSessionToWatch(session)
+                                WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+                                syncLiveActivity(with: session)
+                            }
+                            .buttonStyle(.bordered)
+                            .tint(themeColor.color)
+
+                            Button("Finish Session") {
+                                finishActiveSession(session)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(themeColor.color)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                } else if useTimer {
+                    if let startTime = timerStartTime {
+                        VStack(spacing: 12) {
+                            statusPill(text: isPaused ? "Paused" : "Reading...", isPaused: isPaused)
+
+                            TimerView(startTime: startTime, isPaused: isPaused, pausedElapsedTime: pausedElapsedTime)
+
+                            HStack(spacing: 10) {
+                                Button(isPaused ? "Resume" : "Pause") {
+                                    if isPaused {
+                                        resumeTimer()
+                                    } else {
+                                        pauseTimer()
+                                    }
+                                }
+                                .buttonStyle(.bordered)
+                                .tint(themeColor.color)
+
+                                Button("Finish Session") {
+                                    finishSession()
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .tint(themeColor.color)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                    } else {
+                        Button("Start Timer") {
+                            startTimer()
+                        }
+                        .primaryButton(color: themeColor.color)
+                        .frame(maxWidth: .infinity)
+                    }
+                } else {
+                    DurationPickerView(minutes: $durationMinutes)
+                }
+            }
+            .padding(12)
+            .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+    }
+
+    private var positionCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            cardHeader(title: "Reading Position", icon: "bookmark")
+
+            VStack(spacing: 12) {
+                Toggle("Save reading position", isOn: $shouldSavePosition)
+                    .tint(themeColor.color)
+                    .onChange(of: shouldSavePosition) { _, newValue in
+                        if newValue {
+                            positionPage = endPage
+                        }
+                    }
+                    .onChange(of: endPage) { _, newValue in
+                        if shouldSavePosition {
+                            positionPage = newValue
+                        }
+                    }
+
+                if shouldSavePosition {
+                    HStack {
+                        Text("Page")
+                        Spacer()
+                        TextField("Page", value: $positionPage, format: .number)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(minWidth: 80, alignment: .trailing)
+                            .monospacedDigit()
+                    }
+
+                    HStack {
+                        Text("Line")
+                        Spacer()
+                        TextField("Line (optional)", text: $positionLineText)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(minWidth: 80, alignment: .trailing)
+                    }
+
+                    TextField("Note (optional)", text: $positionNote, axis: .vertical)
+                        .lineLimit(2...4)
+                }
+            }
+            .padding(12)
+            .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+    }
+
+    private var quoteCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            cardHeader(title: "Save Quote", icon: "quote.bubble")
+
+            Button {
+                showAddQuote = true
+            } label: {
+                Label("Add Quote from this Session", systemImage: "quote.bubble")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .tint(themeColor.color)
+        }
+        .padding(12)
+        .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private var sessionDetailsCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            cardHeader(title: "Session Details", icon: "calendar")
+
+            DatePicker("Session Date", selection: $sessionDate, displayedComponents: [.date, .hourAndMinute])
+                .tint(themeColor.color)
+        }
+        .padding(12)
+        .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private var xpCard: some View {
+        HStack {
+            Image(systemName: "star.fill")
+                .foregroundStyle(Theme.Colors.xpGradient)
+
+            Text("Estimated XP")
+                .font(.subheadline.weight(.semibold))
+
+            Spacer()
+
+            Text("+\(estimatedXP)")
+                .font(Theme.Typography.headline)
+                .foregroundStyle(Theme.Colors.xpGradient)
+                .monospacedDigit()
+        }
+        .padding(16)
+        .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func cardHeader(title: String, icon: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(themeColor.color)
+                .frame(width: 16)
+
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.Colors.text)
+
+            Spacer()
+        }
+    }
+
+    private func statusPill(text: String, isPaused: Bool) -> some View {
+        Text(text)
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(isPaused ? Color.orange : themeColor.color)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill((isPaused ? Color.orange : themeColor.color).opacity(0.12))
+            )
     }
 
     private func hideKeyboard() {
