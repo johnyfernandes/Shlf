@@ -89,20 +89,37 @@ struct StatsView: View {
         return formatter.string(from: calendarMonthStart)
     }
 
+    private var minCalendarOffset: Int {
+        let calendar = Calendar.current
+        let now = Date()
+        let currentStart = calendar.date(from: calendar.dateComponents([.year, .month], from: now)) ?? now
+
+        guard let earliest = earliestCalendarDate else { return 0 }
+        let earliestYear = calendar.component(.year, from: earliest)
+        let earliestStart = calendar.date(from: DateComponents(year: earliestYear, month: 1, day: 1)) ?? earliest
+        let diff = calendar.dateComponents([.month], from: earliestStart, to: currentStart).month ?? 0
+        return -max(0, diff)
+    }
+
     private var calendarMonthOptions: [CalendarMonthOption] {
         let calendar = Calendar.current
         let now = Date()
         let currentStart = calendar.date(from: calendar.dateComponents([.year, .month], from: now)) ?? now
-        let earliestActivity = earliestCalendarDate ?? currentStart
-        let earliestStart = calendar.date(from: calendar.dateComponents([.year, .month], from: earliestActivity)) ?? earliestActivity
-        let monthDiff = max(0, calendar.dateComponents([.month], from: earliestStart, to: currentStart).month ?? 0)
+        let selectedYear = calendar.component(.year, from: calendarMonthStart)
+        let currentYear = calendar.component(.year, from: currentStart)
+        let maxMonth = selectedYear == currentYear
+            ? calendar.component(.month, from: currentStart)
+            : 12
 
         let formatter = DateFormatter()
-        formatter.dateFormat = "LLLL yyyy"
+        formatter.dateFormat = "LLLL"
 
-        return (0...monthDiff).map { index in
-            let offset = -index
-            let date = calendar.date(byAdding: .month, value: offset, to: currentStart) ?? currentStart
+        return (1...maxMonth).compactMap { month in
+            guard let date = calendar.date(from: DateComponents(year: selectedYear, month: month, day: 1)) else {
+                return nil
+            }
+            let diff = calendar.dateComponents([.month], from: date, to: currentStart).month ?? 0
+            let offset = -diff
             let label = formatter.string(from: date)
             return CalendarMonthOption(offset: offset, label: label)
         }
@@ -123,25 +140,35 @@ struct StatsView: View {
     }
 
     private var calendarDaySummaries: [Date: CalendarDaySummary] {
+        struct DayAggregate {
+            var pages: Int = 0
+            var minutes: Int = 0
+            var bookPages: [UUID: (pages: Int, cover: URL)] = [:]
+        }
+
         let calendar = Calendar.current
-        var totals: [Date: (pages: Int, minutes: Int, topPages: Int, cover: URL?)] = [:]
+        var totals: [Date: DayAggregate] = [:]
 
         for session in statSessions {
             let day = calendar.startOfDay(for: session.startDate)
-            var entry = totals[day] ?? (0, 0, 0, nil)
+            var entry = totals[day] ?? DayAggregate()
             entry.pages += session.pagesRead
             entry.minutes += session.durationMinutes
 
-            if session.pagesRead >= entry.topPages, let cover = session.book?.coverImageURL {
-                entry.topPages = session.pagesRead
-                entry.cover = cover
+            if let book = session.book, let cover = book.coverImageURL {
+                let existing = entry.bookPages[book.id]?.pages ?? 0
+                entry.bookPages[book.id] = (existing + session.pagesRead, cover)
             }
 
             totals[day] = entry
         }
 
         return totals.mapValues { value in
-            CalendarDaySummary(pages: value.pages, minutes: value.minutes, coverURL: value.cover)
+            let topCovers = value.bookPages
+                .sorted { $0.value.pages > $1.value.pages }
+                .prefix(2)
+                .map { $0.value.cover }
+            return CalendarDaySummary(pages: value.pages, minutes: value.minutes, coverURLs: topCovers)
         }
     }
 
@@ -461,7 +488,7 @@ struct StatsView: View {
             VStack(spacing: Theme.Spacing.md) {
                 HStack {
                     Button {
-                        calendarMonthOffset -= 1
+                        calendarMonthOffset = max(minCalendarOffset, calendarMonthOffset - 1)
                     } label: {
                         Image(systemName: "chevron.left")
                             .font(.caption.weight(.semibold))
@@ -470,8 +497,8 @@ struct StatsView: View {
                             .background(Theme.Colors.tertiaryBackground, in: Circle())
                     }
                     .buttonStyle(.plain)
-                    .disabled(calendarMonthOffset <= -(calendarMonthOptions.count - 1))
-                    .opacity(calendarMonthOffset <= -(calendarMonthOptions.count - 1) ? 0.4 : 1)
+                    .disabled(calendarMonthOffset <= minCalendarOffset)
+                    .opacity(calendarMonthOffset <= minCalendarOffset ? 0.4 : 1)
 
                     Spacer()
 
@@ -1100,7 +1127,7 @@ private struct TrendDelta {
 private struct CalendarDaySummary {
     let pages: Int
     let minutes: Int
-    let coverURL: URL?
+    let coverURLs: [URL]
 }
 
 private struct CalendarMonthOption: Identifiable {
@@ -1140,37 +1167,29 @@ private struct CalendarDayCell: View {
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .fill(hasActivity ? themeColor.color.opacity(0.14) : Theme.Colors.tertiaryBackground)
 
-                if hasActivity, let coverURL = summary?.coverURL {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .fill(themeColor.color.opacity(0.18))
-
-                        CachedAsyncImage(url: coverURL) { image in
-                            image
-                                .resizable()
-                                .scaledToFill()
-                        } placeholder: {
-                            themeColor.color.opacity(0.12)
-                        }
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    }
-                    .frame(width: size * 0.56, height: size * 0.82)
-                    .shadow(color: Theme.Shadow.small, radius: 2, y: 1)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                } else if hasActivity {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    themeColor.color.opacity(0.28),
-                                    themeColor.color.opacity(0.08)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                if hasActivity {
+                    if let summary, !summary.coverURLs.isEmpty {
+                        CalendarCoverStack(
+                            urls: summary.coverURLs,
+                            size: size,
+                            accent: themeColor.color
                         )
-                        .frame(width: size * 0.56, height: size * 0.82)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                    } else {
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        themeColor.color.opacity(0.28),
+                                        themeColor.color.opacity(0.08)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: size * 0.56, height: size * 0.82)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                    }
                 }
 
                 Text(dayNumber)
@@ -1201,6 +1220,47 @@ private struct CalendarEmptyCell: View {
         RoundedRectangle(cornerRadius: 10, style: .continuous)
             .fill(Color.clear)
             .frame(maxWidth: .infinity, minHeight: size, maxHeight: size)
+    }
+}
+
+private struct CalendarCoverStack: View {
+    let urls: [URL]
+    let size: CGFloat
+    let accent: Color
+
+    private var coverSize: CGSize {
+        CGSize(width: size * 0.56, height: size * 0.82)
+    }
+
+    var body: some View {
+        ZStack {
+            if urls.count > 1 {
+                coverView(urls[1])
+                    .offset(x: -5, y: -4)
+                    .opacity(0.9)
+            }
+
+            coverView(urls[0])
+                .offset(x: 4, y: 4)
+        }
+    }
+
+    private func coverView(_ url: URL) -> some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(accent.opacity(0.18))
+
+            CachedAsyncImage(url: url) { image in
+                image
+                    .resizable()
+                    .scaledToFill()
+            } placeholder: {
+                accent.opacity(0.12)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        }
+        .frame(width: coverSize.width, height: coverSize.height)
+        .shadow(color: Theme.Shadow.small, radius: 2, y: 1)
     }
 }
 
