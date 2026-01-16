@@ -114,15 +114,16 @@ struct BookDetailView: View {
                 }
             }
 
-            ToolbarItem(placement: .primaryAction) {
+            ToolbarItemGroup(placement: .primaryAction) {
+                Button {
+                    showLogSession = true
+                } label: {
+                    Image(systemName: "clock.badge.checkmark")
+                        .foregroundStyle(themeColor.color)
+                }
+
                 Menu {
                     if book.readingStatus == .currentlyReading {
-                        Button {
-                            showLogSession = true
-                        } label: {
-                            Label("Log Session", systemImage: "clock.badge.checkmark")
-                        }
-
                         Button {
                             markAsFinished()
                         } label: {

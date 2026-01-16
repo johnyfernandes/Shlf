@@ -21,9 +21,6 @@ struct StatsView: View {
     @State private var selectedAchievement: AchievementEntry?
     @State private var showAllAchievements = false
     @State private var showShareSheet = false
-    @State private var showLogSessionPicker = false
-    @State private var selectedLogBook: Book?
-    @State private var showNoLogBookAlert = false
     @State private var showSettings = false
     @State private var showUpgradeSheet = false
     @State private var showStreakDetail = false
@@ -73,12 +70,6 @@ struct StatsView: View {
 
     private var totalBooksRead: Int {
         allBooks.filter { $0.readingStatus == .finished }.count
-    }
-
-    private var currentlyReadingBooks: [Book] {
-        allBooks
-            .filter { $0.readingStatus == .currentlyReading }
-            .sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
     }
 
     private var todayTrackedSessions: [ReadingSession] {
@@ -169,13 +160,6 @@ struct StatsView: View {
                     }
 
                     Button {
-                        handleLogSessionTap()
-                    } label: {
-                        Image(systemName: "clock.badge.checkmark")
-                            .foregroundStyle(themeColor.color)
-                    }
-
-                    Button {
                         showSettings = true
                     } label: {
                         Image(systemName: "gearshape")
@@ -207,12 +191,6 @@ struct StatsView: View {
             .sheet(isPresented: $showShareSheet) {
                 ShareSheetView()
             }
-            .sheet(isPresented: $showLogSessionPicker) {
-                logSessionPickerSheet
-            }
-            .sheet(item: $selectedLogBook) { book in
-                LogReadingSessionView(book: book)
-            }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
             }
@@ -226,11 +204,6 @@ struct StatsView: View {
                     progress: selection.progress
                 )
             }
-            .alert("No Current Book", isPresented: $showNoLogBookAlert) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text("Start reading a book to log a session.")
-            }
         }
     }
 
@@ -239,63 +212,6 @@ struct StatsView: View {
         tracker.updateGoals(for: profile)
     }
 
-    private func handleLogSessionTap() {
-        if currentlyReadingBooks.isEmpty {
-            showNoLogBookAlert = true
-        } else if currentlyReadingBooks.count == 1, let book = currentlyReadingBooks.first {
-            selectedLogBook = book
-        } else {
-            showLogSessionPicker = true
-        }
-    }
-
-    private func selectLogBook(_ book: Book) {
-        showLogSessionPicker = false
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            selectedLogBook = book
-        }
-    }
-
-    private var logSessionPickerSheet: some View {
-        NavigationStack {
-            List(currentlyReadingBooks) { book in
-                Button {
-                    selectLogBook(book)
-                } label: {
-                    HStack(spacing: 12) {
-                        BookCoverView(
-                            imageURL: book.coverImageURL,
-                            title: book.title,
-                            width: 36,
-                            height: 54
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(book.title)
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(Theme.Colors.text)
-                                .lineLimit(1)
-
-                            Text(book.author)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                        }
-                    }
-                }
-                .buttonStyle(.plain)
-            }
-            .navigationTitle("Log Session")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") {
-                        showLogSessionPicker = false
-                    }
-                }
-            }
-        }
-    }
 
     private var overviewSection: some View {
         VStack(spacing: Theme.Spacing.md) {
