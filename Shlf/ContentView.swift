@@ -14,10 +14,6 @@ struct ContentView: View {
 
     @State private var showOnboarding = false
     @State private var selectedTab = 0
-    @State private var lastNonSearchTab = 0
-    @State private var showQuickAddBook = false
-    @State private var quickLogBook: Book?
-    @StateObject private var quickActionRouter = QuickActionRouter()
 
     private var shouldShowOnboarding: Bool {
         profiles.first?.hasCompletedOnboarding == false || profiles.isEmpty
@@ -47,34 +43,11 @@ struct ContentView: View {
         }
         .tint(currentThemeColor.color)
         .environment(\.themeColor, currentThemeColor)
-        .environmentObject(quickActionRouter)
         .fullScreenCover(isPresented: $showOnboarding) {
             OnboardingView(isPresented: $showOnboarding)
         }
-        .sheet(isPresented: $showQuickAddBook) {
-            AddBookView(selectedTab: $selectedTab)
-        }
-        .sheet(item: $quickLogBook) { book in
-            LogReadingSessionView(book: book)
-        }
         .onAppear {
             showOnboarding = shouldShowOnboarding
-        }
-        .onChange(of: selectedTab) { _, newValue in
-            if newValue == 3 {
-                selectedTab = lastNonSearchTab
-                triggerQuickAction()
-            } else {
-                lastNonSearchTab = newValue
-            }
-        }
-    }
-
-    private func triggerQuickAction() {
-        if let book = quickActionRouter.activeBook {
-            quickLogBook = book
-        } else {
-            showQuickAddBook = true
         }
     }
 }
