@@ -32,7 +32,7 @@ struct BookDetailView: View {
     @State private var showFinishOptions = false
     @State private var showFinishLog = false
     @State private var showShareSheet = false
-    @State private var logSessionShimmer: CGFloat = -30
+    @State private var playShimmer: CGFloat = -40
 
     private var profile: UserProfile? {
         profiles.first
@@ -314,73 +314,7 @@ struct BookDetailView: View {
             .shadow(color: .black.opacity(0.25), radius: 30, x: 0, y: 15)
             .padding(.top, 20)
 
-            // Compact status pill
-            Menu {
-                ForEach(ReadingStatus.allCases, id: \.self) { status in
-                    Button {
-                        handleStatusChange(to: status)
-                    } label: {
-                        Label {
-                            Text(status.displayNameKey)
-                        } icon: {
-                            Image(systemName: status.icon)
-                            if book.readingStatus == status {
-                                Image(systemName: "checkmark")
-                            }
-                        }
-                    }
-                }
-            } label: {
-                ZStack {
-                    HStack(spacing: 6) {
-                        Image(systemName: ReadingStatus.wantToRead.icon)
-                            .font(.caption.weight(.semibold))
-                            .frame(width: 14)
-
-                        Text(ReadingStatus.wantToRead.shortNameKey)
-                            .font(.caption.weight(.semibold))
-                            .lineLimit(1)
-
-                        Image(systemName: "chevron.down.circle.fill")
-                            .font(.caption2)
-                            .symbolRenderingMode(.hierarchical)
-                    }
-                    .opacity(0)
-                    .accessibilityHidden(true)
-
-                    HStack(spacing: 6) {
-                        Image(systemName: book.readingStatus.icon)
-                            .font(.caption.weight(.semibold))
-                            .frame(width: 14)
-
-                        Text(book.readingStatus.shortNameKey)
-                            .font(.caption.weight(.semibold))
-                            .lineLimit(1)
-
-                        Image(systemName: "chevron.down.circle.fill")
-                            .font(.caption2)
-                            .symbolRenderingMode(.hierarchical)
-                    }
-                }
-                .foregroundStyle(.white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(
-                    Capsule()
-                        .fill(themeColor.color.gradient)
-                        .shadow(color: themeColor.color.opacity(0.4), radius: 8, x: 0, y: 4)
-                )
-                .clipShape(Capsule())
-                .contentShape(Capsule())
-                .transaction { $0.animation = nil }
-            }
-            .buttonStyle(.plain)
-
-            HStack {
-                Spacer()
-                logSessionChip
-                Spacer()
-            }
+            heroActions
 
             // Type badge
             if book.bookType != .physical {
@@ -534,15 +468,30 @@ struct BookDetailView: View {
         }
     }
 
-    private var logSessionChip: some View {
+    private var heroActions: some View {
+        HStack(spacing: 24) {
+            heroPlayButton
+            heroStatusButton
+        }
+        .padding(.top, 4)
+    }
+
+    private var heroPlayButton: some View {
         Button {
             showLogSession = true
         } label: {
-            HStack(spacing: 8) {
+            VStack(spacing: 8) {
                 ZStack {
-                    Image(systemName: "clock.badge.checkmark")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(themeColor.color)
+                    Circle()
+                        .fill(themeColor.color.gradient)
+                        .shadow(color: themeColor.color.opacity(0.4), radius: 10, y: 6)
+
+                    Circle()
+                        .strokeBorder(themeColor.color.opacity(0.3), lineWidth: 1)
+
+                    Image(systemName: "play.fill")
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(.white)
 
                     LinearGradient(
                         colors: [
@@ -553,34 +502,68 @@ struct BookDetailView: View {
                         startPoint: .leading,
                         endPoint: .trailing
                     )
-                    .rotationEffect(.degrees(30))
-                    .offset(x: logSessionShimmer)
+                    .rotationEffect(.degrees(20))
+                    .offset(x: playShimmer)
                     .mask(
-                        Image(systemName: "clock.badge.checkmark")
-                            .font(.caption.weight(.semibold))
+                        Circle()
+                            .scale(0.9)
                     )
-                    .blendMode(.overlay)
+                    .blendMode(.screen)
                 }
+                .frame(width: 54, height: 54)
 
                 Text("Log Session")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(themeColor.color)
+                    .foregroundStyle(Theme.Colors.text)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .background(themeColor.color.opacity(0.12), in: Capsule())
-            .overlay(
-                Capsule()
-                    .strokeBorder(themeColor.color.opacity(0.35), lineWidth: 1)
-            )
-            .fixedSize(horizontal: true, vertical: false)
         }
         .buttonStyle(.plain)
         .onAppear {
-            withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: false)) {
-                logSessionShimmer = 30
+            withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) {
+                playShimmer = 40
             }
         }
+    }
+
+    private var heroStatusButton: some View {
+        Menu {
+            ForEach(ReadingStatus.allCases, id: \.self) { status in
+                Button {
+                    handleStatusChange(to: status)
+                } label: {
+                    Label {
+                        Text(status.displayNameKey)
+                    } icon: {
+                        Image(systemName: status.icon)
+                        if book.readingStatus == status {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
+        } label: {
+            VStack(spacing: 8) {
+                ZStack {
+                    Circle()
+                        .fill(Theme.Colors.secondaryBackground)
+                        .overlay(
+                            Circle()
+                                .strokeBorder(themeColor.color.opacity(0.2), lineWidth: 1)
+                        )
+
+                    Image(systemName: book.readingStatus.icon)
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(themeColor.color)
+                }
+                .frame(width: 54, height: 54)
+
+                Text(book.readingStatus.shortNameKey)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Theme.Colors.text)
+            }
+        }
+        .buttonStyle(.plain)
+        .transaction { $0.animation = nil }
     }
 
     // MARK: - Description Section
