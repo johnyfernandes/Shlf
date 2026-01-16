@@ -85,10 +85,34 @@ struct StatsView: View {
 
     private var calendarMonthLabel: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "LLLL"
-        let month = formatter.string(from: calendarMonthStart)
-        let year = Calendar.current.component(.year, from: calendarMonthStart)
-        return "\(month) \(year)"
+        formatter.dateFormat = "LLLL yyyy"
+        return formatter.string(from: calendarMonthStart)
+    }
+
+    private var calendarMonthOptions: [CalendarMonthOption] {
+        let calendar = Calendar.current
+        let now = Date()
+        let currentStart = calendar.date(from: calendar.dateComponents([.year, .month], from: now)) ?? now
+        let earliestActivity = earliestCalendarDate ?? currentStart
+        let earliestStart = calendar.date(from: calendar.dateComponents([.year, .month], from: earliestActivity)) ?? earliestActivity
+        let monthDiff = max(0, calendar.dateComponents([.month], from: earliestStart, to: currentStart).month ?? 0)
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "LLLL yyyy"
+
+        return (0...monthDiff).map { index in
+            let offset = -index
+            let date = calendar.date(byAdding: .month, value: offset, to: currentStart) ?? currentStart
+            let label = formatter.string(from: date)
+            return CalendarMonthOption(offset: offset, label: label)
+        }
+    }
+
+    private var earliestCalendarDate: Date? {
+        let sessionDate = statSessions.map(\.startDate).min()
+        let addedDate = allBooks.map(\.dateAdded).min()
+        let finishedDate = allBooks.compactMap(\.dateFinished).min()
+        return [sessionDate, addedDate, finishedDate].compactMap { $0 }.min()
     }
 
     private var calendarWeekdaySymbols: [String] {
@@ -446,17 +470,27 @@ struct StatsView: View {
                             .background(Theme.Colors.tertiaryBackground, in: Circle())
                     }
                     .buttonStyle(.plain)
+                    .disabled(calendarMonthOffset <= -(calendarMonthOptions.count - 1))
+                    .opacity(calendarMonthOffset <= -(calendarMonthOptions.count - 1) ? 0.4 : 1)
 
                     Spacer()
 
-                    HStack(spacing: 6) {
-                        Text(calendarMonthLabel)
-                            .font(.headline.weight(.semibold))
-                            .foregroundStyle(Theme.Colors.text)
+                    Menu {
+                        ForEach(calendarMonthOptions) { option in
+                            Button(option.label) {
+                                calendarMonthOffset = option.offset
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Text(calendarMonthLabel)
+                                .font(.headline.weight(.semibold))
+                                .foregroundStyle(Theme.Colors.text)
 
-                        Image(systemName: "chevron.down")
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(Theme.Colors.tertiaryText)
+                            Image(systemName: "chevron.down")
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(Theme.Colors.tertiaryText)
+                        }
                     }
 
                     Spacer()
@@ -1069,6 +1103,12 @@ private struct CalendarDaySummary {
     let coverURL: URL?
 }
 
+private struct CalendarMonthOption: Identifiable {
+    let offset: Int
+    let label: String
+    var id: Int { offset }
+}
+
 private struct CalendarGridDay: Identifiable {
     let id: Int
     let date: Date?
@@ -1098,39 +1138,39 @@ private struct CalendarDayCell: View {
         } label: {
             ZStack(alignment: .topLeading) {
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(hasActivity ? themeColor.color.opacity(0.18) : Theme.Colors.tertiaryBackground)
+                    .fill(hasActivity ? themeColor.color.opacity(0.14) : Theme.Colors.tertiaryBackground)
 
-                if hasActivity {
-                    if let coverURL = summary?.coverURL {
-                        AsyncImage(url: coverURL) { image in
+                if hasActivity, let coverURL = summary?.coverURL {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(themeColor.color.opacity(0.18))
+
+                        CachedAsyncImage(url: coverURL) { image in
                             image
                                 .resizable()
                                 .scaledToFill()
                         } placeholder: {
                             themeColor.color.opacity(0.12)
                         }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .clipped()
-                        .overlay(
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    }
+                    .frame(width: size * 0.56, height: size * 0.82)
+                    .shadow(color: Theme.Shadow.small, radius: 2, y: 1)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                } else if hasActivity {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(
                             LinearGradient(
                                 colors: [
-                                    Theme.Colors.background.opacity(0.05),
-                                    Theme.Colors.background.opacity(0.35)
+                                    themeColor.color.opacity(0.28),
+                                    themeColor.color.opacity(0.08)
                                 ],
-                                startPoint: .top,
-                                endPoint: .bottom
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
                             )
                         )
-                    } else {
-                        LinearGradient(
-                            colors: [
-                                themeColor.color.opacity(0.25),
-                                themeColor.color.opacity(0.08)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    }
+                        .frame(width: size * 0.56, height: size * 0.82)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 }
 
                 Text(dayNumber)
