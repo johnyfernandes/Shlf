@@ -109,7 +109,7 @@ struct LogReadingSessionView: View {
                 .ignoresSafeArea()
 
                 ScrollView {
-                    VStack(spacing: 16) {
+                    VStack(spacing: 14) {
                         progressCard
                         durationCard
                         positionCard
@@ -213,7 +213,7 @@ struct LogReadingSessionView: View {
     }
 
     private var progressCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        sessionCard {
             cardHeader(title: "Reading Progress", icon: "book.pages")
 
             VStack(spacing: 0) {
@@ -258,13 +258,11 @@ struct LogReadingSessionView: View {
                 }
                 .padding(.vertical, 10)
             }
-            .padding(.horizontal, 12)
-            .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
     }
 
     private var durationCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        sessionCard {
             cardHeader(title: "Duration", icon: "timer")
 
             VStack(spacing: 12) {
@@ -348,14 +346,27 @@ struct LogReadingSessionView: View {
                     DurationPickerView(minutes: $durationMinutes)
                 }
             }
-            .padding(12)
-            .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
     }
 
     private var positionCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            cardHeader(title: "Reading Position", icon: "bookmark")
+        sessionCard {
+            HStack(spacing: 8) {
+                Image(systemName: "bookmark")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(themeColor.color)
+                    .frame(width: 16)
+
+                Text("Reading Position")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.Colors.text)
+
+                Text("Optional")
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(Theme.Colors.secondaryText)
+
+                Spacer()
+            }
 
             VStack(spacing: 12) {
                 Toggle("Save reading position", isOn: $shouldSavePosition)
@@ -395,13 +406,11 @@ struct LogReadingSessionView: View {
                         .lineLimit(2...4)
                 }
             }
-            .padding(12)
-            .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
     }
 
     private var quoteCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        sessionCard {
             cardHeader(title: "Save Quote", icon: "quote.bubble")
 
             Button {
@@ -413,38 +422,34 @@ struct LogReadingSessionView: View {
             .buttonStyle(.bordered)
             .tint(themeColor.color)
         }
-        .padding(12)
-        .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private var sessionDetailsCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        sessionCard {
             cardHeader(title: "Session Details", icon: "calendar")
 
             DatePicker("Session Date", selection: $sessionDate, displayedComponents: [.date, .hourAndMinute])
                 .tint(themeColor.color)
         }
-        .padding(12)
-        .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private var xpCard: some View {
-        HStack {
-            Image(systemName: "star.fill")
-                .foregroundStyle(Theme.Colors.xpGradient)
+        sessionCard {
+            HStack {
+                Image(systemName: "star.fill")
+                    .foregroundStyle(Theme.Colors.xpGradient)
 
-            Text("Estimated XP")
-                .font(.subheadline.weight(.semibold))
+                Text("Estimated XP")
+                    .font(.subheadline.weight(.semibold))
 
-            Spacer()
+                Spacer()
 
-            Text("+\(estimatedXP)")
-                .font(Theme.Typography.headline)
-                .foregroundStyle(Theme.Colors.xpGradient)
-                .monospacedDigit()
+                Text("+\(estimatedXP)")
+                    .font(Theme.Typography.headline)
+                    .foregroundStyle(Theme.Colors.xpGradient)
+                    .monospacedDigit()
+            }
         }
-        .padding(16)
-        .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private func cardHeader(title: String, icon: String) -> some View {
@@ -460,6 +465,17 @@ struct LogReadingSessionView: View {
 
             Spacer()
         }
+    }
+
+    private func sessionCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        content()
+            .padding(16)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(themeColor.color.opacity(0.08), lineWidth: 1)
+            )
+            .shadow(color: Theme.Shadow.small, radius: 4, y: 2)
     }
 
     private func statusPill(text: String, isPaused: Bool) -> some View {
