@@ -25,6 +25,8 @@ struct StatsView: View {
     @State private var showUpgradeSheet = false
     @State private var showStreakDetail = false
     @State private var trendsRange: TrendsRange = .last7
+    @State private var calendarMonthOffset = 0
+    @State private var selectedCalendarDate: Date?
     @State private var selectedTrend: TrendMetric?
 
     private var profile: UserProfile {
@@ -72,6 +74,72 @@ struct StatsView: View {
 
     private var totalBooksRead: Int {
         allBooks.filter { $0.readingStatus == .finished }.count
+    }
+
+    private var calendarMonthStart: Date {
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.year, .month], from: Date())
+        let start = calendar.date(from: components) ?? Date()
+        return calendar.date(byAdding: .month, value: calendarMonthOffset, to: start) ?? start
+    }
+
+    private var calendarMonthLabel: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "LLLL"
+        let month = formatter.string(from: calendarMonthStart)
+        let year = Calendar.current.component(.year, from: calendarMonthStart)
+        return "\(month) \(year)"
+    }
+
+    private var calendarWeekdaySymbols: [String] {
+        let calendar = Calendar.current
+        let symbols = calendar.veryShortStandaloneWeekdaySymbols
+        let startIndex = max(0, calendar.firstWeekday - 1)
+        return Array(symbols[startIndex...] + symbols[..<startIndex])
+    }
+
+    private var calendarDaySummaries: [Date: CalendarDaySummary] {
+        let calendar = Calendar.current
+        var totals: [Date: (pages: Int, minutes: Int, topPages: Int, cover: URL?)] = [:]
+
+        for session in statSessions {
+            let day = calendar.startOfDay(for: session.startDate)
+            var entry = totals[day] ?? (0, 0, 0, nil)
+            entry.pages += session.pagesRead
+            entry.minutes += session.durationMinutes
+
+            if session.pagesRead >= entry.topPages, let cover = session.book?.coverImageURL {
+                entry.topPages = session.pagesRead
+                entry.cover = cover
+            }
+
+            totals[day] = entry
+        }
+
+        return totals.mapValues { value in
+            CalendarDaySummary(pages: value.pages, minutes: value.minutes, coverURL: value.cover)
+        }
+    }
+
+    private var calendarGridDays: [CalendarGridDay] {
+        let calendar = Calendar.current
+        let monthStart = calendarMonthStart
+        guard let range = calendar.range(of: .day, in: .month, for: monthStart) else { return [] }
+
+        let firstWeekday = calendar.component(.weekday, from: monthStart)
+        let leadingBlanks = (firstWeekday - calendar.firstWeekday + 7) % 7
+        let totalCells = leadingBlanks + range.count
+        let rows = Int(ceil(Double(totalCells) / 7.0))
+        let gridCount = rows * 7
+
+        return (0..<gridCount).map { index in
+            let dayNumber = index - leadingBlanks + 1
+            guard dayNumber >= 1, dayNumber <= range.count else {
+                return CalendarGridDay(id: index, date: nil)
+            }
+            let date = calendar.date(byAdding: .day, value: dayNumber - 1, to: monthStart)
+            return CalendarGridDay(id: index, date: date)
+        }
     }
 
     private var trendsStartDate: Date {
@@ -265,6 +333,7 @@ struct StatsView: View {
 
                 ScrollView {
                     VStack(spacing: Theme.Spacing.lg) {
+                        calendarSection
                         overviewSection
                         readingChartSection
                         achievementsSection
@@ -328,6 +397,13 @@ struct StatsView: View {
                     progress: selection.progress
                 )
             }
+            .sheet(item: Binding(
+                get: { selectedCalendarDate.map { IdentifiableDate(date: $0) } },
+                set: { selectedCalendarDate = $0?.date }
+            )) { identifiableDate in
+                LazyView(DayDetailView(date: identifiableDate.date, sessions: statSessions))
+                    .presentationDetents([.medium, .large])
+            }
             .sheet(item: $selectedTrend) { metric in
                 switch metric {
                 case .streak:
@@ -349,6 +425,91 @@ struct StatsView: View {
     private func refreshGoals() {
         let tracker = GoalTracker(modelContext: modelContext)
         tracker.updateGoals(for: profile)
+    }
+
+    private var calendarSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            Text("Calendar")
+                .font(Theme.Typography.title3)
+                .foregroundStyle(Theme.Colors.text)
+
+            VStack(spacing: Theme.Spacing.md) {
+                HStack {
+                    Button {
+                        calendarMonthOffset -= 1
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Theme.Colors.text)
+                            .padding(6)
+                            .background(Theme.Colors.tertiaryBackground, in: Circle())
+                    }
+                    .buttonStyle(.plain)
+
+                    Spacer()
+
+                    HStack(spacing: 6) {
+                        Text(calendarMonthLabel)
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(Theme.Colors.text)
+
+                        Image(systemName: "chevron.down")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(Theme.Colors.tertiaryText)
+                    }
+
+                    Spacer()
+
+                    Button {
+                        calendarMonthOffset = min(0, calendarMonthOffset + 1)
+                    } label: {
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Theme.Colors.text)
+                            .padding(6)
+                            .background(Theme.Colors.tertiaryBackground, in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(calendarMonthOffset == 0)
+                    .opacity(calendarMonthOffset == 0 ? 0.4 : 1)
+                }
+
+                HStack(spacing: 0) {
+                    ForEach(calendarWeekdaySymbols, id: \.self) { symbol in
+                        Text(symbol.uppercased())
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(Theme.Colors.tertiaryText)
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 7), spacing: 6) {
+                    ForEach(calendarGridDays) { day in
+                        if let date = day.date {
+                            let dayStart = Calendar.current.startOfDay(for: date)
+                            CalendarDayCell(
+                                date: date,
+                                summary: calendarDaySummaries[dayStart],
+                                isToday: Calendar.current.isDateInToday(date)
+                            ) {
+                                if let summary = calendarDaySummaries[dayStart], summary.pages > 0 {
+                                    selectedCalendarDate = date
+                                }
+                            }
+                        } else {
+                            Color.clear
+                                .frame(height: 46)
+                        }
+                    }
+                }
+            }
+            .padding(Theme.Spacing.md)
+            .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(themeColor.color.opacity(0.06), lineWidth: 1)
+            )
+        }
     }
 
 
@@ -899,6 +1060,83 @@ private struct TrendSpark: View {
 private struct TrendDelta {
     let text: String
     let isPositive: Bool
+}
+
+private struct CalendarDaySummary {
+    let pages: Int
+    let minutes: Int
+    let coverURL: URL?
+}
+
+private struct CalendarGridDay: Identifiable {
+    let id: Int
+    let date: Date?
+}
+
+private struct CalendarDayCell: View {
+    @Environment(\.themeColor) private var themeColor
+    let date: Date
+    let summary: CalendarDaySummary?
+    let isToday: Bool
+    let onSelect: () -> Void
+
+    private var dayNumber: String {
+        String(Calendar.current.component(.day, from: date))
+    }
+
+    private var hasActivity: Bool {
+        (summary?.pages ?? 0) > 0
+    }
+
+    var body: some View {
+        Button {
+            if hasActivity {
+                onSelect()
+            }
+        } label: {
+            ZStack(alignment: .topLeading) {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(hasActivity ? themeColor.color.opacity(0.18) : Theme.Colors.tertiaryBackground)
+
+                if let coverURL = summary?.coverURL {
+                    AsyncImage(url: coverURL) { image in
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    } placeholder: {
+                        Color.clear
+                    }
+                    .overlay(
+                        LinearGradient(
+                            colors: [
+                                Theme.Colors.background.opacity(0.05),
+                                Theme.Colors.background.opacity(0.35)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                }
+
+                Text(dayNumber)
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(hasActivity ? Theme.Colors.text : Theme.Colors.tertiaryText)
+                    .padding(6)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .strokeBorder(
+                        isToday ? themeColor.color.opacity(0.8) : themeColor.color.opacity(0.08),
+                        lineWidth: isToday ? 1.5 : 1
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+        .frame(height: 46)
+        .opacity(hasActivity ? 1 : 0.55)
+        .accessibilityLabel(Text(dayNumber))
+    }
 }
 
 private struct TrendDetailView: View {
