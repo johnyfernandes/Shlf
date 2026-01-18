@@ -50,8 +50,82 @@ struct ReadingSessionWidgetLiveActivity: Widget {
             ReadingSessionLockScreenView(context: context)
         } dynamicIsland: { context in
             DynamicIsland {
+                DynamicIslandExpandedRegion(.leading) {
+                    liveActivityCover(
+                        context: context,
+                        size: CGSize(width: 38, height: 52),
+                        cornerRadius: 6
+                    )
+                }
+
+                DynamicIslandExpandedRegion(.center) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(context.attributes.bookTitle)
+                            .font(.headline.weight(.semibold))
+                            .lineLimit(1)
+
+                        Text(context.attributes.bookAuthor)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+
+                        Text("\(context.state.currentPage)/\(context.attributes.totalPages) pages")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                DynamicIslandExpandedRegion(.trailing) {
+                    VStack(alignment: .trailing, spacing: 2) {
+                        if context.state.isPaused {
+                            Text("Paused")
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(.orange)
+                        }
+
+                        if context.state.isPaused,
+                           let pausedElapsed = context.state.pausedElapsedSeconds {
+                            Text(formattedElapsed(seconds: pausedElapsed))
+                                .font(.system(size: 28, weight: .semibold, design: .rounded))
+                                .monospacedDigit()
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                        } else {
+                            Text(context.state.timerStartTime, style: .timer)
+                                .font(.system(size: 28, weight: .semibold, design: .rounded))
+                                .monospacedDigit()
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                }
+
                 DynamicIslandExpandedRegion(.bottom) {
-                    ReadingSessionIslandExpandedView(context: context)
+                    HStack(spacing: 10) {
+                        liveActivityButton(
+                            title: "1",
+                            systemImage: "minus",
+                            tint: context.attributes.themeColor.opacity(0.25),
+                            intent: DecrementPageIntent()
+                        )
+
+                        liveActivityButton(
+                            title: context.state.isPaused ? "Resume" : "Pause",
+                            systemImage: context.state.isPaused ? "play.fill" : "pause.fill",
+                            tint: context.attributes.themeColor.opacity(0.25),
+                            intent: TogglePauseIntent()
+                        )
+
+                        liveActivityButton(
+                            title: "1",
+                            systemImage: "plus",
+                            tint: context.attributes.themeColor.opacity(0.25),
+                            intent: IncrementPageIntent()
+                        )
+                    }
+                    .frame(maxWidth: .infinity)
                 }
             } compactLeading: {
                 Image(systemName: "book.fill")
@@ -64,7 +138,6 @@ struct ReadingSessionWidgetLiveActivity: Widget {
                 Image(systemName: "book.fill")
             }
             .keylineTint(context.attributes.themeColor)
-            .contentMargins(.horizontal, 0, for: .expanded)
         }
     }
 }
@@ -239,172 +312,79 @@ struct ReadingSessionLockScreenView: View {
     }
 }
 
-// MARK: - Dynamic Island Expanded
+// MARK: - Dynamic Island Helpers
 
-struct ReadingSessionIslandExpandedView: View {
-    let context: ActivityViewContext<ReadingSessionWidgetAttributes>
+private func liveActivityCover(
+    context: ActivityViewContext<ReadingSessionWidgetAttributes>,
+    size: CGSize,
+    cornerRadius: CGFloat
+) -> some View {
+    ZStack {
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            .fill(context.attributes.themeColor.opacity(0.2))
 
-    var body: some View {
-        let accent = context.attributes.themeColor
-
-        VStack(spacing: 8) {
-            HStack(spacing: 10) {
-                coverView
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(context.attributes.bookTitle)
-                        .font(.subheadline.weight(.semibold))
-                        .lineLimit(1)
-
-                    Text(context.attributes.bookAuthor)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-
-                    Text("\(context.state.currentPage)/\(context.attributes.totalPages) pages")
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(.secondary)
+        if let fileImage = localCoverImage(context: context) {
+            fileImage
+                .resizable()
+                .scaledToFill()
+                .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+        } else if let url = context.attributes.coverImageURL {
+            AsyncImage(url: url, transaction: Transaction(animation: nil)) { phase in
+                switch phase {
+                case .success(let image):
+                    image
+                        .resizable()
+                        .scaledToFill()
+                default:
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .fill(context.attributes.themeColor.opacity(0.12))
                 }
-
-                Spacer()
-
-                VStack(alignment: .trailing, spacing: 2) {
-                    if context.state.isPaused {
-                        Text("Paused")
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(.orange)
-                    }
-
-                    if context.state.isPaused,
-                       let pausedElapsed = context.state.pausedElapsedSeconds {
-                        Text(formattedElapsed(seconds: pausedElapsed))
-                            .font(.headline)
-                            .monospacedDigit()
-                    } else {
-                        Text(context.state.timerStartTime, style: .timer)
-                            .font(.headline)
-                            .monospacedDigit()
-                    }
-                }
-                .frame(width: 64, alignment: .trailing)
             }
-            .frame(maxWidth: .infinity)
-
-            HStack(spacing: 8) {
-                liveActionButton(
-                    title: "1",
-                    systemImage: "minus",
-                    tint: accent.opacity(0.2),
-                    intent: DecrementPageIntent()
-                )
-
-                liveActionButton(
-                    title: context.state.isPaused ? "Resume" : "Pause",
-                    systemImage: context.state.isPaused ? "play.fill" : "pause.fill",
-                    tint: accent.opacity(0.2),
-                    intent: TogglePauseIntent()
-                )
-
-                liveActionButton(
-                    title: "1",
-                    systemImage: "plus",
-                    tint: accent.opacity(0.2),
-                    intent: IncrementPageIntent()
-                )
-            }
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 12)
+    }
+    .frame(width: size.width, height: size.height)
+}
+
+private func localCoverImage(
+    context: ActivityViewContext<ReadingSessionWidgetAttributes>
+) -> Image? {
+#if canImport(UIKit)
+    guard let url = context.attributes.coverImageURL, url.isFileURL else { return nil }
+    if let image = UIImage(contentsOfFile: url.path) {
+        return Image(uiImage: image)
+    }
+#endif
+    return nil
+}
+
+private func liveActivityButton<IntentType: AppIntent>(
+    title: String,
+    systemImage: String,
+    tint: Color,
+    intent: IntentType
+) -> some View {
+    Button(intent: intent) {
+        HStack(spacing: 8) {
+            Image(systemName: systemImage)
+                .font(.callout.weight(.semibold))
+
+            Text(title)
+                .font(.callout.weight(.semibold))
+        }
+        .foregroundStyle(.primary)
+        .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(.ultraThinMaterial)
+            Capsule(style: .continuous)
+                .fill(Color.white.opacity(0.08))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .strokeBorder(accent.opacity(0.22), lineWidth: 1)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    accent.opacity(0.16),
-                                    .clear
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                    Capsule(style: .continuous)
+                        .strokeBorder(tint.opacity(0.6), lineWidth: 1)
                 )
         )
     }
-
-    private var coverView: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 7, style: .continuous)
-                .fill(context.attributes.themeColor.opacity(0.2))
-
-            if let fileImage = localCoverImage() {
-                fileImage
-                    .resizable()
-                    .scaledToFill()
-                    .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
-            } else if let url = context.attributes.coverImageURL {
-                AsyncImage(url: url, transaction: Transaction(animation: nil)) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    default:
-                        RoundedRectangle(cornerRadius: 7, style: .continuous)
-                            .fill(context.attributes.themeColor.opacity(0.12))
-                    }
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
-            }
-        }
-        .frame(width: 38, height: 50)
-    }
-
-    private func localCoverImage() -> Image? {
-#if canImport(UIKit)
-        guard let url = context.attributes.coverImageURL, url.isFileURL else { return nil }
-        if let image = UIImage(contentsOfFile: url.path) {
-            return Image(uiImage: image)
-        }
-#endif
-        return nil
-    }
-
-    private func liveActionButton<IntentType: AppIntent>(
-        title: String,
-        systemImage: String,
-        tint: Color,
-        intent: IntentType
-    ) -> some View {
-        Button(intent: intent) {
-            HStack(spacing: 6) {
-                Image(systemName: systemImage)
-                    .font(.caption.weight(.semibold))
-
-                Text(title)
-                    .font(.caption.weight(.semibold))
-            }
-            .foregroundStyle(.primary)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 7)
-            .background(
-                Capsule(style: .continuous)
-                    .fill(.thinMaterial)
-                    .overlay(
-                        Capsule(style: .continuous)
-                            .strokeBorder(tint.opacity(0.6), lineWidth: 1)
-                    )
-            )
-        }
-        .buttonStyle(.plain)
-    }
+    .buttonStyle(.plain)
 }
 
 private func formattedElapsed(seconds: Int) -> String {
