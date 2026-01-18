@@ -184,20 +184,22 @@ struct ReadingSessionLockScreenView: View {
                         Text("Paused")
                             .font(.caption2.weight(.semibold))
                             .foregroundStyle(.orange)
+                    }
 
-                        if let pausedElapsed = context.state.pausedElapsedSeconds {
-                            Text(formattedElapsed(seconds: pausedElapsed))
-                                .font(.headline)
-                                .monospacedDigit()
-                        }
+                    if context.state.isPaused,
+                       let pausedElapsed = context.state.pausedElapsedSeconds {
+                        Text(formattedElapsed(seconds: pausedElapsed))
+                            .font(.headline)
+                            .monospacedDigit()
                     } else {
                         Text(context.state.timerStartTime, style: .timer)
                             .font(.headline)
                             .monospacedDigit()
                     }
                 }
-                .frame(minWidth: 64, alignment: .trailing)
+                .frame(width: 72, alignment: .trailing)
             }
+            .frame(maxWidth: .infinity)
 
             HStack(spacing: 8) {
                 liveActionButton(
@@ -223,6 +225,7 @@ struct ReadingSessionLockScreenView: View {
             }
         }
         .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .fill(.ultraThinMaterial)
