@@ -208,7 +208,7 @@ struct ReadingSessionLockScreenView: View {
 
             HStack(spacing: 8) {
                 liveActionButton(
-                    title: "-1",
+                    title: "1",
                     systemImage: "minus",
                     tint: accent.opacity(0.2),
                     intent: DecrementPageIntent()
@@ -222,7 +222,7 @@ struct ReadingSessionLockScreenView: View {
                 )
 
                 liveActionButton(
-                    title: "+1",
+                    title: "1",
                     systemImage: "plus",
                     tint: accent.opacity(0.2),
                     intent: IncrementPageIntent()
