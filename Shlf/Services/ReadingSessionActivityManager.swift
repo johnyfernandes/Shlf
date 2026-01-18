@@ -7,6 +7,12 @@
 
 import Foundation
 import OSLog
+#if canImport(UIKit)
+import UIKit
+#endif
+#if canImport(CoreImage)
+import CoreImage
+#endif
 
 #if canImport(ActivityKit)
 import ActivityKit
@@ -43,13 +49,15 @@ class ReadingSessionActivityManager {
             durationMinutes: actualDuration
         )
 
+        let coverResources = await resolveCoverResources(book: book, fallbackHex: themeColorHex)
         let attributes = ReadingSessionWidgetAttributes(
             bookTitle: book.title,
             bookAuthor: book.author,
             totalPages: max(1, book.totalPages ?? 1),  // Never 0 to prevent divide by zero
             startPage: startPageValue,
             startTime: activityStartTime,
-            themeColorHex: themeColorHex
+            themeColorHex: coverResources.themeHex,
+            coverImageURLString: coverResources.coverURLString
         )
 
         let initialState = ReadingSessionWidgetAttributes.ContentState(
@@ -362,12 +370,105 @@ class ReadingSessionActivityManager {
         return XPCalculator.calculate(pagesRead: pagesRead, durationMinutes: durationMinutes)
     }
 }
+
+// MARK: - Cover Color Sampling
+
+private func resolveCoverResources(book: Book, fallbackHex: String) async -> (themeHex: String, coverURLString: String?) {
+#if canImport(UIKit)
+    guard let coverURL = book.coverImageURL else {
+        return (fallbackHex, nil)
+    }
+
+    let localURL = liveActivityCoverFileURL(for: book.id)
+    if let localURL, FileManager.default.fileExists(atPath: localURL.path) {
+        if let image = UIImage(contentsOfFile: localURL.path),
+           let color = image.averageColor,
+           let hex = color.toHex() {
+            return (hex, localURL.absoluteString)
+        }
+        return (fallbackHex, localURL.absoluteString)
+    }
+
+    do {
+        let (data, _) = try await URLSession.shared.data(from: coverURL)
+        if let localURL {
+            try? FileManager.default.createDirectory(at: localURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try? data.write(to: localURL, options: [.atomic])
+        }
+        if let image = UIImage(data: data),
+           let color = image.averageColor,
+           let hex = color.toHex() {
+            return (hex, localURL?.absoluteString ?? coverURL.absoluteString)
+        }
+        return (fallbackHex, localURL?.absoluteString ?? coverURL.absoluteString)
+    } catch {
+        return (fallbackHex, coverURL.absoluteString)
+    }
+#else
+    return (fallbackHex, book.coverImageURL?.absoluteString)
+#endif
+}
+
+private func liveActivityCoverFileURL(for bookId: UUID) -> URL? {
+#if canImport(UIKit)
+    guard let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: SwiftDataConfig.appGroupID) else {
+        return nil
+    }
+    let folder = containerURL.appendingPathComponent("LiveActivityCovers", isDirectory: true)
+    return folder.appendingPathComponent("\(bookId.uuidString).jpg")
+#else
+    return nil
+#endif
+}
+
+#if canImport(UIKit)
+private extension UIImage {
+    var averageColor: UIColor? {
+        guard let inputImage = CIImage(image: self) else { return nil }
+        let extent = inputImage.extent
+        let filter = CIFilter(
+            name: "CIAreaAverage",
+            parameters: [
+                kCIInputImageKey: inputImage,
+                kCIInputExtentKey: CIVector(cgRect: extent)
+            ]
+        )
+        guard let outputImage = filter?.outputImage else { return nil }
+
+        var bitmap = [UInt8](repeating: 0, count: 4)
+        let context = CIContext(options: [.workingColorSpace: NSNull()])
+        context.render(
+            outputImage,
+            toBitmap: &bitmap,
+            rowBytes: 4,
+            bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
+            format: .RGBA8,
+            colorSpace: nil
+        )
+
+        let red = CGFloat(bitmap[0]) / 255.0
+        let green = CGFloat(bitmap[1]) / 255.0
+        let blue = CGFloat(bitmap[2]) / 255.0
+        return UIColor(red: red, green: green, blue: blue, alpha: 1)
+    }
+}
+
+private extension UIColor {
+    func toHex() -> String? {
+        guard let components = cgColor.components, components.count >= 3 else { return nil }
+        let red = Float(components[0])
+        let green = Float(components[1])
+        let blue = Float(components[2])
+        return String(format: "#%02lX%02lX%02lX", lroundf(red * 255), lroundf(green * 255), lroundf(blue * 255))
+    }
+}
+#endif
 #else
 
 @MainActor
 class ReadingSessionActivityManager {
     static let shared = ReadingSessionActivityManager()
-    func startActivity(book: Book, currentPage: Int? = nil, startPage: Int? = nil, startTime: Date? = nil) async {}
+    func startActivity(book: Book, currentPage: Int? = nil, startPage: Int? = nil, startTime: Date? = nil, themeColorHex: String = "#00CED1") async {}
     func updateActivity(currentPage: Int, xpEarned: Int) async {}
     func updateCurrentPage(_ currentPage: Int) async {}
     func syncActivityState(

@@ -9,6 +9,9 @@ import ActivityKit
 import WidgetKit
 import SwiftUI
 import AppIntents
+#if canImport(UIKit)
+import UIKit
+#endif
 
 struct ReadingSessionWidgetAttributes: ActivityAttributes, Sendable {
     public struct ContentState: Codable, Hashable, Sendable {
@@ -28,9 +31,15 @@ struct ReadingSessionWidgetAttributes: ActivityAttributes, Sendable {
     var startPage: Int
     var startTime: Date
     var themeColorHex: String // Store as hex string for Codable compliance
+    var coverImageURLString: String?
 
     var themeColor: Color {
         Color(hex: themeColorHex) ?? .cyan
+    }
+
+    var coverImageURL: URL? {
+        guard let coverImageURLString else { return nil }
+        return URL(string: coverImageURLString)
     }
 }
 
@@ -151,106 +160,159 @@ struct ReadingSessionLockScreenView: View {
     let context: ActivityViewContext<ReadingSessionWidgetAttributes>
 
     var body: some View {
-        VStack(spacing: 12) {
-            // Header
-            HStack {
-                Image(systemName: "book.fill")
-                    .foregroundStyle(context.attributes.themeColor)
+        let accent = context.attributes.themeColor
+
+        VStack(spacing: 10) {
+            HStack(spacing: 12) {
+                coverView
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(context.attributes.bookTitle)
-                        .font(.headline)
+                        .font(.headline.weight(.semibold))
                         .lineLimit(1)
+
                     Text(context.attributes.bookAuthor)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
 
                 Spacer()
 
-                // Page indicator
-                Text("\(context.state.currentPage)/\(context.attributes.totalPages)")
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(context.attributes.themeColor)
-            }
-
-            // Progress
-            ProgressView(value: Double(context.state.currentPage), total: Double(context.attributes.totalPages))
-                .tint(context.attributes.themeColor)
-
-            // Stats
-            HStack {
-                if context.state.isPaused {
-                    HStack(spacing: 4) {
-                        Image(systemName: "pause.circle.fill")
-                            .font(.caption)
-                            .foregroundStyle(.orange)
+                VStack(alignment: .trailing, spacing: 2) {
+                    if context.state.isPaused {
                         Text("Paused")
-                            .font(.caption)
+                            .font(.caption2.weight(.semibold))
                             .foregroundStyle(.orange)
-                    }
 
-                    if let pausedElapsed = context.state.pausedElapsedSeconds {
-                        Text(formattedElapsed(seconds: pausedElapsed))
-                            .font(.caption)
-                            .monospacedDigit()
-                            .foregroundStyle(.orange)
-                    }
-                } else {
-                    HStack(spacing: 4) {
-                        Image(systemName: "clock")
-                            .font(.caption2)
+                        if let pausedElapsed = context.state.pausedElapsedSeconds {
+                            Text(formattedElapsed(seconds: pausedElapsed))
+                                .font(.headline)
+                                .monospacedDigit()
+                        }
+                    } else {
                         Text(context.state.timerStartTime, style: .timer)
-                            .font(.caption)
+                            .font(.headline)
                             .monospacedDigit()
                     }
                 }
-
-                Spacer()
-
-                Label("\(context.state.pagesRead) read", systemImage: "book.pages")
-                    .font(.caption)
-
-                Spacer()
-
-                Label("+\(context.state.xpEarned)", systemImage: "star.fill")
-                    .font(.caption)
-                    .foregroundStyle(.yellow)
+                .frame(minWidth: 64, alignment: .trailing)
             }
 
-            // Page controls
             HStack(spacing: 8) {
-                Button(intent: DecrementPageIntent()) {
-                    Image(systemName: "minus.circle.fill")
-                        .font(.title2)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(.white.opacity(0.2))
+                liveActionButton(
+                    title: "-1",
+                    systemImage: "minus",
+                    tint: accent.opacity(0.2),
+                    intent: DecrementPageIntent()
+                )
 
-                Button(intent: TogglePauseIntent()) {
-                    Image(systemName: context.state.isPaused ? "play.circle.fill" : "pause.circle.fill")
-                        .font(.title3)
-                        .frame(width: 44, height: 44)
-                }
-                .buttonStyle(.bordered)
-                .tint(context.state.isPaused ? context.attributes.themeColor : .orange)
+                liveActionButton(
+                    title: context.state.isPaused ? "Resume" : "Pause",
+                    systemImage: context.state.isPaused ? "play.fill" : "pause.fill",
+                    tint: accent.opacity(0.2),
+                    intent: TogglePauseIntent()
+                )
 
-                Button(intent: IncrementPageIntent()) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.title2)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(context.attributes.themeColor)
+                liveActionButton(
+                    title: "+1",
+                    systemImage: "plus",
+                    tint: accent.opacity(0.2),
+                    intent: IncrementPageIntent()
+                )
             }
         }
-        .padding()
-        .activityBackgroundTint(.black.opacity(0.2))
-        .activitySystemActionForegroundColor(context.attributes.themeColor)
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .strokeBorder(accent.opacity(0.25), lineWidth: 1)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    accent.opacity(0.18),
+                                    .clear
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                )
+        )
+        .activityBackgroundTint(.clear)
+        .activitySystemActionForegroundColor(accent)
+    }
+
+    private var coverView: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(context.attributes.themeColor.opacity(0.2))
+
+            if let fileImage = localCoverImage() {
+                fileImage
+                    .resizable()
+                    .scaledToFill()
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            } else if let url = context.attributes.coverImageURL {
+                AsyncImage(url: url, transaction: Transaction(animation: nil)) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    default:
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(context.attributes.themeColor.opacity(0.12))
+                    }
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            }
+        }
+        .frame(width: 44, height: 58)
+    }
+
+    private func localCoverImage() -> Image? {
+#if canImport(UIKit)
+        guard let url = context.attributes.coverImageURL, url.isFileURL else { return nil }
+        if let image = UIImage(contentsOfFile: url.path) {
+            return Image(uiImage: image)
+        }
+#endif
+        return nil
+    }
+
+    private func liveActionButton<IntentType: AppIntent>(
+        title: String,
+        systemImage: String,
+        tint: Color,
+        intent: IntentType
+    ) -> some View {
+        Button(intent: intent) {
+            HStack(spacing: 6) {
+                Image(systemName: systemImage)
+                    .font(.caption.weight(.semibold))
+
+                Text(title)
+                    .font(.caption.weight(.semibold))
+            }
+            .foregroundStyle(.primary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(.thinMaterial)
+                    .overlay(
+                        Capsule(style: .continuous)
+                            .strokeBorder(tint.opacity(0.6), lineWidth: 1)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -275,7 +337,8 @@ extension ReadingSessionWidgetAttributes {
             totalPages: 463,
             startPage: 0,
             startTime: Date().addingTimeInterval(-600), // 10 minutes ago
-            themeColorHex: "#00CED1" // Default cyan for preview
+            themeColorHex: "#00CED1",
+            coverImageURLString: "https://covers.openlibrary.org/b/isbn/0140280197-L.jpg"
         )
     }
 }
