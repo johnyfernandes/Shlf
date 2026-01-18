@@ -175,6 +175,10 @@ struct ReadingSessionLockScreenView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
+
+                    Text("\(context.state.currentPage)/\(context.attributes.totalPages) pages")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.secondary)
                 }
 
                 Spacer()
@@ -196,6 +200,7 @@ struct ReadingSessionLockScreenView: View {
                             .font(.headline)
                             .monospacedDigit()
                     }
+
                 }
                 .frame(width: 72, alignment: .trailing)
             }
