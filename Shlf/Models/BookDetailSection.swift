@@ -8,6 +8,7 @@
 import SwiftUI
 
 enum BookDetailSection: String, Codable, CaseIterable, Identifiable, Hashable {
+    case bookStats = "Book Stats"
     case description = "Description"
     case lastPosition = "Last Position"
     case quotes = "Quotes"
@@ -20,6 +21,7 @@ enum BookDetailSection: String, Codable, CaseIterable, Identifiable, Hashable {
 
     var icon: String {
         switch self {
+        case .bookStats: return "chart.bar.xaxis"
         case .description: return "text.alignleft"
         case .lastPosition: return "bookmark.fill"
         case .quotes: return "quote.bubble.fill"
@@ -32,6 +34,8 @@ enum BookDetailSection: String, Codable, CaseIterable, Identifiable, Hashable {
 
     var displayNameKey: LocalizedStringKey {
         switch self {
+        case .bookStats:
+            return "Book Stats"
         case .description:
             return "Description"
         case .lastPosition:
@@ -51,6 +55,8 @@ enum BookDetailSection: String, Codable, CaseIterable, Identifiable, Hashable {
 
     var descriptionKey: LocalizedStringKey {
         switch self {
+        case .bookStats:
+            return "Reading stats for this book"
         case .description:
             return "Book description and synopsis"
         case .lastPosition:

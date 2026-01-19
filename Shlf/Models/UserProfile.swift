@@ -227,6 +227,7 @@ final class UserProfile {
 
     // Book Detail Display Preferences
     var showDescription: Bool = true
+    var showBookStats: Bool = true
     var showMetadata: Bool = true
     var showSubjects: Bool = true
     var showReadingHistory: Bool = true
@@ -283,6 +284,7 @@ final class UserProfile {
     // Book Detail Section Order
     var bookDetailSectionOrder: [String] = [
         BookDetailSection.description.rawValue,
+        BookDetailSection.bookStats.rawValue,
         BookDetailSection.lastPosition.rawValue,
         BookDetailSection.quotes.rawValue,
         BookDetailSection.notes.rawValue,
@@ -309,6 +311,7 @@ final class UserProfile {
         isProUser: Bool = false,
         cloudSyncEnabled: Bool = false,
         showDescription: Bool = true,
+        showBookStats: Bool = true,
         showMetadata: Bool = true,
         showSubjects: Bool = true,
         showReadingHistory: Bool = true,
@@ -342,6 +345,7 @@ final class UserProfile {
         self.isProUser = isProUser
         self.cloudSyncEnabled = cloudSyncEnabled
         self.showDescription = showDescription
+        self.showBookStats = showBookStats
         self.showMetadata = showMetadata
         self.showSubjects = showSubjects
         self.showReadingHistory = showReadingHistory
@@ -455,6 +459,7 @@ final class UserProfile {
     // Helper to check if a section is visible
     func isBookDetailSectionVisible(_ section: BookDetailSection) -> Bool {
         switch section {
+        case .bookStats: return showBookStats
         case .description: return showDescription
         case .lastPosition: return true // Always show if exists
         case .quotes: return true // Always show if exists

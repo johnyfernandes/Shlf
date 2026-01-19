@@ -34,6 +34,7 @@ struct BookDetailView: View {
     @State private var showShareSheet = false
     @State private var playShimmer: CGFloat = -40
     @State private var showBookStatsSettings = false
+    @State private var showBookDetailCustomization = false
     @State private var selectedBookStat: BookStatsCardType?
     @State private var bookStatsRange: BookStatsRange = .all
     @State private var bookStatsRangeOffset = 0
@@ -90,9 +91,6 @@ struct BookDetailView: View {
                         if needsPageCount {
                             missingPagesCard
                         }
-
-                        // Compact stats overview
-                        statsOverview
 
                         // Dynamic sections based on user's order and visibility preferences
                         ForEach(profile?.bookDetailSections ?? BookDetailSection.allCases, id: \.self) { section in
@@ -168,6 +166,14 @@ struct BookDetailView: View {
                         }
                     }
 
+                    if profile != nil {
+                        Button {
+                            showBookDetailCustomization = true
+                        } label: {
+                            Label("Customize Book Details", systemImage: "slider.horizontal.3")
+                        }
+                    }
+
                     Button(role: .destructive) {
                         showDeleteAlert = true
                     } label: {
@@ -210,6 +216,13 @@ struct BookDetailView: View {
                 }
             }
         }
+        .sheet(isPresented: $showBookDetailCustomization) {
+            if let profile {
+                NavigationStack {
+                    BookDetailCustomizationView(profile: profile)
+                }
+            }
+        }
         .alert("Delete Book?", isPresented: $showDeleteAlert) {
             Button("Delete", role: .destructive) {
                 deleteBook()
@@ -223,6 +236,7 @@ struct BookDetailView: View {
                 bookStatsRange = profile?.bookStatsRange ?? .all
                 hasInitializedBookStatsRange = true
             }
+            ensureBookStatsSection()
         }
         .onChange(of: bookStatsRange) { _, newValue in
             bookStatsRangeOffset = 0
@@ -302,6 +316,9 @@ struct BookDetailView: View {
         // Check if section should be visible
         if profile?.isBookDetailSectionVisible(section) ?? true {
             switch section {
+            case .bookStats:
+                bookStatsSection
+
             case .description:
                 if let description = book.bookDescription {
                     descriptionSection(description)
@@ -501,10 +518,6 @@ struct BookDetailView: View {
     }
 
     // MARK: - Stats Overview
-
-    private var statsOverview: some View {
-        bookStatsSection
-    }
 
     private var bookStatsCards: [BookStatsCardType] {
         guard let profile else { return BookStatsCardType.allCases }
@@ -718,6 +731,19 @@ struct BookDetailView: View {
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 1
         return formatter.string(from: NSNumber(value: value)) ?? String(format: "%.1f", value)
+    }
+
+    private func ensureBookStatsSection() {
+        guard let profile else { return }
+        if !profile.bookDetailSectionOrder.contains(BookDetailSection.bookStats.rawValue) {
+            if let descriptionIndex = profile.bookDetailSectionOrder.firstIndex(of: BookDetailSection.description.rawValue) {
+                profile.bookDetailSectionOrder.insert(BookDetailSection.bookStats.rawValue, at: descriptionIndex + 1)
+            } else {
+                profile.bookDetailSectionOrder.insert(BookDetailSection.bookStats.rawValue, at: 0)
+            }
+            profile.showBookStats = true
+            try? modelContext.save()
+        }
     }
 
     private var heroActions: some View {

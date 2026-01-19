@@ -25,6 +25,7 @@ struct HomeView: View {
     @State private var showAddBook = false
     @State private var isEditingCards = false
     @State private var showLevelDetail = false
+    @State private var showHomeCustomization = false
 
     private var profile: UserProfile {
         if let existing = profiles.first {
@@ -136,6 +137,12 @@ struct HomeView: View {
                             } else {
                                 Menu {
                                     Button {
+                                        showHomeCustomization = true
+                                    } label: {
+                                        Label("Customize Home Screen", systemImage: "slider.horizontal.3")
+                                    }
+
+                                    Button {
                                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                                             isEditingCards = true
                                         }
@@ -166,6 +173,11 @@ struct HomeView: View {
             .sheet(isPresented: $showLevelDetail) {
                 LevelDetailView(profile: profile)
                     .presentationDetents([.medium, .large])
+            }
+            .sheet(isPresented: $showHomeCustomization) {
+                NavigationStack {
+                    HomeCardSettingsView(profile: profile)
+                }
             }
         }
     }

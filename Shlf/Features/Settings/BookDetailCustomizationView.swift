@@ -267,6 +267,7 @@ struct BookDetailCustomizationView: View {
         Binding(
             get: {
                 switch section {
+                case .bookStats: return profile.showBookStats
                 case .description: return profile.showDescription
                 case .lastPosition: return true
                 case .quotes: return true
@@ -283,6 +284,8 @@ struct BookDetailCustomizationView: View {
                 }
                 withAnimation {
                     switch section {
+                    case .bookStats:
+                        profile.showBookStats = newValue
                     case .description:
                         profile.showDescription = newValue
                     case .notes:
@@ -314,6 +317,8 @@ struct BookDetailCustomizationView: View {
 
     private func enableSection(_ section: BookDetailSection) {
         switch section {
+        case .bookStats:
+            profile.showBookStats = true
         case .description:
             profile.showDescription = true
         case .notes:
@@ -331,6 +336,8 @@ struct BookDetailCustomizationView: View {
 
     private func disableSection(_ section: BookDetailSection) {
         switch section {
+        case .bookStats:
+            profile.showBookStats = false
         case .description:
             profile.showDescription = false
         case .notes:
@@ -350,6 +357,7 @@ struct BookDetailCustomizationView: View {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
             profile.bookDetailSectionOrder = [
                 BookDetailSection.description.rawValue,
+                BookDetailSection.bookStats.rawValue,
                 BookDetailSection.lastPosition.rawValue,
                 BookDetailSection.quotes.rawValue,
                 BookDetailSection.notes.rawValue,
@@ -358,6 +366,7 @@ struct BookDetailCustomizationView: View {
                 BookDetailSection.readingHistory.rawValue
             ]
             profile.showDescription = true
+            profile.showBookStats = true
             profile.showNotes = true
             profile.showSubjects = true
             profile.showMetadata = true
