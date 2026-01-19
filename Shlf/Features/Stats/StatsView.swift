@@ -193,6 +193,14 @@ struct StatsView: View {
         }
     }
 
+    private var calendarMonthHasData: Bool {
+        let calendar = Calendar.current
+        let monthStart = calendarMonthStart
+        guard let range = calendar.range(of: .day, in: .month, for: monthStart) else { return false }
+        let monthEnd = calendar.date(byAdding: .day, value: range.count - 1, to: monthStart) ?? monthStart
+        return calendarDaySummaries.keys.contains { $0 >= monthStart && $0 <= monthEnd }
+    }
+
     private var trendsStartDate: Date {
         let calendar = Calendar.current
         switch trendsRange {
@@ -568,6 +576,15 @@ struct StatsView: View {
                             CalendarEmptyCell(size: cellSize)
                         }
                     }
+                }
+
+                if !calendarMonthHasData {
+                    InlineEmptyStateView(
+                        icon: "calendar",
+                        title: "No sessions this month",
+                        message: "Log a session to fill your calendar."
+                    )
+                    .padding(.top, Theme.Spacing.sm)
                 }
             }
             .padding(Theme.Spacing.md)
@@ -1586,7 +1603,11 @@ private struct TrendDetailView: View {
             }
 
             if finishedBooksInRange.isEmpty {
-                EmptyView()
+                InlineEmptyStateView(
+                    icon: "checkmark.seal",
+                    title: "No finished books",
+                    message: "Finish a book to see it here."
+                )
             } else {
                 VStack(spacing: 8) {
                     ForEach(finishedBooksInRange.prefix(6), id: \.id) { book in

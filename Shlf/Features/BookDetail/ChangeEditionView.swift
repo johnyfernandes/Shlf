@@ -29,6 +29,11 @@ struct ChangeEditionView: View {
                         Label("No Editions Available", systemImage: "books.vertical")
                     } description: {
                         Text("This book wasn’t added from Open Library.")
+                    } actions: {
+                        Button("Edit Book") {
+                            dismiss()
+                        }
+                        .foregroundStyle(themeColor.color)
                     }
                 } else if isLoading && editions.isEmpty {
                     ProgressView("Loading Editions...")
@@ -38,6 +43,11 @@ struct ChangeEditionView: View {
                         Label("No Editions Found", systemImage: "magnifyingglass")
                     } description: {
                         Text("Open Library didn’t return any editions for this book.")
+                    } actions: {
+                        Button("Try Again") {
+                            Task { await loadEditions() }
+                        }
+                        .foregroundStyle(themeColor.color)
                     }
                 } else {
                     List(editions) { edition in

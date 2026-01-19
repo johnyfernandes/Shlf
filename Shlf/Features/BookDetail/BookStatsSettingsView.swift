@@ -214,6 +214,14 @@ struct BookStatsSettingsView: View {
                         }
                         .padding(16)
                         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    } else {
+                        InlineEmptyStateView(
+                            icon: "checkmark.circle",
+                            title: "All stats added",
+                            message: "Use Edit to reorder your stats."
+                        )
+                        .padding(16)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
                 }
                 .padding(.horizontal, 20)

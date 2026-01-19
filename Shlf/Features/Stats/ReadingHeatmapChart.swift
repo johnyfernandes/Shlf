@@ -342,100 +342,12 @@ struct DayDetailView: View {
 
                 ScrollView {
                     VStack(spacing: 20) {
-                        // Summary Card
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack(spacing: 6) {
-                                Image(systemName: "book.pages")
-                                    .font(.caption)
-                                    .foregroundStyle(themeColor.color)
-                                    .frame(width: 16)
-
-                                Text("Reading Summary")
-                                    .font(.headline)
-                            }
-
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Image(systemName: "doc.text.fill")
-                                        .foregroundStyle(themeColor.color)
-
-                                    Text(String.localizedStringWithFormat(String(localized: "%lld pages"), totalPages))
-                                        .font(.title2)
-                                        .fontWeight(.bold)
-
-                                    Spacer()
-
-                                    Image(systemName: "books.vertical.fill")
-                                        .foregroundStyle(themeColor.color)
-
-                                    Text("\(booksRead.count) \(booksRead.count == 1 ? "book" : "books")")
-                                        .font(.title2)
-                                        .fontWeight(.bold)
-                                }
-                            }
-                            .padding(12)
-                            .background(themeColor.color.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        if daySessions.isEmpty {
+                            emptyDayCard
+                        } else {
+                            summaryCard
+                            booksListCard
                         }
-                        .padding(16)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-
-                        // Books List
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack(spacing: 6) {
-                                Image(systemName: "books.vertical.fill")
-                                    .font(.caption)
-                                    .foregroundStyle(themeColor.color)
-                                    .frame(width: 16)
-
-                                Text("Books Read")
-                                    .font(.headline)
-                            }
-
-                            VStack(spacing: 12) {
-                                ForEach(booksRead) { bookData in
-                                    if let book = bookData.book {
-                                        HStack(spacing: 12) {
-                                            BookCoverView(
-                                                imageURL: book.coverImageURL,
-                                                title: book.title,
-                                                width: 50,
-                                                height: 75
-                                            )
-                                            .shadow(color: Theme.Shadow.medium, radius: 6, y: 3)
-
-                                            VStack(alignment: .leading, spacing: 4) {
-                                                Text(book.title)
-                                                    .font(.subheadline)
-                                                    .fontWeight(.semibold)
-                                                    .foregroundStyle(Theme.Colors.text)
-                                                    .lineLimit(2)
-
-                                                Text(book.author)
-                                                    .font(.caption)
-                                                    .foregroundStyle(Theme.Colors.secondaryText)
-                                                    .lineLimit(1)
-
-                                                HStack(spacing: 4) {
-                                                    Image(systemName: "book.pages")
-                                                        .font(.caption2)
-                                                    Text(String.localizedStringWithFormat(String(localized: "%lld pages"), bookData.pages))
-                                                        .font(.caption)
-                                                }
-                                                .foregroundStyle(themeColor.color)
-                                            }
-
-                                            Spacer()
-                                        }
-                                        .padding(12)
-                                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                                    }
-                                }
-                            }
-                        }
-                        .padding(16)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 20)
@@ -456,6 +368,114 @@ struct DayDetailView: View {
                 calculateData()
             }
         }
+    }
+
+    private var summaryCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 6) {
+                Image(systemName: "book.pages")
+                    .font(.caption)
+                    .foregroundStyle(themeColor.color)
+                    .frame(width: 16)
+
+                Text("Reading Summary")
+                    .font(.headline)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Image(systemName: "doc.text.fill")
+                        .foregroundStyle(themeColor.color)
+
+                    Text(String.localizedStringWithFormat(String(localized: "%lld pages"), totalPages))
+                        .font(.title2)
+                        .fontWeight(.bold)
+
+                    Spacer()
+
+                    Image(systemName: "books.vertical.fill")
+                        .foregroundStyle(themeColor.color)
+
+                    Text("\(booksRead.count) \(booksRead.count == 1 ? "book" : "books")")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                }
+            }
+            .padding(12)
+            .background(themeColor.color.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private var booksListCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 6) {
+                Image(systemName: "books.vertical.fill")
+                    .font(.caption)
+                    .foregroundStyle(themeColor.color)
+                    .frame(width: 16)
+
+                Text("Books Read")
+                    .font(.headline)
+            }
+
+            VStack(spacing: 12) {
+                ForEach(booksRead) { bookData in
+                    if let book = bookData.book {
+                        HStack(spacing: 12) {
+                            BookCoverView(
+                                imageURL: book.coverImageURL,
+                                title: book.title,
+                                width: 50,
+                                height: 75
+                            )
+                            .shadow(color: Theme.Shadow.medium, radius: 6, y: 3)
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(book.title)
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(Theme.Colors.text)
+                                    .lineLimit(2)
+
+                                Text(book.author)
+                                    .font(.caption)
+                                    .foregroundStyle(Theme.Colors.secondaryText)
+                                    .lineLimit(1)
+
+                                HStack(spacing: 4) {
+                                    Image(systemName: "book.pages")
+                                        .font(.caption2)
+                                    Text(String.localizedStringWithFormat(String(localized: "%lld pages"), bookData.pages))
+                                        .font(.caption)
+                                }
+                                .foregroundStyle(themeColor.color)
+                            }
+
+                            Spacer()
+                        }
+                        .padding(12)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private var emptyDayCard: some View {
+        InlineEmptyStateView(
+            icon: "calendar",
+            title: "No sessions logged",
+            message: "Log a session to see details for this day."
+        )
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 

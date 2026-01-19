@@ -260,6 +260,14 @@ struct HomeCardSettingsView: View {
                         }
                         .padding(16)
                         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    } else {
+                        InlineEmptyStateView(
+                            icon: "checkmark.circle",
+                            title: "All cards added",
+                            message: "Use Edit to reorder your home cards."
+                        )
+                        .padding(16)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
 
                     // Remove All Button

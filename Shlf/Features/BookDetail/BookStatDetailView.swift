@@ -14,6 +14,7 @@ struct BookStatDetailView: View {
     let book: Book
     let summary: BookStatsSummary
     let rangeLabel: String
+    let onPrimaryAction: (() -> Void)?
 
     private var accent: Color {
         stat.accent.color(themeColor: themeColor)
@@ -144,12 +145,17 @@ struct BookStatDetailView: View {
 
     private var emptyCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("No activity yet")
-                .font(.headline)
-
-            Text("Log your first session to unlock detailed stats for this book.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            InlineEmptyStateView(
+                icon: "chart.bar.xaxis",
+                title: "No activity yet",
+                message: "Log your first session to unlock detailed stats for this book.",
+                actionTitle: onPrimaryAction == nil ? nil : "Log session"
+            ) {
+                dismiss()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    onPrimaryAction?()
+                }
+            }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)

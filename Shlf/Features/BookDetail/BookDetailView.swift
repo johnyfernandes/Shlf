@@ -206,7 +206,10 @@ struct BookDetailView: View {
                 stat: stat,
                 book: book,
                 summary: bookStatsSummary,
-                rangeLabel: bookStatsRangeLabel
+                rangeLabel: bookStatsRangeLabel,
+                onPrimaryAction: {
+                    showLogSession = true
+                }
             )
         }
         .sheet(isPresented: $showBookStatsSettings) {
@@ -320,28 +323,73 @@ struct BookDetailView: View {
                 bookStatsSection
 
             case .description:
-                if let description = book.bookDescription {
+                if let description = book.bookDescription, !description.isEmpty {
                     descriptionSection(description)
+                } else {
+                    emptySectionCard(
+                        icon: "text.alignleft",
+                        title: "No description yet",
+                        message: "Add a description to see it here.",
+                        actionTitle: "Add description"
+                    ) {
+                        showEditBook = true
+                    }
                 }
 
             case .lastPosition:
                 if let lastPos = book.lastPosition {
                     lastPositionSection(lastPos)
+                } else {
+                    emptySectionCard(
+                        icon: "bookmark",
+                        title: "No saved position",
+                        message: "Log a session and save your last position.",
+                        actionTitle: "Log session"
+                    ) {
+                        showLogSession = true
+                    }
                 }
 
             case .quotes:
                 if let quotes = book.quotes, !quotes.isEmpty {
                     quotesSection(quotes)
+                } else {
+                    emptySectionCard(
+                        icon: "quote.bubble",
+                        title: "No quotes yet",
+                        message: "Save a quote from your next session.",
+                        actionTitle: "Add quote"
+                    ) {
+                        showAddQuote = true
+                    }
                 }
 
             case .notes:
                 if !book.notes.isEmpty {
                     notesSection
+                } else {
+                    emptySectionCard(
+                        icon: "note.text",
+                        title: "No notes yet",
+                        message: "Add your personal notes about this book.",
+                        actionTitle: "Add notes"
+                    ) {
+                        showEditBook = true
+                    }
                 }
 
             case .subjects:
                 if let subjects = book.subjects, !subjects.isEmpty {
                     subjectsSection(subjects)
+                } else {
+                    emptySectionCard(
+                        icon: "tag",
+                        title: "No subjects yet",
+                        message: "Add genres or topics to see them here.",
+                        actionTitle: "Edit details"
+                    ) {
+                        showEditBook = true
+                    }
                 }
 
             case .metadata:
@@ -354,6 +402,15 @@ struct BookDetailView: View {
                 })
                 if hasVisibleSessions {
                     readingHistorySection
+                } else {
+                    emptySectionCard(
+                        icon: "clock.arrow.circlepath",
+                        title: "No sessions yet",
+                        message: "Log your first session to build a history.",
+                        actionTitle: "Log session"
+                    ) {
+                        showLogSession = true
+                    }
                 }
             }
         }
@@ -613,14 +670,26 @@ struct BookDetailView: View {
                 }
             }
 
-            VStack(spacing: 10) {
-                ForEach(bookStatsCards) { card in
-                    BookStatCardView(
-                        title: bookStatTitle(for: card, summary: bookStatsSummary),
-                        indicator: card.indicator,
-                        accent: card.accent.color(themeColor: themeColor)
-                    ) {
-                        selectedBookStat = card
+            if bookStatsSummary.sessionCount == 0 {
+                InlineEmptyStateView(
+                    icon: "chart.bar.xaxis",
+                    title: "No stats yet",
+                    message: "Log a session to see stats for this book.",
+                    actionTitle: "Log session"
+                ) {
+                    showLogSession = true
+                }
+                .padding(.top, 4)
+            } else {
+                VStack(spacing: 10) {
+                    ForEach(bookStatsCards) { card in
+                        BookStatCardView(
+                            title: bookStatTitle(for: card, summary: bookStatsSummary),
+                            indicator: card.indicator,
+                            accent: card.accent.color(themeColor: themeColor)
+                        ) {
+                            selectedBookStat = card
+                        }
                     }
                 }
             }
@@ -866,6 +935,25 @@ struct BookDetailView: View {
                 .foregroundStyle(.secondary)
                 .lineLimit(6)
         }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func emptySectionCard(
+        icon: String,
+        title: LocalizedStringKey,
+        message: LocalizedStringKey,
+        actionTitle: LocalizedStringKey? = nil,
+        action: (() -> Void)? = nil
+    ) -> some View {
+        InlineEmptyStateView(
+            icon: icon,
+            title: title,
+            message: message,
+            actionTitle: actionTitle,
+            action: action
+        )
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
