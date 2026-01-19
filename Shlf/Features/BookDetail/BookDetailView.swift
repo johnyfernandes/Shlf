@@ -33,6 +33,11 @@ struct BookDetailView: View {
     @State private var showFinishLog = false
     @State private var showShareSheet = false
     @State private var playShimmer: CGFloat = -40
+    @State private var showBookStatsSettings = false
+    @State private var selectedBookStat: BookStatsCardType?
+    @State private var bookStatsRange: BookStatsRange = .all
+    @State private var bookStatsRangeOffset = 0
+    @State private var hasInitializedBookStatsRange = false
 
     private var profile: UserProfile? {
         profiles.first
@@ -190,6 +195,21 @@ struct BookDetailView: View {
         .sheet(isPresented: $showShareSheet) {
             ShareSheetView(book: book)
         }
+        .sheet(item: $selectedBookStat) { stat in
+            BookStatDetailView(
+                stat: stat,
+                book: book,
+                summary: bookStatsSummary,
+                rangeLabel: bookStatsRangeLabel
+            )
+        }
+        .sheet(isPresented: $showBookStatsSettings) {
+            if let profile {
+                NavigationStack {
+                    BookStatsSettingsView(profile: profile)
+                }
+            }
+        }
         .alert("Delete Book?", isPresented: $showDeleteAlert) {
             Button("Delete", role: .destructive) {
                 deleteBook()
@@ -197,6 +217,28 @@ struct BookDetailView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This will permanently delete \(book.title) and all reading sessions.")
+        }
+        .onAppear {
+            if !hasInitializedBookStatsRange {
+                bookStatsRange = profile?.bookStatsRange ?? .all
+                hasInitializedBookStatsRange = true
+            }
+        }
+        .onChange(of: bookStatsRange) { _, newValue in
+            bookStatsRangeOffset = 0
+            if let profile {
+                profile.bookStatsRange = newValue
+                try? modelContext.save()
+            }
+        }
+        .onChange(of: profile?.bookStatsRangeRawValue) { _, newValue in
+            guard let newValue,
+                  let newRange = BookStatsRange(rawValue: newValue),
+                  newRange != bookStatsRange else {
+                return
+            }
+            bookStatsRange = newRange
+            bookStatsRangeOffset = 0
         }
         .alert("Change Reading Status?", isPresented: $showStatusChangeAlert) {
             Button("Change Status", role: .destructive) {
@@ -461,11 +503,221 @@ struct BookDetailView: View {
     // MARK: - Stats Overview
 
     private var statsOverview: some View {
-        Group {
-            if book.totalPages != nil {
-                EmptyView()
+        bookStatsSection
+    }
+
+    private var bookStatsCards: [BookStatsCardType] {
+        guard let profile else { return BookStatsCardType.allCases }
+        let cards = profile.bookStatsCards
+        return cards.isEmpty ? BookStatsCardType.allCases : cards
+    }
+
+    private var bookStatsSessions: [ReadingSession] {
+        let includeImported = profile?.bookStatsIncludeImported ?? false
+        let includeExcluded = profile?.bookStatsIncludeExcluded ?? false
+        let range = bookStatsRangeWindow
+
+        return (book.readingSessions ?? [])
+            .filter { session in
+                (includeImported || !session.isImported) &&
+                (includeExcluded || session.countsTowardStats) &&
+                session.startDate >= range.start &&
+                session.startDate <= range.end
+            }
+            .sorted(by: { $0.startDate > $1.startDate })
+    }
+
+    private var bookStatsSummary: BookStatsSummary {
+        BookStatsSummary.build(book: book, sessions: bookStatsSessions)
+    }
+
+    private var bookStatsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                Text("Stats")
+                    .font(.headline)
+
+                Spacer()
+
+                Menu {
+                    Picker("Range", selection: $bookStatsRange) {
+                        ForEach(BookStatsRange.allCases) { range in
+                            Text(range.titleKey).tag(range)
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Text(bookStatsRange.titleKey)
+                            .font(.caption.weight(.semibold))
+                        Image(systemName: "chevron.down")
+                            .font(.caption2.weight(.semibold))
+                    }
+                    .foregroundStyle(Theme.Colors.text)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Theme.Colors.tertiaryBackground, in: Capsule())
+                }
+
+                Button {
+                    showBookStatsSettings = true
+                } label: {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(themeColor.color)
+                        .padding(8)
+                        .background(themeColor.color.opacity(0.1), in: Circle())
+                }
+                .buttonStyle(.plain)
+                .disabled(profile == nil)
+            }
+
+            HStack(spacing: 8) {
+                if bookStatsRange != .all {
+                    Button {
+                        bookStatsRangeOffset += 1
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.caption.weight(.semibold))
+                    }
+                    .foregroundStyle(canShiftBookStatsRangeBack ? themeColor.color : Theme.Colors.tertiaryText)
+                    .disabled(!canShiftBookStatsRangeBack)
+                }
+
+                Text(bookStatsRangeLabel)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                if bookStatsRange != .all {
+                    Button {
+                        bookStatsRangeOffset = max(0, bookStatsRangeOffset - 1)
+                    } label: {
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.semibold))
+                    }
+                    .foregroundStyle(bookStatsRangeOffset == 0 ? Theme.Colors.tertiaryText : themeColor.color)
+                    .disabled(bookStatsRangeOffset == 0)
+                }
+            }
+
+            VStack(spacing: 10) {
+                ForEach(bookStatsCards) { card in
+                    BookStatCardView(
+                        title: bookStatTitle(for: card, summary: bookStatsSummary),
+                        indicator: card.indicator,
+                        accent: card.accent.color(themeColor: themeColor)
+                    ) {
+                        selectedBookStat = card
+                    }
+                }
             }
         }
+        .padding(16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    private var bookStatsRangeWindow: (start: Date, end: Date) {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+
+        switch bookStatsRange {
+        case .all:
+            let earliest = (book.readingSessions ?? []).map(\.startDate).min() ?? today
+            return (calendar.startOfDay(for: earliest), Date())
+        case .year:
+            let currentYear = calendar.component(.year, from: Date()) - bookStatsRangeOffset
+            let start = calendar.date(from: DateComponents(year: currentYear, month: 1, day: 1)) ?? today
+            if bookStatsRangeOffset == 0 {
+                return (start, Date())
+            }
+            let end = calendar.date(byAdding: DateComponents(year: 1, day: -1), to: start) ?? Date()
+            return (start, calendar.date(bySettingHour: 23, minute: 59, second: 59, of: end) ?? end)
+        default:
+            let rangeDays = max(1, bookStatsRange.days ?? 1)
+            let end = calendar.date(byAdding: .day, value: -bookStatsRangeOffset * rangeDays, to: today) ?? today
+            let start = calendar.date(byAdding: .day, value: -(rangeDays - 1), to: end) ?? end
+            let endOfDay = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: end) ?? end
+            return (start, endOfDay)
+        }
+    }
+
+    private var bookStatsRangeLabel: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d MMM yyyy"
+        let range = bookStatsRangeWindow
+        if bookStatsRange == .all {
+            return "\(formatter.string(from: range.start)) – \(formatter.string(from: range.end))"
+        }
+        return "\(formatter.string(from: range.start)) – \(formatter.string(from: range.end))"
+    }
+
+    private var canShiftBookStatsRangeBack: Bool {
+        guard bookStatsRange != .all else { return false }
+        let earliest = (book.readingSessions ?? []).map(\.startDate).min()
+        guard let earliest else { return false }
+        return bookStatsRangeWindow.start > earliest
+    }
+
+    private func bookStatTitle(for stat: BookStatsCardType, summary: BookStatsSummary) -> Text {
+        let accent = stat.accent.color(themeColor: themeColor)
+        switch stat {
+        case .pagesPercent:
+            let percent = summary.percentRead.map { " \($0)%" } ?? ""
+            return Text("You read ") + Text("\(summary.totalPagesRead) pages").foregroundStyle(accent) + Text("\(percent).")
+        case .timeRead:
+            return Text("You read for ") + Text(formatMinutes(summary.totalMinutesRead)).foregroundStyle(accent) + Text(".")
+        case .sessionCount:
+            return Text("You logged ") + Text("\(summary.sessionCount) sessions").foregroundStyle(accent) + Text(".")
+        case .averagePages:
+            return Text("Average ") + Text(formatNumber(summary.averagePagesPerSession)).foregroundStyle(accent) + Text(" pages per session.")
+        case .averageSpeed:
+            return Text("Average ") + Text(formatNumber(summary.averagePagesPerHour)).foregroundStyle(accent) + Text(" pages per hour.")
+        case .longestSession:
+            if summary.longestSessionMinutes > 0 {
+                return Text("Longest session ") + Text(formatMinutes(summary.longestSessionMinutes)).foregroundStyle(accent) + Text(".")
+            }
+            return Text("Longest session ") + Text("\(summary.longestSessionPages) pages").foregroundStyle(accent) + Text(".")
+        case .streak:
+            return Text("Your book streak was ") + Text(formatDays(summary.streakDays)).foregroundStyle(accent) + Text(".")
+        case .daysSinceLast:
+            if let days = summary.daysSinceLastRead {
+                return Text("Last read ") + Text(formatDays(days)).foregroundStyle(accent) + Text(" ago.")
+            }
+            return Text("No reads yet.")
+        case .firstLastDate:
+            if let first = summary.firstReadDate, let last = summary.lastReadDate {
+                return Text("First read ") + Text(formatDate(first)).foregroundStyle(accent) + Text(" • ") + Text(formatDate(last)).foregroundStyle(accent)
+            }
+            return Text("No read dates yet.")
+        }
+    }
+
+    private func formatMinutes(_ minutes: Int) -> String {
+        if minutes >= 60 {
+            let hours = minutes / 60
+            let mins = minutes % 60
+            if mins == 0 {
+                return String.localizedStringWithFormat(String(localized: "%lldh"), hours)
+            }
+            return String.localizedStringWithFormat(String(localized: "%lldh %lldm"), hours, mins)
+        }
+        return String.localizedStringWithFormat(String(localized: "%lldm"), minutes)
+    }
+
+    private func formatDays(_ value: Int) -> String {
+        String.localizedStringWithFormat(String(localized: "%lld days"), value)
+    }
+
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d MMM"
+        return formatter.string(from: date)
+    }
+
+    private func formatNumber(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 1
+        return formatter.string(from: NSNumber(value: value)) ?? String(format: "%.1f", value)
     }
 
     private var heroActions: some View {

@@ -9,6 +9,152 @@ import Foundation
 import SwiftData
 import SwiftUI
 
+// MARK: - Book Detail Stats
+
+enum BookStatsRange: String, CaseIterable, Identifiable, Codable {
+    case last7
+    case last30
+    case last90
+    case year
+    case all
+
+    var id: String { rawValue }
+
+    var titleKey: LocalizedStringKey {
+        switch self {
+        case .last7: return "7 Days"
+        case .last30: return "30 Days"
+        case .last90: return "90 Days"
+        case .year: return "This Year"
+        case .all: return "All Time"
+        }
+    }
+
+    var days: Int? {
+        switch self {
+        case .last7: return 7
+        case .last30: return 30
+        case .last90: return 90
+        case .year: return 365
+        case .all: return nil
+        }
+    }
+}
+
+enum BookStatAccent: String, Codable {
+    case theme
+    case success
+    case warning
+    case secondary
+    case info
+
+    func color(themeColor: ThemeColor) -> Color {
+        switch self {
+        case .theme: return themeColor.color
+        case .success: return .green
+        case .warning: return .orange
+        case .secondary: return .purple
+        case .info: return .blue
+        }
+    }
+}
+
+enum BookStatIndicator: String, Codable {
+    case bars
+    case line
+    case dot
+    case flame
+    case speed
+    case calendar
+    case history
+    case clock
+    case book
+}
+
+enum BookStatsCardType: String, CaseIterable, Identifiable, Codable {
+    case pagesPercent
+    case timeRead
+    case sessionCount
+    case averagePages
+    case averageSpeed
+    case longestSession
+    case streak
+    case daysSinceLast
+    case firstLastDate
+
+    var id: String { rawValue }
+
+    var titleKey: LocalizedStringKey {
+        switch self {
+        case .pagesPercent: return "Pages Read"
+        case .timeRead: return "Reading Time"
+        case .sessionCount: return "Sessions"
+        case .averagePages: return "Average Pages"
+        case .averageSpeed: return "Reading Speed"
+        case .longestSession: return "Longest Session"
+        case .streak: return "Streak"
+        case .daysSinceLast: return "Days Since Last Read"
+        case .firstLastDate: return "First & Last Read"
+        }
+    }
+
+    var descriptionKey: LocalizedStringKey {
+        switch self {
+        case .pagesPercent: return "Total pages read and progress"
+        case .timeRead: return "Total time spent reading"
+        case .sessionCount: return "How many sessions you logged"
+        case .averagePages: return "Average pages per session"
+        case .averageSpeed: return "Average pages per hour"
+        case .longestSession: return "Your longest session in this range"
+        case .streak: return "Reading streak for this book"
+        case .daysSinceLast: return "Time since you last read"
+        case .firstLastDate: return "Your first and most recent read dates"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .pagesPercent: return "book.pages"
+        case .timeRead: return "timer"
+        case .sessionCount: return "list.bullet.rectangle"
+        case .averagePages: return "sum"
+        case .averageSpeed: return "speedometer"
+        case .longestSession: return "trophy"
+        case .streak: return "flame.fill"
+        case .daysSinceLast: return "calendar.badge.clock"
+        case .firstLastDate: return "calendar"
+        }
+    }
+
+    var indicator: BookStatIndicator {
+        switch self {
+        case .pagesPercent: return .bars
+        case .timeRead: return .line
+        case .sessionCount: return .dot
+        case .averagePages: return .book
+        case .averageSpeed: return .speed
+        case .longestSession: return .clock
+        case .streak: return .flame
+        case .daysSinceLast: return .calendar
+        case .firstLastDate: return .history
+        }
+    }
+
+    var accent: BookStatAccent {
+        switch self {
+        case .pagesPercent: return .theme
+        case .timeRead: return .secondary
+        case .sessionCount: return .info
+        case .averagePages: return .theme
+        case .averageSpeed: return .secondary
+        case .longestSession: return .success
+        case .streak: return .warning
+        case .daysSinceLast: return .secondary
+        case .firstLastDate: return .info
+        }
+    }
+}
+
 enum ChartType: String, Codable, CaseIterable, Hashable {
     case bar = "Bar Chart"
     case heatmap = "Activity Heatmap"
@@ -112,6 +258,20 @@ final class UserProfile {
     // Stats Display Preferences
     var chartTypeRawValue: String = "Bar Chart"
     var heatmapPeriodRawValue: String = "Last 12 Weeks"
+    var bookStatsCardOrder: [String] = [
+        BookStatsCardType.pagesPercent.rawValue,
+        BookStatsCardType.timeRead.rawValue,
+        BookStatsCardType.sessionCount.rawValue,
+        BookStatsCardType.averagePages.rawValue,
+        BookStatsCardType.averageSpeed.rawValue,
+        BookStatsCardType.longestSession.rawValue,
+        BookStatsCardType.streak.rawValue,
+        BookStatsCardType.daysSinceLast.rawValue,
+        BookStatsCardType.firstLastDate.rawValue
+    ]
+    var bookStatsRangeRawValue: String = BookStatsRange.all.rawValue
+    var bookStatsIncludeImported: Bool = false
+    var bookStatsIncludeExcluded: Bool = false
 
     // Home Card Preferences
     var homeCardOrder: [String] = [
@@ -228,6 +388,19 @@ final class UserProfile {
         homeCardOrder.compactMap { StatCardType(rawValue: $0) }
     }
 
+    var bookStatsCards: [BookStatsCardType] {
+        bookStatsCardOrder.compactMap { BookStatsCardType(rawValue: $0) }
+    }
+
+    var bookStatsRange: BookStatsRange {
+        get {
+            BookStatsRange(rawValue: bookStatsRangeRawValue) ?? .all
+        }
+        set {
+            bookStatsRangeRawValue = newValue.rawValue
+        }
+    }
+
     // Helper methods for managing home cards
     func addHomeCard(_ card: StatCardType) {
         // CRITICAL: Enforce max 3 cards limit
@@ -243,6 +416,20 @@ final class UserProfile {
 
     func moveHomeCard(from source: IndexSet, to destination: Int) {
         homeCardOrder.move(fromOffsets: source, toOffset: destination)
+    }
+
+    func addBookStatsCard(_ card: BookStatsCardType) {
+        if !bookStatsCardOrder.contains(card.rawValue) {
+            bookStatsCardOrder.append(card.rawValue)
+        }
+    }
+
+    func removeBookStatsCard(_ card: BookStatsCardType) {
+        bookStatsCardOrder.removeAll { $0 == card.rawValue }
+    }
+
+    func moveBookStatsCard(from source: IndexSet, to destination: Int) {
+        bookStatsCardOrder.move(fromOffsets: source, toOffset: destination)
     }
 
     // Helper computed property to get BookDetailSection array from strings

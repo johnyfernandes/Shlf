@@ -114,6 +114,12 @@ struct SettingsView: View {
                         }
 
                         NavigationLink {
+                            BookStatsSettingsView(profile: profile)
+                        } label: {
+                            Label("Book Stats", systemImage: "chart.bar.xaxis")
+                        }
+
+                        NavigationLink {
                             StatsSettingsView()
                         } label: {
                             Label("Stats", systemImage: "chart.xyaxis.line")

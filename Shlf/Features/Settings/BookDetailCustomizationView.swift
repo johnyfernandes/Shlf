@@ -71,6 +71,7 @@ struct BookDetailCustomizationView: View {
             VStack(spacing: 20) {
                 aboutSection
                 sectionsListView
+                bookStatsSection
                 resetButton
             }
             .padding(.horizontal, 20)
@@ -206,6 +207,42 @@ struct BookDetailCustomizationView: View {
                     .strokeBorder(themeColor.color.opacity(0.3), lineWidth: 1)
             )
         }
+    }
+
+    private var bookStatsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 6) {
+                Image(systemName: "chart.bar.xaxis")
+                    .font(.caption)
+                    .foregroundStyle(themeColor.color)
+                    .frame(width: 16)
+
+                Text("Book Stats")
+                    .font(.headline)
+            }
+
+            Text("Customize which stats appear on each book and the default range.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            NavigationLink {
+                BookStatsSettingsView(profile: profile)
+            } label: {
+                HStack(spacing: 8) {
+                    Text("Customize Book Stats")
+                        .font(.subheadline.weight(.semibold))
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption2.weight(.semibold))
+                }
+                .foregroundStyle(themeColor.color)
+                .padding(.vertical, 8)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private var editButton: some View {
