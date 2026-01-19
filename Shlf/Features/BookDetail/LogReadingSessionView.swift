@@ -46,6 +46,8 @@ struct LogReadingSessionView: View {
 
     // Quote management
     @State private var showAddQuote = false
+    @AppStorage("logSessionToPageTooltipDismissed") private var hasDismissedToPageTooltip = false
+    @State private var showToPageTooltip = false
 
     init(book: Book) {
         self.book = book
@@ -122,12 +124,20 @@ struct LogReadingSessionView: View {
                     .padding(.top, 12)
                     .padding(.bottom, 40)
                 }
+                .simultaneousGesture(TapGesture().onEnded {
+                    if showToPageTooltip {
+                        dismissToPageTooltip()
+                    }
+                })
                 .scrollDismissesKeyboard(.interactively)
             }
             .onAppear {
                 syncWithLiveActivity()
                 syncEndPageText(with: actualEndPage)
                 refreshActiveSessionSnapshot()
+                if !hasDismissedToPageTooltip {
+                    showToPageTooltip = true
+                }
                 if xpGradientPhase < 0 {
                     withAnimation(.linear(duration: 2.2).repeatForever(autoreverses: true)) {
                         xpGradientPhase = 1.2
@@ -224,7 +234,7 @@ struct LogReadingSessionView: View {
 
             HStack(spacing: 12) {
                 progressValueChip(title: "From", value: "\(actualStartPage)")
-                progressInputChip(title: "To", text: $endPageText)
+                progressInputChip(title: "To", text: $endPageText, showTooltip: showToPageTooltip)
             }
 
             HStack {
@@ -474,7 +484,7 @@ struct LogReadingSessionView: View {
         )
     }
 
-    private func progressInputChip(title: String, text: Binding<String>) -> some View {
+    private func progressInputChip(title: String, text: Binding<String>, showTooltip: Bool) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.caption2.weight(.medium))
@@ -503,6 +513,13 @@ struct LogReadingSessionView: View {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .strokeBorder(themeColor.color.opacity(0.08), lineWidth: 1)
         )
+        .overlay(alignment: .topTrailing) {
+            if showTooltip {
+                endPageTooltip
+                    .offset(x: 6, y: -58)
+                    .allowsHitTesting(false)
+            }
+        }
     }
 
     private var xpGradient: LinearGradient {
@@ -544,6 +561,37 @@ struct LogReadingSessionView: View {
 
     private func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+
+    private var endPageTooltip: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Tap here!")
+                .font(.caption.weight(.bold))
+            Text("Tap here to edit your last page for this session.")
+                .font(.caption2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(themeColor.color.gradient)
+                .shadow(color: themeColor.color.opacity(0.35), radius: 6, y: 4)
+        )
+        .overlay(alignment: .bottomTrailing) {
+            Rectangle()
+                .fill(themeColor.color)
+                .frame(width: 10, height: 10)
+                .rotationEffect(.degrees(45))
+                .offset(x: -18, y: 6)
+        }
+        .frame(maxWidth: 220, alignment: .leading)
+    }
+
+    private func dismissToPageTooltip() {
+        showToPageTooltip = false
+        hasDismissedToPageTooltip = true
     }
 
     private func handleCancel() {
