@@ -1430,10 +1430,11 @@ private struct TrendDetailView: View {
             .navigationTitle(metric.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
+                ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
                         dismiss()
                     }
+                    .foregroundStyle(themeColor.color)
                 }
             }
         }
@@ -2210,6 +2211,7 @@ struct AchievementDetailView: View {
 
 struct AchievementsGridView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.themeColor) private var themeColor
     let entries: [AchievementEntry]
     let onSelect: (AchievementEntry) -> Void
     @State private var selectedAchievement: AchievementEntry?
@@ -2244,6 +2246,7 @@ struct AchievementsGridView: View {
                     Button("Done") {
                         dismiss()
                     }
+                    .foregroundStyle(themeColor.color)
                 }
             }
             .sheet(item: $selectedAchievement) { selection in

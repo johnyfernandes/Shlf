@@ -118,31 +118,33 @@ struct QuoteDetailView: View {
                     .cardStyle()
                 }
 
-                // Actions
-                VStack(spacing: Theme.Spacing.sm) {
-                    Button {
-                        shareQuote()
-                    } label: {
-                        Label("Share Quote", systemImage: "square.and.arrow.up")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(themeColor.color)
-
-                    Button(role: .destructive) {
-                        showDeleteAlert = true
-                    } label: {
-                        Label("Delete Quote", systemImage: "trash")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                }
             }
             .padding(Theme.Spacing.md)
         }
         .background(Theme.Colors.background)
         .navigationTitle("Quote")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Menu {
+                    Button {
+                        shareQuote()
+                    } label: {
+                        Label("Share Quote", systemImage: "square.and.arrow.up")
+                    }
+
+                    Button(role: .destructive) {
+                        showDeleteAlert = true
+                    } label: {
+                        Label("Delete Quote", systemImage: "trash")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(themeColor.color)
+                }
+            }
+        }
         .alert("Delete Quote?", isPresented: $showDeleteAlert) {
             Button("Delete", role: .destructive) {
                 deleteQuote()

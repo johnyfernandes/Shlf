@@ -90,14 +90,6 @@ struct EditGoalView: View {
                     Toggle("Mark as Completed", isOn: $goal.isCompleted)
                 }
 
-                Section {
-                    Button(role: .destructive) {
-                        showDeleteAlert = true
-                    } label: {
-                        Label("Delete Goal", systemImage: "trash")
-                            .frame(maxWidth: .infinity)
-                    }
-                }
             }
             .navigationTitle("Edit Goal")
             .navigationBarTitleDisplayMode(.inline)
@@ -107,6 +99,20 @@ struct EditGoalView: View {
                         // CRITICAL: Save all changes before dismissing
                         try? modelContext.save()
                         dismiss()
+                    }
+                }
+
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        Button(role: .destructive) {
+                            showDeleteAlert = true
+                        } label: {
+                            Label("Delete Goal", systemImage: "trash")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                            .symbolRenderingMode(.hierarchical)
+                            .foregroundStyle(themeColor.color)
                     }
                 }
             }

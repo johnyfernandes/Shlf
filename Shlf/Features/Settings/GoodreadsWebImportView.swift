@@ -10,6 +10,7 @@ import SwiftUI
 
 struct GoodreadsWebImportView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.themeColor) private var themeColor
     @ObservedObject var coordinator: GoodreadsImportCoordinator
 
     private var showsWebView: Bool {
@@ -52,15 +53,27 @@ struct GoodreadsWebImportView: View {
             .navigationTitle(String(localized: "Goodreads"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button(String(localized: "Close")) {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(String(localized: "Done")) {
                         coordinator.stop()
                         dismiss()
                     }
+                    .foregroundStyle(themeColor.color)
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(String(localized: "Disconnect")) {
-                        coordinator.disconnect()
+
+                if coordinator.isConnected {
+                    ToolbarItem(placement: .primaryAction) {
+                        Menu {
+                            Button(role: .destructive) {
+                                coordinator.disconnect()
+                            } label: {
+                                Label(String(localized: "Disconnect"), systemImage: "link.badge.minus")
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                                .symbolRenderingMode(.hierarchical)
+                                .foregroundStyle(themeColor.color)
+                        }
                     }
                 }
             }

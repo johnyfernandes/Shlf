@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct BookStatDetailView: View {
+    @Environment(\.dismiss) private var dismiss
     @Environment(\.themeColor) private var themeColor
     let stat: BookStatsCardType
     let book: Book
@@ -51,6 +52,14 @@ struct BookStatDetailView: View {
             }
             .navigationTitle(stat.titleKey)
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .foregroundStyle(themeColor.color)
+                }
+            }
         }
     }
 

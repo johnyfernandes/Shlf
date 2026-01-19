@@ -81,13 +81,11 @@ struct StreakDetailView: View {
             .navigationTitle("Streak")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
                         dismiss()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(Theme.Colors.tertiaryText)
                     }
+                    .foregroundStyle(themeColor.color)
                 }
             }
             .confirmationDialog("Use Streak Protection?", isPresented: $showPardonConfirm, titleVisibility: .visible) {

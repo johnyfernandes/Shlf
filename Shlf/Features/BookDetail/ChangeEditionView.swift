@@ -61,10 +61,11 @@ struct ChangeEditionView: View {
             .navigationTitle("Change Edition")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
                         dismiss()
                     }
+                    .foregroundStyle(themeColor.color)
                 }
             }
             .task {

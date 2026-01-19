@@ -178,10 +178,11 @@ struct ShareSheetView: View {
             .navigationTitle("Share")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
+                ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
                         dismiss()
                     }
+                    .foregroundStyle(themeColor.color)
                 }
             }
         }
@@ -1357,10 +1358,11 @@ struct LibraryShareSheetView: View {
             .navigationTitle("Share Library")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
+                ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
                         dismiss()
                     }
+                    .foregroundStyle(themeColor.color)
                 }
             }
         }

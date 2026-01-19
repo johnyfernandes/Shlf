@@ -10,6 +10,7 @@ import SwiftUI
 
 struct KindleWebImportView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.themeColor) private var themeColor
     @ObservedObject var coordinator: KindleImportCoordinator
 
     private var showsWebView: Bool {
@@ -52,14 +53,26 @@ struct KindleWebImportView: View {
             .navigationTitle(String(localized: "Kindle"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button(String(localized: "Close")) {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(String(localized: "Done")) {
                         dismiss()
                     }
+                    .foregroundStyle(themeColor.color)
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(String(localized: "Disconnect")) {
-                        coordinator.disconnect()
+
+                if coordinator.isConnected {
+                    ToolbarItem(placement: .primaryAction) {
+                        Menu {
+                            Button(role: .destructive) {
+                                coordinator.disconnect()
+                            } label: {
+                                Label(String(localized: "Disconnect"), systemImage: "link.badge.minus")
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                                .symbolRenderingMode(.hierarchical)
+                                .foregroundStyle(themeColor.color)
+                        }
                     }
                 }
             }

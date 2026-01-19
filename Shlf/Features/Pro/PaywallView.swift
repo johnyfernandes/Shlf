@@ -45,13 +45,11 @@ struct PaywallView: View {
                 }
             }
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
                         dismiss()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(Theme.Colors.tertiaryText)
                     }
+                    .foregroundStyle(themeColor.color)
                 }
             }
         }
