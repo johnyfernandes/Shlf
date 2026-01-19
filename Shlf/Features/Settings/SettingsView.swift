@@ -65,7 +65,7 @@ struct SettingsView: View {
                 Form {
                     proSection
 
-                    Section("Customization") {
+                    Section("Appearance") {
                         NavigationLink {
                             ThemeColorSettingsView(profile: profile)
                         } label: {
@@ -82,13 +82,9 @@ struct SettingsView: View {
                         } label: {
                             Label("App Icon", systemImage: "app")
                         }
+                    }
 
-                        NavigationLink {
-                            HomeCardSettingsView(profile: profile)
-                        } label: {
-                            Label("Home Screen", systemImage: "square.grid.3x3")
-                        }
-
+                    Section("Reading") {
                         NavigationLink {
                             ReadingPreferencesView(profile: profile)
                         } label: {
@@ -106,6 +102,14 @@ struct SettingsView: View {
                         } label: {
                             Label("Streaks", systemImage: "flame.fill")
                         }
+                    }
+
+                    Section("Library") {
+                        NavigationLink {
+                            HomeCardSettingsView(profile: profile)
+                        } label: {
+                            Label("Home Screen", systemImage: "square.grid.3x3")
+                        }
 
                         NavigationLink {
                             BookDetailCustomizationView(profile: profile)
@@ -118,7 +122,9 @@ struct SettingsView: View {
                         } label: {
                             Label("Subjects", systemImage: "tag.fill")
                         }
+                    }
 
+                    Section("Stats") {
                         NavigationLink {
                             BookStatsSettingsView(profile: profile)
                         } label: {
@@ -132,76 +138,74 @@ struct SettingsView: View {
                         }
                     }
 
-                Section("Apple Watch") {
-                    NavigationLink {
-                        WatchSettingsView()
-                    } label: {
-                        Label("Apple Watch", systemImage: "applewatch")
-                    }
-                }
+                    Section("Sync & Integrations") {
+                        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                            Toggle("iCloud Sync", isOn: Binding(
+                                get: { profile.cloudSyncEnabled },
+                                set: { handleCloudSyncToggle($0) }
+                            ))
+                            .disabled(!isProUser || isMigratingCloud)
+                            .confirmationDialog("Use iCloud Data?", isPresented: $showCloudChoiceDialog, titleVisibility: .visible) {
+                                Button("Use iCloud Data") {
+                                    enableCloudUsingRemoteData()
+                                }
+                                Button("Replace iCloud with This iPhone", role: .destructive) {
+                                    migrateLocalToCloud()
+                                }
+                                Button("Cancel", role: .cancel) {}
+                            } message: {
+                                Text(cloudChoiceMessage)
+                            }
 
-                Section("Sync") {
-                    VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                        Toggle("iCloud Sync", isOn: Binding(
-                            get: { profile.cloudSyncEnabled },
-                            set: { handleCloudSyncToggle($0) }
-                        ))
-                        .disabled(!isProUser || isMigratingCloud)
-                        .confirmationDialog("Use iCloud Data?", isPresented: $showCloudChoiceDialog, titleVisibility: .visible) {
-                            Button("Use iCloud Data") {
-                                enableCloudUsingRemoteData()
-                            }
-                            Button("Replace iCloud with This iPhone", role: .destructive) {
-                                migrateLocalToCloud()
-                            }
-                            Button("Cancel", role: .cancel) {}
-                        } message: {
-                            Text(cloudChoiceMessage)
+                            cloudStatusInline
                         }
 
-                        cloudStatusInline
-                    }
-                }
+                        NavigationLink {
+                            GoodreadsImportView(profile: profile)
+                        } label: {
+                            Label("Goodreads", systemImage: "books.vertical")
+                        }
 
-                Section("App") {
-                    NavigationLink {
-                        AboutView()
-                    } label: {
-                        Label("About", systemImage: "info.circle")
-                    }
-
-                    Link(destination: URL(string: "https://shlf.app")!) {
-                        Label("Visit shlf.app", systemImage: "safari")
+                        NavigationLink {
+                            KindleImportView(profile: profile)
+                        } label: {
+                            Label("Kindle", systemImage: "book.closed")
+                        }
                     }
 
-                    Button {
-                        requestReview()
-                    } label: {
-                        Label("Rate Shlf", systemImage: "star")
-                    }
-                }
-
-                Section("Integrations") {
-                    NavigationLink {
-                        GoodreadsImportView(profile: profile)
-                    } label: {
-                        Label("Goodreads", systemImage: "books.vertical")
+                    Section("Devices") {
+                        NavigationLink {
+                            WatchSettingsView()
+                        } label: {
+                            Label("Apple Watch", systemImage: "applewatch")
+                        }
                     }
 
-                    NavigationLink {
-                        KindleImportView(profile: profile)
-                    } label: {
-                        Label("Kindle", systemImage: "book.closed")
-                    }
-                }
+                    Section("App") {
+                        NavigationLink {
+                            AboutView()
+                        } label: {
+                            Label("About", systemImage: "info.circle")
+                        }
 
-                Section("Data") {
-                    NavigationLink {
-                        DataManagementView()
-                    } label: {
-                        Label("Data Management", systemImage: "folder")
+                        Link(destination: URL(string: "https://shlf.app")!) {
+                            Label("Visit shlf.app", systemImage: "safari")
+                        }
+
+                        Button {
+                            requestReview()
+                        } label: {
+                            Label("Rate Shlf", systemImage: "star")
+                        }
                     }
-                }
+
+                    Section("Data") {
+                        NavigationLink {
+                            DataManagementView()
+                        } label: {
+                            Label("Data Management", systemImage: "folder")
+                        }
+                    }
 
                 #if DEBUG
                 Section("Developer") {
