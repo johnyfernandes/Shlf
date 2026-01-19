@@ -289,6 +289,7 @@ struct LogReadingSessionView: View {
 
                         HStack(spacing: 10) {
                             Button(session.isPaused ? "Resume" : "Pause") {
+                                Haptics.selection()
                                 session.isPaused.toggle()
                                 if session.isPaused {
                                     session.pausedAt = Date()
@@ -333,9 +334,9 @@ struct LogReadingSessionView: View {
                                 .buttonStyle(.bordered)
                                 .tint(themeColor.color)
 
-                                Button("Finish Session") {
-                                    finishSession()
-                                }
+                            Button("Finish Session") {
+                                finishSession()
+                            }
                                 .buttonStyle(.borderedProminent)
                                 .tint(themeColor.color)
                             }
@@ -743,6 +744,7 @@ struct LogReadingSessionView: View {
     }
 
     private func actuallyStartTimer() {
+        Haptics.impact(.light)
         timerStartTime = Date()
 
         // Create active session
@@ -768,6 +770,7 @@ struct LogReadingSessionView: View {
     }
 
     private func pauseTimer() {
+        Haptics.selection()
         guard let startTime = timerStartTime else { return }
         pausedElapsedTime += Date().timeIntervalSince(startTime)
         isPaused = true
@@ -779,6 +782,7 @@ struct LogReadingSessionView: View {
     }
 
     private func resumeTimer() {
+        Haptics.selection()
         timerStartTime = Date()
         isPaused = false
 
@@ -801,6 +805,7 @@ struct LogReadingSessionView: View {
     }
 
     private func finishActiveSession(_ activeSession: ActiveReadingSession) {
+        Haptics.impact(.medium)
         let session = ReadingSession(
             startDate: activeSession.startDate,
             endDate: Date(),
@@ -880,6 +885,7 @@ struct LogReadingSessionView: View {
     }
 
     private func saveSession() {
+        Haptics.impact(.medium)
         // Delete any active session for this book
         if let activeSession = activeSessionForBook {
             let endedId = activeSession.id

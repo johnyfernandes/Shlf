@@ -411,6 +411,7 @@ struct BookDetailView: View {
 
     private var activeSessionBanner: some View {
         Button {
+            Haptics.impact(.light)
             showLogSession = true
         } label: {
             HStack(spacing: 12) {
@@ -1612,6 +1613,7 @@ struct FinishBookLogView: View {
     }
 
     private func saveFinish() {
+        Haptics.impact(.medium)
         if let activeSession = activeSessions.first {
             let endedId = activeSession.id
             modelContext.delete(activeSession)
