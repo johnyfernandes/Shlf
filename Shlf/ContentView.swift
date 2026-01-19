@@ -16,6 +16,7 @@ struct ContentView: View {
     @State private var showOnboarding = false
     @State private var selectedTab = 0
     @State private var navigationPath = NavigationPath()
+    @State private var activeSessionLogDestination: ActiveSessionLogDestination?
 
     private var shouldShowOnboarding: Bool {
         profiles.first?.hasCompletedOnboarding == false || profiles.isEmpty
@@ -40,8 +41,7 @@ struct ContentView: View {
                             session: session,
                             book: book
                         ) {
-                            // Navigate to Library tab and then to book detail
-                            selectedTab = 1
+                            activeSessionLogDestination = ActiveSessionLogDestination(bookID: book.id)
                         }
                     }
             } else {
@@ -53,6 +53,9 @@ struct ContentView: View {
         .environment(\.themeColor, currentThemeColor)
         .fullScreenCover(isPresented: $showOnboarding) {
             OnboardingView(isPresented: $showOnboarding)
+        }
+        .sheet(item: $activeSessionLogDestination) { destination in
+            ActiveSessionLogSheet(bookID: destination.bookID)
         }
         .onAppear {
             showOnboarding = shouldShowOnboarding
@@ -78,6 +81,51 @@ struct ContentView: View {
                 SearchTabView(selectedTab: $selectedTab)
             }
         }
+    }
+}
+
+private struct ActiveSessionLogDestination: Identifiable {
+    let id = UUID()
+    let bookID: UUID
+}
+
+private struct ActiveSessionLogSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @Query private var profiles: [UserProfile]
+    @Query private var books: [Book]
+
+    private let bookID: UUID
+
+    init(bookID: UUID) {
+        self.bookID = bookID
+        _books = Query(filter: #Predicate<Book> { $0.id == bookID })
+    }
+
+    var body: some View {
+        let theme = profiles.first?.themeColor ?? .blue
+        Group {
+            if let book = books.first {
+                LogReadingSessionView(book: book)
+            } else {
+                VStack(spacing: 12) {
+                    ProgressView()
+                    Text("Loading session…")
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(.systemBackground))
+                .task {
+                    try? await Task.sleep(nanoseconds: 300_000_000)
+                    if books.first == nil {
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .environment(\.modelContext, modelContext)
+        .environment(\.themeColor, theme)
+        .tint(theme.color)
     }
 }
 
