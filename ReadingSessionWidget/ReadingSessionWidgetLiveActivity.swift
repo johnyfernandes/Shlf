@@ -58,6 +58,32 @@ struct ReadingSessionWidgetLiveActivity: Widget {
                     )
                 }
 
+                DynamicIslandExpandedRegion(.trailing, priority: 1) {
+                    VStack(alignment: .trailing, spacing: 2) {
+                        if context.state.isPaused {
+                            Text("Paused")
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(.orange)
+                        }
+
+                        if context.state.isPaused,
+                           let pausedElapsed = context.state.pausedElapsedSeconds {
+                            Text(formattedElapsed(seconds: pausedElapsed))
+                                .font(.system(size: 22, weight: .semibold, design: .rounded))
+                                .monospacedDigit()
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                        } else {
+                            Text(context.state.timerStartTime, style: .timer)
+                                .font(.system(size: 22, weight: .semibold, design: .rounded))
+                                .monospacedDigit()
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                        }
+                    }
+                    .frame(minWidth: 85, alignment: .trailing)
+                }
+
                 DynamicIslandExpandedRegion(.center) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(context.attributes.bookTitle)
@@ -74,32 +100,6 @@ struct ReadingSessionWidgetLiveActivity: Widget {
                             .foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                }
-
-                DynamicIslandExpandedRegion(.trailing) {
-                    VStack(alignment: .trailing, spacing: 2) {
-                        if context.state.isPaused {
-                            Text("Paused")
-                                .font(.caption2.weight(.semibold))
-                                .foregroundStyle(.orange)
-                        }
-
-                        if context.state.isPaused,
-                           let pausedElapsed = context.state.pausedElapsedSeconds {
-                            Text(formattedElapsed(seconds: pausedElapsed))
-                                .font(.system(size: 28, weight: .semibold, design: .rounded))
-                                .monospacedDigit()
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.7)
-                        } else {
-                            Text(context.state.timerStartTime, style: .timer)
-                                .font(.system(size: 28, weight: .semibold, design: .rounded))
-                                .monospacedDigit()
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.7)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .trailing)
                 }
 
                 DynamicIslandExpandedRegion(.bottom) {
