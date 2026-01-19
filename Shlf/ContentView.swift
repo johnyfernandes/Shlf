@@ -27,7 +27,6 @@ struct ContentView: View {
     }
 
     private var activeSession: ActiveReadingSession? {
-        guard ReadingSessionActivityManager.shared.isActive else { return nil }
         return activeSessions.first
     }
 
