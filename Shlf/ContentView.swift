@@ -26,10 +26,41 @@ struct ContentView: View {
     }
 
     private var activeSession: ActiveReadingSession? {
-        activeSessions.first
+        guard ReadingSessionActivityManager.shared.isActive else { return nil }
+        return activeSessions.first
     }
 
     var body: some View {
+        Group {
+            if let session = activeSession,
+               let book = session.book {
+                tabShell
+                    .tabViewBottomAccessory {
+                        ActiveSessionAccessoryView(
+                            session: session,
+                            book: book
+                        ) {
+                            // Navigate to Library tab and then to book detail
+                            selectedTab = 1
+                        }
+                    }
+            } else {
+                tabShell
+            }
+        }
+        .tabBarMinimizeBehavior(.onScrollDown)
+        .tint(currentThemeColor.color)
+        .environment(\.themeColor, currentThemeColor)
+        .fullScreenCover(isPresented: $showOnboarding) {
+            OnboardingView(isPresented: $showOnboarding)
+        }
+        .onAppear {
+            showOnboarding = shouldShowOnboarding
+        }
+    }
+
+    @ViewBuilder
+    private var tabShell: some View {
         TabView(selection: $selectedTab) {
             Tab("Home", systemImage: "house.fill", value: 0) {
                 HomeView(selectedTab: $selectedTab)
@@ -46,27 +77,6 @@ struct ContentView: View {
             Tab("Search", systemImage: "magnifyingglass", value: 3, role: .search) {
                 SearchTabView(selectedTab: $selectedTab)
             }
-        }
-        .tabViewBottomAccessory {
-            if let session = activeSession,
-               let book = session.book {
-                ActiveSessionAccessoryView(
-                    session: session,
-                    book: book
-                ) {
-                    // Navigate to Library tab and then to book detail
-                    selectedTab = 1
-                }
-            }
-        }
-        .tabBarMinimizeBehavior(.onScrollDown)
-        .tint(currentThemeColor.color)
-        .environment(\.themeColor, currentThemeColor)
-        .fullScreenCover(isPresented: $showOnboarding) {
-            OnboardingView(isPresented: $showOnboarding)
-        }
-        .onAppear {
-            showOnboarding = shouldShowOnboarding
         }
     }
 }
