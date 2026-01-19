@@ -22,8 +22,8 @@ struct ActiveSessionAccessoryView: View {
                 BookCoverView(
                     imageURL: book.coverImageURL,
                     title: book.title,
-                    width: 40,
-                    height: 56
+                    width: 28,
+                    height: 40
                 )
 
                 // Title and author
