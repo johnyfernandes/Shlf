@@ -136,10 +136,11 @@ struct BookSearchView: View {
                     }
                 }
                 .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") {
                             dismiss()
                         }
+                        .foregroundStyle(themeColor.color)
                     }
                 }
             }

@@ -49,10 +49,11 @@ struct AddBookView: View {
                     )
                 }
                 .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") {
                             dismiss()
                         }
+                        .foregroundStyle(themeColor.color)
                     }
                 }
             .sheet(isPresented: $viewModel.showScanner) {
