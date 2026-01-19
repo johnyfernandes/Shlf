@@ -9,7 +9,8 @@ struct SearchTabView: View {
             selectedTab: $selectedTab,
             onDismissAll: {
                 resetID = UUID()
-            }
+            },
+            showsDoneButton: false
         )
         .id(resetID)
     }

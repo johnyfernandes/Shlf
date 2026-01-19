@@ -12,6 +12,7 @@ struct BookSearchView: View {
     @Environment(\.themeColor) private var themeColor
     @Binding var selectedTab: Int
     let onDismissAll: () -> Void
+    let showsDoneButton: Bool
 
     @State private var searchText = ""
     @State private var searchResults: [BookInfo] = []
@@ -136,11 +137,13 @@ struct BookSearchView: View {
                     }
                 }
                 .toolbar {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Done") {
-                            dismiss()
+                    if showsDoneButton {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") {
+                                dismiss()
+                            }
+                            .foregroundStyle(themeColor.color)
                         }
-                        .foregroundStyle(themeColor.color)
                     }
                 }
             }
@@ -311,6 +314,7 @@ struct BookSearchResultRow: View {
         selectedTab: .constant(1),
         onDismissAll: {
             print("Dismissed all")
-        }
+        },
+        showsDoneButton: true
     )
 }

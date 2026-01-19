@@ -73,7 +73,8 @@ struct AddBookView: View {
                         selectedTab: $selectedTab,
                         onDismissAll: {
                             dismiss()
-                        }
+                        },
+                        showsDoneButton: true
                     )
                 }
             }
