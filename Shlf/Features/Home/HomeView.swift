@@ -130,9 +130,9 @@ struct HomeView: View {
                                         isEditingCards = false
                                     }
                                 } label: {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .font(.title2)
-                                        .foregroundStyle(Theme.Colors.success)
+                                    Text("Done")
+                                        .font(.body.weight(.semibold))
+                                        .foregroundStyle(themeColor.color)
                                 }
                             } else {
                                 Menu {
@@ -152,7 +152,8 @@ struct HomeView: View {
                                 } label: {
                                     Image(systemName: "ellipsis.circle")
                                         .font(.title2)
-                                        .foregroundStyle(Theme.Colors.secondaryText)
+                                        .symbolRenderingMode(.hierarchical)
+                                        .foregroundStyle(themeColor.color)
                                 }
                             }
                         }

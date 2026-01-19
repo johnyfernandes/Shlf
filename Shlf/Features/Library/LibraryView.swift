@@ -84,7 +84,8 @@ struct LibraryView: View {
                         } label: {
                             Image(systemName: "ellipsis.circle")
                                 .font(.title2)
-                                .foregroundStyle(Theme.Colors.secondaryText)
+                                .symbolRenderingMode(.hierarchical)
+                                .foregroundStyle(themeColor.color)
                         }
 
                         Button {

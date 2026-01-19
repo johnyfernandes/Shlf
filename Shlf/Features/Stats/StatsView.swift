@@ -395,18 +395,23 @@ struct StatsView: View {
             }
             .navigationTitle("Stats")
             .toolbar {
-                ToolbarItemGroup(placement: .primaryAction) {
-                    Button {
-                        showShareSheet = true
-                    } label: {
-                        Image(systemName: "square.and.arrow.up")
-                            .foregroundStyle(themeColor.color)
-                    }
+                ToolbarItem(placement: .primaryAction) {
+                    Menu {
+                        Button {
+                            showShareSheet = true
+                        } label: {
+                            Label("Share", systemImage: "square.and.arrow.up")
+                        }
 
-                    Button {
-                        showSettings = true
+                        Button {
+                            showSettings = true
+                        } label: {
+                            Label("Settings", systemImage: "gearshape")
+                        }
                     } label: {
-                        Image(systemName: "gearshape")
+                        Image(systemName: "ellipsis.circle")
+                            .font(.title2)
+                            .symbolRenderingMode(.hierarchical)
                             .foregroundStyle(themeColor.color)
                     }
                 }

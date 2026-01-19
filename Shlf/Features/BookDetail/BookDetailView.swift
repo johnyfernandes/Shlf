@@ -180,7 +180,7 @@ struct BookDetailView: View {
                         Label("Delete Book", systemImage: "trash")
                     }
                 } label: {
-                    Image(systemName: "ellipsis.circle.fill")
+                    Image(systemName: "ellipsis.circle")
                         .symbolRenderingMode(.hierarchical)
                         .foregroundStyle(themeColor.color)
                 }
