@@ -41,6 +41,7 @@ struct ContentView: View {
                 SearchTabView(selectedTab: $selectedTab)
             }
         }
+        .tabBarMinimizeBehavior(.onScrollDown)
         .tint(currentThemeColor.color)
         .environment(\.themeColor, currentThemeColor)
         .fullScreenCover(isPresented: $showOnboarding) {
