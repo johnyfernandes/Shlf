@@ -176,8 +176,8 @@ struct LogReadingSessionView: View {
                 }
 
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        handleCancel()
+                    Button(hasUnsavedData ? "Minimize" : "Cancel") {
+                        dismiss()
                     }
                 }
 
@@ -187,18 +187,28 @@ struct LogReadingSessionView: View {
                     }
                     .disabled(pagesRead <= 0 || (useTimer && timerStartTime != nil && !isPaused))
                 }
+
+                if hasUnsavedData {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Menu {
+                            Button("Discard Session", role: .destructive) {
+                                showDiscardAlert = true
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                                .symbolRenderingMode(.hierarchical)
+                                .foregroundStyle(themeColor.color)
+                        }
+                    }
+                }
             }
-            .interactiveDismissDisabled(hasUnsavedData || activeSessionSnapshot)
             .alert("Discard Session?", isPresented: $showDiscardAlert) {
                 Button("Keep Editing", role: .cancel) {}
                 Button("Discard", role: .destructive) {
-                    Task {
-                        await ReadingSessionActivityManager.shared.endActivity()
-                    }
-                    dismiss()
+                    discardSession()
                 }
             } message: {
-                Text("You have unsaved progress. Are you sure you want to discard this reading session?")
+                Text("This will end the timer and discard your session progress.")
             }
             .onChange(of: activeSessionForBook?.id) { _, newValue in
                 if newValue != nil {
@@ -594,12 +604,22 @@ struct LogReadingSessionView: View {
         hasDismissedToPageTooltip = true
     }
 
-    private func handleCancel() {
-        if hasUnsavedData {
-            showDiscardAlert = true
-        } else {
-            dismiss()
+    private func discardSession() {
+        if let activeSession = activeSessionForBook {
+            let endedId = activeSession.id
+            modelContext.delete(activeSession)
+            try? modelContext.save()
+            WatchConnectivityManager.shared.sendActiveSessionEndToWatch(activeSessionId: endedId)
+            Task {
+                await ReadingSessionActivityManager.shared.endActivity()
+            }
+        } else if timerStartTime != nil {
+            Task {
+                await ReadingSessionActivityManager.shared.endActivity()
+            }
         }
+
+        dismiss()
     }
 
     private func refreshActiveSessionSnapshot() {
