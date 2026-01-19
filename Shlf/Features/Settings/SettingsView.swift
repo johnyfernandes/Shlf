@@ -114,6 +114,12 @@ struct SettingsView: View {
                         }
 
                         NavigationLink {
+                            SubjectsSettingsView(profile: profile)
+                        } label: {
+                            Label("Subjects", systemImage: "tag.fill")
+                        }
+
+                        NavigationLink {
                             BookStatsSettingsView(profile: profile)
                         } label: {
                             Label("Book Stats", systemImage: "chart.bar.xaxis")

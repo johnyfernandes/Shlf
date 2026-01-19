@@ -14,6 +14,7 @@ struct GoodreadsImportView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
     @Bindable var profile: UserProfile
+    @Query private var books: [Book]
     @AppStorage("goodreads_is_connected") private var storedGoodreadsConnected = false
     @AppStorage("goodreads_force_disconnected") private var forceGoodreadsDisconnected = false
 
@@ -530,6 +531,8 @@ struct GoodreadsImportView: View {
                     }
                 )
                 result = importResult
+                profile.syncSubjects(from: books)
+                try? modelContext.save()
 
                 WidgetDataExporter.exportSnapshot(modelContext: modelContext)
                 if importResult.importedCount > 0 || importResult.updatedCount > 0 {

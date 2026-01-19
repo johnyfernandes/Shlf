@@ -39,6 +39,8 @@ struct BookDetailView: View {
     @State private var bookStatsRange: BookStatsRange = .all
     @State private var bookStatsRangeOffset = 0
     @State private var hasInitializedBookStatsRange = false
+    @State private var showSubjectPicker = false
+    @State private var selectedSubjects: [String] = []
 
     private var profile: UserProfile? {
         profiles.first
@@ -226,6 +228,11 @@ struct BookDetailView: View {
                 }
             }
         }
+        .sheet(isPresented: $showSubjectPicker) {
+            if let profile {
+                SubjectPickerView(profile: profile, selectedSubjects: $selectedSubjects)
+            }
+        }
         .alert("Delete Book?", isPresented: $showDeleteAlert) {
             Button("Delete", role: .destructive) {
                 deleteBook()
@@ -239,7 +246,19 @@ struct BookDetailView: View {
                 bookStatsRange = profile?.bookStatsRange ?? .all
                 hasInitializedBookStatsRange = true
             }
+            if selectedSubjects.isEmpty {
+                selectedSubjects = book.subjects ?? []
+            }
+            syncSubjectLibrary()
             ensureBookStatsSection()
+        }
+        .onChange(of: showSubjectPicker) { _, isPresented in
+            if !isPresented {
+                applySubjectSelection()
+            }
+        }
+        .onChange(of: book.subjects) { _, _ in
+            syncSubjectLibrary()
         }
         .onChange(of: bookStatsRange) { _, newValue in
             bookStatsRangeOffset = 0
@@ -386,9 +405,10 @@ struct BookDetailView: View {
                         icon: "tag",
                         title: "No subjects yet",
                         message: "Add genres or topics to see them here.",
-                        actionTitle: "Edit details"
+                        actionTitle: "Add subjects"
                     ) {
-                        showEditBook = true
+                        selectedSubjects = book.subjects ?? []
+                        showSubjectPicker = true
                     }
                 }
 
@@ -803,6 +823,25 @@ struct BookDetailView: View {
         return formatter.string(from: NSNumber(value: value)) ?? String(format: "%.1f", value)
     }
 
+    private func syncSubjectLibrary() {
+        guard let profile else { return }
+        let canonical = profile.registerSubjects(book.subjects ?? [])
+        let normalizedExisting = (book.subjects ?? []).map { UserProfile.normalizedSubjectKey($0) }
+        let normalizedCanonical = canonical.map { UserProfile.normalizedSubjectKey($0) }
+        if normalizedExisting != normalizedCanonical {
+            book.subjects = canonical.isEmpty ? nil : canonical
+        }
+        try? modelContext.save()
+    }
+
+    private func applySubjectSelection() {
+        guard let profile else { return }
+        let canonical = profile.registerSubjects(selectedSubjects)
+        selectedSubjects = canonical
+        book.subjects = canonical.isEmpty ? nil : canonical
+        try? modelContext.save()
+    }
+
     private func ensureBookStatsSection() {
         guard let profile else { return }
         if !profile.bookDetailSectionOrder.contains(BookDetailSection.bookStats.rawValue) {
@@ -1166,6 +1205,21 @@ struct BookDetailView: View {
 
                 Text("Subjects")
                     .font(.headline)
+
+                Spacer()
+
+                Button {
+                    selectedSubjects = subjects
+                    showSubjectPicker = true
+                } label: {
+                    Text("Edit")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(themeColor.color)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(themeColor.color.opacity(0.12), in: Capsule())
+                }
+                .buttonStyle(.plain)
             }
 
             let displayedSubjects = showAllSubjects ? subjects : Array(subjects.prefix(6))

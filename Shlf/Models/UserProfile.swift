@@ -240,6 +240,9 @@ final class UserProfile {
     var showISBN: Bool = true
     var showReadingTime: Bool = true
 
+    // Subjects Library
+    var subjectLibrary: [String] = []
+
     // Reading Progress Preferences
     var pageIncrementAmount: Int = 1
     var useProgressSlider: Bool = false // false = stepper, true = slider
@@ -498,5 +501,98 @@ final class UserProfile {
 
     var xpProgressPercentage: Double {
         Double(xpProgressInCurrentLevel) / 1000.0 * 100
+    }
+
+    // MARK: - Subjects
+
+    static func cleanedSubjectName(_ name: String) -> String {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let collapsed = trimmed.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+        return collapsed
+    }
+
+    static func normalizedSubjectKey(_ name: String) -> String {
+        cleanedSubjectName(name).lowercased()
+    }
+
+    func registerSubjects(_ subjects: [String]) -> [String] {
+        var result: [String] = []
+        var seen: Set<String> = []
+
+        for subject in subjects {
+            guard let canonical = addSubject(subject) else { continue }
+            let key = Self.normalizedSubjectKey(canonical)
+            if seen.insert(key).inserted {
+                result.append(canonical)
+            }
+        }
+
+        return result
+    }
+
+    @discardableResult
+    func addSubject(_ subject: String) -> String? {
+        let cleaned = Self.cleanedSubjectName(subject)
+        guard !cleaned.isEmpty else { return nil }
+        let key = Self.normalizedSubjectKey(cleaned)
+
+        if let existing = subjectLibrary.first(where: { Self.normalizedSubjectKey($0) == key }) {
+            return existing
+        }
+
+        subjectLibrary.append(cleaned)
+        subjectLibrary.sort { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+        return cleaned
+    }
+
+    func syncSubjects(from books: [Book]) {
+        let allSubjects = books.compactMap(\.subjects).flatMap { $0 }
+        _ = registerSubjects(allSubjects)
+    }
+
+    func removeSubject(_ subject: String, from books: [Book]) {
+        let key = Self.normalizedSubjectKey(subject)
+        subjectLibrary.removeAll { Self.normalizedSubjectKey($0) == key }
+
+        for book in books {
+            guard let subjects = book.subjects else { continue }
+            let filtered = subjects.filter { Self.normalizedSubjectKey($0) != key }
+            book.subjects = filtered.isEmpty ? nil : filtered
+        }
+    }
+
+    func renameSubject(_ subject: String, to newName: String, in books: [Book]) -> String? {
+        let oldKey = Self.normalizedSubjectKey(subject)
+        let cleanedNew = Self.cleanedSubjectName(newName)
+        guard !cleanedNew.isEmpty else { return nil }
+        let newKey = Self.normalizedSubjectKey(cleanedNew)
+
+        let canonicalNew: String
+        if let existing = subjectLibrary.first(where: { Self.normalizedSubjectKey($0) == newKey }) {
+            canonicalNew = existing
+        } else {
+            canonicalNew = cleanedNew
+            subjectLibrary.append(cleanedNew)
+        }
+
+        subjectLibrary.removeAll { Self.normalizedSubjectKey($0) == oldKey }
+        subjectLibrary.sort { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+
+        for book in books {
+            guard let subjects = book.subjects else { continue }
+            var updated: [String] = []
+            var seen: Set<String> = []
+            for value in subjects {
+                let valueKey = Self.normalizedSubjectKey(value)
+                let resolved = valueKey == oldKey ? canonicalNew : value
+                let resolvedKey = Self.normalizedSubjectKey(resolved)
+                if seen.insert(resolvedKey).inserted {
+                    updated.append(resolved)
+                }
+            }
+            book.subjects = updated.isEmpty ? nil : updated
+        }
+
+        return canonicalNew
     }
 }

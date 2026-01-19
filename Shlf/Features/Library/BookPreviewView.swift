@@ -432,6 +432,15 @@ struct BookPreviewView: View {
                     clampedCurrentPage = max(0, initialCurrentPage)
                 }
 
+                let resolvedSubjects = displayInfo.subjects ?? []
+                let canonicalSubjects: [String]?
+                if let profile = profiles.first {
+                    let canonical = profile.registerSubjects(resolvedSubjects)
+                    canonicalSubjects = canonical.isEmpty ? nil : canonical
+                } else {
+                    canonicalSubjects = resolvedSubjects.isEmpty ? nil : resolvedSubjects
+                }
+
                 let book = Book(
                     title: displayInfo.title,
                     author: displayInfo.author,
@@ -442,7 +451,7 @@ struct BookPreviewView: View {
                     bookType: bookType,
                     readingStatus: readingStatus,
                     bookDescription: displayInfo.description,
-                    subjects: displayInfo.subjects,
+                    subjects: canonicalSubjects,
                     publisher: displayInfo.publisher,
                     publishedDate: displayInfo.publishedDate,
                     language: displayInfo.language,

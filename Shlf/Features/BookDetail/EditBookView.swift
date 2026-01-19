@@ -14,16 +14,23 @@ struct EditBookView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
     @Bindable var book: Book
+    @Query private var profiles: [UserProfile]
 
     @FocusState private var focusedField: Field?
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var coverImage: UIImage?
     @State private var hasUnsavedChanges = false
     @State private var showDiscardAlert = false
+    @State private var showSubjectPicker = false
+    @State private var selectedSubjects: [String] = []
 
     enum Field: Hashable {
         case title, author, isbn, totalPages, currentPage
         case publisher, publishedDate, language, description, notes
+    }
+
+    private var profile: UserProfile? {
+        profiles.first
     }
 
     var body: some View {
@@ -53,6 +60,7 @@ struct EditBookView: View {
                             typeStatusSection
                             publishingDetailsSection
                             descriptionSection
+                            subjectsSection
                             notesSection
                         }
                         .padding(.horizontal, 20)
@@ -108,6 +116,16 @@ struct EditBookView: View {
                 Button("Keep Editing", role: .cancel) {}
             } message: {
                 Text("You have unsaved changes. Are you sure you want to discard them?")
+            }
+            .sheet(isPresented: $showSubjectPicker) {
+                if let profile {
+                    SubjectPickerView(profile: profile, selectedSubjects: $selectedSubjects)
+                }
+            }
+            .task {
+                if selectedSubjects.isEmpty {
+                    selectedSubjects = book.subjects ?? []
+                }
             }
         }
     }
@@ -469,6 +487,60 @@ struct EditBookView: View {
         }
     }
 
+    // MARK: - Subjects Section
+
+    private var subjectsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "tag.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(themeColor.color)
+                    .frame(width: 20)
+
+                Text("Subjects")
+                    .font(Theme.Typography.headline)
+                    .foregroundStyle(Theme.Colors.text)
+            }
+            .padding(.leading, 4)
+
+            if selectedSubjects.isEmpty {
+                Text("Add genres or topics to organize this book.")
+                    .font(Theme.Typography.subheadline)
+                    .foregroundStyle(Theme.Colors.secondaryText)
+            } else {
+                FlowLayout(spacing: 8) {
+                    ForEach(selectedSubjects, id: \.self) { subject in
+                        Text(subject)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(themeColor.color)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(themeColor.color.opacity(0.12), in: Capsule())
+                    }
+                }
+            }
+
+            Button {
+                showSubjectPicker = true
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.caption)
+                    Text(selectedSubjects.isEmpty ? "Add subjects" : "Edit subjects")
+                        .font(.caption.weight(.semibold))
+                }
+                .foregroundStyle(themeColor.color)
+                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity)
+                .background(themeColor.color.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
     // MARK: - Notes Section
 
     private var notesSection: some View {
@@ -528,6 +600,13 @@ struct EditBookView: View {
                     book.coverImageURL = fileURL
                 }
             }
+        }
+
+        if let profile {
+            let canonical = profile.registerSubjects(selectedSubjects)
+            book.subjects = canonical.isEmpty ? nil : canonical
+        } else {
+            book.subjects = selectedSubjects.isEmpty ? nil : selectedSubjects
         }
 
         try? modelContext.save()

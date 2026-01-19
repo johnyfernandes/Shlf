@@ -13,6 +13,7 @@ struct KindleImportView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
     @Bindable var profile: UserProfile
+    @Query private var books: [Book]
     @AppStorage("kindle_is_connected") private var storedKindleConnected = false
     @AppStorage("kindle_force_disconnected") private var forceKindleDisconnected = false
 
@@ -350,6 +351,8 @@ struct KindleImportView: View {
                     }
                 )
                 result = importResult
+                profile.syncSubjects(from: books)
+                try? modelContext.save()
 
                 WidgetDataExporter.exportSnapshot(modelContext: modelContext)
                 if importResult.importedCount > 0 {
