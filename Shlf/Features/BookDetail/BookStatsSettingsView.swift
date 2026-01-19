@@ -313,7 +313,8 @@ private struct BookStatsDropDelegate: DropDelegate {
                   let to = cards.firstIndex(of: card.rawValue) else {
                 return
             }
-            withAnimation(.default) {
+            Haptics.selection()
+            withAnimation(Theme.Animation.snappy) {
                 cards.move(fromOffsets: IndexSet(integer: from), toOffset: to > from ? to + 1 : to)
                 try? modelContext.save()
             }

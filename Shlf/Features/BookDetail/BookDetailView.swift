@@ -756,6 +756,7 @@ struct BookDetailView: View {
 
     private var heroPlayButton: some View {
         Button {
+            Haptics.impact(.light)
             showLogSession = true
         } label: {
             VStack(spacing: 8) {
@@ -1214,7 +1215,8 @@ struct BookDetailView: View {
         let hasTrackedSessions = sessions.contains { $0.countsTowardStats }
         let hasAnySessions = !sessions.isEmpty
 
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+        Haptics.selection()
+        withAnimation(Theme.Animation.smooth) {
             if status == .finished {
                 showConfetti = true
             }

@@ -400,7 +400,8 @@ struct SectionDropDelegate: DropDelegate {
         if draggedSection != section {
             let from = sections.firstIndex(of: draggedSection.rawValue)!
             let to = sections.firstIndex(of: section.rawValue)!
-            withAnimation(.default) {
+            Haptics.selection()
+            withAnimation(Theme.Animation.snappy) {
                 sections.move(fromOffsets: IndexSet(integer: from), toOffset: to > from ? to + 1 : to)
                 try? modelContext.save()
             }

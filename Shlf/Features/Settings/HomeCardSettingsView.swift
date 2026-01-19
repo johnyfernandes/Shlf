@@ -348,7 +348,8 @@ struct CardDropDelegate: DropDelegate {
         if draggedCard != card {
             let from = cards.firstIndex(of: draggedCard.rawValue)!
             let to = cards.firstIndex(of: card.rawValue)!
-            withAnimation(.default) {
+            Haptics.selection()
+            withAnimation(Theme.Animation.snappy) {
                 cards.move(fromOffsets: IndexSet(integer: from), toOffset: to > from ? to + 1 : to)
                 try? modelContext.save()
             }
