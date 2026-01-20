@@ -13,6 +13,7 @@ struct ShlfApp: App {
     @State private var modelContainer: ModelContainer?
     @State private var modelError: Error?
     @Environment(\.scenePhase) private var scenePhase
+    @StateObject private var toastCenter = ToastCenter()
 #if DEBUG
     @AppStorage(AppLanguage.overrideKey) private var developerLanguageOverride = AppLanguage.system.rawValue
 #endif
@@ -36,6 +37,7 @@ struct ShlfApp: App {
                 } else if let container = modelContainer {
                     ContentView()
                         .modelContainer(container)
+                        .environmentObject(toastCenter)
                         .onAppear {
                             WatchConnectivityManager.shared.configure(modelContext: container.mainContext, container: container)
                             WatchConnectivityManager.shared.activate()

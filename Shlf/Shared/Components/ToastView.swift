@@ -24,7 +24,7 @@ struct ToastView: View {
                 AnimatedCheckmark(color: tint)
             }
 
-            Text(String(localized: toast.titleKey))
+            Text(LocalizedStringKey(toast.titleKey))
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.primary)
         }
@@ -55,7 +55,7 @@ struct ToastView: View {
                 }
         )
         .animation(.easeOut(duration: 0.15), value: dragOffset)
-        .accessibilityLabel(Text(String(localized: toast.titleKey)))
+        .accessibilityLabel(Text(LocalizedStringKey(toast.titleKey)))
     }
 }
 

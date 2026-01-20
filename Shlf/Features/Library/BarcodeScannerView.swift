@@ -15,6 +15,7 @@ struct BarcodeScannerView: View {
     let onScan: (String) -> Void
 
     @State private var showCameraOverlay = true
+    @State private var overlayTask: Task<Void, Never>?
 
     var body: some View {
         ZStack {
@@ -48,21 +49,25 @@ struct BarcodeScannerView: View {
 
             // Camera stabilization overlay
             if showCameraOverlay {
-                Color.black
-                    .ignoresSafeArea()
-                    .overlay {
-                        VStack(spacing: Theme.Spacing.lg) {
-                            ProgressView()
-                                .progressViewStyle(.circular)
-                                .tint(.white)
-                                .scaleEffect(1.5)
+                VStack(spacing: Theme.Spacing.sm) {
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                        .tint(.white)
+                        .scaleEffect(1.1)
 
-                            Text("Initializing Camera...")
-                                .font(Theme.Typography.body)
-                                .foregroundStyle(.white)
-                        }
-                    }
-                    .transition(.opacity)
+                    Text("Initializing Camera...")
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(.white.opacity(0.9))
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(.ultraThinMaterial, in: Capsule())
+                .overlay(
+                    Capsule()
+                        .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
+                )
+                .padding(.top, 18)
+                .transition(.opacity)
             }
 
             VStack {
@@ -81,24 +86,20 @@ struct BarcodeScannerView: View {
 
                 Spacer()
 
-                if !showCameraOverlay {
-                    Text("Scan ISBN Barcode")
-                        .font(Theme.Typography.headline)
-                        .foregroundStyle(.white)
-                        .padding(Theme.Spacing.sm)
-                        .background(.ultraThinMaterial)
-                        .clipShape(RoundedRectangle(cornerRadius: Theme.CornerRadius.sm))
-                        .padding(Theme.Spacing.lg)
-                        .transition(.opacity)
-                }
+                ScanGuidanceOverlay()
+                    .padding(.bottom, Theme.Spacing.lg)
             }
         }
         .animation(.easeInOut(duration: 0.5), value: showCameraOverlay)
         .onAppear {
-            // Hide overlay after camera has time to stabilize
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            overlayTask?.cancel()
+            overlayTask = Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 700_000_000)
                 showCameraOverlay = false
             }
+        }
+        .onDisappear {
+            overlayTask?.cancel()
         }
     }
 }
@@ -117,12 +118,12 @@ struct DataScannerRepresentable: UIViewControllerRepresentable {
 
         let scanner = DataScannerViewController(
             recognizedDataTypes: recognizedDataTypes,
-            qualityLevel: .fast,
+            qualityLevel: .balanced,
             recognizesMultipleItems: false,
-            isHighFrameRateTrackingEnabled: false,
+            isHighFrameRateTrackingEnabled: true,
             isPinchToZoomEnabled: true,
             isGuidanceEnabled: true,
-            isHighlightingEnabled: true
+            isHighlightingEnabled: false
         )
 
         scanner.delegate = context.coordinator
@@ -199,6 +200,36 @@ struct DataScannerRepresentable: UIViewControllerRepresentable {
 
         deinit {
             print("❌ Coordinator deallocated")
+        }
+    }
+}
+
+private struct ScanGuidanceOverlay: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .stroke(
+                        Color.white.opacity(0.25),
+                        style: StrokeStyle(lineWidth: 1, dash: [4, 6], dashPhase: 2)
+                    )
+
+                HStack(spacing: 6) {
+                    ForEach(0..<9) { _ in
+                        Circle()
+                            .fill(Color.white.opacity(0.35))
+                            .frame(width: 4, height: 4)
+                    }
+                }
+            }
+            .frame(width: 260, height: 150)
+
+            Text("Scan ISBN Barcode")
+                .font(Theme.Typography.caption)
+                .foregroundStyle(.white)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(.ultraThinMaterial, in: Capsule())
         }
     }
 }

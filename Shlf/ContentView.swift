@@ -20,7 +20,7 @@ struct ContentView: View {
     @State private var activeSessionLogDestination: ActiveSessionLogDestination?
     @State private var accessoryCoverImage: UIImage?
     @State private var accessoryCoverURL: URL?
-    @StateObject private var toastCenter = ToastCenter()
+    @EnvironmentObject private var toastCenter: ToastCenter
 
     private var shouldShowOnboarding: Bool {
         profiles.first?.hasCompletedOnboarding == false || profiles.isEmpty
@@ -160,4 +160,5 @@ private struct ActiveSessionLogSheet: View {
 #Preview {
     ContentView()
         .modelContainer(for: [UserProfile.self, Book.self], inMemory: true)
+        .environmentObject(ToastCenter())
 }
