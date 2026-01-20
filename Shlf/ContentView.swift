@@ -67,7 +67,9 @@ struct ContentView: View {
         }
         .overlay(alignment: .top) {
             if showSessionLoggedToast {
-                SessionLoggedToast(animate: showSessionLoggedToast)
+                SessionLoggedToast(animate: showSessionLoggedToast) {
+                    dismissSessionLoggedToast()
+                }
                     .padding(.top, 12)
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
@@ -128,11 +130,18 @@ struct ContentView: View {
                 showSessionLoggedToast = true
             }
 
-            try? await Task.sleep(nanoseconds: 1_200_000_000)
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
             guard toastID == sessionLoggedToastID else { return }
             withAnimation(Theme.Animation.smooth) {
                 showSessionLoggedToast = false
             }
+        }
+    }
+
+    private func dismissSessionLoggedToast() {
+        sessionLoggedToastID = UUID()
+        withAnimation(Theme.Animation.smooth) {
+            showSessionLoggedToast = false
         }
     }
 }
@@ -140,6 +149,7 @@ struct ContentView: View {
 private struct SessionLoggedToast: View {
     @Environment(\.themeColor) private var themeColor
     let animate: Bool
+    let onDismiss: () -> Void
 
     var body: some View {
         HStack(spacing: 8) {
@@ -148,7 +158,7 @@ private struct SessionLoggedToast: View {
                 .foregroundStyle(themeColor.color)
                 .symbolEffect(.bounce, value: animate)
 
-            Text("Session logged")
+            Text(String(localized: "Session logged"))
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.primary)
         }
@@ -160,6 +170,11 @@ private struct SessionLoggedToast: View {
                 .strokeBorder(themeColor.color.opacity(0.18), lineWidth: 1)
         )
         .shadow(color: Theme.Shadow.medium, radius: 10, y: 6)
+        .contentShape(Capsule())
+        .onTapGesture {
+            onDismiss()
+        }
+        .accessibilityLabel(Text(String(localized: "Session logged")))
     }
 }
 
