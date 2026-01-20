@@ -10,6 +10,7 @@ import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.colorScheme) private var colorScheme
     @Query(sort: \Book.title) private var allBooks: [Book]
     @Query private var profiles: [UserProfile]
     @Query private var activeSessions: [ActiveReadingSession]
@@ -164,7 +165,7 @@ struct ContentView: View {
                 NavigationLink(destination: SettingsWatchView()) {
                     Image(systemName: "gearshape.fill")
                         .symbolRenderingMode(.monochrome)
-                        .foregroundStyle(.white)
+                        .foregroundStyle(currentThemeColor.onColor(for: colorScheme))
                 }
             }
         }
