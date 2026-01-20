@@ -336,7 +336,10 @@ private struct ShareHeroView: View {
                                 .foregroundStyle(primaryText.opacity(0.6))
 
                             if let progress {
-                                Text("\(Int((progress * 100).rounded()))%")
+                                (
+                                    Text(Int((progress * 100).rounded()), format: .number)
+                                    + Text(verbatim: "%")
+                                )
                                     .font(.system(size: 22 * scale, weight: .bold, design: .rounded))
                                     .foregroundStyle(primaryText)
                             }
@@ -519,7 +522,7 @@ private struct ShareQuoteView: View {
 
     var body: some View {
         VStack(alignment: isCentered ? .center : .leading, spacing: 6 * scale) {
-            Text("“\(quote.text)”")
+            Text(verbatim: "“\(quote.text)”")
                 .font(.system(size: 14 * scale, weight: .medium, design: .rounded))
                 .foregroundStyle(primaryText)
                 .lineLimit(3)
@@ -980,7 +983,7 @@ private struct LibraryShareOverflowCell: View {
                     )
 
                 VStack(spacing: 4) {
-                    Text("+\(count)")
+                    Text(verbatim: "+\(count)")
                         .font(.system(size: 18 * metrics.scale, weight: .bold, design: .rounded))
                         .foregroundStyle(primaryText)
 

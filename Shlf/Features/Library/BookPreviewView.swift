@@ -137,7 +137,7 @@ struct BookPreviewView: View {
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
 
-                                        Text("\(totalPages)")
+                                        Text(totalPages, format: .number)
                                             .font(.caption2)
                                             .foregroundStyle(.tertiary)
                                     }
@@ -251,7 +251,7 @@ struct BookPreviewView: View {
                                             .multilineTextAlignment(.trailing)
                                             .frame(width: 60)
 
-                                        Text("/ \(totalPages)")
+                                        (Text(verbatim: "/ ") + Text(totalPages, format: .number))
                                             .font(.body)
                                             .foregroundStyle(.secondary)
                                     }
@@ -336,7 +336,13 @@ struct BookPreviewView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             if let existing = existingBook {
-                Text("You already have \"\(existing.title)\" by \(existing.author) in your library.")
+                Text(
+                    String.localizedStringWithFormat(
+                        String(localized: "You already have \"%@\" by %@ in your library."),
+                        existing.title,
+                        existing.author
+                    )
+                )
             } else {
                 Text("This book is already in your library.")
             }

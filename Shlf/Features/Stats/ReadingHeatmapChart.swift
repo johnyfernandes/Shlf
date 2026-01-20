@@ -110,9 +110,14 @@ struct ReadingHeatmapChart: View {
             let startOfYear = calendar.date(from: calendar.dateComponents([.year], from: todayDate))!
             let daysSinceStart = calendar.dateComponents([.day], from: startOfYear, to: todayDate).day! + 1
             return Text(todayDate, format: .dateTime.year())
-            + Text(" (")
-            + Text("\(daysSinceStart) days")
-            + Text(")")
+            + Text(verbatim: " (")
+            + Text(
+                String.localizedStringWithFormat(
+                    String(localized: "%lld days"),
+                    daysSinceStart
+                )
+            )
+            + Text(verbatim: ")")
         }
     }
 
@@ -148,19 +153,29 @@ struct ReadingHeatmapChart: View {
                         HStack(spacing: 4) {
                             Image(systemName: "book.pages")
                                 .font(.caption2)
-                            Text("\(totalPages) total")
+                            Text(
+                                String.localizedStringWithFormat(
+                                    String(localized: "%lld total"),
+                                    totalPages
+                                )
+                            )
                                 .font(.caption)
                         }
                         .foregroundStyle(Theme.Colors.secondaryText)
 
-                        Text("•")
+                        Text(verbatim: "•")
                             .font(.caption2)
                             .foregroundStyle(Theme.Colors.tertiaryText)
 
                         HStack(spacing: 4) {
                             Image(systemName: "flame.fill")
                                 .font(.caption2)
-                            Text("\(totalDaysActive) days")
+                            Text(
+                                String.localizedStringWithFormat(
+                                    String(localized: "%lld days"),
+                                    totalDaysActive
+                                )
+                            )
                                 .font(.caption)
                         }
                         .foregroundStyle(Theme.Colors.secondaryText)
@@ -387,7 +402,12 @@ struct DayDetailView: View {
                     Image(systemName: "doc.text.fill")
                         .foregroundStyle(themeColor.color)
 
-                    Text("\(totalPages) pages")
+                    Text(
+                        String.localizedStringWithFormat(
+                            String(localized: "%lld pages"),
+                            totalPages
+                        )
+                    )
                         .font(.title2)
                         .fontWeight(.bold)
 
@@ -397,7 +417,9 @@ struct DayDetailView: View {
                         .foregroundStyle(themeColor.color)
 
                     let unitKey: LocalizedStringKey = booksRead.count == 1 ? "book" : "books"
-                    Text("\(booksRead.count) ") + Text(unitKey)
+                    Text(booksRead.count, format: .number)
+                        + Text(verbatim: " ")
+                        + Text(unitKey)
                         .font(.title2)
                         .fontWeight(.bold)
                 }
@@ -449,7 +471,12 @@ struct DayDetailView: View {
                                 HStack(spacing: 4) {
                                     Image(systemName: "book.pages")
                                         .font(.caption2)
-                                    Text("\(bookData.pages) pages")
+                                    Text(
+                                        String.localizedStringWithFormat(
+                                            String(localized: "%lld pages"),
+                                            bookData.pages
+                                        )
+                                    )
                                         .font(.caption)
                                 }
                                 .foregroundStyle(themeColor.color)

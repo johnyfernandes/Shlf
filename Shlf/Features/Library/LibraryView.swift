@@ -182,7 +182,7 @@ struct LibraryView: View {
 
                 Spacer()
 
-                Text("\(filteredBooks.count)")
+                Text(filteredBooks.count, format: .number)
                     .font(Theme.Typography.subheadline)
                     .foregroundStyle(Theme.Colors.tertiaryText)
                     .padding(.horizontal, Theme.Spacing.sm)
@@ -240,21 +240,21 @@ struct BookRow: View {
                         .lineLimit(1)
 
                     if let totalPages = book.totalPages {
-                        Text("•")
+                        Text(verbatim: "•")
                             .font(Theme.Typography.caption2)
                             .foregroundStyle(Theme.Colors.tertiaryText)
 
                         HStack(spacing: 3) {
                             Image(systemName: "book.pages")
                                 .font(.caption2)
-                            Text("\(totalPages)")
+                            Text(totalPages, format: .number)
                                 .font(Theme.Typography.caption)
                         }
                         .foregroundStyle(Theme.Colors.tertiaryText)
                     }
 
                     if let year = yearPublished {
-                        Text("•")
+                        Text(verbatim: "•")
                             .font(Theme.Typography.caption2)
                             .foregroundStyle(Theme.Colors.tertiaryText)
 
@@ -273,17 +273,25 @@ struct BookRow: View {
                 if book.readingStatus == .currentlyReading, let totalPages = book.totalPages {
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         HStack {
-                            Text("\(book.currentPage)")
+                            Text(book.currentPage, format: .number)
                                 .font(Theme.Typography.headline)
                                 .foregroundStyle(themeColor.color)
 
-                            Text("/ \(totalPages) pages")
+                            Text(
+                                String.localizedStringWithFormat(
+                                    String(localized: "/ %lld pages"),
+                                    totalPages
+                                )
+                            )
                                 .font(Theme.Typography.caption)
                                 .foregroundStyle(Theme.Colors.tertiaryText)
 
                             Spacer()
 
-                            Text("\(Int(book.progressPercentage))%")
+                            (
+                                Text(Int(book.progressPercentage), format: .number)
+                                + Text(verbatim: "%")
+                            )
                                 .font(Theme.Typography.subheadline)
                                 .fontWeight(.semibold)
                                 .foregroundStyle(themeColor.color)
@@ -361,7 +369,7 @@ struct FilterChip: View {
                     .font(.system(size: 15, weight: .semibold))
 
                 if let count {
-                    Text("\(count)")
+                    Text(count, format: .number)
                         .font(.system(size: 13, weight: .medium))
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)

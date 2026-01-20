@@ -96,7 +96,10 @@ struct LevelDetailView: View {
                                                     )
                                             }
 
-                                            Text("\(Int(profile.xpProgressPercentage))%")
+                                            (
+                                                Text(Int(profile.xpProgressPercentage), format: .number)
+                                                + Text(verbatim: "%")
+                                            )
                                                 .font(.system(size: 20, weight: .bold, design: .rounded))
                                                 .foregroundStyle(Theme.Colors.text)
                                         }
@@ -110,7 +113,12 @@ struct LevelDetailView: View {
                                     Image(systemName: "star.circle.fill")
                                         .foregroundStyle(themeColor.color)
 
-                                    Text("Level \(profile.currentLevel)")
+                                    Text(
+                                        String.localizedStringWithFormat(
+                                            String(localized: "Level %lld"),
+                                            profile.currentLevel
+                                        )
+                                    )
                                         .font(.title2)
                                         .fontWeight(.bold)
 
@@ -119,7 +127,12 @@ struct LevelDetailView: View {
                                     Image(systemName: "bolt.fill")
                                         .foregroundStyle(themeColor.color)
 
-                                    Text("\(profile.totalXP) XP")
+                                    Text(
+                                        String.localizedStringWithFormat(
+                                            String(localized: "%lld XP"),
+                                            profile.totalXP
+                                        )
+                                    )
                                         .font(.title2)
                                         .fontWeight(.bold)
                                 }
@@ -173,7 +186,12 @@ struct LevelDetailView: View {
                                             .foregroundStyle(Theme.Colors.text)
                                             .lineLimit(2)
 
-                                        Text("Level \(profile.currentLevel)")
+                                        Text(
+                                            String.localizedStringWithFormat(
+                                                String(localized: "Level %lld"),
+                                                profile.currentLevel
+                                            )
+                                        )
                                             .font(.caption)
                                             .foregroundStyle(Theme.Colors.secondaryText)
                                             .lineLimit(1)
@@ -181,7 +199,12 @@ struct LevelDetailView: View {
                                         HStack(spacing: 4) {
                                             Image(systemName: "bolt.fill")
                                                 .font(.caption2)
-                                            Text("\(profile.totalXP) total XP")
+                                            Text(
+                                                String.localizedStringWithFormat(
+                                                    String(localized: "%lld total XP"),
+                                                    profile.totalXP
+                                                )
+                                            )
                                                 .font(.caption)
                                         }
                                         .foregroundStyle(themeColor.color)
@@ -221,7 +244,12 @@ struct LevelDetailView: View {
                                             .foregroundStyle(Theme.Colors.text)
                                             .lineLimit(2)
 
-                                        Text("Level \(profile.currentLevel + 1)")
+                                        Text(
+                                            String.localizedStringWithFormat(
+                                                String(localized: "Level %lld"),
+                                                profile.currentLevel + 1
+                                            )
+                                        )
                                             .font(.caption)
                                             .foregroundStyle(Theme.Colors.secondaryText)
                                             .lineLimit(1)
@@ -229,7 +257,12 @@ struct LevelDetailView: View {
                                         HStack(spacing: 4) {
                                             Image(systemName: "bolt.fill")
                                                 .font(.caption2)
-                                            Text("\(profile.xpForNextLevel - profile.totalXP) XP needed")
+                                            Text(
+                                                String.localizedStringWithFormat(
+                                                    String(localized: "%lld XP needed"),
+                                                    profile.xpForNextLevel - profile.totalXP
+                                                )
+                                            )
                                                 .font(.caption)
                                         }
                                         .foregroundStyle(themeColor.color)

@@ -183,7 +183,12 @@ struct SessionRowWatch: View {
                 Text(session.displayName)
                     .font(.headline)
                 Spacer()
-                Text("\(session.xpEarned) XP")
+                Text(
+                    String.localizedStringWithFormat(
+                        String(localized: "%lld XP"),
+                        session.xpEarned
+                    )
+                )
                     .font(.caption)
                     .foregroundStyle(themeColor.color)
             }

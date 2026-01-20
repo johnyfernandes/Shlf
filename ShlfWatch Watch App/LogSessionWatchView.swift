@@ -93,7 +93,7 @@ struct LogSessionWatchView: View {
                 VStack(spacing: 8) {
                     HStack {
                         VStack {
-                            Text("\(startPage)")
+                            Text(startPage, format: .number)
                                 .font(.title3)
                                 .fontWeight(.semibold)
                             Text("Start")
@@ -106,7 +106,7 @@ struct LogSessionWatchView: View {
                             .foregroundStyle(themeColor.color)
 
                         VStack {
-                            Text("\(currentPage)")
+                            Text(currentPage, format: .number)
                                 .font(.title3)
                                 .fontWeight(.semibold)
                             Text("Current")
@@ -148,7 +148,7 @@ struct LogSessionWatchView: View {
                 if pagesRead > 0 {
                     HStack(spacing: 16) {
                         VStack(spacing: 2) {
-                            Text("\(pagesRead)")
+                            Text(pagesRead, format: .number)
                                 .font(.title3)
                                 .fontWeight(.semibold)
                             Text("pages")
@@ -158,7 +158,7 @@ struct LogSessionWatchView: View {
                         .frame(maxWidth: .infinity)
 
                         VStack(spacing: 2) {
-                            Text("\(xpEarned)")
+                            Text(xpEarned, format: .number)
                                 .font(.title3)
                                 .fontWeight(.semibold)
                             Text("XP")
@@ -338,7 +338,13 @@ struct LogSessionWatchView: View {
         } message: {
             if let existing = pendingActiveSession,
                let bookTitle = existing.book?.title {
-                Text("There's an active session for \"\(bookTitle)\" started on \(existing.sourceDevice). End it and start a new one?")
+                Text(
+                    String.localizedStringWithFormat(
+                        String(localized: "There's an active session for \"%@\" started on %@. End it and start a new one?"),
+                        bookTitle,
+                        existing.sourceDevice
+                    )
+                )
             } else {
                 Text("There's already an active reading session. End it and start a new one?")
             }
@@ -768,7 +774,7 @@ struct MarkPositionSheet: View {
                     Text("Page")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
-                    Text("\(page)")
+                    Text(page, format: .number)
                         .font(.title3.bold())
                         .foregroundStyle(themeColor.color)
                 }
@@ -780,18 +786,25 @@ struct MarkPositionSheet: View {
                     Text("Line")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
-                    Text(lineNumber == 0 ? "—" : "\(lineNumber)")
-                        .font(.title3.bold())
-                        .foregroundStyle(themeColor.color)
+                    if lineNumber == 0 {
+                        Text(verbatim: "—")
+                            .font(.title3.bold())
+                            .foregroundStyle(themeColor.color)
+                    } else {
+                        Text(lineNumber, format: .number)
+                            .font(.title3.bold())
+                            .foregroundStyle(themeColor.color)
+                    }
                 }
             }
             .padding(.vertical, 4)
 
             // Line number picker (Digital Crown)
             Picker("Line", selection: $lineNumber) {
-                Text("—").tag(0)
+                Text(verbatim: "—").tag(0)
                 ForEach(1...50, id: \.self) { line in
-                    Text("\(line)").tag(line)
+                    Text(line, format: .number)
+                        .tag(line)
                 }
             }
             .pickerStyle(.wheel)

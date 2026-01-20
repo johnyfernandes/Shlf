@@ -73,10 +73,10 @@ struct BookDetailWatchView: View {
                                 .animation(.spring(response: 0.6, dampingFraction: 0.8), value: book.currentPage)
 
                             VStack(spacing: 0) {
-                                Text("\(book.currentPage)")
+                                Text(book.currentPage, format: .number)
                                     .font(.system(size: 40, weight: .bold, design: .rounded))
 
-                                Text("/ \(totalPages)")
+                                (Text(verbatim: "/ ") + Text(totalPages, format: .number))
                                     .font(.system(size: 13, weight: .medium, design: .rounded))
                                     .foregroundStyle(.secondary)
                             }
@@ -85,11 +85,16 @@ struct BookDetailWatchView: View {
                     } else {
                         // Progress bar (default)
                         VStack(spacing: 6) {
-                            Text("\(book.currentPage)")
+                            Text(book.currentPage, format: .number)
                                 .font(.system(size: 48, weight: .bold, design: .rounded))
                                 .foregroundStyle(themeColor.color)
 
-                            Text("of \(totalPages) pages")
+                            Text(
+                                String.localizedStringWithFormat(
+                                    String(localized: "of %lld pages"),
+                                    totalPages
+                                )
+                            )
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
 
@@ -212,7 +217,16 @@ struct BookDetailWatchView: View {
                     NavigationLink {
                         QuotesListWatchView(quotes: quotes)
                     } label: {
-                        Label("View Quotes (\(quotes.count))", systemImage: "quote.bubble")
+                        Label {
+                            Text(
+                                String.localizedStringWithFormat(
+                                    String(localized: "View Quotes (%lld)"),
+                                    quotes.count
+                                )
+                            )
+                        } icon: {
+                            Image(systemName: "quote.bubble")
+                        }
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
@@ -232,7 +246,7 @@ struct BookDetailWatchView: View {
         Button {
             addPages(amount)
         } label: {
-            Text("+\(amount)")
+            Text(verbatim: "+\(amount)")
                 .font(.caption2.weight(.medium))
                 .frame(maxWidth: .infinity)
         }
@@ -337,7 +351,7 @@ struct AddPagesWatchView: View {
                 .padding(.bottom, 8)
 
             // Digital Crown scrollable value
-            Text("\(intAmount > 0 ? "+" : "")\(intAmount)")
+            Text(verbatim: intAmount > 0 ? "+\(intAmount)" : "\(intAmount)")
                 .font(.system(size: 64, weight: .bold, design: .rounded))
                 .foregroundStyle(intAmount > 0 ? themeColor.color : intAmount < 0 ? .orange : .secondary)
                 .focusable()

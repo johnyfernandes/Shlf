@@ -40,7 +40,12 @@ struct DurationPickerView: View {
             HStack(spacing: 12) {
                 Picker("Hours", selection: $selectedHours) {
                     ForEach(0...maxHours, id: \.self) { hour in
-                        Text("\(hour) hr")
+                        Text(
+                            String.localizedStringWithFormat(
+                                String(localized: "%lldh"),
+                                hour
+                            )
+                        )
                             .tag(hour)
                     }
                 }
@@ -51,7 +56,12 @@ struct DurationPickerView: View {
 
                 Picker("Minutes", selection: $selectedMinutes) {
                     ForEach(Array(stride(from: 0, through: 59, by: minuteStep)), id: \.self) { minute in
-                        Text("\(minute) min")
+                        Text(
+                            String.localizedStringWithFormat(
+                                String(localized: "%lldm"),
+                                minute
+                            )
+                        )
                             .tag(minute)
                     }
                 }

@@ -149,7 +149,13 @@ struct BookStatsSettingsView: View {
 
                                 Spacer()
 
-                                Text("\(profile.bookStatsCards.count)/\(BookStatsCardType.allCases.count)")
+                                Text(
+                                    String.localizedStringWithFormat(
+                                        String(localized: "%lld/%lld"),
+                                        profile.bookStatsCards.count,
+                                        BookStatsCardType.allCases.count
+                                    )
+                                )
                                     .font(.caption.weight(.semibold))
                                     .foregroundStyle(.secondary)
                                     .padding(.horizontal, 8)

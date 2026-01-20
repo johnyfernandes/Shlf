@@ -422,7 +422,7 @@ struct SettingsView: View {
                     Text(profile.cloudSyncEnabled ? "Sync is on" : "iCloud data found")
                         .foregroundStyle(Theme.Colors.success)
                     if let lastActivity = snapshot.lastActivity {
-                    Text("Last activity") + Text(" ") + Text(verbatim: formatDate(lastActivity))
+                    Text("Last activity") + Text(verbatim: " ") + Text(verbatim: formatDate(lastActivity))
                     }
                 case .empty:
                     Text("No iCloud data yet")
@@ -782,7 +782,7 @@ struct ReadingPreferencesView: View {
                                         }
                                     } label: {
                                         HStack {
-                                            Text(verbatim: "\(amount)") + Text(" ") + Text(amount == 1 ? "page" : "pages")
+                                            Text(verbatim: "\(amount)") + Text(verbatim: " ") + Text(amount == 1 ? "page" : "pages")
                                                 .font(.subheadline.weight(.medium))
                                                 .foregroundStyle(.primary)
 

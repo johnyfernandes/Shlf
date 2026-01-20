@@ -120,7 +120,7 @@ struct StreakDetailView: View {
             }
 
             HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.xs) {
-                Text("\(profile.currentStreak)")
+                Text(profile.currentStreak, format: .number)
                     .font(.system(size: 42, weight: .bold, design: .rounded))
                     .foregroundStyle(Theme.Colors.text)
 
@@ -134,7 +134,12 @@ struct StreakDetailView: View {
                     Text("Longest")
                         .font(.caption)
                         .foregroundStyle(Theme.Colors.secondaryText)
-                    Text("\(profile.longestStreak) days")
+                    Text(
+                        String.localizedStringWithFormat(
+                            String(localized: "%lld days"),
+                            profile.longestStreak
+                        )
+                    )
                         .font(.headline)
                         .foregroundStyle(Theme.Colors.text)
                 }

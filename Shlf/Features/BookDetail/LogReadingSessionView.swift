@@ -227,7 +227,13 @@ struct LogReadingSessionView: View {
             } message: {
                 if let existing = pendingActiveSession,
                    let bookTitle = existing.book?.title {
-                    Text("There's an active session for \"\(bookTitle)\" started on \(existing.sourceDevice). End it and start a new one?")
+                    Text(
+                        String.localizedStringWithFormat(
+                            String(localized: "There's an active session for \"%@\" started on %@. End it and start a new one?"),
+                            bookTitle,
+                            existing.sourceDevice
+                        )
+                    )
                 } else {
                     Text("There's already an active reading session. End it and start a new one?")
                 }
@@ -256,7 +262,7 @@ struct LogReadingSessionView: View {
 
                 Spacer()
 
-                Text("\(pagesRead)")
+                Text(pagesRead, format: .number)
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(themeColor.color)
                     .monospacedDigit()
@@ -281,7 +287,12 @@ struct LogReadingSessionView: View {
                     VStack(spacing: 12) {
                         statusPill(text: session.isPaused ? "Paused" : "Reading...", isPaused: session.isPaused)
 
-                        Text("Started on \(session.sourceDevice)")
+                        Text(
+                            String.localizedStringWithFormat(
+                                String(localized: "Started on %@"),
+                                session.sourceDevice
+                            )
+                        )
                             .font(.caption)
                             .foregroundStyle(.secondary)
 
@@ -452,7 +463,7 @@ struct LogReadingSessionView: View {
 
                 Spacer()
 
-                Text("+\(estimatedXP)")
+                Text(verbatim: "+\(estimatedXP)")
                     .font(Theme.Typography.headline)
                     .foregroundStyle(xpGradient)
                     .monospacedDigit()

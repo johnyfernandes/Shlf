@@ -27,7 +27,12 @@ struct QuotesListWatchView: View {
 
                         HStack {
                             if let page = quote.pageNumber {
-                                Text("Page \(page)")
+                Text(
+                    String.localizedStringWithFormat(
+                        String(localized: "Page %lld"),
+                        page
+                    )
+                )
                                     .font(.caption2)
                                     .foregroundStyle(.secondary)
                             }
@@ -75,7 +80,12 @@ struct QuoteDetailWatchView: View {
                 if let page = quote.pageNumber {
                     HStack {
                         Image(systemName: "book.pages")
-                        Text("Page \(page)")
+            Text(
+                String.localizedStringWithFormat(
+                    String(localized: "Page %lld"),
+                    page
+                )
+            )
                         Spacer()
                     }
                     .font(.caption2)

@@ -108,7 +108,7 @@ struct QuickProgressStepper: View {
                                         }
                                     }
                             } else {
-                                Text("\(book.currentPage)")
+                                Text(book.currentPage, format: .number)
                                     .font(.system(size: 36, weight: .bold, design: .rounded))
                                     .foregroundStyle(Theme.Colors.text)
                                     .monospacedDigit()
@@ -129,7 +129,7 @@ struct QuickProgressStepper: View {
                                 .font(.title3)
                                 .foregroundStyle(themeColor.color)
 
-                            Text("\(totalPendingPages)")
+                            Text(totalPendingPages, format: .number)
                                 .font(.system(size: 36, weight: .bold, design: .rounded))
                                 .foregroundStyle(themeColor.color)
                                 .monospacedDigit()
@@ -139,16 +139,26 @@ struct QuickProgressStepper: View {
 
                     if let total = book.totalPages {
                         HStack(spacing: 4) {
-                            Text("of \(total)")
+                            Text(
+                                String.localizedStringWithFormat(
+                                    String(localized: "of %lld"),
+                                    total
+                                )
+                            )
                                 .font(Theme.Typography.subheadline)
                                 .foregroundStyle(Theme.Colors.tertiaryText)
 
                             if total > book.currentPage {
-                                Text("•")
+                                Text(verbatim: "•")
                                     .font(Theme.Typography.subheadline)
                                     .foregroundStyle(Theme.Colors.tertiaryText)
 
-                                Text("\(total - book.currentPage) left")
+                                Text(
+                                    String.localizedStringWithFormat(
+                                        String(localized: "%lld left"),
+                                        total - book.currentPage
+                                    )
+                                )
                                     .font(Theme.Typography.subheadline)
                                     .foregroundStyle(Theme.Colors.tertiaryText)
                             }
@@ -237,7 +247,12 @@ struct QuickProgressStepper: View {
                 }
             }
         } message: {
-            Text("You've reached the last page of \(book.title). Would you like to mark it as finished?")
+            Text(
+                String.localizedStringWithFormat(
+                    String(localized: "You've reached the last page of %@. Would you like to mark it as finished?"),
+                    book.title
+                )
+            )
         }
     }
 

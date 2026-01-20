@@ -179,21 +179,48 @@ struct ReadingSessionWidgetEntryView: View {
                 .shadow(color: .white.opacity(0.2), radius: 4)
 
             HStack {
-                Label("\(entry.currentPage)/\(entry.totalPages)", systemImage: "book.pages")
+                Label {
+                    Text(
+                        String.localizedStringWithFormat(
+                            String(localized: "%lld/%lld"),
+                            entry.currentPage,
+                            entry.totalPages
+                        )
+                    )
+                } icon: {
+                    Image(systemName: "book.pages")
+                }
                     .font(.caption2)
                     .foregroundStyle(.white.opacity(0.9))
                 Spacer()
-                Text("\(Int(entry.progress * 100))%")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(.white)
+                (
+                    Text(Int(entry.progress * 100), format: .number)
+                    + Text(verbatim: "%")
+                )
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.white)
             }
         }
     }
 
     private var statPills: some View {
         HStack(spacing: 8) {
-            pill(icon: "bolt.fill", text: "Today \(entry.xpToday) XP", tint: .yellow)
-            pill(icon: "flame.fill", text: "\(entry.streak)d streak", tint: .orange)
+            pill(
+                icon: "bolt.fill",
+                text: String.localizedStringWithFormat(
+                    String(localized: "Today %lld XP"),
+                    entry.xpToday
+                ),
+                tint: .yellow
+            )
+            pill(
+                icon: "flame.fill",
+                text: String.localizedStringWithFormat(
+                    String(localized: "%lldd streak"),
+                    entry.streak
+                ),
+                tint: .orange
+            )
         }
     }
 
@@ -242,9 +269,15 @@ struct ReadingSessionWidgetEntryView: View {
 
             Spacer()
 
-            Text("\(entry.sessionPagesRead)p · \(entry.sessionElapsedMinutes)m")
-                .font(.caption2.weight(.medium))
-                .foregroundStyle(.white.opacity(0.9))
+            (
+                Text(entry.sessionPagesRead, format: .number)
+                + Text(verbatim: "p")
+                + Text(verbatim: " · ")
+                + Text(entry.sessionElapsedMinutes, format: .number)
+                + Text(verbatim: "m")
+            )
+            .font(.caption2.weight(.medium))
+            .foregroundStyle(.white.opacity(0.9))
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
@@ -276,7 +309,13 @@ struct ReadingSessionWidgetEntryView: View {
 
                     if !entry.hasActiveSession {
                         HStack {
-                            Label("\(entry.pagesToday) pages today", systemImage: "clock")
+                            Label {
+                                Text(entry.pagesToday, format: .number)
+                                    + Text(verbatim: " ")
+                                    + Text("pages today")
+                            } icon: {
+                                Image(systemName: "clock")
+                            }
                                 .font(.caption2)
                                 .foregroundStyle(.white.opacity(0.9))
                             Spacer()

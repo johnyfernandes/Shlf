@@ -74,12 +74,17 @@ struct ContentView: View {
                                     .lineLimit(1)
 
                                 HStack(spacing: 4) {
-                                    Text("\(session.pagesRead) pages")
+                                    Text(
+                                        String.localizedStringWithFormat(
+                                            String(localized: "%lld pages"),
+                                            session.pagesRead
+                                        )
+                                    )
                                         .font(.system(.caption2, design: .rounded))
                                         .foregroundStyle(.secondary)
 
                                     if session.isPaused {
-                                        Text("•")
+                                        Text(verbatim: "•")
                                             .font(.caption2)
                                             .foregroundStyle(.secondary)
                                         Text("Paused")
@@ -177,7 +182,13 @@ struct BookRowWatch: View {
 
             if let totalPages = book.totalPages {
                 HStack(spacing: 4) {
-                    Text("\(book.currentPage)/\(totalPages)")
+                    Text(
+                        String.localizedStringWithFormat(
+                            String(localized: "%lld/%lld"),
+                            book.currentPage,
+                            totalPages
+                        )
+                    )
                         .font(.caption2)
                         .foregroundStyle(themeColor.color)
 

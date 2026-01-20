@@ -272,7 +272,7 @@ struct StatsView: View {
 
     private var trendsDateRangeText: Text {
         Text(trendsStartDate, format: .dateTime.day().month(.abbreviated))
-        + Text(" – ")
+        + Text(verbatim: " – ")
         + Text(trendsEndDate, format: .dateTime.day().month(.abbreviated))
     }
 
@@ -280,14 +280,14 @@ struct StatsView: View {
         var text = Text(prefix)
             .foregroundStyle(Theme.Colors.text)
 
-        text = text + Text(" ")
+        text = text + Text(verbatim: " ")
             .foregroundStyle(Theme.Colors.text)
 
         text = text + value
             .foregroundStyle(accent)
 
         if let suffix {
-            text = text + Text(" ")
+            text = text + Text(verbatim: " ")
                 .foregroundStyle(Theme.Colors.text)
             text = text + Text(suffix)
                 .foregroundStyle(Theme.Colors.text)
@@ -302,7 +302,9 @@ struct StatsView: View {
         guard delta != 0 else { return nil }
         let isPositive = delta > 0
         let deltaValue = abs(delta)
-        let text = Text("\(deltaValue) ") + Text(unit)
+        let text = Text(deltaValue, format: .number)
+            + Text(verbatim: " ")
+            + Text(unit)
         return TrendDelta(text: text, isPositive: isPositive)
     }
 
@@ -709,7 +711,7 @@ struct StatsView: View {
                 )
 
                 let speedValue: Text = averageSpeedText == "—"
-                ? Text("—")
+                ? Text(verbatim: "—")
                 : Text(averageSpeedText)
                 let speedSuffix: LocalizedStringKey? = averageSpeedText == "—" ? nil : "pages/hour"
                 let speedAccent = averageSpeedText == "—" ? Theme.Colors.secondaryText : Theme.Colors.primary
@@ -785,7 +787,12 @@ struct StatsView: View {
                         .font(.system(size: 48))
                         .foregroundStyle(themeColor.color.opacity(0.3))
 
-                    Text("You've read \(totalPagesRead) pages!")
+                    Text(
+                        String.localizedStringWithFormat(
+                            String(localized: "You've read %lld pages!"),
+                            totalPagesRead
+                        )
+                    )
                         .font(Theme.Typography.headline)
                         .foregroundStyle(Theme.Colors.text)
 
@@ -817,7 +824,13 @@ struct StatsView: View {
 
                 Spacer()
 
-                Text("\((profile.achievements ?? []).count) / \(AchievementType.allCases.count)")
+                Text(
+                    String.localizedStringWithFormat(
+                        String(localized: "%lld/%lld"),
+                        (profile.achievements ?? []).count,
+                        AchievementType.allCases.count
+                    )
+                )
                     .font(Theme.Typography.callout)
                     .foregroundStyle(Theme.Colors.secondaryText)
 
@@ -958,13 +971,21 @@ struct StatsView: View {
 
     private func progress(current: Int, target: Int, unit: LocalizedStringKey, repeatCount: Int) -> AchievementProgress {
         let clampedCurrent = max(0, current)
-        let text = Text("\(formatNumber(clampedCurrent))/\(formatNumber(target)) ") + Text(unit)
+        let text = Text(verbatim: "\(formatNumber(clampedCurrent))/\(formatNumber(target))")
+            + Text(verbatim: " ")
+            + Text(unit)
         return AchievementProgress(current: clampedCurrent, target: target, text: text, repeatCount: repeatCount)
     }
 
     private func levelProgress(current: Int, target: Int, repeatCount: Int) -> AchievementProgress {
         let clampedCurrent = max(0, current)
-        let text = Text("Level \(clampedCurrent)/\(target)")
+        let text = Text(
+            String.localizedStringWithFormat(
+                String(localized: "Level %lld/%lld"),
+                clampedCurrent,
+                target
+            )
+        )
         return AchievementProgress(current: clampedCurrent, target: target, text: text, repeatCount: repeatCount)
     }
 
@@ -1695,7 +1716,7 @@ private struct TrendDetailView: View {
 
                                 Spacer()
 
-                                Text("\(count)")
+                                Text(count, format: .number)
                                     .font(.caption)
                                     .foregroundStyle(Theme.Colors.secondaryText)
                             }
@@ -1813,21 +1834,46 @@ private struct TrendDetailView: View {
     private var summaryHint: Text? {
         switch metric {
         case .pages:
-            return Text("\(sessions.count) sessions logged")
+            return Text(
+                String.localizedStringWithFormat(
+                    String(localized: "%lld sessions logged"),
+                    sessions.count
+                )
+            )
         case .minutes:
-            return Text("\(sessions.count) sessions logged")
+            return Text(
+                String.localizedStringWithFormat(
+                    String(localized: "%lld sessions logged"),
+                    sessions.count
+                )
+            )
         case .books:
-            return Text("\(finishedBooksInRange.count) books finished")
+            return Text(
+                String.localizedStringWithFormat(
+                    String(localized: "%lld books finished"),
+                    finishedBooksInRange.count
+                )
+            )
         case .categories:
             return categoryCounts.isEmpty
             ? nil
-            : Text("\(categoryCounts.first?.1 ?? 0) sessions tagged")
+            : Text(
+                String.localizedStringWithFormat(
+                    String(localized: "%lld sessions tagged"),
+                    categoryCounts.first?.1 ?? 0
+                )
+            )
         case .streak:
             return nil
         case .speed:
             return sessions.isEmpty
             ? nil
-            : Text("\(sessions.count) timed sessions")
+            : Text(
+                String.localizedStringWithFormat(
+                    String(localized: "%lld timed sessions"),
+                    sessions.count
+                )
+            )
         }
     }
 }
@@ -1881,19 +1927,26 @@ struct ReadingActivityChart: View {
                         HStack(spacing: 4) {
                             Image(systemName: "book.pages")
                                 .font(.caption2)
-                            Text("\(totalPages) total")
+                            Text(
+                                String.localizedStringWithFormat(
+                                    String(localized: "%lld total"),
+                                    totalPages
+                                )
+                            )
                                 .font(.caption)
                         }
                         .foregroundStyle(Theme.Colors.secondaryText)
 
-                        Text("•")
+                        Text(verbatim: "•")
                             .font(.caption2)
                             .foregroundStyle(Theme.Colors.tertiaryText)
 
                         HStack(spacing: 4) {
                             Image(systemName: "chart.bar")
                                 .font(.caption2)
-                            Text("\(Int(averagePages)) avg")
+                            Text(Int(averagePages), format: .number)
+                                + Text(verbatim: " ")
+                                + Text("avg")
                                 .font(.caption)
                         }
                         .foregroundStyle(Theme.Colors.secondaryText)
@@ -1939,7 +1992,7 @@ struct ReadingActivityChart: View {
                 AxisMarks(position: .leading) { value in
                     AxisValueLabel {
                         if let pages = value.as(Int.self) {
-                            Text("\(pages)")
+                            Text(pages, format: .number)
                                 .font(.caption)
                                 .fontWeight(.medium)
                                 .foregroundStyle(Theme.Colors.secondaryText)
@@ -2098,7 +2151,12 @@ struct AchievementCard: View {
                 if isUnlocked && progress.repeatCount > 1 {
                     VStack {
                         HStack {
-                            Text("x\(progress.repeatCount)")
+                            Text(
+                                String.localizedStringWithFormat(
+                                    String(localized: "x%lld"),
+                                    progress.repeatCount
+                                )
+                            )
                                 .font(.system(size: 9, weight: .bold))
                                 .foregroundStyle(.white)
                                 .padding(.horizontal, 6)
@@ -2218,7 +2276,12 @@ struct AchievementDetailView: View {
                             }
 
                             if type.isRepeatable {
-                                Text("Times earned: \(progress.repeatCount)")
+                                Text(
+                                    String.localizedStringWithFormat(
+                                        String(localized: "Times earned: %lld"),
+                                        progress.repeatCount
+                                    )
+                                )
                                     .font(.caption)
                                     .foregroundStyle(Theme.Colors.secondaryText)
                             }
@@ -2351,7 +2414,10 @@ struct GoalCard: View {
 
                 Spacer()
 
-                Text("\(Int(goal.progressPercentage))%")
+                (
+                    Text(Int(goal.progressPercentage), format: .number)
+                    + Text(verbatim: "%")
+                )
                     .font(Theme.Typography.callout)
                     .foregroundStyle(themeColor.color)
             }
@@ -2360,7 +2426,15 @@ struct GoalCard: View {
                 .tint(themeColor.color)
 
             HStack {
-                Text("\(goal.currentValue) / \(goal.targetValue) ") + Text(goal.type.unitTextKey)
+                Text(
+                    String.localizedStringWithFormat(
+                        String(localized: "%lld/%lld"),
+                        goal.currentValue,
+                        goal.targetValue
+                    )
+                )
+                + Text(verbatim: " ")
+                + Text(goal.type.unitTextKey)
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
 
@@ -2372,7 +2446,12 @@ struct GoalCard: View {
                             .font(Theme.Typography.caption)
                             .foregroundStyle(Theme.Colors.tertiaryText)
                     } else if daysLeft >= 0 {
-                        Text("\(daysLeft) days left")
+                        Text(
+                            String.localizedStringWithFormat(
+                                String(localized: "%lld days left"),
+                                daysLeft
+                            )
+                        )
                             .font(Theme.Typography.caption)
                             .foregroundStyle(Theme.Colors.tertiaryText)
                     } else {
@@ -2513,7 +2592,15 @@ struct GoalRow: View {
                     .tint(goal.isCompleted ? Theme.Colors.success : themeColor.color)
 
                 HStack {
-                    Text("\(goal.currentValue) / \(goal.targetValue) ") + Text(goal.type.unitTextKey)
+                    Text(
+                        String.localizedStringWithFormat(
+                            String(localized: "%lld/%lld"),
+                            goal.currentValue,
+                            goal.targetValue
+                        )
+                    )
+                    + Text(verbatim: " ")
+                    + Text(goal.type.unitTextKey)
                         .font(Theme.Typography.caption)
                         .foregroundStyle(Theme.Colors.secondaryText)
 
@@ -2525,7 +2612,12 @@ struct GoalRow: View {
                                 .font(Theme.Typography.caption)
                                 .foregroundStyle(Theme.Colors.tertiaryText)
                         } else {
-                            Text("\(daysLeft) days left")
+                            Text(
+                                String.localizedStringWithFormat(
+                                    String(localized: "%lld days left"),
+                                    daysLeft
+                                )
+                            )
                                 .font(Theme.Typography.caption)
                                 .foregroundStyle(Theme.Colors.tertiaryText)
                         }

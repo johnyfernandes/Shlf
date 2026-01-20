@@ -396,7 +396,13 @@ struct GoodreadsImportView: View {
             ProgressView(value: Double(current), total: Double(total))
                 .progressViewStyle(.linear)
 
-            Text("Importing \(current) of \(total) books")
+                                    Text(
+                                        String.localizedStringWithFormat(
+                                            String(localized: "Importing %lld of %lld books"),
+                                            current,
+                                            total
+                                        )
+                                    )
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
@@ -415,7 +421,13 @@ struct GoodreadsImportView: View {
             ProgressView(value: Double(current), total: Double(total))
                 .progressViewStyle(.linear)
 
-            Text("Fetching descriptions \(current) of \(total)")
+                                    Text(
+                                        String.localizedStringWithFormat(
+                                            String(localized: "Fetching descriptions %lld of %lld"),
+                                            current,
+                                            total
+                                        )
+                                    )
                 .font(.caption)
                 .foregroundStyle(.secondary)
 

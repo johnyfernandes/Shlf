@@ -124,7 +124,7 @@ struct ProgressSliderView: View {
                                         }
                                     }
                             } else {
-                                Text("\(currentPage)")
+                                Text(currentPage, format: .number)
                                     .font(.system(size: 42, weight: .bold, design: .rounded))
                                     .foregroundStyle(isDragging ? themeColor.color : Theme.Colors.text)
                                     .monospacedDigit()
@@ -142,7 +142,7 @@ struct ProgressSliderView: View {
                         }
 
                         if let total = book.totalPages {
-                            Text("/ \(total)")
+                            (Text(verbatim: "/ ") + Text(total, format: .number))
                                 .font(.title3)
                                 .foregroundStyle(Theme.Colors.tertiaryText)
                         }
@@ -151,17 +151,25 @@ struct ProgressSliderView: View {
 
                     if let total = book.totalPages {
                         HStack(spacing: 4) {
-                            Text("\(Int(progressPercentage))%")
-                                .font(.caption.weight(.medium))
-                                .foregroundStyle(themeColor.color)
-                                .contentTransition(.numericText())
+                            (
+                                Text(Int(progressPercentage), format: .number)
+                                + Text(verbatim: "%")
+                            )
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(themeColor.color)
+                            .contentTransition(.numericText())
 
                             if total > currentPage {
-                                Text("•")
+                                Text(verbatim: "•")
                                     .font(.caption)
                                     .foregroundStyle(Theme.Colors.tertiaryText)
 
-                                Text("\(total - currentPage) left")
+                                Text(
+                                    String.localizedStringWithFormat(
+                                        String(localized: "%lld left"),
+                                        total - currentPage
+                                    )
+                                )
                                     .font(.caption)
                                     .foregroundStyle(Theme.Colors.tertiaryText)
                             }
@@ -242,9 +250,19 @@ struct ProgressSliderView: View {
                 } label: {
                     HStack(spacing: 6) {
                         if currentPage > book.currentPage {
-                            Text("Save +\(currentPage - book.currentPage) pages")
+                            Text(
+                                String.localizedStringWithFormat(
+                                    String(localized: "Save +%lld pages"),
+                                    currentPage - book.currentPage
+                                )
+                            )
                         } else if currentPage < book.currentPage {
-                            Text("Save \(currentPage - book.currentPage) pages")
+                            Text(
+                                String.localizedStringWithFormat(
+                                    String(localized: "Save %lld pages"),
+                                    currentPage - book.currentPage
+                                )
+                            )
                         } else {
                             Text("No changes")
                         }
@@ -306,7 +324,12 @@ struct ProgressSliderView: View {
                 }
             }
         } message: {
-            Text("You've reached the last page of \(book.title). Would you like to mark it as finished?")
+            Text(
+                String.localizedStringWithFormat(
+                    String(localized: "You've reached the last page of %@. Would you like to mark it as finished?"),
+                    book.title
+                )
+            )
         }
     }
 

@@ -238,8 +238,13 @@ private struct EditionRow: View {
                         Text(publishDate)
                     }
                     if let pages = edition.numberOfPages {
-                        Text("•")
-                        Text("\(pages) pages")
+                        Text(verbatim: "•")
+                        Text(
+                            String.localizedStringWithFormat(
+                                String(localized: "%lld pages"),
+                                pages
+                            )
+                        )
                     }
                 }
                 .font(Theme.Typography.caption)

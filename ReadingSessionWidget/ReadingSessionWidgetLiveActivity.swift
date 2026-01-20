@@ -95,7 +95,13 @@ struct ReadingSessionWidgetLiveActivity: Widget {
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
 
-                        Text("\(context.state.currentPage)/\(context.attributes.totalPages) pages")
+                        Text(
+                            String.localizedStringWithFormat(
+                                String(localized: "%lld/%lld pages"),
+                                context.state.currentPage,
+                                context.attributes.totalPages
+                            )
+                        )
                             .font(.caption2.weight(.semibold))
                             .foregroundStyle(.secondary)
                     }
@@ -131,7 +137,13 @@ struct ReadingSessionWidgetLiveActivity: Widget {
                 Image(systemName: "book.fill")
                     .foregroundStyle(context.attributes.themeColor)
             } compactTrailing: {
-                Text("\(context.state.currentPage)/\(context.attributes.totalPages)")
+                Text(
+                    String.localizedStringWithFormat(
+                        String(localized: "%lld/%lld"),
+                        context.state.currentPage,
+                        context.attributes.totalPages
+                    )
+                )
                     .foregroundStyle(context.attributes.themeColor)
                     .font(.caption2)
             } minimal: {
@@ -164,7 +176,13 @@ struct ReadingSessionLockScreenView: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
 
-                    Text("\(context.state.currentPage)/\(context.attributes.totalPages) pages")
+                    Text(
+                        String.localizedStringWithFormat(
+                            String(localized: "%lld/%lld pages"),
+                            context.state.currentPage,
+                            context.attributes.totalPages
+                        )
+                    )
                         .font(.caption2.weight(.semibold))
                         .foregroundStyle(.secondary)
                 }

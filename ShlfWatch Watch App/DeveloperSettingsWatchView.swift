@@ -107,10 +107,16 @@ struct DeveloperSettingsWatchView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Last Seed")
                         .font(.caption)
-                    Text("\(summary.rangeLabel) · \(summary.intensityLabel)")
+                    Text(verbatim: "\(summary.rangeLabel) · \(summary.intensityLabel)")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
-                    Text("Books \(summary.bookCount) · Sessions \(summary.sessionCount)")
+                    Text(
+                        String.localizedStringWithFormat(
+                            String(localized: "Books %lld · Sessions %lld"),
+                            summary.bookCount,
+                            summary.sessionCount
+                        )
+                    )
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }

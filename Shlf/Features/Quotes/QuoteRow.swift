@@ -33,7 +33,12 @@ struct QuoteRow: View {
 
             HStack {
                 if let page = quote.pageNumber {
-                    Text("Page \(page)")
+            Text(
+                String.localizedStringWithFormat(
+                    String(localized: "Page %lld"),
+                    page
+                )
+            )
                         .font(Theme.Typography.caption)
                         .foregroundStyle(Theme.Colors.tertiaryText)
                 }

@@ -694,7 +694,13 @@ private struct StatSelectorSections<Stat: Hashable & Identifiable>: View {
 
             Spacer()
 
-            Text("\(selected.count)/\(maxSelection)")
+            Text(
+                String.localizedStringWithFormat(
+                    String(localized: "%lld/%lld"),
+                    selected.count,
+                    maxSelection
+                )
+            )
                 .foregroundStyle(Theme.Colors.secondaryText)
         }
         .font(.caption)

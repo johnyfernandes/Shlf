@@ -60,7 +60,7 @@ struct QuoteDetailView: View {
 
                             Spacer()
 
-                            Text("\(page)")
+                            Text(page, format: .number)
                                 .font(.caption.weight(.medium))
                                 .foregroundStyle(Theme.Colors.text)
                         }

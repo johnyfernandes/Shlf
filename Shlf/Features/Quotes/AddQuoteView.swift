@@ -37,7 +37,13 @@ struct AddQuoteView: View {
 
                     HStack {
                         Spacer()
-                        Text("\(quoteText.count)/\(maxCharacters)")
+                        Text(
+                            String.localizedStringWithFormat(
+                                String(localized: "%lld/%lld"),
+                                quoteText.count,
+                                maxCharacters
+                            )
+                        )
                             .font(.caption)
                             .foregroundStyle(quoteText.count > maxCharacters ? .red : .secondary)
                     }

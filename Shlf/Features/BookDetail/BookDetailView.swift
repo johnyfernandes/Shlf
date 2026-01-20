@@ -239,7 +239,12 @@ struct BookDetailView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This will permanently delete \(book.title) and all reading sessions.")
+            Text(
+                String.localizedStringWithFormat(
+                    String(localized: "This will permanently delete %@ and all reading sessions."),
+                    book.title
+                )
+            )
         }
         .onAppear {
             if !hasInitializedBookStatsRange {
@@ -288,7 +293,12 @@ struct BookDetailView: View {
             }
         } message: {
             if let status = pendingStatus {
-                Text("You're on page \(book.currentPage). Your progress will be saved and automatically restored when you return to \"Currently Reading\".")
+                Text(
+                    String.localizedStringWithFormat(
+                        String(localized: "You're on page %lld. Your progress will be saved and automatically restored when you return to \"Currently Reading\"."),
+                        book.currentPage
+                    )
+                )
             }
         }
         .alert("Delete Session?", isPresented: $showDeleteSessionAlert) {
@@ -509,7 +519,13 @@ struct BookDetailView: View {
                         Text("Active Session")
                             .font(.subheadline.weight(.semibold))
 
-                        Text("\(activeSession.sourceDevice) • Started at page \(activeSession.currentPage)")
+                        Text(
+                            String.localizedStringWithFormat(
+                                String(localized: "%@ • Started at page %lld"),
+                                activeSession.sourceDevice,
+                                activeSession.currentPage
+                            )
+                        )
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -764,31 +780,86 @@ struct BookDetailView: View {
         let accent = stat.accent.color(themeColor: themeColor)
         switch stat {
         case .pagesPercent:
-            let percent = summary.percentRead.map { " \($0)%" } ?? ""
-            return Text("You read ") + Text("\(summary.totalPagesRead) pages").foregroundStyle(accent) + Text("\(percent).")
+            let percentText = summary.percentRead.map { Text(verbatim: " \($0)%") } ?? Text(verbatim: "")
+            let pagesText = Text(
+                String.localizedStringWithFormat(
+                    String(localized: "%lld pages"),
+                    summary.totalPagesRead
+                )
+            )
+            .foregroundStyle(accent)
+            return Text("You read")
+                + Text(verbatim: " ")
+                + pagesText
+                + percentText
+                + Text(verbatim: ".")
         case .timeRead:
-            return Text("You read for ") + Text(formatMinutes(summary.totalMinutesRead)).foregroundStyle(accent) + Text(".")
+            return Text("You read for")
+                + Text(verbatim: " ")
+                + Text(formatMinutes(summary.totalMinutesRead)).foregroundStyle(accent)
+                + Text(verbatim: ".")
         case .sessionCount:
-            return Text("You logged ") + Text("\(summary.sessionCount) sessions").foregroundStyle(accent) + Text(".")
+            let sessionsText = Text(
+                String.localizedStringWithFormat(
+                    String(localized: "%lld sessions"),
+                    summary.sessionCount
+                )
+            )
+            .foregroundStyle(accent)
+            return Text("You logged")
+                + Text(verbatim: " ")
+                + sessionsText
+                + Text(verbatim: ".")
         case .averagePages:
-            return Text("Average ") + Text(formatNumber(summary.averagePagesPerSession)).foregroundStyle(accent) + Text(" pages per session.")
+            return Text("Average")
+                + Text(verbatim: " ")
+                + Text(formatNumber(summary.averagePagesPerSession)).foregroundStyle(accent)
+                + Text(verbatim: " ")
+                + Text("pages per session.")
         case .averageSpeed:
-            return Text("Average ") + Text(formatNumber(summary.averagePagesPerHour)).foregroundStyle(accent) + Text(" pages per hour.")
+            return Text("Average")
+                + Text(verbatim: " ")
+                + Text(formatNumber(summary.averagePagesPerHour)).foregroundStyle(accent)
+                + Text(verbatim: " ")
+                + Text("pages per hour.")
         case .longestSession:
             if summary.longestSessionMinutes > 0 {
-                return Text("Longest session ") + Text(formatMinutes(summary.longestSessionMinutes)).foregroundStyle(accent) + Text(".")
+                return Text("Longest session")
+                    + Text(verbatim: " ")
+                    + Text(formatMinutes(summary.longestSessionMinutes)).foregroundStyle(accent)
+                    + Text(verbatim: ".")
             }
-            return Text("Longest session ") + Text("\(summary.longestSessionPages) pages").foregroundStyle(accent) + Text(".")
+            return Text("Longest session")
+                + Text(verbatim: " ")
+                + Text(
+                    String.localizedStringWithFormat(
+                        String(localized: "%lld pages"),
+                        summary.longestSessionPages
+                    )
+                )
+                .foregroundStyle(accent)
+                + Text(verbatim: ".")
         case .streak:
-            return Text("Your book streak was ") + Text(formatDays(summary.streakDays)).foregroundStyle(accent) + Text(".")
+            return Text("Your book streak was")
+                + Text(verbatim: " ")
+                + Text(formatDays(summary.streakDays)).foregroundStyle(accent)
+                + Text(verbatim: ".")
         case .daysSinceLast:
             if let days = summary.daysSinceLastRead {
-                return Text("Last read ") + Text(formatDays(days)).foregroundStyle(accent) + Text(" ago.")
+                return Text("Last read")
+                    + Text(verbatim: " ")
+                    + Text(formatDays(days)).foregroundStyle(accent)
+                    + Text(verbatim: " ")
+                    + Text("ago.")
             }
             return Text("No reads yet.")
         case .firstLastDate:
             if let first = summary.firstReadDate, let last = summary.lastReadDate {
-                return Text("First read ") + Text(formatDate(first)).foregroundStyle(accent) + Text(" • ") + Text(formatDate(last)).foregroundStyle(accent)
+                return Text("First read")
+                    + Text(verbatim: " ")
+                    + Text(formatDate(first)).foregroundStyle(accent)
+                    + Text(verbatim: " • ")
+                    + Text(formatDate(last)).foregroundStyle(accent)
             }
             return Text("No read dates yet.")
         }
@@ -1150,7 +1221,14 @@ struct BookDetailView: View {
                         }
                     } label: {
                         HStack(spacing: 6) {
-                            Text(showAllSessions ? "Show Less" : "Show All (\(sessions.count))")
+                            Text(
+                                showAllSessions
+                                ? "Show Less"
+                                : String.localizedStringWithFormat(
+                                    String(localized: "Show All (%lld)"),
+                                    sessions.count
+                                )
+                            )
                                 .font(.caption.weight(.semibold))
                             Image(systemName: showAllSessions ? "chevron.up" : "chevron.down")
                                 .font(.caption2)
@@ -1242,7 +1320,14 @@ struct BookDetailView: View {
                     }
                 } label: {
                     HStack(spacing: 6) {
-                        Text(showAllSubjects ? "Show Less" : "Show All (\(subjects.count))")
+                        Text(
+                            showAllSubjects
+                            ? "Show Less"
+                            : String.localizedStringWithFormat(
+                                String(localized: "Show All (%lld)"),
+                                subjects.count
+                            )
+                        )
                             .font(.caption.weight(.semibold))
                         Image(systemName: showAllSubjects ? "chevron.up" : "chevron.down")
                             .font(.caption2)
@@ -1574,7 +1659,7 @@ struct FinishBookLogView: View {
                     HStack {
                         Text("From Page")
                         Spacer()
-                        Text("0")
+                        Text(verbatim: "0")
                             .foregroundStyle(.secondary)
                             .frame(width: 80, alignment: .trailing)
                     }
@@ -1592,7 +1677,7 @@ struct FinishBookLogView: View {
                             }
 
                         if let totalPages = book.totalPages, totalPages > 0 {
-                            Text("/ \(totalPages)")
+                            (Text(verbatim: "/ ") + Text(totalPages, format: .number))
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -1603,7 +1688,7 @@ struct FinishBookLogView: View {
 
                         Text("Pages Read")
                         Spacer()
-                        Text("\(pagesRead)")
+                        Text(pagesRead, format: .number)
                             .font(Theme.Typography.headline)
                             .foregroundStyle(themeColor.color)
                     }
@@ -1665,7 +1750,7 @@ struct FinishBookLogView: View {
 
                         Text("Estimated XP")
                         Spacer()
-                        Text("+\(estimatedXP)")
+                        Text(verbatim: "+\(estimatedXP)")
                             .font(Theme.Typography.headline)
                             .foregroundStyle(Theme.Colors.xpGradient)
                     }
@@ -1853,7 +1938,7 @@ struct ReadingSessionRow: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
-                    Text("•")
+                    Text(verbatim: "•")
                         .font(.caption)
                         .foregroundStyle(.tertiary)
 
@@ -1861,11 +1946,16 @@ struct ReadingSessionRow: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
-                    Text("•")
+                    Text(verbatim: "•")
                         .font(.caption)
                         .foregroundStyle(.tertiary)
 
-                    Text("\(session.durationMinutes) min")
+                    Text(
+                        String.localizedStringWithFormat(
+                            String(localized: "%lld min"),
+                            session.durationMinutes
+                        )
+                    )
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -1873,7 +1963,12 @@ struct ReadingSessionRow: View {
 
             Spacer()
 
-            Text("\(session.xpEarned) XP")
+            Text(
+                String.localizedStringWithFormat(
+                    String(localized: "%lld XP"),
+                    session.xpEarned
+                )
+            )
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.green)
         }

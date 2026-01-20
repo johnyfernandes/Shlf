@@ -271,7 +271,7 @@ struct BookSearchResultRow: View {
                         HStack(spacing: 3) {
                             Image(systemName: "book.pages")
                                 .font(.caption2)
-                            Text("\(pages)")
+                            Text(pages, format: .number)
                                 .font(Theme.Typography.caption)
                         }
                         .foregroundStyle(Theme.Colors.tertiaryText)
@@ -279,7 +279,7 @@ struct BookSearchResultRow: View {
 
                     if let year = yearPublished {
                         if bookInfo.totalPages != nil {
-                            Text("•")
+                            Text(verbatim: "•")
                                 .font(Theme.Typography.caption2)
                                 .foregroundStyle(Theme.Colors.tertiaryText)
                         }

@@ -64,7 +64,7 @@ struct SessionDetailView: View {
     }
 
     private var durationText: String {
-        "\(durationMinutes) min"
+        String.localizedStringWithFormat(String(localized: "%lld min"), durationMinutes)
     }
 
     private var xpText: String {
@@ -253,7 +253,7 @@ struct SessionDetailView: View {
                     Text("Start")
                         .font(.caption)
                         .foregroundStyle(Theme.Colors.secondaryText)
-                    Text("\(session.startPage)")
+                    Text(session.startPage, format: .number)
                         .font(.title3.weight(.semibold))
                 }
 
@@ -268,7 +268,7 @@ struct SessionDetailView: View {
                     Text("End")
                         .font(.caption)
                         .foregroundStyle(Theme.Colors.secondaryText)
-                    Text("\(session.endPage)")
+                    Text(session.endPage, format: .number)
                         .font(.title3.weight(.semibold))
                 }
             }

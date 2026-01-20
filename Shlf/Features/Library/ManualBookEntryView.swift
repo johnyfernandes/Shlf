@@ -315,13 +315,23 @@ struct ManualBookEntryView: View {
                 let progress = Double(currentPage) / Double(total) * 100
                 VStack(spacing: 8) {
                     HStack {
-                        Text("\(Int(progress))% Complete")
+                        Text(
+                            String.localizedStringWithFormat(
+                                String(localized: "%lld%% Complete"),
+                                Int(progress)
+                            )
+                        )
                             .font(.caption)
                             .foregroundStyle(Theme.Colors.secondaryText)
 
                         Spacer()
 
-                        Text("\(max(0, total - currentPage)) pages left")
+                        Text(
+                            String.localizedStringWithFormat(
+                                String(localized: "%lld pages left"),
+                                max(0, total - currentPage)
+                            )
+                        )
                             .font(.caption)
                             .foregroundStyle(Theme.Colors.tertiaryText)
                     }

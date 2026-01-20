@@ -304,7 +304,13 @@ struct KindleImportView: View {
             ProgressView(value: Double(current), total: Double(total))
                 .progressViewStyle(.linear)
 
-            Text("Importing \(current) of \(total) books")
+                                    Text(
+                                        String.localizedStringWithFormat(
+                                            String(localized: "Importing %lld of %lld books"),
+                                            current,
+                                            total
+                                        )
+                                    )
                 .font(.caption)
                 .foregroundStyle(.secondary)
 

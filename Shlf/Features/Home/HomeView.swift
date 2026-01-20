@@ -192,7 +192,7 @@ struct HomeView: View {
                 .fontWeight(.semibold)
                 .foregroundStyle(Theme.Colors.text)
 
-            Text("•")
+            Text(verbatim: "•")
                 .font(.title3)
                 .foregroundStyle(Theme.Colors.tertiaryText)
 
@@ -300,7 +300,7 @@ struct HomeView: View {
 
                 Spacer()
 
-                Text("\(currentlyReading.count)")
+                Text(currentlyReading.count, format: .number)
                     .font(Theme.Typography.subheadline)
                     .foregroundStyle(Theme.Colors.tertiaryText)
                     .padding(.horizontal, Theme.Spacing.sm)
@@ -353,17 +353,25 @@ struct CurrentlyReadingCard: View {
                 if let totalPages = book.totalPages {
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                         HStack {
-                            Text("\(book.currentPage)")
+                            Text(book.currentPage, format: .number)
                                 .font(Theme.Typography.headline)
                                 .foregroundStyle(themeColor.color)
 
-                            Text("/ \(totalPages) pages")
+                            Text(
+                                String.localizedStringWithFormat(
+                                    String(localized: "/ %lld pages"),
+                                    totalPages
+                                )
+                            )
                                 .font(Theme.Typography.caption)
                                 .foregroundStyle(Theme.Colors.tertiaryText)
 
                             Spacer()
 
-                            Text("\(Int(book.progressPercentage))%")
+                            (
+                                Text(Int(book.progressPercentage), format: .number)
+                                + Text(verbatim: "%")
+                            )
                                 .font(Theme.Typography.subheadline)
                                 .fontWeight(.semibold)
                                 .foregroundStyle(themeColor.color)

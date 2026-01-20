@@ -61,7 +61,7 @@ struct SessionDetailWatchView: View {
 
                     HStack {
                         VStack {
-                            Text("\(session.startPage)")
+                            Text(session.startPage, format: .number)
                                 .font(.title3)
                                 .fontWeight(.semibold)
                             Text("Start")
@@ -74,7 +74,7 @@ struct SessionDetailWatchView: View {
                             .foregroundStyle(themeColor.color)
 
                         VStack {
-                            Text("\(session.endPage)")
+                            Text(session.endPage, format: .number)
                                 .font(.title3)
                                 .fontWeight(.semibold)
                             Text("End")

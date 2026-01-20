@@ -56,7 +56,9 @@ struct AddGoalView: View {
 
                 Section("Target") {
                     Stepper(value: $targetValue, in: 1...1000) {
-                        Text("\(targetValue) ") + Text(selectedType.unitTextKey)
+                        Text(targetValue, format: .number)
+                        + Text(verbatim: " ")
+                        + Text(selectedType.unitTextKey)
                     }
                     .font(Theme.Typography.body)
                 }
@@ -163,7 +165,7 @@ struct GoalPreviewCard: View {
 
                 Spacer()
 
-                Text("0%")
+                Text(verbatim: "0%")
                     .font(Theme.Typography.callout)
                     .foregroundStyle(themeColor.color)
             }
@@ -172,7 +174,10 @@ struct GoalPreviewCard: View {
                 .tint(themeColor.color)
 
             HStack {
-                Text("0 / \(targetValue) ") + Text(type.unitTextKey)
+                Text(verbatim: "0 / ")
+                    + Text(targetValue, format: .number)
+                    + Text(verbatim: " ")
+                    + Text(type.unitTextKey)
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
 
@@ -183,7 +188,12 @@ struct GoalPreviewCard: View {
                         .font(Theme.Typography.caption)
                         .foregroundStyle(Theme.Colors.tertiaryText)
                 } else {
-                    Text("\(daysRemaining) days left")
+                    Text(
+                        String.localizedStringWithFormat(
+                            String(localized: "%lld days left"),
+                            daysRemaining
+                        )
+                    )
                         .font(Theme.Typography.caption)
                         .foregroundStyle(Theme.Colors.tertiaryText)
                 }

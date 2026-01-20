@@ -170,40 +170,73 @@ struct BookStatDetailView: View {
         switch stat {
         case .pagesPercent:
             let percent = summary.percentRead.map { " \($0)%" } ?? ""
-            return Text("\(summary.totalPagesRead) pages\(percent)")
+            return Text(
+                String.localizedStringWithFormat(
+                    String(localized: "%lld pages"),
+                    summary.totalPagesRead
+                )
+            ) + Text(verbatim: percent)
                 .foregroundStyle(accent)
         case .timeRead:
             return Text(formatMinutes(summary.totalMinutesRead))
                 .foregroundStyle(accent)
         case .sessionCount:
-            return Text("\(summary.sessionCount) sessions")
-                .foregroundStyle(accent)
+            return Text(
+                String.localizedStringWithFormat(
+                    String(localized: "%lld sessions"),
+                    summary.sessionCount
+                )
+            )
+            .foregroundStyle(accent)
         case .averagePages:
-            return Text("\(formatNumber(summary.averagePagesPerSession)) pages/session")
-                .foregroundStyle(accent)
+            return (
+                Text(formatNumber(summary.averagePagesPerSession))
+                + Text(verbatim: " ")
+                + Text("pages/session")
+            )
+            .foregroundStyle(accent)
         case .averageSpeed:
-            return Text("\(formatNumber(summary.averagePagesPerHour)) pages/hour")
-                .foregroundStyle(accent)
+            return (
+                Text(formatNumber(summary.averagePagesPerHour))
+                + Text(verbatim: " ")
+                + Text("pages/hour")
+            )
+            .foregroundStyle(accent)
         case .longestSession:
             if summary.longestSessionMinutes > 0 {
                 return Text(formatMinutes(summary.longestSessionMinutes))
                     .foregroundStyle(accent)
             }
-            return Text("\(summary.longestSessionPages) pages")
+            return Text(
+                String.localizedStringWithFormat(
+                    String(localized: "%lld pages"),
+                    summary.longestSessionPages
+                )
+            )
                 .foregroundStyle(accent)
         case .streak:
-            return Text("\(summary.streakDays) days")
+            return Text(
+                String.localizedStringWithFormat(
+                    String(localized: "%lld days"),
+                    summary.streakDays
+                )
+            )
                 .foregroundStyle(accent)
         case .daysSinceLast:
             if let value = summary.daysSinceLastRead {
-                return Text("\(value) days")
+                return Text(
+                    String.localizedStringWithFormat(
+                        String(localized: "%lld days"),
+                        value
+                    )
+                )
                     .foregroundStyle(accent)
             }
             return Text("No reads yet")
                 .foregroundStyle(accent)
         case .firstLastDate:
             if let first = summary.firstReadDate, let last = summary.lastReadDate {
-                return Text("\(formatDate(first)) – \(formatDate(last))")
+                return Text(verbatim: "\(formatDate(first)) – \(formatDate(last))")
                     .foregroundStyle(accent)
             }
             return Text("No dates yet")

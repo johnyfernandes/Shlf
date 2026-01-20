@@ -177,7 +177,7 @@ struct PaywallView: View {
 
             HStack(spacing: Theme.Spacing.sm) {
                 Link("Terms", destination: URL(string: "https://shlf.app/terms")!)
-                Text("•")
+                Text(verbatim: "•")
                     .foregroundStyle(Theme.Colors.tertiaryText)
                 Link("Privacy", destination: URL(string: "https://shlf.app/privacy")!)
             }

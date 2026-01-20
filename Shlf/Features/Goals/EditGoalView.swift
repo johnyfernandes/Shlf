@@ -35,14 +35,25 @@ struct EditGoalView: View {
                 Section("Progress") {
                     VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                         HStack {
-                            Text("\(goal.currentValue) / \(goal.targetValue) ") + Text(goal.type.unitTextKey)
+                            Text(
+                                String.localizedStringWithFormat(
+                                    String(localized: "%lld/%lld"),
+                                    goal.currentValue,
+                                    goal.targetValue
+                                )
+                            )
+                            + Text(verbatim: " ")
+                            + Text(goal.type.unitTextKey)
                                 .font(Theme.Typography.title3)
 
                             Spacer()
 
-                            Text("\(Int(goal.progressPercentage))%")
-                                .font(Theme.Typography.title2)
-                                .foregroundStyle(goal.isCompleted ? Theme.Colors.success : themeColor.color)
+                            (
+                                Text(Int(goal.progressPercentage), format: .number)
+                                + Text(verbatim: "%")
+                            )
+                            .font(Theme.Typography.title2)
+                            .foregroundStyle(goal.isCompleted ? Theme.Colors.success : themeColor.color)
                         }
 
                         ProgressView(value: goal.progressPercentage, total: 100)
@@ -50,14 +61,20 @@ struct EditGoalView: View {
                     }
 
                     Stepper(value: $goal.currentValue, in: 0...goal.targetValue) {
-                        Text("Current Progress") + Text(": \(goal.currentValue)")
+                        Text("Current Progress")
+                        + Text(verbatim: ": ")
+                        + Text(goal.currentValue, format: .number)
                     }
                     .font(Theme.Typography.body)
                 }
 
                 Section("Target") {
                     Stepper(value: $goal.targetValue, in: max(1, goal.currentValue)...1000) {
-                        Text("Target") + Text(": \(goal.targetValue) ") + Text(goal.type.unitTextKey)
+                        Text("Target")
+                        + Text(verbatim: ": ")
+                        + Text(goal.targetValue, format: .number)
+                        + Text(verbatim: " ")
+                        + Text(goal.type.unitTextKey)
                     }
                     .font(Theme.Typography.body)
                 }
@@ -80,7 +97,12 @@ struct EditGoalView: View {
                                 Text("Resets at midnight")
                                     .foregroundStyle(themeColor.color)
                             } else if daysLeft >= 0 {
-                                Text("\(daysLeft) days")
+                                Text(
+                                    String.localizedStringWithFormat(
+                                        String(localized: "%lld days"),
+                                        daysLeft
+                                    )
+                                )
                                     .foregroundStyle(themeColor.color)
                             } else {
                                 Text("Expired")
