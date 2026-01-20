@@ -20,8 +20,7 @@ struct ContentView: View {
     @State private var activeSessionLogDestination: ActiveSessionLogDestination?
     @State private var accessoryCoverImage: UIImage?
     @State private var accessoryCoverURL: URL?
-    @State private var showSessionLoggedToast = false
-    @State private var sessionLoggedToastID = UUID()
+    @StateObject private var toastCenter = ToastCenter()
 
     private var shouldShowOnboarding: Bool {
         profiles.first?.hasCompletedOnboarding == false || profiles.isEmpty
@@ -65,21 +64,14 @@ struct ContentView: View {
         .sheet(item: $activeSessionLogDestination) { destination in
             ActiveSessionLogSheet(bookID: destination.bookID)
         }
-        .overlay(alignment: .top) {
-            if showSessionLoggedToast {
-                SessionLoggedToast(animate: showSessionLoggedToast) {
-                    dismissSessionLoggedToast()
-                }
-                    .padding(.top, 12)
-                    .transition(.move(edge: .top).combined(with: .opacity))
-            }
-        }
         .onAppear {
             showOnboarding = shouldShowOnboarding
         }
         .onReceive(NotificationCenter.default.publisher(for: .readingSessionLogged)) { _ in
-            triggerSessionLoggedToast()
+            toastCenter.show(.sessionLogged(tint: currentThemeColor.color), delay: 0.35)
         }
+        .environmentObject(toastCenter)
+        .toastHost()
     }
 
     @ViewBuilder
@@ -118,116 +110,6 @@ struct ContentView: View {
         }
     }
 
-    private func triggerSessionLoggedToast() {
-        sessionLoggedToastID = UUID()
-        let toastID = sessionLoggedToastID
-
-        Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 350_000_000)
-            guard toastID == sessionLoggedToastID else { return }
-            Haptics.impact(.light)
-            withAnimation(Theme.Animation.smooth) {
-                showSessionLoggedToast = true
-            }
-
-            try? await Task.sleep(nanoseconds: 3_000_000_000)
-            guard toastID == sessionLoggedToastID else { return }
-            withAnimation(Theme.Animation.smooth) {
-                showSessionLoggedToast = false
-            }
-        }
-    }
-
-    private func dismissSessionLoggedToast() {
-        sessionLoggedToastID = UUID()
-        withAnimation(Theme.Animation.smooth) {
-            showSessionLoggedToast = false
-        }
-    }
-}
-
-private struct SessionLoggedToast: View {
-    @Environment(\.themeColor) private var themeColor
-    let animate: Bool
-    let onDismiss: () -> Void
-    @GestureState private var dragOffset: CGFloat = 0
-
-    var body: some View {
-        HStack(spacing: 8) {
-            AnimatedCheckmark()
-
-            Text(String(localized: "Session logged"))
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.primary)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 8)
-        .background(.ultraThinMaterial, in: Capsule())
-        .overlay(
-            Capsule()
-                .strokeBorder(themeColor.color.opacity(0.18), lineWidth: 1)
-        )
-        .shadow(color: Theme.Shadow.medium, radius: 10, y: 6)
-        .contentShape(Capsule())
-        .onTapGesture {
-            onDismiss()
-        }
-        .offset(y: dragOffset < 0 ? dragOffset : 0)
-        .gesture(
-            DragGesture(minimumDistance: 4)
-                .updating($dragOffset) { value, state, _ in
-                    if value.translation.height < 0 {
-                        state = value.translation.height
-                    }
-                }
-                .onEnded { value in
-                    if value.translation.height < -16 {
-                        onDismiss()
-                    }
-                }
-        )
-        .animation(.easeOut(duration: 0.15), value: dragOffset)
-        .accessibilityLabel(Text(String(localized: "Session logged")))
-    }
-}
-
-private struct AnimatedCheckmark: View {
-    @Environment(\.themeColor) private var themeColor
-    @State private var progress: CGFloat = 0
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .stroke(themeColor.color.opacity(0.2), lineWidth: 1.5)
-
-            CheckmarkShape()
-                .trim(from: 0, to: progress)
-                .stroke(
-                    themeColor.color,
-                    style: StrokeStyle(lineWidth: 2.2, lineCap: .round, lineJoin: .round)
-                )
-        }
-        .frame(width: 20, height: 20)
-        .onAppear {
-            progress = 0
-            withAnimation(.easeOut(duration: 0.9)) {
-                progress = 1
-            }
-        }
-    }
-}
-
-private struct CheckmarkShape: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        let width = rect.width
-        let height = rect.height
-
-        path.move(to: CGPoint(x: width * 0.24, y: height * 0.52))
-        path.addLine(to: CGPoint(x: width * 0.42, y: height * 0.70))
-        path.addLine(to: CGPoint(x: width * 0.76, y: height * 0.34))
-        return path
-    }
 }
 
 private struct ActiveSessionLogDestination: Identifiable {
