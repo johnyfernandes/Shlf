@@ -150,6 +150,7 @@ private struct SessionLoggedToast: View {
     @Environment(\.themeColor) private var themeColor
     let animate: Bool
     let onDismiss: () -> Void
+    @GestureState private var dragOffset: CGFloat = 0
 
     var body: some View {
         HStack(spacing: 8) {
@@ -174,6 +175,21 @@ private struct SessionLoggedToast: View {
         .onTapGesture {
             onDismiss()
         }
+        .offset(y: dragOffset < 0 ? dragOffset : 0)
+        .gesture(
+            DragGesture(minimumDistance: 4)
+                .updating($dragOffset) { value, state, _ in
+                    if value.translation.height < 0 {
+                        state = value.translation.height
+                    }
+                }
+                .onEnded { value in
+                    if value.translation.height < -16 {
+                        onDismiss()
+                    }
+                }
+        )
+        .animation(.easeOut(duration: 0.15), value: dragOffset)
         .accessibilityLabel(Text(String(localized: "Session logged")))
     }
 }
