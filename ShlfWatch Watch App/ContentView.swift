@@ -62,11 +62,15 @@ struct ContentView: View {
                 VStack(spacing: 8) {
                     NavigationLink(destination: LogSessionWatchView(book: book)) {
                         HStack(spacing: 8) {
-                            // Live indicator
-                            Circle()
-                                .fill(.green)
-                                .frame(width: 8, height: 8)
-                                .shadow(color: .green.opacity(0.6), radius: 4, x: 0, y: 0)
+                            ZStack(alignment: .bottomTrailing) {
+                                WatchBookCoverView(imageURL: book.coverImageURL, size: CGSize(width: 24, height: 32))
+
+                                Circle()
+                                    .fill(.green)
+                                    .frame(width: 8, height: 8)
+                                    .shadow(color: .green.opacity(0.6), radius: 4, x: 0, y: 0)
+                                    .offset(x: 3, y: 3)
+                            }
 
                             VStack(alignment: .leading, spacing: 1) {
                                 Text(book.title)
@@ -101,7 +105,7 @@ struct ContentView: View {
                                 .foregroundStyle(.tertiary)
                         }
                         .padding(.horizontal, 14)
-                        .padding(.vertical, 12)
+                        .padding(.vertical, 10)
                         .background {
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
                                 .fill(.ultraThinMaterial)
@@ -141,8 +145,10 @@ struct ContentView: View {
                         NavigationLink(destination: BookDetailWatchView(book: book)) {
                             BookRowWatch(book: book)
                         }
+                        .listRowInsets(EdgeInsets(top: 3, leading: 6, bottom: 3, trailing: 6))
                     }
                 }
+                .listStyle(.plain)
                 .navigationTitle("Reading")
                 .toolbar { settingsToolbar }
             }
@@ -170,34 +176,42 @@ struct BookRowWatch: View {
     let book: Book
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(book.title)
-                .font(.headline)
-                .lineLimit(2)
+        HStack(alignment: .top, spacing: 10) {
+            WatchBookCoverView(imageURL: book.coverImageURL)
 
-            Text(book.author)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(book.title)
+                    .font(.system(.caption, design: .rounded, weight: .semibold))
+                    .lineLimit(2)
 
-            if let totalPages = book.totalPages {
-                HStack(spacing: 4) {
-                    Text(
-                        String.localizedStringWithFormat(
-                            String(localized: "%lld/%lld"),
-                            book.currentPage,
-                            totalPages
+                Text(book.author)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+
+                if let totalPages = book.totalPages {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(
+                            String.localizedStringWithFormat(
+                                String(localized: "%lld/%lld"),
+                                book.currentPage,
+                                totalPages
+                            )
                         )
-                    )
                         .font(.caption2)
                         .foregroundStyle(themeColor.color)
 
-                    ProgressView(value: Double(book.currentPage), total: Double(totalPages))
-                        .tint(themeColor.color)
+                        ProgressView(value: Double(book.currentPage), total: Double(totalPages))
+                            .tint(themeColor.color)
+                            .progressViewStyle(.linear)
+                            .scaleEffect(y: 0.8, anchor: .center)
+                    }
                 }
             }
+
+            Spacer(minLength: 0)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 1)
     }
 }
 
