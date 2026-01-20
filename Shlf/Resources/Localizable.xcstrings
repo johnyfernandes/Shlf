@@ -709,6 +709,7 @@
       }
     },
     "%lld page%@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1122,6 +1123,7 @@
       }
     },
     "%lld/3" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2286,7 +2288,38 @@
       }
     },
     "Add" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hinzufügen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar"
+          }
+        }
+      }
     },
     "Add a Book" : {
       "localizations" : {
@@ -2677,7 +2710,38 @@
       }
     },
     "Add Subject" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thema hinzufügen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add Subject"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir tema"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter un sujet"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar tema"
+          }
+        }
+      }
     },
     "Add subjects" : {
       "comment" : "Button title to add subjects to a book.",
@@ -2854,6 +2918,41 @@
         }
       }
     },
+    "Adding \\(title)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hinzufügen \\(title)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adding \\(title)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadiendo \\(title)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajout de \\(title)"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A adicionar \\(title)"
+          }
+        }
+      }
+    },
     "Adding %@" : {
       "localizations" : {
         "de" : {
@@ -2884,6 +2983,41 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "A adicionar %@"
+          }
+        }
+      }
+    },
+    "Adding description for \\(title)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beschreibung hinzufügen für \\(title)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adding description for \\(title)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadiendo descripción para \\(title)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajout de la description pour \\(title)"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A adicionar descrição para \\(title)"
           }
         }
       }
@@ -3032,7 +3166,38 @@
 
     },
     "All Subjects" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Themen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All Subjects"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos los temas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous les sujets"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos os temas"
+          }
+        }
+      }
     },
     "All Time" : {
       "comment" : "Title of the book stats range option that shows all time reading data.",
@@ -4282,7 +4447,38 @@
       }
     },
     "Book Stats" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buchstatistiken"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Book Stats"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estadísticas del libro"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Statistiques du livre"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estatísticas do livro"
+          }
+        }
+      }
     },
     "Book Type" : {
       "localizations" : {
@@ -4355,6 +4551,41 @@
     "Books" : {
       "comment" : "Label for the y-axis in the chart displaying the number of finished books.",
       "isCommentAutoGenerated" : true
+    },
+    "Books \\(summary.bookCount) · Sessions \\(summary.sessionCount) · Achievements \\(summary.achievementCount)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bücher \\(summary.bookCount) · Sitzungen \\(summary.sessionCount) · Erfolge \\(summary.achievementCount)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Books \\(summary.bookCount) · Sessions \\(summary.sessionCount) · Achievements \\(summary.achievementCount)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Libros \\(summary.bookCount) · Sesiones \\(summary.sessionCount) · Logros \\(summary.achievementCount)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Livres \\(summary.bookCount) · Sessions \\(summary.sessionCount) · Succès \\(summary.achievementCount)"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Livros \\(summary.bookCount) · Sessões \\(summary.sessionCount) · Conquistas \\(summary.achievementCount)"
+          }
+        }
+      }
     },
     "Books %lld · Sessions %lld · Achievements %lld" : {
       "comment" : "A list of counts of books, reading sessions, and achievements that were generated in the last mock data seed.",
@@ -5977,6 +6208,41 @@
     "Create your first subject to get started." : {
 
     },
+    "Created \\(result.createdSessions) imported sessions" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\\(result.createdSessions) importierte Sitzungen erstellt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Created \\(result.createdSessions) imported sessions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\\(result.createdSessions) sesiones importadas creadas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\\(result.createdSessions) sessions importées créées"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\\(result.createdSessions) sessões importadas criadas"
+          }
+        }
+      }
+    },
     "Created %lld imported sessions" : {
       "localizations" : {
         "de" : {
@@ -6492,7 +6758,39 @@
     },
     "Customize Book Stats" : {
       "comment" : "A link label that lets users customize the statistics displayed on each book.",
-      "isCommentAutoGenerated" : true
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buchstatistiken anpassen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Customize Book Stats"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personalizar estadísticas del libro"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personnaliser les stats du livre"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personalizar estatísticas do livro"
+          }
+        }
+      }
     },
     "Customize Home Screen" : {
       "comment" : "A button that, when tapped, presents a view allowing users to customize their home screen.",
@@ -6605,7 +6903,39 @@
     },
     "Customize which stats appear on each book and the default range." : {
       "comment" : "A description of the feature that allows users to customize which statistics appear on each book and their default range.",
-      "isCommentAutoGenerated" : true
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lege fest, welche Statistiken pro Buch erscheinen und den Standardzeitraum."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Customize which stats appear on each book and the default range."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige qué estadísticas aparecen en cada libro y el rango predeterminado."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez quelles stats s’affichent pour chaque livre et la plage par défaut."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Define que estatísticas aparecem em cada livro e o intervalo padrão."
+          }
+        }
+      }
     },
     "Customize which stats appear on your home page. You can show up to 3 cards." : {
       "localizations" : {
@@ -7422,7 +7752,39 @@
     },
     "Density" : {
       "comment" : "A label describing the intensity of the mock data generation.",
-      "isCommentAutoGenerated" : true
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dichte"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Density"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Densidad"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Densité"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Densidade"
+          }
+        }
+      }
     },
     "Description" : {
       "localizations" : {
@@ -7527,7 +7889,38 @@
       }
     },
     "Devices" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geräte"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Devices"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dispositivos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appareils"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dispositivos"
+          }
+        }
+      }
     },
     "Did Not Finish" : {
       "localizations" : {
@@ -7779,6 +8172,12 @@
             "value" : "Kindle trennen"
           }
         },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disconnect Kindle"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7794,7 +8193,7 @@
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Desligar Kindle"
+            "value" : "Desconectar Kindle"
           }
         }
       }
@@ -7804,25 +8203,31 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Durch das Trennen wird die Goodreads-Sitzung von diesem Gerät entfernt. Du kannst jederzeit erneut verbinden."
+            "value" : "Durch die Trennung wird die Goodreads‑Sitzung von diesem Gerät entfernt. Du kannst jederzeit erneut verbinden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disconnecting will remove the Goodreads session from this device. You can reconnect anytime."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Al desconectar se eliminará la sesión de Goodreads de este dispositivo. Puedes reconectar en cualquier momento."
+            "value" : "La desconexión eliminará la sesión de Goodreads de este dispositivo. Puedes reconectarte en cualquier momento."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La déconnexion supprimera la session Goodreads de cet appareil. Vous pouvez vous reconnecter à tout moment."
+            "value" : "La déconnexion supprimera la session Goodreads de cet appareil. Vous pourrez vous reconnecter à tout moment."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ao desligar, a sessão do Goodreads será removida deste dispositivo. Pode voltar a ligar a qualquer momento."
+            "value" : "A desconexão removerá a sessão do Goodreads deste dispositivo. Podes voltar a ligar-te a qualquer momento."
           }
         }
       }
@@ -7832,25 +8237,31 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Durch das Trennen wird die Kindle‑Sitzung von diesem Gerät entfernt. Du kannst jederzeit erneut verbinden."
+            "value" : "Durch die Trennung wird die Kindle‑Sitzung von diesem Gerät entfernt. Du kannst jederzeit erneut verbinden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disconnecting will remove the Kindle session from this device. You can reconnect anytime."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Al desconectar se eliminará la sesión de Kindle de este dispositivo. Puedes reconectar en cualquier momento."
+            "value" : "La desconexión eliminará la sesión de Kindle de este dispositivo. Puedes reconectarte en cualquier momento."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La déconnexion supprimera la session Kindle de cet appareil. Vous pouvez vous reconnecter à tout moment."
+            "value" : "La déconnexion supprimera la session Kindle de cet appareil. Vous pourrez vous reconnecter à tout moment."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ao desligar, a sessão do Kindle será removida deste dispositivo. Pode voltar a ligar a qualquer momento."
+            "value" : "A desconexão removerá a sessão do Kindle deste dispositivo. Podes voltar a ligar-te a qualquer momento."
           }
         }
       }
@@ -8812,7 +9223,39 @@
     },
     "EULA" : {
       "comment" : "A link to the app's End User License Agreement (EULA).",
-      "isCommentAutoGenerated" : true
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EULA"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EULA"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EULA"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CLUF"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EULA"
+          }
+        }
+      }
     },
     "Exclude from stats & XP" : {
       "localizations" : {
@@ -9188,6 +9631,41 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mais rápida"
+          }
+        }
+      }
+    },
+    "Fetching descriptions \\(current) of \\(total)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lade Beschreibungen \\(current) von \\(total)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fetching descriptions \\(current) of \\(total)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obteniendo descripciones \\(current) de \\(total)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Récupération des descriptions \\(current) sur \\(total)"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A obter descrições \\(current) de \\(total)"
           }
         }
       }
@@ -11270,6 +11748,12 @@
             "value" : "Aus Kindle importieren"
           }
         },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import from Kindle"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11429,6 +11913,41 @@
         }
       }
     },
+    "Imported \\(result.importedCount) books" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\\(result.importedCount) Bücher importiert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imported \\(result.importedCount) books"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\\(result.importedCount) libros importados"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\\(result.importedCount) livres importés"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\\(result.importedCount) livros importados"
+          }
+        }
+      }
+    },
     "Imported %lld books" : {
       "localizations" : {
         "de" : {
@@ -11527,6 +12046,41 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "As sessões importadas são excluídas das estatísticas por predefinição."
+          }
+        }
+      }
+    },
+    "Importing \\(current) of \\(total) books" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importiere \\(current) von \\(total) Büchern"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importing \\(current) of \\(total) books"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importando \\(current) de \\(total) libros"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importation de \\(current) sur \\(total) livres"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A importar \\(current) de \\(total) livros"
           }
         }
       }
@@ -12246,6 +12800,12 @@
             "value" : "Kindle"
           }
         },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kindle"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -12274,22 +12834,28 @@
             "value" : "Kindle stellt nur deine Bibliotheksliste bereit. Lesestatus und Daten sind nicht verfügbar."
           }
         },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kindle only provides your library list. Reading status and dates aren't available."
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kindle solo proporciona la lista de tu biblioteca. El estado de lectura y las fechas no están disponibles."
+            "value" : "Kindle solo proporciona la lista de tu biblioteca. El estado y las fechas de lectura no están disponibles."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kindle ne fournit que la liste de votre bibliothèque. L’état de lecture et les dates ne sont pas disponibles."
+            "value" : "Kindle ne fournit que la liste de votre bibliothèque. Le statut et les dates de lecture ne sont pas disponibles."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O Kindle apenas fornece a lista da tua biblioteca. O estado de leitura e as datas não estão disponíveis."
+            "value" : "O Kindle só fornece a lista da tua biblioteca. O estado e as datas de leitura não estão disponíveis."
           }
         }
       }
@@ -12366,8 +12932,43 @@
         }
       }
     },
+    "Last activity" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte Aktivität"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last activity"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Última actividad"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dernière activité"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Última atividade"
+          }
+        }
+      }
+    },
     "Last activity %@" : {
       "comment" : "A label displaying the last time the user synced their data with iCloud. The argument is a `Date` representing the last sync date.",
+      "extractionState" : "stale",
       "isCommentAutoGenerated" : true,
       "localizations" : {
         "de" : {
@@ -12465,6 +13066,41 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Último seed"
+          }
+        }
+      }
+    },
+    "Last Seed: \\(summary.rangeLabel) · \\(summary.intensityLabel)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzter Seed: \\(summary.rangeLabel) · \\(summary.intensityLabel)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last Seed: \\(summary.rangeLabel) · \\(summary.intensityLabel)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Último seed: \\(summary.rangeLabel) · \\(summary.intensityLabel)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dernier seed : \\(summary.rangeLabel) · \\(summary.intensityLabel)"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Último seed: \\(summary.rangeLabel) · \\(summary.intensityLabel)"
           }
         }
       }
@@ -16257,6 +16893,40 @@
       "comment" : "Label for the pace (pages per hour) stat on the session detail view.",
       "isCommentAutoGenerated" : true
     },
+    "page" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seite"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "page"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "página"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "page"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "página"
+          }
+        }
+      }
+    },
     "Page" : {
       "localizations" : {
         "de" : {
@@ -17675,7 +18345,39 @@
     },
     "Privacy Policy" : {
       "comment" : "A link that takes the user to the privacy policy of the app.",
-      "isCommentAutoGenerated" : true
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datenschutzrichtlinie"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacy Policy"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Política de privacidad"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Politique de confidentialité"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Política de Privacidade"
+          }
+        }
+      }
     },
     "Pro" : {
       "localizations" : {
@@ -19295,7 +19997,38 @@
       }
     },
     "Rename" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Umbenennen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rename"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renombrar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renommer"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renomear"
+          }
+        }
+      }
     },
     "Rename Subject" : {
 
@@ -20602,6 +21335,41 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Secções"
+          }
+        }
+      }
+    },
+    "Seeded \\(summary.seededAt.formatted(date: .abbreviated, time: .shortened))" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erstellt \\(summary.seededAt.formatted(date: .abbreviated, time: .shortened))"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seeded \\(summary.seededAt.formatted(date: .abbreviated, time: .shortened))"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generado \\(summary.seededAt.formatted(date: .abbreviated, time: .shortened))"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Généré \\(summary.seededAt.formatted(date: .abbreviated, time: .shortened))"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gerado \\(summary.seededAt.formatted(date: .abbreviated, time: .shortened))"
           }
         }
       }
@@ -22024,6 +22792,12 @@
             "value" : "Melde dich mit deinem Amazon‑Konto an und wir importieren deine Kindle‑Bibliothek."
           }
         },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in with your Amazon account and we'll import your Kindle library."
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22033,13 +22807,13 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Connectez‑vous avec votre compte Amazon et nous importerons votre bibliothèque Kindle."
+            "value" : "Connectez-vous avec votre compte Amazon et nous importerons votre bibliothèque Kindle."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Inicia sessão com a tua conta Amazon e iremos importar a tua biblioteca Kindle."
+            "value" : "Inicia sessão com a tua conta Amazon e importaremos a tua biblioteca Kindle."
           }
         }
       }
@@ -22109,6 +22883,41 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ignorar duplicados"
+          }
+        }
+      }
+    },
+    "Skipped \\(result.skippedCount) rows" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\\(result.skippedCount) Zeilen übersprungen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skipped \\(result.skippedCount) rows"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\\(result.skippedCount) filas omitidas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\\(result.skippedCount) lignes ignorées"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\\(result.skippedCount) linhas ignoradas"
           }
         }
       }
@@ -23260,11 +24069,74 @@
       }
     },
     "Subjects help organize your library and power category stats. Changes here apply to all books." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Themen helfen, deine Bibliothek zu organisieren und Kategorie-Statistiken zu erstellen. Änderungen hier gelten für alle Bücher."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subjects help organize your library and power category stats. Changes here apply to all books."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los temas ayudan a organizar tu biblioteca y alimentan las estadísticas por categoría. Los cambios aquí se aplican a todos los libros."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les sujets aident à organiser votre bibliothèque et alimentent les statistiques par catégorie. Les changements s’appliquent à tous les livres."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os temas ajudam a organizar a tua biblioteca e alimentam as estatísticas por categoria. As alterações aqui aplicam-se a todos os livros."
+          }
+        }
+      }
     },
     "Support" : {
       "comment" : "A link to the support section of the app.",
-      "isCommentAutoGenerated" : true
+      "isCommentAutoGenerated" : true,
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Support"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Support"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soporte"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Assistance"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suporte"
+          }
+        }
+      }
     },
     "Sync" : {
       "extractionState" : "stale",
@@ -23302,7 +24174,38 @@
       }
     },
     "Sync & Integrations" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronisierung & Integrationen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync & Integrations"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sincronización e integraciones"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync & intégrations"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sincronização e integrações"
+          }
+        }
+      }
     },
     "Sync instantly with your iPhone" : {
       "localizations" : {
@@ -24016,10 +24919,72 @@
       }
     },
     "This removes the subject from all books." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entfernt das Thema aus allen Büchern."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This removes the subject from all books."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elimina el tema de todos los libros."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprime le sujet de tous les livres."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove o tema de todos os livros."
+          }
+        }
+      }
     },
     "This updates every book using this subject." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualisiert jedes Buch, das dieses Thema verwendet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This updates every book using this subject."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualiza todos los libros que usan este tema."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Met à jour tous les livres utilisant ce sujet."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualiza todos os livros que usam este tema."
+          }
+        }
+      }
     },
     "This will end the timer and discard your session progress." : {
       "comment" : "An alert message that appears when a user attempts to discard their reading session.",
@@ -25487,6 +26452,41 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Atualiza a tua página atual e o total de páginas."
+          }
+        }
+      }
+    },
+    "Updated \\(result.updatedCount) books" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\\(result.updatedCount) Bücher aktualisiert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Updated \\(result.updatedCount) books"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\\(result.updatedCount) libros actualizados"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\\(result.updatedCount) livres mis à jour"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\\(result.updatedCount) livros atualizados"
           }
         }
       }

@@ -104,7 +104,7 @@ struct HomeCardSettingsView: View {
 
                                 Spacer()
 
-                                Text("\(profile.homeCards.count)/3")
+                                Text(verbatim: "\(profile.homeCards.count)/3")
                                     .font(.caption.weight(.semibold))
                                     .foregroundStyle(.secondary)
                                     .padding(.horizontal, 8)

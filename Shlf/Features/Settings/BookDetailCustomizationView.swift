@@ -117,7 +117,7 @@ struct BookDetailCustomizationView: View {
 
                 Spacer()
 
-                Text("\(activeSectionCount)/\(BookDetailSection.allCases.count)")
+                Text(verbatim: "\(activeSectionCount)/\(BookDetailSection.allCases.count)")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 8)

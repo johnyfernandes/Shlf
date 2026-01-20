@@ -113,7 +113,7 @@ struct SubjectsSettingsView: View {
 
                                 Spacer()
 
-                                Text("\(profile.subjectLibrary.count)")
+                                Text(verbatim: "\(profile.subjectLibrary.count)")
                                     .font(.caption.weight(.semibold))
                                     .foregroundStyle(.secondary)
                                     .padding(.horizontal, 8)
