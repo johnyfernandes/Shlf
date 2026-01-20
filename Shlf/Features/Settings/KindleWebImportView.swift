@@ -26,10 +26,10 @@ struct KindleWebImportView: View {
         NavigationStack {
             VStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(String(localized: "Import from Kindle"))
+                    Text("Import from Kindle")
                         .font(.headline)
 
-                    Text(String(localized: "Sign in with your Amazon account and we'll import your Kindle library."))
+                    Text("Sign in with your Amazon account and we'll import your Kindle library.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -50,11 +50,11 @@ struct KindleWebImportView: View {
                     .allowsHitTesting(showsWebView)
             }
             .padding(16)
-            .navigationTitle(String(localized: "Kindle"))
+            .navigationTitle("Kindle")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(String(localized: "Done")) {
+                    Button("Done") {
                         dismiss()
                     }
                     .foregroundStyle(themeColor.color)
@@ -66,7 +66,7 @@ struct KindleWebImportView: View {
                             Button(role: .destructive) {
                                 coordinator.disconnect()
                             } label: {
-                                Label(String(localized: "Disconnect"), systemImage: "link.badge.minus")
+                                Label("Disconnect", systemImage: "link.badge.minus")
                             }
                         } label: {
                             Image(systemName: "ellipsis.circle")

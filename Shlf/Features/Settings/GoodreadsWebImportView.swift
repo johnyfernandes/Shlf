@@ -26,10 +26,10 @@ struct GoodreadsWebImportView: View {
         NavigationStack {
             VStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(String(localized: "Import from Goodreads"))
+                    Text("Import from Goodreads")
                         .font(.headline)
 
-                    Text(String(localized: "Sign in to Goodreads and we'll fetch your export automatically."))
+                    Text("Sign in to Goodreads and we'll fetch your export automatically.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -50,11 +50,11 @@ struct GoodreadsWebImportView: View {
                     .allowsHitTesting(showsWebView)
             }
             .padding(16)
-            .navigationTitle(String(localized: "Goodreads"))
+            .navigationTitle("Goodreads")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(String(localized: "Done")) {
+                    Button("Done") {
                         coordinator.stop()
                         dismiss()
                     }
@@ -67,7 +67,7 @@ struct GoodreadsWebImportView: View {
                             Button(role: .destructive) {
                                 coordinator.disconnect()
                             } label: {
-                                Label(String(localized: "Disconnect"), systemImage: "link.badge.minus")
+                                Label("Disconnect", systemImage: "link.badge.minus")
                             }
                         } label: {
                             Image(systemName: "ellipsis.circle")

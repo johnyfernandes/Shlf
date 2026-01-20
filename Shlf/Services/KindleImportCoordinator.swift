@@ -8,6 +8,7 @@
 #if os(iOS) && !WIDGET_EXTENSION
 import Foundation
 import Combine
+import SwiftUI
 import WebKit
 
 @MainActor
@@ -21,7 +22,7 @@ final class KindleImportCoordinator: NSObject, ObservableObject {
     }
 
     @Published var phase: Phase = .idle
-    @Published var statusText: String = String(localized: "Loading Kindle...")
+    @Published var statusText: LocalizedStringKey = "Loading Kindle..."
     @Published var items: [KindleImportItem] = []
     @Published var errorMessage: String?
     @Published var isConnected: Bool = false
@@ -58,7 +59,7 @@ final class KindleImportCoordinator: NSObject, ObservableObject {
         isSyncOnly = syncOnly
         requiresLogin = false
         phase = .idle
-        statusText = String(localized: "Loading Kindle...")
+        statusText = "Loading Kindle..."
         errorMessage = nil
         items = []
         didStartScrape = false
@@ -72,7 +73,7 @@ final class KindleImportCoordinator: NSObject, ObservableObject {
         isConnected = false
         requiresLogin = false
         phase = .idle
-        statusText = String(localized: "Loading Kindle...")
+        statusText = "Loading Kindle..."
         didStartScrape = false
         Task {
             await WebSessionCleaner.clear(domains: ["amazon"])
@@ -102,7 +103,7 @@ final class KindleImportCoordinator: NSObject, ObservableObject {
         guard !didStartScrape else { return }
         didStartScrape = true
         phase = .scanning
-        statusText = String(localized: "Scanning Kindle library...")
+        statusText = "Scanning Kindle library..."
         runScrapeScript()
     }
 
@@ -179,8 +180,8 @@ final class KindleImportCoordinator: NSObject, ObservableObject {
         webView.evaluateJavaScript(script) { [weak self] _, error in
             guard let self else { return }
             if error != nil {
-                self.phase = .failed(String(localized: "We couldn't read your Kindle library. Please try again."))
-                self.errorMessage = String(localized: "We couldn't read your Kindle library. Please try again.")
+                self.phase = .failed("We couldn't read your Kindle library. Please try again.")
+                self.errorMessage = "We couldn't read your Kindle library. Please try again."
             }
         }
     }
@@ -193,7 +194,7 @@ extension KindleImportCoordinator: WKNavigationDelegate, WKUIDelegate {
 
         if path.contains("landing") || path.contains("signin") || path.contains("sign-in") {
             phase = .waitingForLogin
-            statusText = String(localized: "Sign in to Amazon")
+            statusText = "Sign in to Amazon"
             isConnected = false
             didStartScrape = false
             if isSyncOnly {
@@ -233,14 +234,14 @@ extension KindleImportCoordinator: WKScriptMessageHandler {
             if payload.type == "books", let items = payload.items {
                 self.items = items
                 self.phase = .finished
-                self.statusText = String.localizedStringWithFormat(String(localized: "Found %lld books"), items.count)
+                self.statusText = "Found \(items.count) books"
             } else {
-                let errorMessage = String(localized: "We couldn't read your Kindle library. Please try again.")
+                let errorMessage = "We couldn't read your Kindle library. Please try again."
                 self.phase = .failed(errorMessage)
                 self.errorMessage = errorMessage
             }
         } catch {
-            let errorMessage = String(localized: "We couldn't read your Kindle library. Please try again.")
+            let errorMessage = "We couldn't read your Kindle library. Please try again."
             phase = .failed(errorMessage)
             self.errorMessage = errorMessage
         }

@@ -8,6 +8,7 @@
 #if os(iOS) && !WIDGET_EXTENSION
 import Combine
 import Foundation
+import SwiftUI
 import WebKit
 
 @MainActor
@@ -23,7 +24,7 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
     }
 
     @Published var phase: Phase = .idle
-    @Published var statusText: String = String(localized: "Loading Goodreads...")
+    @Published var statusText: LocalizedStringKey = "Loading Goodreads..."
     @Published var downloadedData: Data?
     @Published var errorMessage: String?
     @Published var isConnected: Bool = false
@@ -57,7 +58,7 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
         isSyncOnly = syncOnly
         requiresLogin = false
         phase = .idle
-        statusText = String(localized: "Loading Goodreads...")
+        statusText = "Loading Goodreads..."
         downloadedData = nil
         errorMessage = nil
         didRequestExport = false
@@ -72,7 +73,7 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
         isConnected = false
         requiresLogin = false
         phase = .idle
-        statusText = String(localized: "Loading Goodreads...")
+        statusText = "Loading Goodreads..."
         Task { [weak self] in
             await WebSessionCleaner.clear(domains: ["goodreads"])
             if let signInURL = self?.signInURL {
@@ -153,14 +154,14 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
 
             if error != nil {
                 self.phase = .waitingForExport
-                self.statusText = String(localized: "Loading export page...")
+                self.statusText = "Loading export page..."
                 self.startPolling()
                 return
             }
 
             if let link = result as? String, link.hasPrefix("http"), let url = URL(string: link) {
                 self.phase = .downloading
-                self.statusText = String(localized: "Downloading CSV...")
+                self.statusText = "Downloading CSV..."
                 Task {
                     await self.downloadCSV(from: url)
                 }
@@ -171,12 +172,12 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
                 switch resultString {
                 case "loading":
                     self.phase = .waitingForExport
-                    self.statusText = String(localized: "Loading export page...")
+                    self.statusText = "Loading export page..."
                     self.startPolling()
                 case "login_required":
                     self.stop()
                     self.phase = .waitingForLogin
-                    self.statusText = String(localized: "Sign in to Goodreads")
+                    self.statusText = "Sign in to Goodreads"
                     if self.isSyncOnly {
                         self.requiresLogin = true
                     }
@@ -184,24 +185,24 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
                 case "export_clicked":
                     self.didAutoClickExport = true
                     self.phase = .waitingForExport
-                    self.statusText = String(localized: "Export started. Waiting for file...")
+                    self.statusText = "Export started. Waiting for file..."
                     self.startPolling()
                 case "export_pending":
                     self.phase = .waitingForExport
-                    self.statusText = String(localized: "Waiting for export to finish...")
+                    self.statusText = "Waiting for export to finish..."
                     self.startPolling()
                 case "captcha":
-                    self.fail(with: String(localized: "Goodreads blocked automated export. Please use manual CSV upload."))
+                    self.fail(with: "Goodreads blocked automated export. Please use manual CSV upload.")
                 case "waiting":
                     self.phase = .waitingForExport
-                    self.statusText = String(localized: "Waiting for export to finish...")
+                    self.statusText = "Waiting for export to finish..."
                     self.startPolling()
                 default:
-                    self.fail(with: String(localized: "We couldn't find the Export Library page. Goodreads may have changed something."))
+                    self.fail(with: "We couldn't find the Export Library page. Goodreads may have changed something.")
                 }
             } else {
                 self.phase = .waitingForExport
-                self.statusText = String(localized: "Loading export page...")
+                self.statusText = "Loading export page..."
                 self.startPolling()
             }
         }
@@ -213,7 +214,7 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
             guard let self else { return }
             self.exportPollCount += 1
             if self.exportPollCount > 60 {
-                self.fail(with: String(localized: "Export is taking too long. Please try manual CSV upload."))
+                self.fail(with: "Export is taking too long. Please try manual CSV upload.")
                 return
             }
             self.handleExportPage()
@@ -230,7 +231,7 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
         guard !didRequestExport else { return }
         didRequestExport = true
         phase = .exporting
-        statusText = String(localized: "Preparing export...")
+        statusText = "Preparing export..."
         webView.load(URLRequest(url: exportPageURL))
     }
 
@@ -251,7 +252,7 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
             }
 
             phase = .finished
-            statusText = String(localized: "Export complete")
+            statusText = "Export complete"
             downloadedData = data
             stop()
         } catch {
@@ -280,7 +281,7 @@ extension GoodreadsImportCoordinator: WKNavigationDelegate, WKUIDelegate {
 
         if path.contains("sign_in") || path.contains("signin") || path.contains("sign_up") || path.contains("signup") {
             phase = .waitingForLogin
-            statusText = String(localized: "Sign in to Goodreads")
+            statusText = "Sign in to Goodreads"
             didRequestExport = false
             didAutoClickExport = false
             isConnected = false
@@ -293,7 +294,7 @@ extension GoodreadsImportCoordinator: WKNavigationDelegate, WKUIDelegate {
         if path.contains("/review/import") {
             isConnected = true
             phase = .exporting
-            statusText = String(localized: "Preparing export...")
+            statusText = "Preparing export..."
             requiresLogin = false
             handleExportPage()
         } else {
@@ -314,7 +315,7 @@ extension GoodreadsImportCoordinator: WKNavigationDelegate, WKUIDelegate {
 
             if isCSV {
                 phase = .downloading
-                statusText = String(localized: "Downloading CSV...")
+                statusText = "Downloading CSV..."
                 decisionHandler(.cancel)
                 Task {
                     await downloadCSV(from: url)
@@ -328,13 +329,13 @@ extension GoodreadsImportCoordinator: WKNavigationDelegate, WKUIDelegate {
     func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) {
         download.delegate = self
         phase = .downloading
-        statusText = String(localized: "Downloading CSV...")
+        statusText = "Downloading CSV..."
     }
 
     func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) {
         download.delegate = self
         phase = .downloading
-        statusText = String(localized: "Downloading CSV...")
+        statusText = "Downloading CSV..."
     }
 }
 
@@ -348,14 +349,14 @@ extension GoodreadsImportCoordinator: WKDownloadDelegate {
 
     func downloadDidFinish(_ download: WKDownload) {
         guard let downloadURL else {
-            fail(with: String(localized: "Could not read CSV file."))
+            fail(with: "Could not read CSV file.")
             return
         }
 
         do {
             let data = try Data(contentsOf: downloadURL)
             phase = .finished
-            statusText = String(localized: "Export complete")
+            statusText = "Export complete"
             downloadedData = data
             stop()
         } catch {

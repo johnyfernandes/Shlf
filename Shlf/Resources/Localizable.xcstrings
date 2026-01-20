@@ -5803,6 +5803,7 @@
       }
     },
     "Could not read CSV file." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -8984,6 +8985,7 @@
       }
     },
     "Export is taking too long. Please try manual CSV upload." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -10308,6 +10310,7 @@
       }
     },
     "Goodreads blocked automated export. Please use manual CSV upload." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -10342,6 +10345,7 @@
       }
     },
     "Goodreads CSV is empty." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -10376,6 +10380,7 @@
       }
     },
     "Goodreads CSV is missing a Title or Author column." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -23362,7 +23367,6 @@
       }
     },
     "Sync now" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -26422,6 +26426,7 @@
       }
     },
     "We couldn't find the Export Library page. Goodreads may have changed something." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -26456,6 +26461,7 @@
       }
     },
     "We couldn't read your Kindle library. Please try again." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {

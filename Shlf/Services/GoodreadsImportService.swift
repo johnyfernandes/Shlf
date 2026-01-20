@@ -17,11 +17,11 @@ enum GoodreadsImportError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .emptyFile:
-            return String(localized: "Goodreads CSV is empty.")
+            return "Goodreads CSV is empty."
         case .missingRequiredColumns:
-            return String(localized: "Goodreads CSV is missing a Title or Author column.")
+            return "Goodreads CSV is missing a Title or Author column."
         case .unreadableFile:
-            return String(localized: "Could not read CSV file.")
+            return "Could not read CSV file."
         }
     }
 }
