@@ -20,7 +20,6 @@ struct ReadingHeatmapChart: View {
     @State private var maxPages: Int = 1
     @State private var totalPages: Int = 0
     @State private var totalDaysActive: Int = 0
-    @State private var periodTitle: String = ""
     @State private var shouldScrollToEnd = false
 
     private let columns = 7 // Days of week
@@ -29,6 +28,11 @@ struct ReadingHeatmapChart: View {
 
     // PERFORMANCE: Reuse calendar instance
     private let calendar = Calendar.current
+
+    private var weekdayHeaderDates: [Date] {
+        guard let weekStart = calendar.dateInterval(of: .weekOfYear, for: Date())?.start else { return [] }
+        return (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: weekStart) }
+    }
 
     // PERFORMANCE: Calculate all data once when view appears or period changes
     private func calculateData() {
@@ -91,29 +95,25 @@ struct ReadingHeatmapChart: View {
         totalPages = data.values.reduce(0, +)
         totalDaysActive = data.values.filter { $0 > 0 }.count
 
-        // Calculate period title
+        // Trigger scroll to end after data is ready
+        shouldScrollToEnd = true
+    }
+
+    private var periodTitleText: Text {
         let todayDate = Date()
         switch period {
         case .last12Weeks:
-            periodTitle = String(localized: "Last 12 Weeks")
+            return Text("Last 12 Weeks")
         case .currentMonth:
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMMM yyyy"
-            periodTitle = formatter.string(from: todayDate)
+            return Text(todayDate, format: .dateTime.month(.wide).year())
         case .currentYear:
-            let formatter = DateFormatter()
-            formatter.dateFormat = "yyyy"
             let startOfYear = calendar.date(from: calendar.dateComponents([.year], from: todayDate))!
             let daysSinceStart = calendar.dateComponents([.day], from: startOfYear, to: todayDate).day! + 1
-            periodTitle = String.localizedStringWithFormat(
-                String(localized: "%@ (%lld days)"),
-                formatter.string(from: todayDate),
-                daysSinceStart
-            )
+            return Text(todayDate, format: .dateTime.year())
+            + Text(" (")
+            + Text("\(daysSinceStart) days")
+            + Text(")")
         }
-
-        // Trigger scroll to end after data is ready
-        shouldScrollToEnd = true
     }
 
     private func intensityColor(for pages: Int) -> Color {
@@ -139,7 +139,7 @@ struct ReadingHeatmapChart: View {
             // Header with stats
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(periodTitle)
+                    periodTitleText
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundStyle(Theme.Colors.text)
@@ -148,7 +148,7 @@ struct ReadingHeatmapChart: View {
                         HStack(spacing: 4) {
                             Image(systemName: "book.pages")
                                 .font(.caption2)
-                            Text(String.localizedStringWithFormat(String(localized: "%lld total"), totalPages))
+                            Text("\(totalPages) total")
                                 .font(.caption)
                         }
                         .foregroundStyle(Theme.Colors.secondaryText)
@@ -160,7 +160,7 @@ struct ReadingHeatmapChart: View {
                         HStack(spacing: 4) {
                             Image(systemName: "flame.fill")
                                 .font(.caption2)
-                            Text(String.localizedStringWithFormat(String(localized: "%lld days"), totalDaysActive))
+                            Text("\(totalDaysActive) days")
                                 .font(.caption)
                         }
                         .foregroundStyle(Theme.Colors.secondaryText)
@@ -225,8 +225,8 @@ struct ReadingHeatmapChart: View {
 
                 // Sticky day labels
                 VStack(alignment: .trailing, spacing: cellSpacing) {
-                    ForEach(["S", "M", "T", "W", "T", "F", "S"], id: \.self) { day in
-                        Text(day)
+                    ForEach(weekdayHeaderDates, id: \.self) { date in
+                        Text(date, format: .dateTime.weekday(.narrow))
                             .font(.system(size: 8, weight: .medium))
                             .foregroundStyle(Theme.Colors.tertiaryText)
                             .frame(width: 12, height: cellSize)
@@ -387,7 +387,7 @@ struct DayDetailView: View {
                     Image(systemName: "doc.text.fill")
                         .foregroundStyle(themeColor.color)
 
-                    Text(String.localizedStringWithFormat(String(localized: "%lld pages"), totalPages))
+                    Text("\(totalPages) pages")
                         .font(.title2)
                         .fontWeight(.bold)
 
@@ -396,7 +396,8 @@ struct DayDetailView: View {
                     Image(systemName: "books.vertical.fill")
                         .foregroundStyle(themeColor.color)
 
-                    Text("\(booksRead.count) \(booksRead.count == 1 ? "book" : "books")")
+                    let unitKey: LocalizedStringKey = booksRead.count == 1 ? "book" : "books"
+                    Text("\(booksRead.count) ") + Text(unitKey)
                         .font(.title2)
                         .fontWeight(.bold)
                 }
@@ -448,7 +449,7 @@ struct DayDetailView: View {
                                 HStack(spacing: 4) {
                                     Image(systemName: "book.pages")
                                         .font(.caption2)
-                                    Text(String.localizedStringWithFormat(String(localized: "%lld pages"), bookData.pages))
+                                    Text("\(bookData.pages) pages")
                                         .font(.caption)
                                 }
                                 .foregroundStyle(themeColor.color)

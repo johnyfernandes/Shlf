@@ -83,12 +83,6 @@ struct StatsView: View {
         return calendar.date(byAdding: .month, value: calendarMonthOffset, to: start) ?? start
     }
 
-    private var calendarMonthLabel: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "LLLL yyyy"
-        return formatter.string(from: calendarMonthStart)
-    }
-
     private var minCalendarOffset: Int {
         let calendar = Calendar.current
         let now = Date()
@@ -111,17 +105,13 @@ struct StatsView: View {
             ? calendar.component(.month, from: currentStart)
             : 12
 
-        let formatter = DateFormatter()
-        formatter.dateFormat = "LLLL"
-
         return (1...maxMonth).compactMap { month in
             guard let date = calendar.date(from: DateComponents(year: selectedYear, month: month, day: 1)) else {
                 return nil
             }
             let diff = calendar.dateComponents([.month], from: date, to: currentStart).month ?? 0
             let offset = -diff
-            let label = formatter.string(from: date)
-            return CalendarMonthOption(offset: offset, label: label)
+            return CalendarMonthOption(offset: offset, date: date)
         }
     }
 
@@ -132,11 +122,13 @@ struct StatsView: View {
         return [sessionDate, addedDate, finishedDate].compactMap { $0 }.min()
     }
 
-    private var calendarWeekdaySymbols: [String] {
+    private var calendarWeekdays: [Date] {
         let calendar = Calendar.current
-        let symbols = calendar.veryShortStandaloneWeekdaySymbols
-        let startIndex = max(0, calendar.firstWeekday - 1)
-        return Array(symbols[startIndex...] + symbols[..<startIndex])
+        let today = Date()
+        let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: today)) ?? today
+        return (0..<7).compactMap { offset in
+            calendar.date(byAdding: .day, value: offset, to: startOfWeek)
+        }
     }
 
     private var calendarDaySummaries: [Date: CalendarDaySummary] {
@@ -278,36 +270,39 @@ struct StatsView: View {
         return String(format: "%.1f", speed)
     }
 
-    private var trendsDateRangeText: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "d MMM"
-        let start = formatter.string(from: trendsStartDate)
-        let end = formatter.string(from: trendsEndDate)
-        return "\(start) – \(end)"
+    private var trendsDateRangeText: Text {
+        Text(trendsStartDate, format: .dateTime.day().month(.abbreviated))
+        + Text(" – ")
+        + Text(trendsEndDate, format: .dateTime.day().month(.abbreviated))
     }
 
-    private func trendTitle(prefix: String, value: String, suffix: String, accent: Color) -> Text {
-        var text = Text(prefix + " ")
+    private func trendTitle(prefix: LocalizedStringKey, value: Text, suffix: LocalizedStringKey? = nil, accent: Color) -> Text {
+        var text = Text(prefix)
             .foregroundStyle(Theme.Colors.text)
 
-        text = text + Text(value)
+        text = text + Text(" ")
+            .foregroundStyle(Theme.Colors.text)
+
+        text = text + value
             .foregroundStyle(accent)
 
-        if !suffix.isEmpty {
-            text = text + Text(" " + suffix)
+        if let suffix {
+            text = text + Text(" ")
+                .foregroundStyle(Theme.Colors.text)
+            text = text + Text(suffix)
                 .foregroundStyle(Theme.Colors.text)
         }
 
         return text
     }
 
-    private func trendDelta(current: Int, previous: Int, unit: String) -> TrendDelta? {
+    private func trendDelta(current: Int, previous: Int, unit: LocalizedStringKey) -> TrendDelta? {
         guard previous > 0 || current > 0 else { return nil }
         let delta = current - previous
         guard delta != 0 else { return nil }
         let isPositive = delta > 0
         let deltaValue = abs(delta)
-        let text = "\(deltaValue) \(unit)"
+        let text = Text("\(deltaValue) ") + Text(unit)
         return TrendDelta(text: text, isPositive: isPositive)
     }
 
@@ -517,13 +512,15 @@ struct StatsView: View {
 
                     Menu {
                         ForEach(calendarMonthOptions) { option in
-                            Button(option.label) {
+                            Button {
                                 calendarMonthOffset = option.offset
+                            } label: {
+                                Text(option.date, format: .dateTime.month(.wide).year())
                             }
                         }
                     } label: {
                         HStack(spacing: 6) {
-                            Text(calendarMonthLabel)
+                            Text(calendarMonthStart, format: .dateTime.month(.wide).year())
                                 .font(.headline.weight(.semibold))
                                 .foregroundStyle(Theme.Colors.text)
 
@@ -550,8 +547,8 @@ struct StatsView: View {
                 }
 
                 HStack(spacing: 0) {
-                    ForEach(calendarWeekdaySymbols, id: \.self) { symbol in
-                        Text(symbol.uppercased())
+                    ForEach(calendarWeekdays, id: \.self) { date in
+                        Text(date, format: .dateTime.weekday(.narrow))
                             .font(.caption2.weight(.semibold))
                             .foregroundStyle(Theme.Colors.tertiaryText)
                             .frame(maxWidth: .infinity)
@@ -605,7 +602,7 @@ struct StatsView: View {
                         .font(Theme.Typography.title3)
                         .foregroundStyle(Theme.Colors.text)
 
-                    Text(trendsDateRangeText)
+                    trendsDateRangeText
                         .font(.caption)
                         .foregroundStyle(Theme.Colors.secondaryText)
                 }
@@ -635,24 +632,51 @@ struct StatsView: View {
 
             VStack(spacing: 12) {
                 TrendCard(
-                    title: trendTitle(prefix: "You read", value: "\(pagesReadInRange)", suffix: "pages", accent: themeColor.color),
-                    delta: trendDelta(current: pagesReadInRange, previous: previousTrendSessions.reduce(0) { $0 + $1.pagesRead }, unit: "pages"),
+                    title: trendTitle(
+                        prefix: "You read",
+                        value: Text(formatNumber(pagesReadInRange)),
+                        suffix: "pages",
+                        accent: themeColor.color
+                    ),
+                    delta: trendDelta(
+                        current: pagesReadInRange,
+                        previous: previousTrendSessions.reduce(0) { $0 + $1.pagesRead },
+                        unit: "pages"
+                    ),
                     accent: themeColor.color,
                     icon: .bars,
                     onTap: { selectedTrend = .pages }
                 )
 
                 TrendCard(
-                    title: trendTitle(prefix: "You read for", value: "\(minutesReadInRange)", suffix: "min", accent: Theme.Colors.secondary),
-                    delta: trendDelta(current: minutesReadInRange, previous: previousTrendSessions.reduce(0) { $0 + $1.durationMinutes }, unit: "min"),
+                    title: trendTitle(
+                        prefix: "You read for",
+                        value: Text(formatNumber(minutesReadInRange)),
+                        suffix: "min",
+                        accent: Theme.Colors.secondary
+                    ),
+                    delta: trendDelta(
+                        current: minutesReadInRange,
+                        previous: previousTrendSessions.reduce(0) { $0 + $1.durationMinutes },
+                        unit: "min"
+                    ),
                     accent: Theme.Colors.secondary,
                     icon: .line,
                     onTap: { selectedTrend = .minutes }
                 )
 
                 TrendCard(
-                    title: trendTitle(prefix: "You finished", value: "\(booksFinishedInRange)", suffix: "books", accent: Theme.Colors.success),
-                    delta: trendDelta(current: booksFinishedInRange, previous: previousBooksFinishedInRange, unit: "books"),
+                    title: trendTitle(
+                        prefix: "You finished",
+                        value: Text(formatNumber(booksFinishedInRange)),
+                        suffix: "books",
+                        accent: Theme.Colors.success
+                    ),
+                    delta: trendDelta(
+                        current: booksFinishedInRange,
+                        previous: previousBooksFinishedInRange,
+                        unit: "books"
+                    ),
                     accent: Theme.Colors.success,
                     icon: .bars,
                     onTap: { selectedTrend = .books }
@@ -661,8 +685,8 @@ struct StatsView: View {
                 TrendCard(
                     title: trendTitle(
                         prefix: "Your top category was",
-                        value: topCategoryInRange ?? "No categories yet",
-                        suffix: "",
+                        value: topCategoryInRange.map(Text.init) ?? Text("No categories yet"),
+                        suffix: nil,
                         accent: topCategoryInRange == nil ? Theme.Colors.secondaryText : themeColor.color
                     ),
                     delta: nil,
@@ -672,20 +696,28 @@ struct StatsView: View {
                 )
 
                 TrendCard(
-                    title: trendTitle(prefix: "Your longest streak was", value: formatDays(profile.longestStreak), suffix: "", accent: Theme.Colors.warning),
+                    title: trendTitle(
+                        prefix: "Your longest streak was",
+                        value: Text(formatNumber(profile.longestStreak)),
+                        suffix: "days",
+                        accent: Theme.Colors.warning
+                    ),
                     delta: nil,
                     accent: Theme.Colors.warning,
                     icon: .flame,
                     onTap: { selectedTrend = .streak }
                 )
 
-                let speedValue = averageSpeedText == "—" ? "—" : "\(averageSpeedText) pages/hour"
+                let speedValue: Text = averageSpeedText == "—"
+                ? Text("—")
+                : Text(averageSpeedText)
+                let speedSuffix: LocalizedStringKey? = averageSpeedText == "—" ? nil : "pages/hour"
                 let speedAccent = averageSpeedText == "—" ? Theme.Colors.secondaryText : Theme.Colors.primary
                 TrendCard(
                     title: trendTitle(
                         prefix: "Your average reading speed was",
                         value: speedValue,
-                        suffix: "",
+                        suffix: speedSuffix,
                         accent: speedAccent
                     ),
                     delta: nil,
@@ -753,7 +785,7 @@ struct StatsView: View {
                         .font(.system(size: 48))
                         .foregroundStyle(themeColor.color.opacity(0.3))
 
-                    Text(String.localizedStringWithFormat(String(localized: "You've read %lld pages!"), totalPagesRead))
+                    Text("You've read \(totalPagesRead) pages!")
                         .font(Theme.Typography.headline)
                         .foregroundStyle(Theme.Colors.text)
 
@@ -892,25 +924,25 @@ struct StatsView: View {
         let repeatCount = repeatCount(for: type, isUnlocked: isUnlocked)
         switch type {
         case .firstBook:
-            return progress(current: totalBooksRead, target: 1, unit: String(localized: "book"), repeatCount: repeatCount)
+            return progress(current: totalBooksRead, target: 1, unit: "book", repeatCount: repeatCount)
         case .tenBooks:
-            return progress(current: totalBooksRead, target: 10, unit: String(localized: "books"), repeatCount: repeatCount)
+            return progress(current: totalBooksRead, target: 10, unit: "books", repeatCount: repeatCount)
         case .fiftyBooks:
-            return progress(current: totalBooksRead, target: 50, unit: String(localized: "books"), repeatCount: repeatCount)
+            return progress(current: totalBooksRead, target: 50, unit: "books", repeatCount: repeatCount)
         case .hundredBooks:
-            return progress(current: totalBooksRead, target: 100, unit: String(localized: "books"), repeatCount: repeatCount)
+            return progress(current: totalBooksRead, target: 100, unit: "books", repeatCount: repeatCount)
         case .hundredPages:
-            return progress(current: totalPagesRead, target: 100, unit: String(localized: "pages"), repeatCount: repeatCount)
+            return progress(current: totalPagesRead, target: 100, unit: "pages", repeatCount: repeatCount)
         case .thousandPages:
-            return progress(current: totalPagesRead, target: 1000, unit: String(localized: "pages"), repeatCount: repeatCount)
+            return progress(current: totalPagesRead, target: 1000, unit: "pages", repeatCount: repeatCount)
         case .tenThousandPages:
-            return progress(current: totalPagesRead, target: 10000, unit: String(localized: "pages"), repeatCount: repeatCount)
+            return progress(current: totalPagesRead, target: 10000, unit: "pages", repeatCount: repeatCount)
         case .sevenDayStreak:
-            return progress(current: streaksEnabled ? profile.currentStreak : 0, target: 7, unit: String(localized: "days"), repeatCount: repeatCount)
+            return progress(current: streaksEnabled ? profile.currentStreak : 0, target: 7, unit: "days", repeatCount: repeatCount)
         case .thirtyDayStreak:
-            return progress(current: streaksEnabled ? profile.currentStreak : 0, target: 30, unit: String(localized: "days"), repeatCount: repeatCount)
+            return progress(current: streaksEnabled ? profile.currentStreak : 0, target: 30, unit: "days", repeatCount: repeatCount)
         case .hundredDayStreak:
-            return progress(current: streaksEnabled ? profile.currentStreak : 0, target: 100, unit: String(localized: "days"), repeatCount: repeatCount)
+            return progress(current: streaksEnabled ? profile.currentStreak : 0, target: 100, unit: "days", repeatCount: repeatCount)
         case .levelFive:
             return levelProgress(current: profile.currentLevel, target: 5, repeatCount: repeatCount)
         case .levelTen:
@@ -918,25 +950,21 @@ struct StatsView: View {
         case .levelTwenty:
             return levelProgress(current: profile.currentLevel, target: 20, repeatCount: repeatCount)
         case .hundredPagesInDay:
-            return progress(current: todayPagesRead, target: 100, unit: String(localized: "pages today"), repeatCount: repeatCount)
+            return progress(current: todayPagesRead, target: 100, unit: "pages today", repeatCount: repeatCount)
         case .marathonReader:
-            return progress(current: todayMinutesRead, target: 180, unit: String(localized: "min today"), repeatCount: repeatCount)
+            return progress(current: todayMinutesRead, target: 180, unit: "min today", repeatCount: repeatCount)
         }
     }
 
-    private func progress(current: Int, target: Int, unit: String, repeatCount: Int) -> AchievementProgress {
+    private func progress(current: Int, target: Int, unit: LocalizedStringKey, repeatCount: Int) -> AchievementProgress {
         let clampedCurrent = max(0, current)
-        let text = "\(formatNumber(clampedCurrent))/\(formatNumber(target)) \(unit)"
+        let text = Text("\(formatNumber(clampedCurrent))/\(formatNumber(target)) ") + Text(unit)
         return AchievementProgress(current: clampedCurrent, target: target, text: text, repeatCount: repeatCount)
     }
 
     private func levelProgress(current: Int, target: Int, repeatCount: Int) -> AchievementProgress {
         let clampedCurrent = max(0, current)
-        let text = String.localizedStringWithFormat(
-            String(localized: "Level %lld/%lld"),
-            clampedCurrent,
-            target
-        )
+        let text = Text("Level \(clampedCurrent)/\(target)")
         return AchievementProgress(current: clampedCurrent, target: target, text: text, repeatCount: repeatCount)
     }
 
@@ -1006,7 +1034,7 @@ private enum TrendsRange: String, CaseIterable, Identifiable {
         }
     }
 
-    var title: String {
+    var title: LocalizedStringKey {
         switch self {
         case .last7: return "7 Days"
         case .last30: return "30 Days"
@@ -1025,7 +1053,7 @@ private enum TrendMetric: String, Identifiable {
 
     var id: String { rawValue }
 
-    var title: String {
+    var title: LocalizedStringKey {
         switch self {
         case .pages: return "Pages Read"
         case .minutes: return "Reading Time"
@@ -1068,7 +1096,7 @@ private struct TrendCard: View {
                                 .font(.caption2.weight(.bold))
                                 .foregroundStyle(delta.isPositive ? Theme.Colors.success : Theme.Colors.error)
 
-                            Text(delta.text)
+                            delta.text
                                 .font(.caption)
                                 .foregroundStyle(delta.isPositive ? Theme.Colors.success : Theme.Colors.error)
                         }
@@ -1142,7 +1170,7 @@ private struct TrendSpark: View {
 }
 
 private struct TrendDelta {
-    let text: String
+    let text: Text
     let isPositive: Bool
 }
 
@@ -1154,7 +1182,7 @@ private struct CalendarDaySummary {
 
 private struct CalendarMonthOption: Identifiable {
     let offset: Int
-    let label: String
+    let date: Date
     var id: Int { offset }
 }
 
@@ -1476,8 +1504,8 @@ private struct TrendDetailView: View {
                 .font(.caption)
                 .foregroundStyle(Theme.Colors.secondaryText)
 
-            if !summaryHint.isEmpty {
-                Text(summaryHint)
+            if let summaryHint {
+                summaryHint
                     .font(.callout)
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
@@ -1507,13 +1535,13 @@ private struct TrendDetailView: View {
             metricChartCard(
                 valueKeyPath: \.pages,
                 title: "Pages per day",
-                highlight: "Best day \(bestDayPages) pages • Avg \(averagePagesPerDay) per day"
+                highlight: Text("Best day \(bestDayPages) pages • Avg \(averagePagesPerDay) per day")
             )
         case .minutes:
             metricChartCard(
                 valueKeyPath: \.minutes,
                 title: "Minutes per day",
-                highlight: "Best day \(bestDayMinutes) min • Avg \(averageMinutesPerDay) min/day"
+                highlight: Text("Best day \(bestDayMinutes) min • Avg \(averageMinutesPerDay) min/day")
             )
         case .books:
             booksDetailCard
@@ -1526,7 +1554,7 @@ private struct TrendDetailView: View {
         }
     }
 
-    private func metricChartCard(valueKeyPath: KeyPath<DailySnapshot, Int>, title: String, highlight: String) -> some View {
+    private func metricChartCard(valueKeyPath: KeyPath<DailySnapshot, Int>, title: LocalizedStringKey, highlight: Text) -> some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Text(title)
                 .font(Theme.Typography.headline)
@@ -1571,7 +1599,7 @@ private struct TrendDetailView: View {
                 }
             }
 
-            Text(highlight)
+            highlight
                 .font(.caption)
                 .foregroundStyle(Theme.Colors.secondaryText)
         }
@@ -1765,7 +1793,7 @@ private struct TrendDetailView: View {
         }
     }
 
-    private var summarySuffix: String {
+    private var summarySuffix: LocalizedStringKey {
         switch metric {
         case .pages:
             return "pages"
@@ -1782,20 +1810,24 @@ private struct TrendDetailView: View {
         }
     }
 
-    private var summaryHint: String {
+    private var summaryHint: Text? {
         switch metric {
         case .pages:
-            return "\(sessions.count) sessions logged"
+            return Text("\(sessions.count) sessions logged")
         case .minutes:
-            return "\(sessions.count) sessions logged"
+            return Text("\(sessions.count) sessions logged")
         case .books:
-            return "\(finishedBooksInRange.count) books finished"
+            return Text("\(finishedBooksInRange.count) books finished")
         case .categories:
-            return categoryCounts.isEmpty ? "" : "\(categoryCounts.first?.1 ?? 0) sessions tagged"
+            return categoryCounts.isEmpty
+            ? nil
+            : Text("\(categoryCounts.first?.1 ?? 0) sessions tagged")
         case .streak:
-            return ""
+            return nil
         case .speed:
-            return sessions.isEmpty ? "" : "\(sessions.count) timed sessions"
+            return sessions.isEmpty
+            ? nil
+            : Text("\(sessions.count) timed sessions")
         }
     }
 }
@@ -2034,7 +2066,7 @@ struct AchievementCard: View {
                         .progressViewStyle(.linear)
                         .frame(height: 4)
 
-                    Text(progress.text)
+                    progress.text
                         .font(.system(size: 9))
                         .foregroundStyle(Theme.Colors.tertiaryText)
                         .lineLimit(1)
@@ -2114,8 +2146,8 @@ struct AchievementDetailView: View {
         achievement != nil
     }
 
-    private var statusText: String {
-        isUnlocked ? String(localized: "Unlocked") : String(localized: "Locked")
+    private var statusText: LocalizedStringKey {
+        isUnlocked ? "Unlocked" : "Locked"
     }
 
     private var unlockedDateText: String? {
@@ -2203,7 +2235,7 @@ struct AchievementDetailView: View {
                                 .tint(isUnlocked ? themeColor.color : Theme.Colors.tertiaryText)
                                 .progressViewStyle(.linear)
 
-                            Text(progress.text)
+                            progress.text
                                 .font(.caption)
                                 .foregroundStyle(Theme.Colors.secondaryText)
                         }
@@ -2284,7 +2316,7 @@ struct AchievementsGridView: View {
 struct AchievementProgress {
     let current: Int
     let target: Int
-    let text: String
+    let text: Text
     let repeatCount: Int
 
     var fraction: Double {
@@ -2301,14 +2333,6 @@ private let achievementNumberFormatter: NumberFormatter = {
 
 private func formatNumber(_ value: Int) -> String {
     achievementNumberFormatter.string(from: NSNumber(value: value)) ?? "\(value)"
-}
-
-private func formatDays(_ value: Int) -> String {
-    String.localizedStringWithFormat(String(localized: "%lld days"), value)
-}
-
-private func formatBooks(_ value: Int) -> String {
-    String.localizedStringWithFormat(String(localized: "%lld books"), value)
 }
 
 struct GoalCard: View {
@@ -2336,7 +2360,7 @@ struct GoalCard: View {
                 .tint(themeColor.color)
 
             HStack {
-                Text("\(goal.currentValue) / \(goal.targetValue) \(goal.type.unitText)")
+                Text("\(goal.currentValue) / \(goal.targetValue) ") + Text(goal.type.unitTextKey)
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
 
@@ -2348,7 +2372,7 @@ struct GoalCard: View {
                             .font(Theme.Typography.caption)
                             .foregroundStyle(Theme.Colors.tertiaryText)
                     } else if daysLeft >= 0 {
-                        Text(String.localizedStringWithFormat(String(localized: "%lld days left"), daysLeft))
+                        Text("\(daysLeft) days left")
                             .font(Theme.Typography.caption)
                             .foregroundStyle(Theme.Colors.tertiaryText)
                     } else {
@@ -2388,27 +2412,33 @@ struct ManageGoalsView: View {
             if let profile = profile {
                 let visibleGoals = (profile.readingGoals ?? []).filter { streaksEnabled || $0.type != .readingStreak }
                 if !visibleGoals.isEmpty {
-                    Section("Active Goals") {
+                    Section {
                         ForEach(visibleGoals.filter { $0.isActive }) { goal in
                             GoalRow(goal: goal, profile: profile)
                         }
+                    } header: {
+                        Text("Active Goals")
                     }
 
                     let completedGoals = visibleGoals.filter { $0.isCompleted }
                     if !completedGoals.isEmpty {
-                        Section("Completed") {
+                        Section {
                             ForEach(completedGoals) { goal in
                                 GoalRow(goal: goal, profile: profile)
                             }
+                        } header: {
+                            Text("Completed")
                         }
                     }
 
                     let expiredGoals = visibleGoals.filter { !$0.isActive && !$0.isCompleted && $0.endDate < Date() }
                     if !expiredGoals.isEmpty {
-                        Section("Expired") {
+                        Section {
                             ForEach(expiredGoals) { goal in
                                 GoalRow(goal: goal, profile: profile)
                             }
+                        } header: {
+                            Text("Expired")
                         }
                     }
                 } else {
@@ -2483,7 +2513,7 @@ struct GoalRow: View {
                     .tint(goal.isCompleted ? Theme.Colors.success : themeColor.color)
 
                 HStack {
-                    Text("\(goal.currentValue) / \(goal.targetValue) \(goal.type.unitText)")
+                    Text("\(goal.currentValue) / \(goal.targetValue) ") + Text(goal.type.unitTextKey)
                         .font(Theme.Typography.caption)
                         .foregroundStyle(Theme.Colors.secondaryText)
 
@@ -2495,7 +2525,7 @@ struct GoalRow: View {
                                 .font(Theme.Typography.caption)
                                 .foregroundStyle(Theme.Colors.tertiaryText)
                         } else {
-                            Text(String.localizedStringWithFormat(String(localized: "%lld days left"), daysLeft))
+                            Text("\(daysLeft) days left")
                                 .font(Theme.Typography.caption)
                                 .foregroundStyle(Theme.Colors.tertiaryText)
                         }

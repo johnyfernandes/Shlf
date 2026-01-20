@@ -35,7 +35,7 @@ struct EditGoalView: View {
                 Section("Progress") {
                     VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                         HStack {
-                            Text("\(goal.currentValue) / \(goal.targetValue) \(goal.type.unitText)")
+                            Text("\(goal.currentValue) / \(goal.targetValue) ") + Text(goal.type.unitTextKey)
                                 .font(Theme.Typography.title3)
 
                             Spacer()
@@ -49,13 +49,17 @@ struct EditGoalView: View {
                             .tint(goal.isCompleted ? Theme.Colors.success : themeColor.color)
                     }
 
-                    Stepper("Current Progress: \(goal.currentValue)", value: $goal.currentValue, in: 0...goal.targetValue)
-                        .font(Theme.Typography.body)
+                    Stepper(value: $goal.currentValue, in: 0...goal.targetValue) {
+                        Text("Current Progress") + Text(": \(goal.currentValue)")
+                    }
+                    .font(Theme.Typography.body)
                 }
 
                 Section("Target") {
-                    Stepper("Target: \(goal.targetValue) \(goal.type.unitText)", value: $goal.targetValue, in: max(1, goal.currentValue)...1000)
-                        .font(Theme.Typography.body)
+                    Stepper(value: $goal.targetValue, in: max(1, goal.currentValue)...1000) {
+                        Text("Target") + Text(": \(goal.targetValue) ") + Text(goal.type.unitTextKey)
+                    }
+                    .font(Theme.Typography.body)
                 }
 
                 Section("Timeline") {
@@ -76,7 +80,7 @@ struct EditGoalView: View {
                                 Text("Resets at midnight")
                                     .foregroundStyle(themeColor.color)
                             } else if daysLeft >= 0 {
-                                Text(String.localizedStringWithFormat(String(localized: "%lld days"), daysLeft))
+                                Text("\(daysLeft) days")
                                     .foregroundStyle(themeColor.color)
                             } else {
                                 Text("Expired")

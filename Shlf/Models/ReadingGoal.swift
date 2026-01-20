@@ -96,6 +96,19 @@ enum GoalType: String, Codable, CaseIterable {
         }
     }
 
+    var unitTextKey: LocalizedStringKey {
+        switch self {
+        case .booksPerYear, .booksPerMonth:
+            return "books"
+        case .pagesPerDay:
+            return "pages"
+        case .minutesPerDay:
+            return "minutes"
+        case .readingStreak:
+            return "days"
+        }
+    }
+
     var isDaily: Bool {
         self == .pagesPerDay || self == .minutesPerDay
     }
