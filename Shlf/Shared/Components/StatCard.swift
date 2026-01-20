@@ -9,6 +9,7 @@ import SwiftUI
 
 struct StatCard: View {
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.colorScheme) private var colorScheme
     let title: LocalizedStringKey
     let value: String
     let icon: String
@@ -28,6 +29,16 @@ struct StatCard: View {
             else {
                 return themeColor.color
             }
+        }
+        return Theme.Colors.accent
+    }
+
+    private var iconForeground: Color {
+        if icon.contains("flame") {
+            return .white
+        }
+        if gradient != nil {
+            return themeColor.onColor(for: colorScheme)
         }
         return Theme.Colors.accent
     }
@@ -79,7 +90,7 @@ struct StatCard: View {
                         Image(systemName: icon)
                             .font(.system(size: 18))
                             .fontWeight(.bold)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(iconForeground)
                     } else {
                         Circle()
                             .fill(

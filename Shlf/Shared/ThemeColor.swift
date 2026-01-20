@@ -8,6 +8,7 @@
 import SwiftUI
 
 enum ThemeColor: String, CaseIterable, Codable, Identifiable {
+    case neutral = "Neutral"
     case blue = "Blue"
     case purple = "Purple"
     case pink = "Pink"
@@ -24,6 +25,8 @@ enum ThemeColor: String, CaseIterable, Codable, Identifiable {
 
     var color: Color {
         switch self {
+        case .neutral:
+            return Color.primary
         case .blue:
             return Color(red: 0.0, green: 0.48, blue: 1.0)
         case .purple:
@@ -59,6 +62,8 @@ enum ThemeColor: String, CaseIterable, Codable, Identifiable {
 
     var displayNameKey: LocalizedStringKey {
         switch self {
+        case .neutral:
+            return "Neutral"
         case .blue:
             return "Blue"
         case .purple:
@@ -82,5 +87,12 @@ enum ThemeColor: String, CaseIterable, Codable, Identifiable {
         case .mint:
             return "Mint"
         }
+    }
+
+    func onColor(for scheme: ColorScheme) -> Color {
+        if self == .neutral {
+            return scheme == .dark ? .black : .white
+        }
+        return .white
     }
 }

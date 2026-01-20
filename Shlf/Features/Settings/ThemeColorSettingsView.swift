@@ -17,7 +17,7 @@ struct ThemeColorSettingsView: View {
         GridItem(.adaptive(minimum: 80), spacing: 16)
     ]
 
-    private let freeColors: Set<ThemeColor> = [.orange, .blue, .green]
+    private let freeColors: Set<ThemeColor> = [.neutral, .orange, .blue, .green]
 
     private var isProUser: Bool {
         ProAccess.isProUser(profile: profile)
@@ -149,6 +149,7 @@ struct ThemeColorSettingsView: View {
 }
 
 struct ColorOption: View {
+    @Environment(\.colorScheme) private var colorScheme
     let themeColor: ThemeColor
     let isSelected: Bool
     let isFree: Bool
@@ -166,7 +167,7 @@ struct ColorOption: View {
                         .overlay(
                             Circle()
                                 .strokeBorder(
-                                    isSelected ? .white : .clear,
+                                    isSelected ? themeColor.onColor(for: colorScheme) : .clear,
                                     lineWidth: 3
                                 )
                         )
@@ -180,7 +181,7 @@ struct ColorOption: View {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.title2)
                             .fontWeight(.semibold)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(themeColor.onColor(for: colorScheme))
                             .symbolRenderingMode(.hierarchical)
                     }
 

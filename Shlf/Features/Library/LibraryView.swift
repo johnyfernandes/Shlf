@@ -350,11 +350,16 @@ struct StatusBadge: View {
 
 struct FilterChip: View {
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.colorScheme) private var colorScheme
     let title: LocalizedStringKey
     var icon: String? = nil
     var count: Int? = nil
     let isSelected: Bool
     let action: () -> Void
+
+    private var selectedForeground: Color {
+        themeColor.onColor(for: colorScheme)
+    }
 
     var body: some View {
         Button(action: action) {
@@ -375,7 +380,7 @@ struct FilterChip: View {
                         .padding(.vertical, 2)
                         .background(
                             isSelected ?
-                                Color.white.opacity(0.25) :
+                                selectedForeground.opacity(themeColor == .neutral ? 0.18 : 0.25) :
                                 Theme.Colors.tertiaryBackground
                         )
                         .clipShape(Capsule())
@@ -395,7 +400,7 @@ struct FilterChip: View {
                     }
                 }
             )
-            .foregroundStyle(isSelected ? .white : Theme.Colors.text)
+            .foregroundStyle(isSelected ? selectedForeground : Theme.Colors.text)
             .animation(Theme.Animation.snappy, value: isSelected)
         }
         .buttonStyle(.plain)
