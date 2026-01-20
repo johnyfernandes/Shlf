@@ -18,6 +18,7 @@ private enum ReadingConstants {
 struct BookDetailWatchView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.colorScheme) private var colorScheme
     @Bindable var book: Book
     @Query private var profiles: [UserProfile]
 
@@ -154,6 +155,7 @@ struct BookDetailWatchView: View {
                 Image(systemName: "plus")
                     .font(.title3.weight(.semibold))
                     .frame(width: 40, height: 30)
+                    .foregroundStyle(themeColor.onColor(for: colorScheme))
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.small)
@@ -333,6 +335,7 @@ struct AddPagesWatchView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.colorScheme) private var colorScheme
     @Bindable var book: Book
     @Query private var profiles: [UserProfile]
 
@@ -397,6 +400,7 @@ struct AddPagesWatchView: View {
                     applyAndDismiss()
                 } label: {
                     Text("Apply")
+                        .foregroundStyle(intAmount > 0 ? themeColor.onColor(for: colorScheme) : .white)
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(intAmount > 0 ? themeColor.color : .orange)

@@ -20,6 +20,7 @@ struct LogSessionWatchView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.colorScheme) private var colorScheme
     @Bindable var book: Book
     @Query private var profiles: [UserProfile]
     @Query private var activeSessions: [ActiveReadingSession]
@@ -179,6 +180,7 @@ struct LogSessionWatchView: View {
                         } label: {
                             Label("Start Reading", systemImage: "play.circle.fill")
                                 .frame(maxWidth: .infinity)
+                                .foregroundStyle(themeColor.onColor(for: colorScheme))
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(themeColor.color)
@@ -758,6 +760,7 @@ struct LogSessionWatchView: View {
 struct MarkPositionSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.colorScheme) private var colorScheme
 
     let page: Int
     @Binding var lineNumber: Int
@@ -819,6 +822,7 @@ struct MarkPositionSheet: View {
                 Text("Save")
                     .font(.footnote.bold())
                     .frame(maxWidth: .infinity)
+                    .foregroundStyle(themeColor.onColor(for: colorScheme))
             }
             .buttonStyle(.borderedProminent)
             .tint(themeColor.color)
