@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 /// A compact "Now Playing" style accessory view for the tab bar
 /// that displays when a reading session is active.
@@ -13,18 +14,14 @@ struct ActiveSessionAccessoryView: View {
     @Environment(\.themeColor) private var themeColor
     let session: ActiveReadingSession
     let book: Book
+    let coverImage: UIImage?
     let onTap: () -> Void
 
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 12) {
                 // Book cover thumbnail
-                BookCoverView(
-                    imageURL: book.coverImageURL,
-                    title: book.title,
-                    width: 28,
-                    height: 40
-                )
+                coverThumbnail
 
                 // Title and author
                 VStack(alignment: .leading, spacing: 2) {
@@ -56,6 +53,26 @@ struct ActiveSessionAccessoryView: View {
             .padding(.vertical, 8)
         }
         .buttonStyle(.plain)
+    }
+
+    private var coverThumbnail: some View {
+        ZStack {
+            if let coverImage {
+                Image(uiImage: coverImage)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                RoundedRectangle(cornerRadius: Theme.CornerRadius.sm)
+                    .fill(Theme.Colors.secondaryBackground)
+                    .overlay(
+                        Image(systemName: "book.closed")
+                            .font(.caption)
+                            .foregroundStyle(Theme.Colors.tertiaryText.opacity(0.6))
+                    )
+            }
+        }
+        .frame(width: 28, height: 40)
+        .clipShape(RoundedRectangle(cornerRadius: Theme.CornerRadius.sm))
     }
 
     @ViewBuilder

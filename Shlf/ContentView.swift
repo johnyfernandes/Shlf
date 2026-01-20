@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
@@ -17,6 +18,8 @@ struct ContentView: View {
     @State private var selectedTab = 0
     @State private var navigationPath = NavigationPath()
     @State private var activeSessionLogDestination: ActiveSessionLogDestination?
+    @State private var accessoryCoverImage: UIImage?
+    @State private var accessoryCoverURL: URL?
 
     private var shouldShowOnboarding: Bool {
         profiles.first?.hasCompletedOnboarding == false || profiles.isEmpty
@@ -38,9 +41,13 @@ struct ContentView: View {
                     .tabViewBottomAccessory {
                         ActiveSessionAccessoryView(
                             session: session,
-                            book: book
+                            book: book,
+                            coverImage: accessoryCoverImage
                         ) {
                             activeSessionLogDestination = ActiveSessionLogDestination(bookID: book.id)
+                        }
+                        .task(id: book.coverImageURL?.absoluteString) {
+                            await loadAccessoryCoverIfNeeded(for: book.coverImageURL)
                         }
                     }
             } else {
@@ -79,6 +86,21 @@ struct ContentView: View {
             Tab("Search", systemImage: "magnifyingglass", value: 3, role: .search) {
                 SearchTabView(selectedTab: $selectedTab)
             }
+        }
+    }
+
+    @MainActor
+    private func loadAccessoryCoverIfNeeded(for url: URL?) async {
+        guard accessoryCoverURL != url else { return }
+        accessoryCoverURL = url
+        accessoryCoverImage = nil
+
+        guard let url else {
+            return
+        }
+
+        if let cachedImage = await ImageCacheManager.shared.getImage(for: url) {
+            accessoryCoverImage = cachedImage
         }
     }
 }
