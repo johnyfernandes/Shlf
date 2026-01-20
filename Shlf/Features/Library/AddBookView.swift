@@ -57,15 +57,12 @@ struct AddBookView: View {
                     }
                 }
             .sheet(isPresented: $viewModel.showScanner) {
-                BarcodeScannerView { isbn in
-                    viewModel.showScanner = false
-                    Task {
-                        if let bookInfo = await viewModel.fetchBookInfo(isbn: isbn) {
-                            // Navigate to BookPreviewView - the Apple way!
-                            navigationPath.append(bookInfo)
-                        }
+                BarcodeScanQueueView(
+                    selectedTab: $selectedTab,
+                    onDismissAll: {
+                        dismiss()
                     }
-                }
+                )
             }
             .sheet(isPresented: $viewModel.showSearch) {
                 NavigationStack {
