@@ -616,6 +616,10 @@ struct LogReadingSessionView: View {
         hasDismissedToPageTooltip = true
     }
 
+    private func notifySessionLogged() {
+        NotificationCenter.default.post(name: .readingSessionLogged, object: nil)
+    }
+
     private func discardSession() {
         if let activeSession = activeSessionForBook {
             let endedId = activeSession.id
@@ -892,6 +896,7 @@ struct LogReadingSessionView: View {
             }
         }
 
+        notifySessionLogged()
         dismiss()
     }
 
@@ -971,6 +976,7 @@ struct LogReadingSessionView: View {
     WidgetDataExporter.exportSnapshot(modelContext: modelContext)
 
     try? modelContext.save()
+    notifySessionLogged()
     dismiss()
 }
 }

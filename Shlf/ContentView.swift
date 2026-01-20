@@ -20,6 +20,8 @@ struct ContentView: View {
     @State private var activeSessionLogDestination: ActiveSessionLogDestination?
     @State private var accessoryCoverImage: UIImage?
     @State private var accessoryCoverURL: URL?
+    @State private var showSessionLoggedToast = false
+    @State private var sessionLoggedToastID = UUID()
 
     private var shouldShowOnboarding: Bool {
         profiles.first?.hasCompletedOnboarding == false || profiles.isEmpty
@@ -63,8 +65,18 @@ struct ContentView: View {
         .sheet(item: $activeSessionLogDestination) { destination in
             ActiveSessionLogSheet(bookID: destination.bookID)
         }
+        .overlay(alignment: .top) {
+            if showSessionLoggedToast {
+                SessionLoggedToast(animate: showSessionLoggedToast)
+                    .padding(.top, 12)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
         .onAppear {
             showOnboarding = shouldShowOnboarding
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .readingSessionLogged)) { _ in
+            triggerSessionLoggedToast()
         }
     }
 
@@ -102,6 +114,52 @@ struct ContentView: View {
         if let cachedImage = await ImageCacheManager.shared.getImage(for: url) {
             accessoryCoverImage = cachedImage
         }
+    }
+
+    private func triggerSessionLoggedToast() {
+        sessionLoggedToastID = UUID()
+        let toastID = sessionLoggedToastID
+
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 180_000_000)
+            guard toastID == sessionLoggedToastID else { return }
+            Haptics.impact(.light)
+            withAnimation(Theme.Animation.smooth) {
+                showSessionLoggedToast = true
+            }
+
+            try? await Task.sleep(nanoseconds: 1_200_000_000)
+            guard toastID == sessionLoggedToastID else { return }
+            withAnimation(Theme.Animation.smooth) {
+                showSessionLoggedToast = false
+            }
+        }
+    }
+}
+
+private struct SessionLoggedToast: View {
+    @Environment(\.themeColor) private var themeColor
+    let animate: Bool
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "checkmark.circle.fill")
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(themeColor.color)
+                .symbolEffect(.bounce, value: animate)
+
+            Text("Session logged")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(.ultraThinMaterial, in: Capsule())
+        .overlay(
+            Capsule()
+                .strokeBorder(themeColor.color.opacity(0.18), lineWidth: 1)
+        )
+        .shadow(color: Theme.Shadow.medium, radius: 10, y: 6)
     }
 }
 
