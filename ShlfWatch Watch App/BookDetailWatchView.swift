@@ -43,113 +43,137 @@ struct BookDetailWatchView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                // Book info
-                VStack(spacing: 2) {
-                    Text(book.title)
-                        .font(.headline)
-                        .multilineTextAlignment(.center)
+        TabView {
+            progressPage
+            actionsPage
+        }
+        .tabViewStyle(.page(indexDisplayMode: .automatic))
+        .navigationTitle(book.title)
+        .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showingAddPages) {
+            AddPagesWatchView(book: book)
+        }
+    }
 
-                    Text(book.author)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+    private var progressPage: some View {
+        VStack(spacing: 10) {
+            if !book.author.isEmpty {
+                Text(book.author)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
 
-                // Progress
-                if let totalPages = book.totalPages {
-                    if profile.useCircularProgressWatch {
-                        // Circular progress
-                        ZStack {
-                            Circle()
-                                .stroke(.tertiary.opacity(0.2), lineWidth: 6)
-                                .frame(width: 100, height: 100)
+            progressSummary
 
-                            Circle()
-                                .trim(from: 0, to: book.progressPercentage / 100)
-                                .stroke(themeColor.color, style: StrokeStyle(lineWidth: 6, lineCap: .round))
-                                .rotationEffect(.degrees(-90))
-                                .frame(width: 100, height: 100)
-                                .animation(.spring(response: 0.6, dampingFraction: 0.8), value: book.currentPage)
+            ViewThatFits(in: .vertical) {
+                VStack(spacing: 8) {
+                    stepperRow
 
-                            VStack(spacing: 0) {
-                                Text(book.currentPage, format: .number)
-                                    .font(.system(size: 40, weight: .bold, design: .rounded))
-
-                                (Text(verbatim: "/ ") + Text(totalPages, format: .number))
-                                    .font(.system(size: 13, weight: .medium, design: .rounded))
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        .padding(.vertical, 4)
-                    } else {
-                        // Progress bar (default)
-                        VStack(spacing: 6) {
-                            Text(book.currentPage, format: .number)
-                                .font(.system(size: 48, weight: .bold, design: .rounded))
-                                .foregroundStyle(themeColor.color)
-
-                            Text(
-                                String.localizedStringWithFormat(
-                                    String(localized: "of %lld pages"),
-                                    totalPages
-                                )
-                            )
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-
-                            ProgressView(value: Double(book.currentPage), total: Double(totalPages))
-                                .tint(themeColor.color)
-                        }
-                        .padding(.vertical)
+                    HStack(spacing: 6) {
+                        quickAddButton(5)
+                        quickAddButton(10)
+                        quickAddButton(20)
                     }
                 }
-
-                // Quick stepper (Apple-style)
-                HStack(spacing: 12) {
-                    Button {
-                        addPages(-1)
-                    } label: {
-                        Image(systemName: "minus")
-                            .font(.title2.weight(.semibold))
-                            .frame(width: 44, height: 44)
-                    }
-                    .buttonStyle(.bordered)
-                    .disabled(book.currentPage <= 0)
-
-                    Button {
-                        addPages(1)
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.title2.weight(.semibold))
-                            .frame(width: 44, height: 44)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(themeColor.color)
-                }
-
-                // Preset quick adds
-                HStack(spacing: 6) {
-                    quickAddButton(5)
-                    quickAddButton(10)
-                    quickAddButton(20)
-                }
-
-                // Custom amount with Digital Crown
-                Button {
-                    showingAddPages = true
-                } label: {
-                    Label("Custom Amount", systemImage: "slider.horizontal.3")
-                        .font(.footnote)
-                }
-                .buttonStyle(.bordered)
-                .tint(.secondary)
-
-                // Session actions
-                Divider()
-                    .padding(.vertical, 4)
 
                 VStack(spacing: 8) {
+                    stepperRow
+                }
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.top, 8)
+    }
+
+    private var progressSummary: some View {
+        Group {
+            if let totalPages = book.totalPages {
+                if profile.useCircularProgressWatch {
+                    ZStack {
+                        Circle()
+                            .stroke(.tertiary.opacity(0.2), lineWidth: 6)
+                            .frame(width: 86, height: 86)
+
+                        Circle()
+                            .trim(from: 0, to: book.progressPercentage / 100)
+                            .stroke(themeColor.color, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                            .rotationEffect(.degrees(-90))
+                            .frame(width: 86, height: 86)
+                            .animation(.spring(response: 0.6, dampingFraction: 0.8), value: book.currentPage)
+
+                        VStack(spacing: 0) {
+                            Text(book.currentPage, format: .number)
+                                .font(.system(size: 32, weight: .bold, design: .rounded))
+
+                            (Text(verbatim: "/ ") + Text(totalPages, format: .number))
+                                .font(.system(size: 12, weight: .medium, design: .rounded))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                } else {
+                    VStack(spacing: 4) {
+                        Text(book.currentPage, format: .number)
+                            .font(.system(size: 36, weight: .bold, design: .rounded))
+                            .foregroundStyle(themeColor.color)
+
+                        Text(
+                            String.localizedStringWithFormat(
+                                String(localized: "of %lld pages"),
+                                totalPages
+                            )
+                        )
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        ProgressView(value: Double(book.currentPage), total: Double(totalPages))
+                            .tint(themeColor.color)
+                    }
+                    .padding(.vertical, 2)
+                }
+            }
+        }
+    }
+
+    private var stepperRow: some View {
+        HStack(spacing: 12) {
+            Button {
+                addPages(-1)
+            } label: {
+                Image(systemName: "minus")
+                    .font(.title3.weight(.semibold))
+                    .frame(width: 40, height: 30)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .disabled(book.currentPage <= 0)
+
+            Button {
+                addPages(1)
+            } label: {
+                Image(systemName: "plus")
+                    .font(.title3.weight(.semibold))
+                    .frame(width: 40, height: 30)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.small)
+            .tint(themeColor.color)
+        }
+    }
+
+    private var actionsPage: some View {
+        ScrollView {
+            VStack(spacing: 10) {
+                VStack(spacing: 8) {
+                    Button {
+                        showingAddPages = true
+                    } label: {
+                        Label("Custom Amount", systemImage: "slider.horizontal.3")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.secondary)
+
                     NavigationLink {
                         LogSessionWatchView(book: book)
                     } label: {
@@ -167,10 +191,9 @@ struct BookDetailWatchView: View {
                     .buttonStyle(.bordered)
                 }
 
-                // Last Reading Position
                 if let lastPos = book.lastPosition {
                     Divider()
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 2)
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Last Position")
@@ -209,10 +232,9 @@ struct BookDetailWatchView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
-                // Quotes
                 if let quotes = book.quotes, !quotes.isEmpty {
                     Divider()
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 2)
 
                     NavigationLink {
                         QuotesListWatchView(quotes: quotes)
@@ -227,17 +249,14 @@ struct BookDetailWatchView: View {
                         } icon: {
                             Image(systemName: "quote.bubble")
                         }
-                            .frame(maxWidth: .infinity)
+                        .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
                 }
             }
-            .padding()
-        }
-        .navigationTitle(book.title)
-        .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $showingAddPages) {
-            AddPagesWatchView(book: book)
+            .padding(.horizontal, 12)
+            .padding(.top, 8)
+            .padding(.bottom, 10)
         }
     }
 
@@ -251,6 +270,7 @@ struct BookDetailWatchView: View {
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.bordered)
+        .controlSize(.mini)
         .tint(themeColor.color)
     }
 
