@@ -123,7 +123,7 @@ struct ContentView: View {
         let toastID = sessionLoggedToastID
 
         Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 180_000_000)
+            try? await Task.sleep(nanoseconds: 350_000_000)
             guard toastID == sessionLoggedToastID else { return }
             Haptics.impact(.light)
             withAnimation(Theme.Animation.smooth) {
@@ -154,10 +154,7 @@ private struct SessionLoggedToast: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: "checkmark.circle.fill")
-                .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(themeColor.color)
-                .symbolEffect(.bounce, value: animate)
+            AnimatedCheckmark()
 
             Text(String(localized: "Session logged"))
                 .font(.subheadline.weight(.semibold))
@@ -191,6 +188,45 @@ private struct SessionLoggedToast: View {
         )
         .animation(.easeOut(duration: 0.15), value: dragOffset)
         .accessibilityLabel(Text(String(localized: "Session logged")))
+    }
+}
+
+private struct AnimatedCheckmark: View {
+    @Environment(\.themeColor) private var themeColor
+    @State private var progress: CGFloat = 0
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(themeColor.color.opacity(0.2), lineWidth: 1.5)
+
+            CheckmarkShape()
+                .trim(from: 0, to: progress)
+                .stroke(
+                    themeColor.color,
+                    style: StrokeStyle(lineWidth: 2.2, lineCap: .round, lineJoin: .round)
+                )
+        }
+        .frame(width: 20, height: 20)
+        .onAppear {
+            progress = 0
+            withAnimation(.easeOut(duration: 0.9)) {
+                progress = 1
+            }
+        }
+    }
+}
+
+private struct CheckmarkShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let width = rect.width
+        let height = rect.height
+
+        path.move(to: CGPoint(x: width * 0.24, y: height * 0.52))
+        path.addLine(to: CGPoint(x: width * 0.42, y: height * 0.70))
+        path.addLine(to: CGPoint(x: width * 0.76, y: height * 0.34))
+        return path
     }
 }
 
