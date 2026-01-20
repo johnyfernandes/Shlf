@@ -309,13 +309,8 @@ struct DayDetailView: View {
     @State private var booksRead: [BookReadingData] = []
     @State private var totalPages: Int = 0
 
-    // PERFORMANCE: Reuse calendar and formatter
+    // PERFORMANCE: Reuse calendar
     private let calendar = Calendar.current
-    private static let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .long
-        return formatter
-    }()
 
     private func calculateData() {
         let dayStart = calendar.startOfDay(for: date)
@@ -369,7 +364,7 @@ struct DayDetailView: View {
                     .padding(.bottom, 40)
                 }
             }
-            .navigationTitle(Self.dateFormatter.string(from: date))
+            .navigationTitle(localizedDateTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -402,14 +397,13 @@ struct DayDetailView: View {
                     Image(systemName: "doc.text.fill")
                         .foregroundStyle(themeColor.color)
 
-                    Text(
-                        String.localizedStringWithFormat(
-                            String(localized: "%lld pages"),
-                            totalPages
-                        )
+                    (
+                        Text(totalPages, format: .number)
+                        + Text(verbatim: " ")
+                        + Text("pages")
                     )
-                        .font(.title2)
-                        .fontWeight(.bold)
+                    .font(.title2)
+                    .fontWeight(.bold)
 
                     Spacer()
 
@@ -417,11 +411,13 @@ struct DayDetailView: View {
                         .foregroundStyle(themeColor.color)
 
                     let unitKey: LocalizedStringKey = booksRead.count == 1 ? "book" : "books"
-                    Text(booksRead.count, format: .number)
+                    (
+                        Text(booksRead.count, format: .number)
                         + Text(verbatim: " ")
                         + Text(unitKey)
-                        .font(.title2)
-                        .fontWeight(.bold)
+                    )
+                    .font(.title2)
+                    .fontWeight(.bold)
                 }
             }
             .padding(12)
@@ -471,13 +467,12 @@ struct DayDetailView: View {
                                 HStack(spacing: 4) {
                                     Image(systemName: "book.pages")
                                         .font(.caption2)
-                                    Text(
-                                        String.localizedStringWithFormat(
-                                            String(localized: "%lld pages"),
-                                            bookData.pages
-                                        )
+                                    (
+                                        Text(bookData.pages, format: .number)
+                                        + Text(verbatim: " ")
+                                        + Text("pages")
                                     )
-                                        .font(.caption)
+                                    .font(.caption)
                                 }
                                 .foregroundStyle(themeColor.color)
                             }
@@ -504,6 +499,10 @@ struct DayDetailView: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private var localizedDateTitle: Text {
+        Text(date, format: .dateTime.day().month(.wide).year())
     }
 }
 
