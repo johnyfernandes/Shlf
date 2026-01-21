@@ -50,62 +50,66 @@ struct ReadingSessionWidgetLiveActivity: Widget {
             ReadingSessionLockScreenView(context: context)
         } dynamicIsland: { context in
             DynamicIsland {
-                DynamicIslandExpandedRegion(.leading) {
-                    liveActivityCover(
-                        context: context,
-                        size: CGSize(width: 38, height: 52),
-                        cornerRadius: 6
-                    )
-                }
-
-                DynamicIslandExpandedRegion(.trailing, priority: 1) {
-                    VStack(alignment: .trailing, spacing: 2) {
-                        if context.state.isPaused {
-                            Text("Paused")
-                                .font(.caption2.weight(.semibold))
-                                .foregroundStyle(.orange)
-                        }
-
-                        if context.state.isPaused,
-                           let pausedElapsed = context.state.pausedElapsedSeconds {
-                            Text(formattedElapsed(seconds: pausedElapsed))
-                                .font(.system(size: 22, weight: .semibold, design: .rounded))
-                                .monospacedDigit()
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.8)
-                        } else {
-                            Text(context.state.timerStartTime, style: .timer)
-                                .font(.system(size: 22, weight: .semibold, design: .rounded))
-                                .monospacedDigit()
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.8)
-                        }
-                    }
-                    .frame(minWidth: 85, alignment: .trailing)
-                }
-
                 DynamicIslandExpandedRegion(.center) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(context.attributes.bookTitle)
-                            .font(.headline.weight(.semibold))
-                            .lineLimit(1)
+                    let timerWidth: CGFloat = 88
 
-                        Text(context.attributes.bookAuthor)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-
-                        Text(
-                            String.localizedStringWithFormat(
-                                String(localized: "%lld/%lld pages"),
-                                context.state.currentPage,
-                                context.attributes.totalPages
-                            )
+                    HStack(alignment: .center, spacing: 10) {
+                        liveActivityCover(
+                            context: context,
+                            size: CGSize(width: 38, height: 52),
+                            cornerRadius: 6
                         )
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(.secondary)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(alignment: .top, spacing: 6) {
+                                Text(context.attributes.bookTitle)
+                                    .font(.headline.weight(.semibold))
+                                    .lineLimit(1)
+
+                                Spacer(minLength: 6)
+
+                                let timerText: Text = {
+                                    if context.state.isPaused,
+                                       let pausedElapsed = context.state.pausedElapsedSeconds {
+                                        return Text(formattedElapsed(seconds: pausedElapsed))
+                                    }
+                                    return Text(context.state.timerStartTime, style: .timer)
+                                }()
+
+                                timerText
+                                    .font(.system(size: 22, weight: .semibold, design: .rounded))
+                                    .monospacedDigit()
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
+                                    .frame(width: timerWidth, alignment: .trailing)
+                                    .overlay(alignment: .topTrailing) {
+                                        if context.state.isPaused {
+                                            Text("Paused")
+                                                .font(.caption2.weight(.semibold))
+                                                .foregroundStyle(.orange)
+                                                .offset(y: -14)
+                                        }
+                                    }
+                            }
+
+                            Text(context.attributes.bookAuthor)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+
+                            Text(
+                                String.localizedStringWithFormat(
+                                    String(localized: "%lld/%lld pages"),
+                                    context.state.currentPage,
+                                    context.attributes.totalPages
+                                )
+                            )
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 2)
                 }
 
                 DynamicIslandExpandedRegion(.bottom) {
