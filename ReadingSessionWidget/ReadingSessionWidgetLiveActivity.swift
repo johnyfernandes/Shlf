@@ -90,7 +90,8 @@ struct ReadingSessionWidgetLiveActivity: Widget {
                                 Text("Paused")
                                     .font(.caption2.weight(.semibold))
                                     .foregroundStyle(.orange)
-                                    .offset(y: -14)
+                                    .offset(y: -12)
+                                    .padding(.trailing, 6)
                             }
 
                             ZStack(alignment: .trailing) {
