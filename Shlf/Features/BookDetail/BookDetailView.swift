@@ -14,6 +14,7 @@ struct BookDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     @Bindable var book: Book
     @Query private var profiles: [UserProfile]
     @Query private var activeSessions: [ActiveReadingSession]
@@ -782,7 +783,8 @@ struct BookDetailView: View {
         case .pagesPercent:
             let pagesText = coloredValueWithUnit(
                 value: summary.totalPagesRead,
-                unitKey: "pages",
+                singular: Text("page"),
+                plural: Text("pages"),
                 accent: accent
             )
             let percentText = summary.percentRead.map { percent in
@@ -803,7 +805,8 @@ struct BookDetailView: View {
         case .sessionCount:
             let sessionsText = coloredValueWithUnit(
                 value: summary.sessionCount,
-                unitKey: "sessions",
+                singular: Text("session"),
+                plural: Text("sessions"),
                 accent: accent
             )
             return Text("You logged")
@@ -833,7 +836,8 @@ struct BookDetailView: View {
                 + Text(verbatim: " ")
                 + coloredValueWithUnit(
                     value: summary.longestSessionPages,
-                    unitKey: "pages",
+                    singular: Text("page"),
+                    plural: Text("pages"),
                     accent: accent
                 )
                 + Text(verbatim: ".")
@@ -842,21 +846,17 @@ struct BookDetailView: View {
                 + Text(verbatim: " ")
                 + coloredValueWithUnit(
                     value: summary.streakDays,
-                    unitKey: "days",
+                    singular: Text("day"),
+                    plural: Text("days"),
                     accent: accent
                 )
                 + Text(verbatim: ".")
         case .daysSinceLast:
             if let days = summary.daysSinceLastRead {
+                let relative = relativeDayString(days, locale: locale)
                 return Text("Last read")
                     + Text(verbatim: " ")
-                    + coloredValueWithUnit(
-                        value: days,
-                        unitKey: "days",
-                        accent: accent
-                    )
-                    + Text(verbatim: " ")
-                    + Text("ago")
+                    + coloredNumberInFormattedString(relative, number: days, accent: accent)
                     + Text(verbatim: ".")
             }
             return Text("No reads yet")
@@ -903,13 +903,38 @@ struct BookDetailView: View {
 
     private func coloredValueWithUnit(
         value: Int,
-        unitKey: LocalizedStringKey,
+        singular: Text,
+        plural: Text,
         accent: Color
     ) -> Text {
         let numberString = NumberFormatter.localizedString(from: NSNumber(value: value), number: .decimal)
+        let unitText = value == 1 ? singular : plural
         return Text(verbatim: numberString).foregroundStyle(accent)
             + Text(verbatim: " ")
-            + Text(unitKey)
+            + unitText
+    }
+
+    private func coloredNumberInFormattedString(
+        _ formatted: String,
+        number: Int,
+        accent: Color
+    ) -> Text {
+        let numberString = NumberFormatter.localizedString(from: NSNumber(value: number), number: .decimal)
+        var attributed = AttributedString(formatted)
+        if let range = attributed.range(of: numberString) {
+            attributed[range].foregroundColor = UIColor(accent)
+        }
+        return Text(attributed)
+    }
+
+    private func relativeDayString(_ days: Int, locale: Locale) -> String {
+        let calendar = Calendar.current
+        let todayStart = calendar.startOfDay(for: Date())
+        let target = calendar.date(byAdding: .day, value: -days, to: todayStart) ?? todayStart
+        let formatter = RelativeDateTimeFormatter()
+        formatter.locale = locale
+        formatter.unitsStyle = .full
+        return formatter.localizedString(for: target, relativeTo: todayStart)
     }
 
     private func syncSubjectLibrary() {
