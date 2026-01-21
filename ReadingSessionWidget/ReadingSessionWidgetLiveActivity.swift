@@ -85,11 +85,12 @@ struct ReadingSessionWidgetLiveActivity: Widget {
 
                         Spacer(minLength: 8)
 
-                        VStack(alignment: .trailing, spacing: 2) {
+                        ZStack(alignment: .topTrailing) {
                             if context.state.isPaused {
                                 Text("Paused")
                                     .font(.caption2.weight(.semibold))
                                     .foregroundStyle(.orange)
+                                    .offset(y: -14)
                             }
 
                             ZStack(alignment: .trailing) {
@@ -111,8 +112,8 @@ struct ReadingSessionWidgetLiveActivity: Widget {
                             }
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
-                            .frame(width: timerWidth, alignment: .trailing)
                         }
+                        .frame(width: timerWidth, alignment: .trailing)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .offset(y: topOffset)
