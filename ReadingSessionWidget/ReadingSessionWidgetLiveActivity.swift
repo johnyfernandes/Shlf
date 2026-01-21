@@ -52,6 +52,7 @@ struct ReadingSessionWidgetLiveActivity: Widget {
             DynamicIsland {
                 DynamicIslandExpandedRegion(.center) {
                     let timerWidth: CGFloat = 86
+                    let topOffset: CGFloat = -6
 
                     HStack(alignment: .top, spacing: 10) {
                         liveActivityCover(
@@ -114,7 +115,7 @@ struct ReadingSessionWidgetLiveActivity: Widget {
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 2)
+                    .offset(y: topOffset)
                 }
 
                 DynamicIslandExpandedRegion(.bottom) {
