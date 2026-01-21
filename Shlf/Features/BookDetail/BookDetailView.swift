@@ -15,6 +15,7 @@ struct BookDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.themeColor) private var themeColor
     @Environment(\.locale) private var locale
+    @Environment(\.colorScheme) private var colorScheme
     @Bindable var book: Book
     @Query private var profiles: [UserProfile]
     @Query private var activeSessions: [ActiveReadingSession]
@@ -993,7 +994,7 @@ struct BookDetailView: View {
 
                     Image(systemName: "play.fill")
                         .font(.title3.weight(.bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(themeColor.onColor(for: colorScheme))
 
                     LinearGradient(
                         colors: [
