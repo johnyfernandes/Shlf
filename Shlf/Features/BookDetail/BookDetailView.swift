@@ -780,14 +780,16 @@ struct BookDetailView: View {
         let accent = stat.accent.color(themeColor: themeColor)
         switch stat {
         case .pagesPercent:
-            let percentText = summary.percentRead.map { Text(verbatim: " \($0)%") } ?? Text(verbatim: "")
-            let pagesText = Text(
-                String.localizedStringWithFormat(
-                    String(localized: "%lld pages"),
-                    summary.totalPagesRead
-                )
+            let pagesText = coloredValueWithUnit(
+                value: summary.totalPagesRead,
+                unitKey: "pages",
+                accent: accent
             )
-            .foregroundStyle(accent)
+            let percentText = summary.percentRead.map { percent in
+                Text(verbatim: " ")
+                    + Text(verbatim: "\(percent)").foregroundStyle(accent)
+                    + Text(verbatim: "%")
+            } ?? Text(verbatim: "")
             return Text("You read")
                 + Text(verbatim: " ")
                 + pagesText
@@ -799,13 +801,11 @@ struct BookDetailView: View {
                 + Text(formatMinutes(summary.totalMinutesRead)).foregroundStyle(accent)
                 + Text(verbatim: ".")
         case .sessionCount:
-            let sessionsText = Text(
-                String.localizedStringWithFormat(
-                    String(localized: "%lld sessions"),
-                    summary.sessionCount
-                )
+            let sessionsText = coloredValueWithUnit(
+                value: summary.sessionCount,
+                unitKey: "sessions",
+                accent: accent
             )
-            .foregroundStyle(accent)
             return Text("You logged")
                 + Text(verbatim: " ")
                 + sessionsText
@@ -831,28 +831,35 @@ struct BookDetailView: View {
             }
             return Text("Longest session")
                 + Text(verbatim: " ")
-                + Text(
-                    String.localizedStringWithFormat(
-                        String(localized: "%lld pages"),
-                        summary.longestSessionPages
-                    )
+                + coloredValueWithUnit(
+                    value: summary.longestSessionPages,
+                    unitKey: "pages",
+                    accent: accent
                 )
-                .foregroundStyle(accent)
                 + Text(verbatim: ".")
         case .streak:
             return Text("Your book streak was")
                 + Text(verbatim: " ")
-                + Text(formatDays(summary.streakDays)).foregroundStyle(accent)
+                + coloredValueWithUnit(
+                    value: summary.streakDays,
+                    unitKey: "days",
+                    accent: accent
+                )
                 + Text(verbatim: ".")
         case .daysSinceLast:
             if let days = summary.daysSinceLastRead {
                 return Text("Last read")
                     + Text(verbatim: " ")
-                    + Text(formatDays(days)).foregroundStyle(accent)
+                    + coloredValueWithUnit(
+                        value: days,
+                        unitKey: "days",
+                        accent: accent
+                    )
                     + Text(verbatim: " ")
-                    + Text("ago.")
+                    + Text("ago")
+                    + Text(verbatim: ".")
             }
-            return Text("No reads yet.")
+            return Text("No reads yet")
         case .firstLastDate:
             if let first = summary.firstReadDate, let last = summary.lastReadDate {
                 return Text("First read")
@@ -861,7 +868,7 @@ struct BookDetailView: View {
                     + Text(verbatim: " • ")
                     + Text(formatDate(last)).foregroundStyle(accent)
             }
-            return Text("No read dates yet.")
+            return Text("No read dates yet")
         }
     }
 
@@ -892,6 +899,17 @@ struct BookDetailView: View {
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 1
         return formatter.string(from: NSNumber(value: value)) ?? String(format: "%.1f", value)
+    }
+
+    private func coloredValueWithUnit(
+        value: Int,
+        unitKey: LocalizedStringKey,
+        accent: Color
+    ) -> Text {
+        let numberString = NumberFormatter.localizedString(from: NSNumber(value: value), number: .decimal)
+        return Text(verbatim: numberString).foregroundStyle(accent)
+            + Text(verbatim: " ")
+            + Text(unitKey)
     }
 
     private func syncSubjectLibrary() {
