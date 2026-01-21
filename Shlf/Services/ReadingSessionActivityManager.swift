@@ -7,6 +7,7 @@
 
 import Foundation
 import OSLog
+import SwiftData
 #if canImport(UIKit)
 import UIKit
 #endif
@@ -28,6 +29,7 @@ class ReadingSessionActivityManager {
     private var startPage: Int = 0
     private var pausedAt: Date?
     private var totalPausedDuration: TimeInterval = 0
+    private var contentUpdateTask: Task<Void, Never>?
 
     private init() {}
 
@@ -270,6 +272,67 @@ class ReadingSessionActivityManager {
         Self.logger.info("🔄 Live Activity synced to session state")
     }
 
+    // MARK: - Observe Activity Updates
+
+    func observeActivityUpdates(modelContext: ModelContext) async {
+        if currentActivity == nil {
+            await rehydrateExistingActivity()
+        }
+
+        guard let activity = currentActivity else {
+            Self.logger.debug("⚠️ No Live Activity to observe (currentActivity is nil)")
+            return
+        }
+
+        contentUpdateTask?.cancel()
+        contentUpdateTask = Task { [weak self] in
+            for await update in activity.contentUpdates {
+                guard let self else { return }
+                await self.applyLiveActivityState(update.state, modelContext: modelContext)
+            }
+        }
+    }
+
+    private func applyLiveActivityState(
+        _ state: ReadingSessionWidgetAttributes.ContentState,
+        modelContext: ModelContext
+    ) async {
+        let descriptor = FetchDescriptor<ActiveReadingSession>()
+        guard let session = try? modelContext.fetch(descriptor).first else {
+            Self.logger.debug("⚠️ No active session to sync from Live Activity")
+            return
+        }
+
+        var didChange = false
+
+        if session.currentPage != state.currentPage {
+            session.currentPage = state.currentPage
+            session.book?.currentPage = state.currentPage
+            didChange = true
+        }
+
+        if session.isPaused != state.isPaused {
+            if state.isPaused {
+                if session.pausedAt == nil {
+                    session.pausedAt = Date()
+                }
+            } else if let pausedAt = session.pausedAt {
+                session.totalPausedDuration += Date().timeIntervalSince(pausedAt)
+                session.pausedAt = nil
+            }
+            session.isPaused = state.isPaused
+            didChange = true
+        }
+
+        if didChange {
+            session.lastUpdated = Date()
+            try? modelContext.save()
+            WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+            NotificationCenter.default.post(name: .watchStatsUpdated, object: nil)
+            Self.logger.info("🔄 Synced Live Activity state into app session")
+        }
+    }
+
     // MARK: - End Activity
 
     func endActivity() async {
@@ -294,6 +357,8 @@ class ReadingSessionActivityManager {
         startPage = 0
         pausedAt = nil
         totalPausedDuration = 0
+        contentUpdateTask?.cancel()
+        contentUpdateTask = nil
 
         Self.logger.info("🛑 Live Activity ended")
     }

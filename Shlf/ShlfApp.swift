@@ -44,6 +44,7 @@ struct ShlfApp: App {
                             WidgetDataExporter.exportSnapshot(modelContext: container.mainContext)
                             Task {
                                 await ReadingSessionActivityManager.shared.rehydrateExistingActivity()
+                                await ReadingSessionActivityManager.shared.observeActivityUpdates(modelContext: container.mainContext)
                             }
 
                             Task { @MainActor in
@@ -100,6 +101,7 @@ struct ShlfApp: App {
                 // App returning to foreground - rehydrate and cleanup
                 Task { @MainActor in
                     await ReadingSessionActivityManager.shared.rehydrateExistingActivity()
+                    await ReadingSessionActivityManager.shared.observeActivityUpdates(modelContext: container.mainContext)
                     await ActiveSessionCleanup.cleanupStaleSessionsIfNeeded(modelContext: container.mainContext)
                     WidgetDataExporter.exportSnapshot(modelContext: container.mainContext)
                 }
