@@ -106,7 +106,7 @@ struct ReadingSessionWidgetLiveActivity: Widget {
                                         .font(.system(size: 22, weight: .semibold, design: .rounded))
                                         .monospacedDigit()
                                 } else {
-                                    Text(context.state.timerStartTime, style: .timer)
+                                    LiveActivityTimerView(startTime: context.state.timerStartTime)
                                         .font(.system(size: 22, weight: .semibold, design: .rounded))
                                         .monospacedDigit()
                                 }
@@ -214,7 +214,7 @@ struct ReadingSessionLockScreenView: View {
                             .font(.headline)
                             .monospacedDigit()
                     } else {
-                        Text(context.state.timerStartTime, style: .timer)
+                        LiveActivityTimerView(startTime: context.state.timerStartTime)
                             .font(.headline)
                             .monospacedDigit()
                     }
@@ -426,6 +426,22 @@ private func formattedElapsed(seconds: Int) -> String {
         return String(format: "%d:%02d:%02d", hours, minutes, remainingSeconds)
     }
     return String(format: "%02d:%02d", minutes, remainingSeconds)
+}
+
+private struct LiveActivityTimerView: View {
+    @Environment(\.isLuminanceReduced) private var isLuminanceReduced
+    let startTime: Date
+
+    var body: some View {
+        if isLuminanceReduced {
+            Text(
+                timerInterval: startTime...Date.distantFuture,
+                countsDown: false
+            )
+        } else {
+            Text(startTime, style: .timer)
+        }
+    }
 }
 
 // MARK: - Previews
