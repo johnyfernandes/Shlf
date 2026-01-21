@@ -143,12 +143,6 @@ private struct ActiveSessionLogSheet: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(.systemBackground))
-                .task {
-                    try? await Task.sleep(nanoseconds: 300_000_000)
-                    if books.first == nil {
-                        dismiss()
-                    }
-                }
             }
         }
         .environment(\.modelContext, modelContext)
