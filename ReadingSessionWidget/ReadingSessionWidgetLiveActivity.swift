@@ -51,9 +51,9 @@ struct ReadingSessionWidgetLiveActivity: Widget {
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.center) {
-                    let timerWidth: CGFloat = 88
+                    let timerWidth: CGFloat = 86
 
-                    HStack(alignment: .center, spacing: 10) {
+                    HStack(alignment: .top, spacing: 10) {
                         liveActivityCover(
                             context: context,
                             size: CGSize(width: 38, height: 52),
@@ -61,36 +61,9 @@ struct ReadingSessionWidgetLiveActivity: Widget {
                         )
 
                         VStack(alignment: .leading, spacing: 2) {
-                            HStack(alignment: .top, spacing: 6) {
-                                Text(context.attributes.bookTitle)
-                                    .font(.headline.weight(.semibold))
-                                    .lineLimit(1)
-
-                                Spacer(minLength: 6)
-
-                                let timerText: Text = {
-                                    if context.state.isPaused,
-                                       let pausedElapsed = context.state.pausedElapsedSeconds {
-                                        return Text(formattedElapsed(seconds: pausedElapsed))
-                                    }
-                                    return Text(context.state.timerStartTime, style: .timer)
-                                }()
-
-                                timerText
-                                    .font(.system(size: 22, weight: .semibold, design: .rounded))
-                                    .monospacedDigit()
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.8)
-                                    .frame(width: timerWidth, alignment: .trailing)
-                                    .overlay(alignment: .topTrailing) {
-                                        if context.state.isPaused {
-                                            Text("Paused")
-                                                .font(.caption2.weight(.semibold))
-                                                .foregroundStyle(.orange)
-                                                .offset(y: -14)
-                                        }
-                                    }
-                            }
+                            Text(context.attributes.bookTitle)
+                                .font(.headline.weight(.semibold))
+                                .lineLimit(1)
 
                             Text(context.attributes.bookAuthor)
                                 .font(.caption)
@@ -104,12 +77,44 @@ struct ReadingSessionWidgetLiveActivity: Widget {
                                     context.attributes.totalPages
                                 )
                             )
-                                .font(.caption2.weight(.semibold))
-                                .foregroundStyle(.secondary)
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                        }
+
+                        Spacer(minLength: 8)
+
+                        VStack(alignment: .trailing, spacing: 2) {
+                            if context.state.isPaused {
+                                Text("Paused")
+                                    .font(.caption2.weight(.semibold))
+                                    .foregroundStyle(.orange)
+                            }
+
+                            ZStack(alignment: .trailing) {
+                                Text("99:59:59")
+                                    .font(.system(size: 22, weight: .semibold, design: .rounded))
+                                    .monospacedDigit()
+                                    .hidden()
+
+                                if context.state.isPaused,
+                                   let pausedElapsed = context.state.pausedElapsedSeconds {
+                                    Text(formattedElapsed(seconds: pausedElapsed))
+                                        .font(.system(size: 22, weight: .semibold, design: .rounded))
+                                        .monospacedDigit()
+                                } else {
+                                    Text(context.state.timerStartTime, style: .timer)
+                                        .font(.system(size: 22, weight: .semibold, design: .rounded))
+                                        .monospacedDigit()
+                                }
+                            }
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                            .frame(width: timerWidth, alignment: .trailing)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .offset(y: -4)
+                    .padding(.top, 2)
                 }
 
                 DynamicIslandExpandedRegion(.bottom) {
