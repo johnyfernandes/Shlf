@@ -109,7 +109,7 @@ struct ReadingSessionWidgetLiveActivity: Widget {
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.vertical, 2)
+                    .offset(y: -4)
                 }
 
                 DynamicIslandExpandedRegion(.bottom) {
