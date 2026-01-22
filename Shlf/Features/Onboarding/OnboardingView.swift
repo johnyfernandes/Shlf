@@ -13,6 +13,7 @@ import UIKit
 struct OnboardingView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.colorScheme) private var colorScheme
     @Query private var profiles: [UserProfile]
     @Binding var isPresented: Bool
 
@@ -72,18 +73,29 @@ struct OnboardingView: View {
             Button {
                 advanceOrComplete()
             } label: {
-                Text(currentStep == steps.last ? "Get Started" : "Continue")
+                Text(currentStep == steps.last ? "Onboarding.Button.GetStarted" : "Onboarding.Button.Continue")
+                    .font(Theme.Typography.headline)
+                    .foregroundStyle(themeColor.onColor(for: colorScheme))
                     .frame(maxWidth: .infinity)
-                    .primaryButton(color: themeColor.color)
+                    .padding(.vertical, Theme.Spacing.md)
+                    .background(
+                        RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous)
+                            .fill(themeColor.gradient)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous)
+                                    .stroke(themeColor.color.opacity(colorScheme == .dark ? 0.35 : 0.2), lineWidth: 1)
+                            )
+                    )
+                    .shadow(color: themeColor.color.opacity(0.35), radius: 12, y: 6)
             }
 
             if !currentStep.isSetupStep {
-                Button("Skip") {
+                Button("Onboarding.Button.Skip") {
                     completeOnboarding()
                 }
                 .foregroundStyle(Theme.Colors.secondaryText)
             } else if currentStep == .goal {
-                Button("Not now") {
+                Button("Onboarding.Button.NotNow") {
                     skipGoalSetup = true
                     goToNextStep()
                 }
@@ -198,22 +210,22 @@ private struct OnboardingStepView: View {
                 switch step {
                 case .welcome:
                     onboardingHeader(
-                        title: "Welcome to Shlf",
-                        subtitle: "A calm, focused reading companion that keeps every session, streak, and goal in one place."
+                        title: "Onboarding.Welcome.Title",
+                        subtitle: "Onboarding.Welcome.Subtitle"
                     )
                     OnboardingHero {
                         PlaceholderLibraryStack(colorScheme: colorScheme)
                     }
                     onboardingPillRow([
-                        FeaturePill(icon: "barcode.viewfinder", text: "Scan books"),
-                        FeaturePill(icon: "doc.text.magnifyingglass", text: "Smart search"),
-                        FeaturePill(icon: "list.bullet", text: "Track formats")
+                        FeaturePill(icon: "barcode.viewfinder", text: "Onboarding.Pill.Scan"),
+                        FeaturePill(icon: "doc.text.magnifyingglass", text: "Onboarding.Pill.SmartSearch"),
+                        FeaturePill(icon: "list.bullet", text: "Onboarding.Pill.TrackFormats")
                     ])
 
                 case .sessions:
                     onboardingHeader(
-                        title: "Log sessions, stay in flow",
-                        subtitle: "Track pages and time with Live Activities and Dynamic Island at a glance."
+                        title: "Onboarding.Sessions.Title",
+                        subtitle: "Onboarding.Sessions.Subtitle"
                     )
                     OnboardingHero {
                         PlaceholderLiveActivity(colorScheme: colorScheme)
@@ -222,53 +234,53 @@ private struct OnboardingStepView: View {
 
                 case .habits:
                     onboardingHeader(
-                        title: "Build streaks and goals",
-                        subtitle: "Daily goals, streaks, and trends help you stay consistent without the pressure."
+                        title: "Onboarding.Habits.Title",
+                        subtitle: "Onboarding.Habits.Subtitle"
                     )
                     OnboardingHero {
                         PlaceholderStats(colorScheme: colorScheme)
                     }
                     onboardingPillRow([
-                        FeaturePill(icon: "flame.fill", text: "Streaks"),
-                        FeaturePill(icon: "target", text: "Goals"),
-                        FeaturePill(icon: "chart.bar.xaxis", text: "Trends")
+                        FeaturePill(icon: "flame.fill", text: "Onboarding.Pill.Streaks"),
+                        FeaturePill(icon: "target", text: "Onboarding.Pill.Goals"),
+                        FeaturePill(icon: "chart.bar.xaxis", text: "Onboarding.Pill.Trends")
                     ])
 
                 case .devices:
                     onboardingHeader(
-                        title: "Across iPhone, Watch, and iCloud",
-                        subtitle: "Pick up where you left off with seamless sync and a beautiful Apple Watch companion."
+                        title: "Onboarding.Devices.Title",
+                        subtitle: "Onboarding.Devices.Subtitle"
                     )
                     OnboardingHero {
                         PlaceholderDevices(colorScheme: colorScheme)
                     }
                     onboardingPillRow([
-                        FeaturePill(icon: "applewatch", text: "Watch"),
-                        FeaturePill(icon: "icloud", text: "iCloud"),
-                        FeaturePill(icon: "rectangle.and.pencil.and.ellipsis", text: "Live sync")
+                        FeaturePill(icon: "applewatch", text: "Onboarding.Pill.Watch"),
+                        FeaturePill(icon: "icloud", text: "Onboarding.Pill.iCloud"),
+                        FeaturePill(icon: "rectangle.and.pencil.and.ellipsis", text: "Onboarding.Pill.LiveSync")
                     ])
 
                 case .importShare:
                     onboardingHeader(
-                        title: "Import and share instantly",
-                        subtitle: "Bring your Goodreads or Kindle library and share beautiful reading cards."
+                        title: "Onboarding.Import.Title",
+                        subtitle: "Onboarding.Import.Subtitle"
                     )
                     OnboardingHero {
                         PlaceholderImportShare(colorScheme: colorScheme)
                     }
                     onboardingPillRow([
-                        FeaturePill(icon: "books.vertical", text: "Goodreads"),
-                        FeaturePill(icon: "book.closed", text: "Kindle"),
-                        FeaturePill(icon: "square.and.arrow.up", text: "Share cards")
+                        FeaturePill(icon: "books.vertical", text: "Onboarding.Pill.Goodreads"),
+                        FeaturePill(icon: "book.closed", text: "Onboarding.Pill.Kindle"),
+                        FeaturePill(icon: "square.and.arrow.up", text: "Onboarding.Pill.ShareCards")
                     ])
-                    Text("Some advanced features require Shlf Pro.")
+                    Text("Onboarding.Import.ProNote")
                         .font(Theme.Typography.caption)
                         .foregroundStyle(Theme.Colors.secondaryText)
 
                 case .goal:
                     onboardingHeader(
-                        title: "Set a daily goal",
-                        subtitle: "Pick a simple daily target. You can change this anytime in Goals."
+                        title: "Onboarding.Goal.Title",
+                        subtitle: "Onboarding.Goal.Subtitle"
                     )
                     OnboardingHero {
                         PlaceholderGoal(colorScheme: colorScheme)
@@ -277,14 +289,14 @@ private struct OnboardingStepView: View {
 
                 case .theme:
                     onboardingHeader(
-                        title: "Pick your look",
-                        subtitle: "Choose a theme color that matches your reading mood."
+                        title: "Onboarding.Theme.Title",
+                        subtitle: "Onboarding.Theme.Subtitle"
                     )
                     OnboardingHero {
                         PlaceholderTheme(colorScheme: colorScheme, accent: selectedTheme.color)
                     }
                     themePicker
-                    Text("More colors and icons are available with Shlf Pro.")
+                    Text("Onboarding.Theme.ProNote")
                         .font(Theme.Typography.caption)
                         .foregroundStyle(Theme.Colors.secondaryText)
                 }
@@ -299,7 +311,7 @@ private struct OnboardingStepView: View {
     }
 
     @ViewBuilder
-    private func onboardingHeader(title: String, subtitle: String) -> some View {
+    private func onboardingHeader(title: LocalizedStringKey, subtitle: LocalizedStringKey) -> some View {
         VStack(spacing: Theme.Spacing.sm) {
             Text(title)
                 .font(.system(size: 34, weight: .semibold))
@@ -315,18 +327,36 @@ private struct OnboardingStepView: View {
 
     @ViewBuilder
     private func onboardingPillRow(_ pills: [FeaturePill]) -> some View {
+        let pillAccent = themeColor == .neutral ? Theme.Colors.text : themeColor.color
+        let pillForeground = Theme.Colors.text
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 10)], spacing: 10) {
             ForEach(pills) { pill in
                 HStack(spacing: 6) {
+                    Circle()
+                        .fill(pillAccent)
+                        .frame(width: 6, height: 6)
                     Image(systemName: pill.icon)
                         .font(.caption)
+                        .foregroundStyle(pillAccent)
                     Text(pill.text)
                         .font(Theme.Typography.caption)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.06), in: Capsule())
-                .foregroundStyle(Theme.Colors.secondaryText)
+                .background(
+                    Capsule()
+                        .fill(.ultraThinMaterial)
+                        .overlay(
+                            Capsule()
+                                .fill(themeColor.color.opacity(colorScheme == .dark ? 0.18 : 0.12))
+                        )
+                        .overlay(
+                            Capsule()
+                                .stroke(themeColor.color.opacity(colorScheme == .dark ? 0.35 : 0.2), lineWidth: 1)
+                        )
+                )
+                .foregroundStyle(pillForeground)
+                .shadow(color: themeColor.color.opacity(colorScheme == .dark ? 0.25 : 0.15), radius: 6, y: 3)
             }
         }
     }
@@ -335,14 +365,14 @@ private struct OnboardingStepView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             if !isProUser {
                 OnboardingCallout(
-                    title: "Goals are part of Shlf Pro",
-                    message: "Upgrade to set custom daily goals and track your progress.",
-                    actionTitle: "Upgrade to Pro",
+                    title: "Onboarding.Goal.ProTitle",
+                    message: "Onboarding.Goal.ProMessage",
+                    actionTitle: "Onboarding.Goal.Upgrade",
                     action: { showUpgradeSheet = true }
                 )
             } else {
                 VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                    Picker("Goal type", selection: $selectedGoalType) {
+                    Picker("Onboarding.Goal.Type", selection: $selectedGoalType) {
                         Text(GoalType.pagesPerDay.displayNameKey).tag(GoalType.pagesPerDay)
                         Text(GoalType.minutesPerDay.displayNameKey).tag(GoalType.minutesPerDay)
                     }
@@ -408,7 +438,7 @@ private struct OnboardingStepView: View {
 private struct FeaturePill: Identifiable {
     let id = UUID()
     let icon: String
-    let text: String
+    let text: LocalizedStringKey
 }
 
 private struct OnboardingHero<Content: View>: View {
@@ -671,17 +701,17 @@ private struct LiveActivityCard: View {
                 .font(.title3)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("Live Activities")
-                    .font(Theme.Typography.headline)
-                Text(isEnabled ? "Enabled on your Lock Screen." : "Enable Live Activities in Settings.")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(Theme.Colors.secondaryText)
+            Text("Onboarding.LiveActivities.Title")
+                .font(Theme.Typography.headline)
+            Text(isEnabled ? "Onboarding.LiveActivities.Enabled" : "Onboarding.LiveActivities.Disabled")
+                .font(Theme.Typography.caption)
+                .foregroundStyle(Theme.Colors.secondaryText)
             }
 
             Spacer()
 
             if !isEnabled {
-                Button("Open Settings") {
+                Button("Onboarding.LiveActivities.OpenSettings") {
                     if let url = URL(string: UIApplication.openSettingsURLString) {
                         UIApplication.shared.open(url)
                     }
@@ -699,9 +729,9 @@ private struct LiveActivityCard: View {
 }
 
 private struct OnboardingCallout: View {
-    let title: String
-    let message: String
-    let actionTitle: String
+    let title: LocalizedStringKey
+    let message: LocalizedStringKey
+    let actionTitle: LocalizedStringKey
     let action: () -> Void
 
     var body: some View {
