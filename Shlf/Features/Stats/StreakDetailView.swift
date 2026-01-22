@@ -12,8 +12,10 @@ struct StreakDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.themeColor) private var themeColor
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.colorScheme) private var colorScheme
     @Bindable var profile: UserProfile
     @Query(sort: [SortDescriptor(\StreakEvent.date, order: .reverse)]) private var events: [StreakEvent]
+    @Query private var sessions: [ReadingSession]
 
     @State private var historyFilter: StreakHistoryFilter = .last90Days
     @State private var showUpgradeSheet = false
@@ -115,44 +117,39 @@ struct StreakDetailView: View {
     }
 
     private var streakSummaryCard: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            HStack(spacing: Theme.Spacing.xs) {
-                Image(systemName: "flame.fill")
-                    .foregroundStyle(Theme.Colors.streakGradient)
-                Text("Current Streak")
-                    .font(Theme.Typography.headline)
-            }
+        cardContainer {
+            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                HStack(spacing: Theme.Spacing.sm) {
+                    Text("Streak.DaysInRow.Title")
+                        .font(.system(size: 28, weight: .semibold))
+                        .foregroundStyle(Theme.Colors.text)
 
-            HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.xs) {
-                Text(profile.currentStreak, format: .number)
-                    .font(.system(size: 42, weight: .bold, design: .rounded))
-                    .foregroundStyle(Theme.Colors.text)
+                    Spacer()
 
-                Text("days")
-                    .font(Theme.Typography.title3)
-                    .foregroundStyle(Theme.Colors.secondaryText)
+                    streakCountPill
+                }
 
-                Spacer()
+                streakWeekRow
 
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("Longest")
-                        .font(.caption)
-                        .foregroundStyle(Theme.Colors.secondaryText)
+                HStack(spacing: Theme.Spacing.sm) {
+                    Image(systemName: "trophy.fill")
+                        .foregroundStyle(Theme.Colors.warning)
+
                     Text(
                         String.localizedStringWithFormat(
-                            String(localized: "%lld days"),
+                            String(localized: "Streak.LongestChain"),
                             profile.longestStreak
                         )
                     )
-                        .font(.headline)
-                        .foregroundStyle(Theme.Colors.text)
-                }
-            }
+                    .font(Theme.Typography.callout)
+                    .foregroundStyle(Theme.Colors.secondaryText)
 
-            streakStatusText
+                    Spacer()
+                }
+
+                streakStatusText
+            }
         }
-        .padding(Theme.Spacing.lg)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private var streakStatusText: some View {
@@ -195,30 +192,30 @@ struct StreakDetailView: View {
     }
 
     private var streakProtectionCard: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            HStack(spacing: Theme.Spacing.xs) {
-                Image(systemName: "shield.fill")
-                    .foregroundStyle(themeColor.color)
-                Text("Streak Protection")
-                    .font(Theme.Typography.headline)
-            }
-
-            if !isProUser {
-                Text("Protect missed days with a 48-hour pardon window.")
-                    .font(Theme.Typography.callout)
-                    .foregroundStyle(Theme.Colors.secondaryText)
-
-                Button("Upgrade to Pro") {
-                    showUpgradeSheet = true
+        cardContainer {
+            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                HStack(spacing: Theme.Spacing.xs) {
+                    Image(systemName: "shield.fill")
+                        .foregroundStyle(themeColor.color)
+                    Text("Streak Protection")
+                        .font(Theme.Typography.headline)
                 }
-                .font(Theme.Typography.callout)
-                .foregroundStyle(themeColor.color)
-            } else {
-                streakProtectionContent
+
+                if !isProUser {
+                    Text("Protect missed days with a 48-hour pardon window.")
+                        .font(Theme.Typography.callout)
+                        .foregroundStyle(Theme.Colors.secondaryText)
+
+                    Button("Upgrade to Pro") {
+                        showUpgradeSheet = true
+                    }
+                    .font(Theme.Typography.callout)
+                    .foregroundStyle(themeColor.color)
+                } else {
+                    streakProtectionContent
+                }
             }
         }
-        .padding(Theme.Spacing.lg)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private var streakProtectionContent: some View {
@@ -264,49 +261,176 @@ struct StreakDetailView: View {
     }
 
     private var streakHistoryCard: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            HStack(spacing: Theme.Spacing.xs) {
-                Image(systemName: "clock.arrow.circlepath")
-                    .foregroundStyle(themeColor.color)
-                Text("History")
-                    .font(Theme.Typography.headline)
-            }
-
-            if isProUser {
-                Picker("History", selection: $historyFilter) {
-                    ForEach(StreakHistoryFilter.allCases, id: \.self) { filter in
-                        Text(filter.title).tag(filter)
-                    }
+        cardContainer {
+            VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                HStack(spacing: Theme.Spacing.xs) {
+                    Image(systemName: "clock.arrow.circlepath")
+                        .foregroundStyle(themeColor.color)
+                    Text("History")
+                        .font(Theme.Typography.headline)
                 }
-                .pickerStyle(.segmented)
 
-                if filteredEvents.isEmpty {
-                    Text("No streak history yet.")
-                        .font(Theme.Typography.callout)
-                        .foregroundStyle(Theme.Colors.secondaryText)
-                        .padding(.top, Theme.Spacing.xs)
-                } else {
-                    VStack(spacing: Theme.Spacing.xs) {
-                        ForEach(filteredEvents) { event in
-                            StreakEventRow(event: event)
+                if isProUser {
+                    Picker("History", selection: $historyFilter) {
+                        ForEach(StreakHistoryFilter.allCases, id: \.self) { filter in
+                            Text(filter.title).tag(filter)
                         }
                     }
-                    .padding(.top, Theme.Spacing.xs)
-                }
-            } else {
-                Text("Streak history is available with Pro.")
-                    .font(Theme.Typography.callout)
-                    .foregroundStyle(Theme.Colors.secondaryText)
+                    .pickerStyle(.segmented)
 
-                Button("Upgrade to Pro") {
-                    showUpgradeSheet = true
+                    if filteredEvents.isEmpty {
+                        Text("No streak history yet.")
+                            .font(Theme.Typography.callout)
+                            .foregroundStyle(Theme.Colors.secondaryText)
+                            .padding(.top, Theme.Spacing.xs)
+                    } else {
+                        VStack(spacing: Theme.Spacing.xs) {
+                            ForEach(filteredEvents) { event in
+                                StreakEventRow(
+                                    event: event,
+                                    pagesRead: pagesForEvent(event)
+                                )
+                            }
+                        }
+                        .padding(.top, Theme.Spacing.xs)
+                    }
+                } else {
+                    Text("Streak history is available with Pro.")
+                        .font(Theme.Typography.callout)
+                        .foregroundStyle(Theme.Colors.secondaryText)
+
+                    Button("Upgrade to Pro") {
+                        showUpgradeSheet = true
+                    }
+                    .font(Theme.Typography.callout)
+                    .foregroundStyle(themeColor.color)
                 }
-                .font(Theme.Typography.callout)
-                .foregroundStyle(themeColor.color)
             }
         }
-        .padding(Theme.Spacing.lg)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private var streakCountPill: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "flame.fill")
+                .font(.caption.weight(.semibold))
+            Text("\(profile.currentStreak)")
+                .font(.callout.weight(.semibold))
+        }
+        .foregroundStyle(themeColor.color)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 6)
+        .background(themeColor.color.opacity(0.16), in: Capsule())
+    }
+
+    private var statusPill: some View {
+        let labelKey: LocalizedStringKey
+        let tint: Color
+        if let daysSince = daysSinceLastStreakDay {
+            switch daysSince {
+            case 0:
+                labelKey = "Streak.Status.Active"
+                tint = Theme.Colors.success
+            case 1:
+                labelKey = "Streak.Status.Risk"
+                tint = Theme.Colors.warning
+            default:
+                labelKey = "Streak.Status.Lost"
+                tint = Theme.Colors.error
+            }
+        } else {
+            labelKey = "Streak.Status.Start"
+            tint = themeColor.color
+        }
+
+        return Text(labelKey)
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(tint)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(tint.opacity(0.12), in: Capsule())
+    }
+
+    private var streakWeekRow: some View {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let dates = (0..<7).reversed().compactMap { offset in
+            calendar.date(byAdding: .day, value: -offset, to: today)
+        }
+        let readingDays = Set(
+            sessions
+                .filter { $0.countsTowardStats }
+                .map { calendar.startOfDay(for: $0.startDate) }
+        )
+
+        return ZStack {
+            Capsule()
+                .fill(Theme.Colors.secondaryBackground)
+                .frame(height: 3)
+                .padding(.horizontal, 18)
+                .padding(.bottom, 18)
+
+            HStack(spacing: 0) {
+                ForEach(Array(dates.enumerated()), id: \.offset) { _, date in
+                    let isToday = calendar.isDate(date, inSameDayAs: Date())
+                    let didRead = readingDays.contains(date)
+                    VStack(spacing: 8) {
+                        ZStack {
+                            Circle()
+                                .fill(didRead ? themeColor.color : Theme.Colors.secondaryBackground)
+                                .overlay(
+                                    Circle()
+                                        .strokeBorder(themeColor.color.opacity(didRead ? 0 : 0.6), lineWidth: didRead ? 0 : 1.5)
+                                )
+                                .frame(width: 34, height: 34)
+
+                            if didRead {
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundStyle(themeColor.onColor(for: colorScheme))
+                            } else if isToday {
+                                Text("?")
+                                    .font(.system(size: 15, weight: .bold))
+                                    .foregroundStyle(themeColor.color)
+                            }
+                        }
+
+                        Text(isToday ? String(localized: "Streak.Today") : shortWeekdayLabel(for: date))
+                            .font(.caption2.weight(.medium))
+                            .foregroundStyle(Theme.Colors.secondaryText)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+        }
+    }
+
+    private func shortWeekdayLabel(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale.current
+        formatter.setLocalizedDateFormatFromTemplate("EEE")
+        return formatter.string(from: date)
+    }
+
+    private func cardContainer<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        content()
+            .padding(Theme.Spacing.lg)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.06), radius: 12, y: 6)
+    }
+
+    private func pagesForEvent(_ event: StreakEvent) -> Int? {
+        guard event.type == .day else { return nil }
+        let calendar = Calendar.current
+        let day = calendar.startOfDay(for: event.date)
+        let total = sessions
+            .filter { $0.countsTowardStats && calendar.startOfDay(for: $0.startDate) == day }
+            .reduce(0) { $0 + max(0, $1.pagesRead) }
+        return total > 0 ? total : nil
     }
 
     private var missedDayDate: Date? {
@@ -367,6 +491,7 @@ private enum StreakHistoryFilter: CaseIterable {
 
 private struct StreakEventRow: View {
     let event: StreakEvent
+    let pagesRead: Int?
 
     var body: some View {
         HStack(spacing: Theme.Spacing.sm) {
@@ -382,6 +507,16 @@ private struct StreakEventRow: View {
                     Text(subtitle)
                         .font(Theme.Typography.caption)
                         .foregroundStyle(Theme.Colors.secondaryText)
+                }
+                if let pagesRead {
+                    Text(
+                        String.localizedStringWithFormat(
+                            String(localized: "%lld pages"),
+                            pagesRead
+                        )
+                    )
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(Theme.Colors.secondaryText)
                 }
             }
 
