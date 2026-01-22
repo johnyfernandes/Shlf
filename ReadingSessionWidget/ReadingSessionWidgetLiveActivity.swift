@@ -32,6 +32,7 @@ struct ReadingSessionWidgetAttributes: ActivityAttributes, Sendable {
     var startTime: Date
     var themeColorHex: String // Store as hex string for Codable compliance
     var coverImageURLString: String?
+    var compactCoverURLString: String?
 
     var themeColor: Color {
         Color(hex: themeColorHex) ?? .cyan
@@ -40,6 +41,11 @@ struct ReadingSessionWidgetAttributes: ActivityAttributes, Sendable {
     var coverImageURL: URL? {
         guard let coverImageURLString else { return nil }
         return URL(string: coverImageURLString)
+    }
+
+    var compactCoverURL: URL? {
+        guard let compactCoverURLString else { return nil }
+        return URL(string: compactCoverURLString)
     }
 }
 
@@ -379,7 +385,8 @@ private func localCoverImage(
     context: ActivityViewContext<ReadingSessionWidgetAttributes>
 ) -> Image? {
 #if canImport(UIKit)
-    guard let url = context.attributes.coverImageURL, url.isFileURL else { return nil }
+    guard let url = (context.attributes.compactCoverURL ?? context.attributes.coverImageURL),
+          url.isFileURL else { return nil }
     if let image = UIImage(contentsOfFile: url.path) {
         return Image(uiImage: image)
     }
@@ -494,7 +501,8 @@ extension ReadingSessionWidgetAttributes {
             startPage: 0,
             startTime: Date().addingTimeInterval(-600), // 10 minutes ago
             themeColorHex: "#00CED1",
-            coverImageURLString: "https://covers.openlibrary.org/b/isbn/0140280197-L.jpg"
+            coverImageURLString: "https://covers.openlibrary.org/b/isbn/0140280197-L.jpg",
+            compactCoverURLString: nil
         )
     }
 }

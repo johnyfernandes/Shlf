@@ -52,6 +52,7 @@ class ReadingSessionActivityManager {
         )
 
         let coverResources = await resolveCoverResources(book: book, fallbackHex: themeColorHex)
+        let compactCoverURLString = await resolveCompactCoverURLString(for: book)
         let attributes = ReadingSessionWidgetAttributes(
             bookTitle: book.title,
             bookAuthor: book.author,
@@ -59,7 +60,8 @@ class ReadingSessionActivityManager {
             startPage: startPageValue,
             startTime: activityStartTime,
             themeColorHex: coverResources.themeHex,
-            coverImageURLString: coverResources.coverURLString
+            coverImageURLString: coverResources.coverURLString,
+            compactCoverURLString: compactCoverURLString
         )
 
         let initialState = ReadingSessionWidgetAttributes.ContentState(
@@ -459,6 +461,10 @@ private func resolveCoverResources(book: Book, fallbackHex: String) async -> (th
         if let localURL {
             try? FileManager.default.createDirectory(at: localURL.deletingLastPathComponent(), withIntermediateDirectories: true)
             try? data.write(to: localURL, options: [.atomic])
+            try? FileManager.default.setAttributes(
+                [.protectionKey: FileProtectionType.none],
+                ofItemAtPath: localURL.path
+            )
         }
         if let image = UIImage(data: data),
            let color = image.averageColor,
@@ -481,6 +487,60 @@ private func liveActivityCoverFileURL(for bookId: UUID) -> URL? {
     }
     let folder = containerURL.appendingPathComponent("LiveActivityCovers", isDirectory: true)
     return folder.appendingPathComponent("\(bookId.uuidString).jpg")
+#else
+    return nil
+#endif
+}
+
+private func liveActivityCompactCoverFileURL(for bookId: UUID) -> URL? {
+#if canImport(UIKit)
+    guard let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: SwiftDataConfig.appGroupID) else {
+        return nil
+    }
+    let folder = containerURL.appendingPathComponent("LiveActivityCovers", isDirectory: true)
+    return folder.appendingPathComponent("\(bookId.uuidString)_compact.jpg")
+#else
+    return nil
+#endif
+}
+
+private func resolveCompactCoverURLString(for book: Book) async -> String? {
+#if canImport(UIKit)
+    guard let coverURL = book.coverImageURL else { return nil }
+    guard let compactURL = liveActivityCompactCoverFileURL(for: book.id) else { return nil }
+
+    if FileManager.default.fileExists(atPath: compactURL.path) {
+        return compactURL.absoluteString
+    }
+
+    do {
+        let (data, _) = try await URLSession.shared.data(from: coverURL)
+        guard let image = UIImage(data: data) else { return nil }
+
+        let targetSize = CGSize(width: 12, height: 18)
+        let scale = max(targetSize.width / image.size.width, targetSize.height / image.size.height)
+        let scaledSize = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+        let origin = CGPoint(
+            x: (targetSize.width - scaledSize.width) * 0.5,
+            y: (targetSize.height - scaledSize.height) * 0.5
+        )
+        let renderer = UIGraphicsImageRenderer(size: targetSize)
+        let thumbnail = renderer.image { _ in
+            image.draw(in: CGRect(origin: origin, size: scaledSize))
+        }
+
+        guard let thumbData = thumbnail.jpegData(compressionQuality: 0.75) else { return nil }
+
+        try? FileManager.default.createDirectory(at: compactURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try? thumbData.write(to: compactURL, options: [.atomic])
+        try? FileManager.default.setAttributes(
+            [.protectionKey: FileProtectionType.none],
+            ofItemAtPath: compactURL.path
+        )
+        return compactURL.absoluteString
+    } catch {
+        return nil
+    }
 #else
     return nil
 #endif
