@@ -446,7 +446,7 @@ struct StatsView: View {
                 ShareSheetView()
             }
             .sheet(isPresented: $showSettings) {
-                SettingsView()
+                SettingsView(profile: profile)
             }
             .sheet(isPresented: $showStreakDetail) {
                 StreakDetailView(profile: profile)

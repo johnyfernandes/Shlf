@@ -13,7 +13,7 @@ import UIKit
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.requestReview) private var requestReview
-    @Query private var profiles: [UserProfile]
+    @Bindable var profile: UserProfile
 
     @State private var storeKit = StoreKitService.shared
     @State private var showUpgradeSheet = false
@@ -24,45 +24,13 @@ struct SettingsView: View {
     @State private var cloudStatus: CloudDataStatus = .checking
     @State private var showCloudChoiceDialog = false
 
-    private var profile: UserProfile {
-        if let existing = profiles.first {
-            return existing
-        }
-
-        // CRITICAL: Check again after fetching to prevent race condition
-        // Another thread might have created profile between @Query and here
-        let descriptor = FetchDescriptor<UserProfile>()
-        if let existingAfterFetch = try? modelContext.fetch(descriptor).first {
-            return existingAfterFetch
-        }
-
-        // Now safe to create
-        let new = UserProfile()
-        modelContext.insert(new)
-        try? modelContext.save() // Save immediately to prevent other threads from creating
-        return new
-    }
-
     private var isProUser: Bool {
         ProAccess.isProUser(profile: profile)
     }
 
     var body: some View {
         NavigationStack {
-            ZStack(alignment: .top) {
-                // Dynamic gradient background
-                LinearGradient(
-                    colors: [
-                        profile.themeColor.color.opacity(0.08),
-                        profile.themeColor.color.opacity(0.02),
-                        Theme.Colors.background
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
-
-                Form {
+            Form {
                     proSection
 
                     Section("Appearance") {
@@ -225,12 +193,9 @@ struct SettingsView: View {
                             .foregroundStyle(Theme.Colors.secondaryText)
                     }
                 }
-                }
-                .labelStyle(SettingsLabelStyle())
-                .id(profile.themeColor.rawValue)
-                .tint(profile.themeColor.color)
-                .scrollContentBackground(.hidden)
             }
+            .labelStyle(SettingsLabelStyle())
+            .tint(profile.themeColor.color)
             .navigationTitle("Settings")
             .overlay {
                 if isMigratingCloud {
@@ -1018,6 +983,6 @@ struct DataManagementView: View {
 }
 
 #Preview {
-    SettingsView()
+    SettingsView(profile: UserProfile())
         .modelContainer(for: [UserProfile.self], inMemory: true)
 }
