@@ -107,6 +107,10 @@ struct StreakDetailView: View {
             .sheet(isPresented: $showUpgradeSheet) {
                 PaywallView()
             }
+            .onAppear {
+                let engine = GamificationEngine(modelContext: modelContext)
+                engine.refreshStreak(for: profile)
+            }
         }
     }
 
@@ -391,6 +395,8 @@ private struct StreakEventRow: View {
 private extension StreakEvent {
     var title: String {
         switch type {
+        case .day:
+            return String(localized: "Streak day")
         case .saved:
             return "Saved streak"
         case .lost:
@@ -403,6 +409,15 @@ private extension StreakEvent {
     var subtitle: String? {
         let dateText = date.formatted(date: .abbreviated, time: .omitted)
         switch type {
+        case .day:
+            if streakLength > 0 {
+                return String.localizedStringWithFormat(
+                    String(localized: "%@ • Day %lld"),
+                    dateText,
+                    streakLength
+                )
+            }
+            return dateText
         case .saved:
             return "\(dateText) • \(streakLength) days"
         case .lost:
@@ -414,6 +429,8 @@ private extension StreakEvent {
 
     var iconName: String {
         switch type {
+        case .day:
+            return "flame.fill"
         case .saved:
             return "shield.fill"
         case .lost:
@@ -425,6 +442,8 @@ private extension StreakEvent {
 
     var iconColor: Color {
         switch type {
+        case .day:
+            return Theme.Colors.warning
         case .saved:
             return Theme.Colors.success
         case .lost:

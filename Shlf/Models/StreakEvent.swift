@@ -9,6 +9,7 @@ import Foundation
 import SwiftData
 
 enum StreakEventType: String, Codable, CaseIterable {
+    case day
     case saved
     case lost
     case started

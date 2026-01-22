@@ -92,6 +92,7 @@ final class GamificationEngine {
         let trackedSessions = allSessions.filter { $0.countsTowardStats }
 
         recalculateStreak(for: profile, sessions: trackedSessions)
+        backfillStreakDaysIfNeeded(from: trackedSessions)
         checkStreakAchievements(streak: profile.currentStreak, profile: profile)
     }
 
@@ -174,6 +175,8 @@ final class GamificationEngine {
             profile.currentStreak = 1
             profile.longestStreak = 1
             profile.lastReadingDate = validSessionDate
+            recordStreakDayIfNeeded(date: validSessionDate, streakLength: profile.currentStreak)
+            recordStreakEvent(type: .started, date: validSessionDate, streakLength: profile.currentStreak)
             return
         }
 
@@ -186,6 +189,7 @@ final class GamificationEngine {
         switch daysSinceLastReading {
         case 0:
             // Same day, no change to streak
+            recordStreakDayIfNeeded(date: validSessionDate, streakLength: profile.currentStreak)
             break
         case 1:
             // Consecutive day, increment streak
@@ -194,6 +198,7 @@ final class GamificationEngine {
                 profile.longestStreak = profile.currentStreak
             }
             profile.lastReadingDate = validSessionDate
+            recordStreakDayIfNeeded(date: validSessionDate, streakLength: profile.currentStreak)
             checkStreakAchievements(streak: profile.currentStreak, profile: profile)
         default:
             // Streak broken
@@ -204,6 +209,8 @@ final class GamificationEngine {
             }
             profile.currentStreak = 1
             profile.lastReadingDate = validSessionDate
+            recordStreakEvent(type: .started, date: validSessionDate, streakLength: profile.currentStreak)
+            recordStreakDayIfNeeded(date: validSessionDate, streakLength: profile.currentStreak)
         }
     }
 
@@ -422,5 +429,45 @@ final class GamificationEngine {
 
         let event = StreakEvent(date: day, type: type, streakLength: streakLength)
         modelContext.insert(event)
+        try? modelContext.save()
+    }
+
+    private func recordStreakDayIfNeeded(date: Date, streakLength: Int) {
+        let calendar = Calendar.current
+        let day = calendar.startOfDay(for: date)
+        let predicate = #Predicate<StreakEvent> { $0.typeRawValue == "day" }
+        let descriptor = FetchDescriptor<StreakEvent>(predicate: predicate)
+        if let existing = try? modelContext.fetch(descriptor) {
+            if existing.contains(where: { calendar.startOfDay(for: $0.date) == day }) {
+                return
+            }
+        }
+
+        let event = StreakEvent(date: day, type: .day, streakLength: streakLength)
+        modelContext.insert(event)
+        try? modelContext.save()
+    }
+
+    private func backfillStreakDaysIfNeeded(from sessions: [ReadingSession]) {
+        let calendar = Calendar.current
+        let predicate = #Predicate<StreakEvent> { $0.typeRawValue == "day" }
+        let descriptor = FetchDescriptor<StreakEvent>(predicate: predicate)
+        let existingEvents = (try? modelContext.fetch(descriptor)) ?? []
+
+        guard existingEvents.isEmpty else { return }
+
+        let readingDays = Set(
+            sessions
+                .filter { $0.countsTowardStats }
+                .map { calendar.startOfDay(for: $0.startDate) }
+        )
+
+        guard !readingDays.isEmpty else { return }
+
+        for day in readingDays {
+            let event = StreakEvent(date: day, type: .day, streakLength: 0)
+            modelContext.insert(event)
+        }
+        try? modelContext.save()
     }
 }
