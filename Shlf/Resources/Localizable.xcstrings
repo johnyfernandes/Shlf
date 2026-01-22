@@ -25086,7 +25086,6 @@
     },
     "Session logged" : {
       "comment" : "Toast shown after a reading session is saved.",
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {

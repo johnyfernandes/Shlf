@@ -11,6 +11,7 @@ import UIKit
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @Query private var profiles: [UserProfile]
     @Query private var activeSessions: [ActiveReadingSession]
     @Query(sort: [SortDescriptor(\Achievement.unlockedAt, order: .reverse)]) private var achievements: [Achievement]
@@ -81,6 +82,9 @@ struct ContentView: View {
             if let achievement = notification.object as? Achievement {
                 showAchievementToast(achievement)
             }
+        }
+        .onChange(of: scenePhase) { _, newValue in
+            toastCenter.updateScenePhase(newValue)
         }
         .environmentObject(toastCenter)
         .toastHost()
