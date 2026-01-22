@@ -40,12 +40,18 @@ struct QuickProgressStepper: View {
         max(24, pageFieldWidth)
     }
 
-    private var accentForeground: Color {
-        themeColor.onColor(for: colorScheme)
+    private var accentBackground: Color {
+        if themeColor == .neutral {
+            return colorScheme == .dark ? .white : .black
+        }
+        return themeColor.color
     }
 
-    private var accentBackground: Color {
-        themeColor.color
+    private var accentForeground: Color {
+        if themeColor == .neutral {
+            return colorScheme == .dark ? .black : .white
+        }
+        return themeColor.onColor(for: colorScheme)
     }
 
     var body: some View {
