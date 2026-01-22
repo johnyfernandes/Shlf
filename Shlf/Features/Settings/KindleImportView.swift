@@ -188,15 +188,32 @@ struct KindleImportView: View {
                     showWebImport = true
                 }
             } label: {
+                let isSyncing = showCoordinatorProgress || isImporting
                 let primaryTitle: LocalizedStringKey = displayConnected ? "Sync now" : "Import from Kindle"
-                Text(primaryTitle)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(themeColor.color, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                HStack(spacing: 10) {
+                    if isSyncing {
+                        ProgressView()
+                            .tint(.white)
+                    }
+                    Text(isSyncing ? "Syncing..." : primaryTitle)
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(themeColor.color.opacity(isSyncing ? 0.6 : 1), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
             .disabled(showCoordinatorProgress || isImporting)
+
+            if showCoordinatorProgress || isImporting {
+                HStack(spacing: 6) {
+                    ProgressView()
+                        .scaleEffect(0.85)
+                    Text("Syncing...")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
 
             if displayConnected {
                 Button {
