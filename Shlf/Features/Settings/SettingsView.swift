@@ -225,8 +225,11 @@ struct SettingsView: View {
                             .foregroundStyle(Theme.Colors.secondaryText)
                     }
                 }
-            }
-            .scrollContentBackground(.hidden)
+                }
+                .labelStyle(SettingsLabelStyle())
+                .id(profile.themeColor.rawValue)
+                .tint(profile.themeColor.color)
+                .scrollContentBackground(.hidden)
             }
             .navigationTitle("Settings")
             .overlay {
@@ -821,6 +824,21 @@ struct ReadingPreferencesView: View {
             Button("OK") {}
         } message: {
             Text(saveErrorMessage)
+        }
+        .withDynamicTheme(profile.themeColor)
+    }
+}
+
+private struct SettingsLabelStyle: LabelStyle {
+    @Environment(\.themeColor) private var themeColor
+
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 10) {
+            configuration.icon
+                .foregroundStyle(themeColor.color)
+                .frame(width: 18, alignment: .center)
+            configuration.title
+                .foregroundStyle(.primary)
         }
     }
 }
