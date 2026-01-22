@@ -146,8 +146,7 @@ struct ReadingSessionWidgetLiveActivity: Widget {
                     .frame(maxWidth: .infinity)
                 }
             } compactLeading: {
-                Image(systemName: "book.fill")
-                    .foregroundStyle(context.attributes.themeColor)
+                compactLeadingCover(context: context)
             } compactTrailing: {
                 Text(
                     String.localizedStringWithFormat(
@@ -156,8 +155,8 @@ struct ReadingSessionWidgetLiveActivity: Widget {
                         context.attributes.totalPages
                     )
                 )
-                    .foregroundStyle(context.attributes.themeColor)
-                    .font(.caption2)
+                    .foregroundStyle(.white)
+                    .font(.caption2.weight(.semibold))
             } minimal: {
                 Image(systemName: "book.fill")
             }
@@ -386,6 +385,46 @@ private func localCoverImage(
     }
 #endif
     return nil
+}
+
+private func compactLeadingCover(
+    context: ActivityViewContext<ReadingSessionWidgetAttributes>
+) -> some View {
+    let coverSize = CGSize(width: 12, height: 18)
+
+    return ZStack {
+        RoundedRectangle(cornerRadius: 4, style: .continuous)
+            .fill(Color.black.opacity(0.35))
+
+        if let image = localCoverImage(context: context) {
+            image
+                .resizable()
+                .scaledToFit()
+                .frame(width: coverSize.width, height: coverSize.height)
+                .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
+        } else if let url = context.attributes.coverImageURL {
+            AsyncImage(url: url, transaction: Transaction(animation: nil)) { phase in
+                switch phase {
+                case .success(let image):
+                    image
+                        .resizable()
+                        .scaledToFit()
+                default:
+                    Image(systemName: "book.closed.fill")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+            }
+            .frame(width: coverSize.width, height: coverSize.height)
+            .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
+        } else {
+            Image(systemName: "book.closed.fill")
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(.white)
+        }
+    }
+    .frame(width: 18, height: 18)
+    .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
 }
 
 private func liveActivityButton<IntentType: AppIntent>(
