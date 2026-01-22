@@ -221,6 +221,7 @@ private struct OnboardingStepView: View {
                         FeaturePill(icon: "doc.text.magnifyingglass", text: "Onboarding.Pill.SmartSearch"),
                         FeaturePill(icon: "list.bullet", text: "Onboarding.Pill.TrackFormats")
                     ])
+                    .padding(.top, Theme.Spacing.md)
 
                 case .sessions:
                     onboardingHeader(
@@ -245,6 +246,7 @@ private struct OnboardingStepView: View {
                         FeaturePill(icon: "target", text: "Onboarding.Pill.Goals"),
                         FeaturePill(icon: "chart.bar.xaxis", text: "Onboarding.Pill.Trends")
                     ])
+                    .padding(.top, Theme.Spacing.md)
 
                 case .devices:
                     onboardingHeader(
@@ -259,6 +261,7 @@ private struct OnboardingStepView: View {
                         FeaturePill(icon: "icloud", text: "Onboarding.Pill.iCloud"),
                         FeaturePill(icon: "rectangle.and.pencil.and.ellipsis", text: "Onboarding.Pill.LiveSync")
                     ])
+                    .padding(.top, Theme.Spacing.md)
 
                 case .importShare:
                     onboardingHeader(
@@ -273,6 +276,7 @@ private struct OnboardingStepView: View {
                         FeaturePill(icon: "book.closed", text: "Onboarding.Pill.Kindle"),
                         FeaturePill(icon: "square.and.arrow.up", text: "Onboarding.Pill.ShareCards")
                     ])
+                    .padding(.top, Theme.Spacing.md)
                     Text("Onboarding.Import.ProNote")
                         .font(Theme.Typography.caption)
                         .foregroundStyle(Theme.Colors.secondaryText)
