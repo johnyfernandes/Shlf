@@ -9,6 +9,7 @@ import SwiftUI
 
 struct QuickProgressStepper: View {
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.colorScheme) private var colorScheme
     @Bindable var book: Book
     let incrementAmount: Int
     @Binding var showConfetti: Bool
@@ -37,6 +38,14 @@ struct QuickProgressStepper: View {
 
     private var pageFieldWidthValue: CGFloat {
         max(24, pageFieldWidth)
+    }
+
+    private var accentForeground: Color {
+        themeColor.onColor(for: colorScheme)
+    }
+
+    private var accentBackground: Color {
+        themeColor.color
     }
 
     var body: some View {
@@ -175,7 +184,10 @@ struct QuickProgressStepper: View {
                     Image(systemName: "plus.circle.fill")
                         .font(.system(size: 44))
                         .symbolRenderingMode(.palette)
-                        .foregroundStyle(.white, themeColor.color)
+                        .foregroundStyle(
+                            themeColor == .neutral ? accentForeground : .white,
+                            accentBackground
+                        )
                 }
                 .onLongPressGesture(minimumDuration: 0.5, pressing: { isPressing in
                     if isPressing {
@@ -199,7 +211,17 @@ struct QuickProgressStepper: View {
                     }
                     .font(Theme.Typography.headline)
                     .frame(maxWidth: .infinity)
-                    .primaryButton(color: themeColor.color)
+                    .foregroundStyle(accentForeground)
+                    .padding(.vertical, Theme.Spacing.md)
+                    .background(
+                        RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous)
+                            .fill(accentBackground)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous)
+                                    .stroke(accentBackground.opacity(colorScheme == .dark ? 0.25 : 0.2), lineWidth: 1)
+                            )
+                    )
+                    .shadow(color: accentBackground.opacity(0.3), radius: 10, y: 4)
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }

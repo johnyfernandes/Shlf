@@ -13,6 +13,7 @@ struct LogReadingSessionView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.colorScheme) private var colorScheme
     @Query private var profiles: [UserProfile]
     @Query private var activeSessions: [ActiveReadingSession]
 
@@ -324,6 +325,7 @@ struct LogReadingSessionView: View {
                             }
                             .buttonStyle(.borderedProminent)
                             .tint(themeColor.color)
+                            .foregroundStyle(themeColor.onColor(for: colorScheme))
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -350,6 +352,7 @@ struct LogReadingSessionView: View {
                             }
                                 .buttonStyle(.borderedProminent)
                                 .tint(themeColor.color)
+                                .foregroundStyle(themeColor.onColor(for: colorScheme))
                             }
                         }
                         .frame(maxWidth: .infinity)
@@ -357,7 +360,19 @@ struct LogReadingSessionView: View {
                         Button("Start Timer") {
                             startTimer()
                         }
-                        .primaryButton(color: themeColor.color)
+                        .font(Theme.Typography.headline)
+                        .foregroundStyle(themeColor.onColor(for: colorScheme))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Theme.Spacing.md)
+                        .background(
+                            RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous)
+                                .fill(themeColor.color)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous)
+                                        .stroke(themeColor.color.opacity(colorScheme == .dark ? 0.25 : 0.2), lineWidth: 1)
+                                )
+                        )
+                        .shadow(color: themeColor.color.opacity(0.3), radius: 10, y: 4)
                         .frame(maxWidth: .infinity)
                     }
                 } else {
