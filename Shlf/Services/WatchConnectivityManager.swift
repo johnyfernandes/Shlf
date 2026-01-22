@@ -10,13 +10,6 @@ import WatchConnectivity
 import SwiftData
 import OSLog
 
-extension Notification.Name {
-    static let watchReachabilityDidChange = Notification.Name("watchReachabilityDidChange")
-    static let watchSessionReceived = Notification.Name("watchSessionReceived")
-    static let watchStatsUpdated = Notification.Name("watchStatsUpdated")
-    static let readingSessionLogged = Notification.Name("readingSessionLogged")
-}
-
 private enum ReadingConstants {
     static let defaultMaxPages = 1000
 }
@@ -598,7 +591,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
     }
 
     nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
-        NotificationCenter.default.post(name: .watchReachabilityDidChange, object: nil)
+        NotificationCenter.default.post(name: Notification.Name("watchReachabilityDidChange"), object: nil)
     }
 
     nonisolated func session(
@@ -922,7 +915,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
     @MainActor
     private func handlePageDelta(_ delta: PageDelta) async {
-        guard let modelContext = await resolvedModelContext() else {
+        guard let modelContext = resolvedModelContext() else {
             Self.logger.warning("ModelContext not configured")
             return
         }
@@ -1001,7 +994,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
     @MainActor
     private func handleWatchSession(_ transfer: SessionTransfer) async {
-        guard let modelContext = await resolvedModelContext() else {
+        guard let modelContext = resolvedModelContext() else {
             Self.logger.warning("ModelContext not configured")
             return
         }
@@ -1155,7 +1148,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
             }
 
             // Force UI refresh
-            NotificationCenter.default.post(name: .watchSessionReceived, object: nil)
+            NotificationCenter.default.post(name: Notification.Name("watchSessionReceived"), object: nil)
 
             // If this session has an end date, end Live Activity to avoid stale state
             if transfer.endDate != nil {
@@ -1200,11 +1193,6 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
     @MainActor
     private func handleProfileStats(_ stats: ProfileStatsTransfer) async {
-        guard let modelContext = modelContext else {
-            Self.logger.warning("ModelContext not configured")
-            return
-        }
-
         // iPhone is the source of truth for stats (Watch only creates/view sessions).
         // Ignore Watch-sent stats to prevent stale overrides after deletions/edits on iPhone.
         Self.logger.info("Ignoring profile stats from Watch (iPhone authoritative)")
@@ -1214,7 +1202,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
     @MainActor
     private func handleLiveActivityStart(_ transfer: LiveActivityStartTransfer) async {
-        guard let modelContext = await resolvedModelContext() else {
+        guard let modelContext = resolvedModelContext() else {
             Self.logger.warning("ModelContext not configured")
             return
         }
@@ -1302,7 +1290,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
     @MainActor
     private func handleLiveActivityEnd() async {
         await ReadingSessionActivityManager.shared.endActivity()
-        if let modelContext = await resolvedModelContext() {
+        if let modelContext = resolvedModelContext() {
             WidgetDataExporter.exportSnapshot(modelContext: modelContext)
         }
         Self.logger.info("🛑 Ended Live Activity from Watch")
@@ -1312,7 +1300,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
     @MainActor
     private func handleActiveSession(_ transfer: ActiveSessionTransfer) async {
-        guard let modelContext = await resolvedModelContext() else {
+        guard let modelContext = resolvedModelContext() else {
             Self.logger.warning("ModelContext not configured")
             return
         }
@@ -1433,7 +1421,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
             WidgetDataExporter.exportSnapshot(modelContext: modelContext)
 
             // Post notification to update UI
-            NotificationCenter.default.post(name: .watchSessionReceived, object: nil)
+            NotificationCenter.default.post(name: Notification.Name("watchSessionReceived"), object: nil)
         } catch {
             Self.logger.error("Failed to handle active session: \(error)")
         }
@@ -1441,7 +1429,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
     @MainActor
     private func handleActiveSessionEnd(endedId: UUID? = nil) async {
-        guard let modelContext = await resolvedModelContext() else {
+        guard let modelContext = resolvedModelContext() else {
             Self.logger.warning("ModelContext not configured")
             return
         }
@@ -1470,7 +1458,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
             WidgetDataExporter.exportSnapshot(modelContext: modelContext)
 
             // Post notification to update UI
-            NotificationCenter.default.post(name: .watchSessionReceived, object: nil)
+            NotificationCenter.default.post(name: Notification.Name("watchSessionReceived"), object: nil)
         } catch {
             Self.logger.error("Failed to end active sessions: \(error)")
         }
@@ -1521,7 +1509,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
     @MainActor
     private func handleSessionCompletion(_ completion: SessionCompletionTransfer) async {
-        guard let modelContext = await resolvedModelContext() else {
+        guard let modelContext = resolvedModelContext() else {
             Self.logger.warning("ModelContext not configured")
             return
         }
@@ -1556,14 +1544,14 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
         // 3. Export snapshot and notify UI
         WidgetDataExporter.exportSnapshot(modelContext: modelContext)
-        NotificationCenter.default.post(name: .watchSessionReceived, object: nil)
+        NotificationCenter.default.post(name: Notification.Name("watchSessionReceived"), object: nil)
 
         Self.logger.info("✅ Atomic session completion handled successfully")
     }
 
     @MainActor
     private func handleBookPosition(_ transfer: BookPositionTransfer) async {
-        guard let modelContext = await resolvedModelContext() else {
+        guard let modelContext = resolvedModelContext() else {
             Self.logger.warning("ModelContext not configured")
             return
         }
@@ -1608,7 +1596,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
     @MainActor
     private func handleQuotes(_ transfers: [QuoteTransfer]) async {
-        guard let modelContext = await resolvedModelContext() else {
+        guard let modelContext = resolvedModelContext() else {
             Self.logger.warning("ModelContext not configured")
             return
         }

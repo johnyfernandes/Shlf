@@ -8,6 +8,12 @@
 import Foundation
 import SwiftData
 
+#if os(watchOS)
+extension Notification.Name {
+    static let achievementUnlocked = Notification.Name("achievementUnlocked")
+}
+#endif
+
 @MainActor
 @Observable
 final class GamificationEngine {
@@ -340,6 +346,8 @@ final class GamificationEngine {
 
         // CRITICAL: Save immediately so achievement persists
         try? modelContext.save()
+
+        NotificationCenter.default.post(name: Notification.Name("achievementUnlocked"), object: achievement)
     }
 
     // MARK: - Stats Calculation

@@ -13,6 +13,7 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var profiles: [UserProfile]
     @Query private var activeSessions: [ActiveReadingSession]
+    @Query(sort: [SortDescriptor(\Achievement.unlockedAt, order: .reverse)]) private var achievements: [Achievement]
 
     @State private var showOnboarding = false
     @State private var selectedTab = 0
@@ -20,6 +21,8 @@ struct ContentView: View {
     @State private var activeSessionLogDestination: ActiveSessionLogDestination?
     @State private var accessoryCoverImage: UIImage?
     @State private var accessoryCoverURL: URL?
+    @State private var didSeedAchievementToasts = false
+    @State private var toastedAchievementIDs: Set<UUID> = []
     @EnvironmentObject private var toastCenter: ToastCenter
 
     private var shouldShowOnboarding: Bool {
@@ -66,9 +69,18 @@ struct ContentView: View {
         }
         .onAppear {
             showOnboarding = shouldShowOnboarding
+            if !didSeedAchievementToasts {
+                toastedAchievementIDs = Set(achievements.map(\.id))
+                didSeedAchievementToasts = true
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .readingSessionLogged)) { _ in
             toastCenter.show(.sessionLogged(tint: currentThemeColor.color), delay: 0.35)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("achievementUnlocked"))) { notification in
+            if let achievement = notification.object as? Achievement {
+                showAchievementToast(achievement)
+            }
         }
         .environmentObject(toastCenter)
         .toastHost()
@@ -108,6 +120,17 @@ struct ContentView: View {
         if let cachedImage = await ImageCacheManager.shared.getImage(for: url) {
             accessoryCoverImage = cachedImage
         }
+    }
+
+    private func showAchievementToast(_ achievement: Achievement) {
+        guard !toastedAchievementIDs.contains(achievement.id) else { return }
+        toastedAchievementIDs.insert(achievement.id)
+
+        let message = String.localizedStringWithFormat(
+            String(localized: "Achievement unlocked: %@"),
+            achievement.type.localizedName
+        )
+        toastCenter.show(.achievementUnlocked(title: message, tint: currentThemeColor.color), delay: 0.2)
     }
 
 }

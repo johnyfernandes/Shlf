@@ -330,7 +330,7 @@ class ReadingSessionActivityManager {
             session.lastUpdated = Date()
             try? modelContext.save()
             WidgetDataExporter.exportSnapshot(modelContext: modelContext)
-            NotificationCenter.default.post(name: .watchStatsUpdated, object: nil)
+            NotificationCenter.default.post(name: Notification.Name("watchStatsUpdated"), object: nil)
             Self.logger.info("🔄 Synced Live Activity state into app session")
         }
     }

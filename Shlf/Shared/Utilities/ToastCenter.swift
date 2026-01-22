@@ -84,6 +84,16 @@ struct ToastData: Identifiable {
             haptic: .light
         )
     }
+
+    static func achievementUnlocked(title: String, tint: Color?) -> ToastData {
+        ToastData(
+            titleKey: title,
+            style: .successCheck,
+            tint: tint,
+            duration: 3,
+            haptic: .medium
+        )
+    }
 }
 
 enum ToastStyle {

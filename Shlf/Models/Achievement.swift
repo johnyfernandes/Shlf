@@ -81,6 +81,41 @@ enum AchievementType: String, Codable, CaseIterable {
         }
     }
 
+    var localizedName: String {
+        switch self {
+        case .firstBook:
+            return String(localized: "Chapter One")
+        case .tenBooks:
+            return String(localized: "Shelf Stacker")
+        case .fiftyBooks:
+            return String(localized: "Library Builder")
+        case .hundredBooks:
+            return String(localized: "Archive Legend")
+        case .hundredPages:
+            return String(localized: "Page Turner")
+        case .thousandPages:
+            return String(localized: "Page Voyager")
+        case .tenThousandPages:
+            return String(localized: "Page Titan")
+        case .sevenDayStreak:
+            return String(localized: "Weekly Flame")
+        case .thirtyDayStreak:
+            return String(localized: "Monthly Blaze")
+        case .hundredDayStreak:
+            return String(localized: "Iron Streak")
+        case .levelFive:
+            return String(localized: "Rising Reader")
+        case .levelTen:
+            return String(localized: "Seasoned Reader")
+        case .levelTwenty:
+            return String(localized: "Master Reader")
+        case .hundredPagesInDay:
+            return String(localized: "Century Sprint")
+        case .marathonReader:
+            return String(localized: "Long Haul")
+        }
+    }
+
     var titleKey: LocalizedStringKey {
         nameKey
     }

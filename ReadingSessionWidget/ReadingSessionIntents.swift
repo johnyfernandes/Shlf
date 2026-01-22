@@ -206,7 +206,7 @@ private func updateAppData(
         logger.info("🔄 Widget reloaded after Live Activity update")
 
         // Post notification to refresh UI
-        NotificationCenter.default.post(name: .watchStatsUpdated, object: nil)
+        NotificationCenter.default.post(name: Notification.Name("watchStatsUpdated"), object: nil)
         logger.info("📡 Posted UI refresh notification")
 
     } catch {
