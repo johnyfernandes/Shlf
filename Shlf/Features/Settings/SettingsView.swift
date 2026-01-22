@@ -23,6 +23,7 @@ struct SettingsView: View {
     @State private var cloudMigrationError: String?
     @State private var cloudStatus: CloudDataStatus = .checking
     @State private var showCloudChoiceDialog = false
+    @State private var showOnboarding = false
 
     private var isProUser: Bool {
         ProAccess.isProUser(profile: profile)
@@ -156,6 +157,12 @@ struct SettingsView: View {
                             Label("About", systemImage: "info.circle")
                         }
 
+                        Button {
+                            showOnboarding = true
+                        } label: {
+                            Label("Onboarding", systemImage: "sparkles")
+                        }
+
                         Link(destination: URL(string: "https://shlf.app")!) {
                             Label("Visit shlf.app", systemImage: "safari")
                         }
@@ -212,6 +219,9 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showUpgradeSheet) {
                 PaywallView()
+            }
+            .fullScreenCover(isPresented: $showOnboarding) {
+                OnboardingView(isPresented: $showOnboarding)
             }
             .alert("Restore Complete", isPresented: $showRestoreAlert) {
                 Button("OK") {}
