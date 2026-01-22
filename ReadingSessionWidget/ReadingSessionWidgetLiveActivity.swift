@@ -397,7 +397,7 @@ private func localCoverImage(
 private func compactLeadingCover(
     context: ActivityViewContext<ReadingSessionWidgetAttributes>
 ) -> some View {
-    let coverSize = CGSize(width: 12, height: 18)
+    let coverSize = CGSize(width: 13, height: 18)
 
     return ZStack {
         RoundedRectangle(cornerRadius: 4, style: .continuous)
