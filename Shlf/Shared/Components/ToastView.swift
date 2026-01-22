@@ -64,13 +64,17 @@ struct ToastHost: ViewModifier {
 
     func body(content: Content) -> some View {
         content.overlay(alignment: .top) {
-            if let toast = toastCenter.toast {
-                ToastView(toast: toast) {
-                    toastCenter.dismiss()
+            VStack(spacing: 8) {
+                ForEach(Array(toastCenter.toasts.enumerated()), id: \.element.id) { index, toast in
+                    ToastView(toast: toast) {
+                        toastCenter.dismiss(toast.id)
+                    }
+                    .offset(y: CGFloat(index) * 6)
+                    .transition(.move(edge: .top).combined(with: .opacity))
                 }
-                .padding(.top, 12)
-                .transition(.move(edge: .top).combined(with: .opacity))
             }
+            .padding(.top, 12)
+            .animation(.spring(response: 0.35, dampingFraction: 0.9), value: toastCenter.toasts)
         }
     }
 }

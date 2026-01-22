@@ -13,11 +13,10 @@ import UserNotifications
 
 @MainActor
 final class ToastCenter: ObservableObject {
-    @Published private(set) var toast: ToastData?
+    @Published private(set) var toasts: [ToastData] = []
 
     private var showTask: Task<Void, Never>?
-    private var dismissTask: Task<Void, Never>?
-    private var queue: [ToastData] = []
+    private var dismissTasks: [UUID: Task<Void, Never>] = [:]
     private var scenePhase: ScenePhase = .active
     private var didRequestNotificationAuth = false
 
@@ -39,9 +38,19 @@ final class ToastCenter: ObservableObject {
 
     func dismiss() {
         showTask?.cancel()
-        dismissTask?.cancel()
-        toast = nil
-        showNextIfNeeded()
+        for task in dismissTasks.values {
+            task.cancel()
+        }
+        dismissTasks.removeAll()
+        toasts.removeAll()
+    }
+
+    func dismiss(_ toastID: UUID) {
+        if let task = dismissTasks[toastID] {
+            task.cancel()
+            dismissTasks[toastID] = nil
+        }
+        toasts.removeAll { $0.id == toastID }
     }
 
     private func enqueue(_ toast: ToastData) {
@@ -50,39 +59,37 @@ final class ToastCenter: ObservableObject {
             return
         }
 
-        if self.toast == nil {
-            present(toast)
-        } else {
-            queue.append(toast)
-        }
+        present(toast)
     }
 
     private func present(_ toast: ToastData) {
-        self.toast = toast
-        performHaptic(for: toast.haptic)
+        toasts.insert(toast, at: 0)
+        performHaptic(for: toast)
         scheduleDismiss(for: toast)
     }
 
     private func scheduleDismiss(for toast: ToastData) {
         guard toast.duration > 0 else { return }
-        dismissTask = Task { [weak self] in
+        dismissTasks[toast.id]?.cancel()
+        dismissTasks[toast.id] = Task { [weak self] in
             try? await Task.sleep(nanoseconds: UInt64(toast.duration * 1_000_000_000))
             guard let self else { return }
-            if self.toast?.id == toast.id {
-                self.toast = nil
-                self.showNextIfNeeded()
-            }
+            self.dismiss(toast.id)
         }
     }
 
-    private func showNextIfNeeded() {
-        guard toast == nil, !queue.isEmpty else { return }
-        let next = queue.removeFirst()
-        present(next)
-    }
+    private func performHaptic(for toast: ToastData) {
+        let resolvedHaptic: ToastHaptic? = {
+            if let explicit = toast.haptic {
+                return explicit
+            }
+            switch toast.style {
+            case .successCheck:
+                return .light
+            }
+        }()
 
-    private func performHaptic(for haptic: ToastHaptic?) {
-        switch haptic {
+        switch resolvedHaptic {
         case .selection:
             Haptics.selection()
         case .light:
@@ -90,6 +97,8 @@ final class ToastCenter: ObservableObject {
         case .medium:
             Haptics.impact(.medium)
         case .none:
+            break
+        case nil:
             break
         }
     }
@@ -148,7 +157,7 @@ struct ToastNotificationData {
     }
 }
 
-struct ToastData: Identifiable {
+struct ToastData: Identifiable, Equatable {
     let id = UUID()
     let title: String
     let style: ToastStyle
@@ -156,6 +165,10 @@ struct ToastData: Identifiable {
     let duration: TimeInterval
     let haptic: ToastHaptic?
     let notification: ToastNotificationData?
+
+    static func == (lhs: ToastData, rhs: ToastData) -> Bool {
+        lhs.id == rhs.id
+    }
 
     static func sessionLogged(tint: Color?) -> ToastData {
         ToastData(
