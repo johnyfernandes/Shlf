@@ -9,6 +9,7 @@ import SwiftUI
 
 struct EmptyStateView: View {
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.colorScheme) private var colorScheme
 
     let icon: String
     let title: LocalizedStringKey
@@ -68,7 +69,7 @@ struct EmptyStateView: View {
 
                         Text(actionTitle)
                     }
-                    .primaryButton(color: themeColor.color)
+                    .primaryButton(color: themeColor.color, foreground: themeColor.onColor(for: colorScheme))
                 }
             }
         }

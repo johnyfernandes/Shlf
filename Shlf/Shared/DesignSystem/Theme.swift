@@ -172,11 +172,11 @@ extension View {
 
     // MARK: - Button Styles
 
-    func primaryButton(fullWidth: Bool = false, color: Color? = nil) -> some View {
+    func primaryButton(fullWidth: Bool = false, color: Color? = nil, foreground: Color? = nil) -> some View {
         let buttonColor = color ?? Theme.Colors.primary
         return self
             .font(Theme.Typography.headline)
-            .foregroundStyle(.white)
+            .foregroundStyle(foreground ?? .white)
             .frame(maxWidth: fullWidth ? .infinity : nil)
             .padding(.horizontal, Theme.Spacing.lg)
             .padding(.vertical, Theme.Spacing.md)

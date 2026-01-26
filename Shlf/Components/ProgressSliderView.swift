@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ProgressSliderView: View {
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.colorScheme) private var colorScheme
     @Bindable var book: Book
     let incrementAmount: Int
     let showButtons: Bool
@@ -270,7 +271,7 @@ struct ProgressSliderView: View {
                     }
                     .font(.headline)
                     .frame(maxWidth: .infinity)
-                    .primaryButton(color: themeColor.color)
+                    .primaryButton(color: themeColor.color, foreground: themeColor.onColor(for: colorScheme))
                 }
                 .disabled(!hasChanges)
                 .transition(.move(edge: .bottom).combined(with: .opacity))

@@ -608,7 +608,7 @@ struct LogReadingSessionView: View {
                 .font(.caption2)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(themeColor.onColor(for: colorScheme))
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
         .background(

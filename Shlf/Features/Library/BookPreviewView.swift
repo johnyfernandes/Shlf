@@ -15,6 +15,7 @@ struct BookPreviewView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.colorScheme) private var colorScheme
     @Query private var profiles: [UserProfile]
     @Query private var books: [Book]
 
@@ -283,14 +284,14 @@ struct BookPreviewView: View {
                             HStack(spacing: 8) {
                                 if isLoading {
                                     ProgressView()
-                                        .tint(.white)
+                                        .tint(themeColor.onColor(for: colorScheme))
                                 } else {
                                     Image(systemName: "plus.circle.fill")
                                     Text("Add to Library")
                                 }
                             }
                             .font(.headline)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(themeColor.onColor(for: colorScheme))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
                             .background(themeColor.color.gradient, in: RoundedRectangle(cornerRadius: 14, style: .continuous))

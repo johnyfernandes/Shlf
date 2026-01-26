@@ -12,6 +12,7 @@ import Vision
 struct BarcodeScannerView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.colorScheme) private var colorScheme
     let onScan: (String) -> Void
 
     @State private var showCameraOverlay = true
@@ -42,7 +43,7 @@ struct BarcodeScannerView: View {
                     Button("Close") {
                         dismiss()
                     }
-                    .primaryButton(color: themeColor.color)
+                    .primaryButton(color: themeColor.color, foreground: themeColor.onColor(for: colorScheme))
                 }
                 .padding(Theme.Spacing.xl)
             }

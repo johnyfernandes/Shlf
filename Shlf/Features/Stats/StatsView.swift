@@ -12,6 +12,7 @@ import Charts
 struct StatsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.scenePhase) private var scenePhase
     @Query private var profiles: [UserProfile]
     @Query private var allSessions: [ReadingSession]
@@ -2048,6 +2049,7 @@ struct AchievementEntry: Identifiable {
 
 struct AchievementCard: View {
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.colorScheme) private var colorScheme
     let type: AchievementType
     let achievement: Achievement?
     let progress: AchievementProgress
@@ -2129,7 +2131,7 @@ struct AchievementCard: View {
                     if let achievement = achievement, achievement.isNew {
                         Text("New!")
                             .font(.system(size: 9, weight: .bold))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(themeColor.onColor(for: colorScheme))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(themeColor.color)
@@ -2143,10 +2145,10 @@ struct AchievementCard: View {
                     RoundedRectangle(cornerRadius: 12)
                         .fill(isUnlocked ? themeColor.color.opacity(0.08) : Color.clear)
                 )
-                .overlay(
+                .overlay(alignment: .center) {
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(isUnlocked ? themeColor.color.opacity(0.3) : Theme.Colors.tertiaryText.opacity(0.2), lineWidth: 1)
-                )
+                }
 
                 if isUnlocked && progress.repeatCount > 1 {
                     VStack {
@@ -2158,7 +2160,7 @@ struct AchievementCard: View {
                                 )
                             )
                                 .font(.system(size: 9, weight: .bold))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(themeColor.onColor(for: colorScheme))
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
                                 .background(themeColor.color)

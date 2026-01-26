@@ -12,6 +12,7 @@ import SwiftData
 struct KindleImportView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.colorScheme) private var colorScheme
     @Bindable var profile: UserProfile
     @Query private var books: [Book]
     @AppStorage("kindle_is_connected") private var storedKindleConnected = false
@@ -193,12 +194,12 @@ struct KindleImportView: View {
                 HStack(spacing: 10) {
                     if isSyncing {
                         ProgressView()
-                            .tint(.white)
+                            .tint(themeColor.onColor(for: colorScheme))
                     }
                     Text(isSyncing ? "Syncing..." : primaryTitle)
                 }
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(themeColor.onColor(for: colorScheme))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
                 .background(themeColor.color.opacity(isSyncing ? 0.6 : 1), in: RoundedRectangle(cornerRadius: 12, style: .continuous))

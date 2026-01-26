@@ -238,7 +238,7 @@ struct StreakDetailView: View {
                         Text("Use Pardon")
                     }
                 }
-                .primaryButton(color: themeColor.color)
+                .primaryButton(color: themeColor.color, foreground: themeColor.onColor(for: colorScheme))
                 .disabled(isApplyingPardon)
             case .cooldown(let nextAvailable):
                 Text("Pardon is cooling down.")

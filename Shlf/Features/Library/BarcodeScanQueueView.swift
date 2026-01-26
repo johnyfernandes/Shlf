@@ -14,6 +14,7 @@ struct BarcodeScanQueueView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.colorScheme) private var colorScheme
     @Query private var profiles: [UserProfile]
     @Query private var books: [Book]
 
@@ -84,7 +85,7 @@ struct BarcodeScanQueueView: View {
                     Button("Close") {
                         dismiss()
                     }
-                    .primaryButton(color: themeColor.color)
+                    .primaryButton(color: themeColor.color, foreground: themeColor.onColor(for: colorScheme))
                 }
                 .padding(Theme.Spacing.xl)
             }
@@ -211,7 +212,7 @@ struct BarcodeScanQueueView: View {
                 Text(addButtonTitle)
                     .frame(maxWidth: .infinity)
             }
-            .primaryButton(color: themeColor.color)
+            .primaryButton(color: themeColor.color, foreground: themeColor.onColor(for: colorScheme))
             .disabled(canAddCount == 0 || isAdding)
         }
         .padding(.horizontal, 16)

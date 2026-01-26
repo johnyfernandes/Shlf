@@ -13,6 +13,7 @@ struct PaywallView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.themeColor) private var themeColor
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.openURL) private var openURL
     @Query private var profiles: [UserProfile]
     @State private var storeKit = StoreKitService.shared
@@ -134,7 +135,7 @@ struct PaywallView: View {
                 } label: {
                     if isPurchasing {
                         ProgressView()
-                            .tint(.white)
+                            .tint(themeColor.onColor(for: colorScheme))
                     } else if let product = selectedProduct {
                         Text("Continue with \(selectedPlan.title) - \(product.displayPrice)")
                             .font(Theme.Typography.headline)
@@ -144,7 +145,7 @@ struct PaywallView: View {
                     }
                 }
                 .frame(maxWidth: .infinity)
-                .primaryButton(color: themeColor.color)
+                .primaryButton(color: themeColor.color, foreground: themeColor.onColor(for: colorScheme))
                 .disabled(isPurchasing || selectedProduct == nil)
 
                 Button("Restore Purchases") {
