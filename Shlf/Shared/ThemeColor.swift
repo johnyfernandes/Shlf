@@ -26,7 +26,13 @@ enum ThemeColor: String, CaseIterable, Codable, Identifiable {
     var color: Color {
         switch self {
         case .neutral:
+            #if os(watchOS)
             return Color.primary
+            #else
+            return Color(uiColor: UIColor { trait in
+                trait.userInterfaceStyle == .dark ? .white : .black
+            })
+            #endif
         case .blue:
             return Color(red: 0.0, green: 0.48, blue: 1.0)
         case .purple:
@@ -91,7 +97,13 @@ enum ThemeColor: String, CaseIterable, Codable, Identifiable {
 
     func onColor(for scheme: ColorScheme) -> Color {
         if self == .neutral {
+            #if os(watchOS)
             return scheme == .dark ? .black : .white
+            #else
+            return Color(uiColor: UIColor { trait in
+                trait.userInterfaceStyle == .dark ? .black : .white
+            })
+            #endif
         }
         return .white
     }

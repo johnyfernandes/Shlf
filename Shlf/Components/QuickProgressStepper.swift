@@ -41,17 +41,11 @@ struct QuickProgressStepper: View {
     }
 
     private var accentBackground: Color {
-        if themeColor == .neutral {
-            return colorScheme == .dark ? .white : .black
-        }
-        return themeColor.color
+        themeColor.color
     }
 
     private var accentForeground: Color {
-        if themeColor == .neutral {
-            return colorScheme == .dark ? .black : .white
-        }
-        return themeColor.onColor(for: colorScheme)
+        themeColor.onColor(for: colorScheme)
     }
 
     var body: some View {

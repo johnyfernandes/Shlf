@@ -188,7 +188,7 @@ struct ProgressSliderView: View {
                         Image(systemName: "plus.circle.fill")
                             .font(.system(size: 36))
                             .symbolRenderingMode(.palette)
-                            .foregroundStyle(.white, themeColor.color)
+                            .foregroundStyle(themeColor.onColor(for: colorScheme), themeColor.color)
                     }
                     .disabled(book.totalPages != nil && sliderValue >= Double(book.totalPages!))
                     .opacity(book.totalPages != nil && sliderValue >= Double(book.totalPages!) ? 0.3 : 1.0)
