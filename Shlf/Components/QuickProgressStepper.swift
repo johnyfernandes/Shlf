@@ -105,7 +105,6 @@ struct QuickProgressStepper: View {
                                     .focused($isPageFieldFocused)
                                     .frame(width: pageFieldWidthValue)
                                     .lineLimit(1)
-                                    .minimumScaleFactor(0.7)
                                     .textFieldStyle(.plain)
                                     .onSubmit {
                                         commitPageEdit()
@@ -131,7 +130,6 @@ struct QuickProgressStepper: View {
                                     .foregroundStyle(Theme.Colors.text)
                                     .monospacedDigit()
                                     .lineLimit(1)
-                                    .minimumScaleFactor(0.7)
                                     .fixedSize(horizontal: true, vertical: false)
                                     .contentShape(Rectangle())
                                     .onTapGesture {
@@ -157,7 +155,6 @@ struct QuickProgressStepper: View {
                                 .foregroundStyle(themeColor.color)
                                 .monospacedDigit()
                                 .lineLimit(1)
-                                .minimumScaleFactor(0.7)
                                 .fixedSize(horizontal: true, vertical: false)
                                 .frame(minWidth: pageFieldWidthValue)
                         }
