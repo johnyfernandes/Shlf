@@ -972,22 +972,23 @@ struct StatsView: View {
 
     private func progress(current: Int, target: Int, unit: LocalizedStringKey, repeatCount: Int) -> AchievementProgress {
         let clampedCurrent = max(0, current)
-        let text = Text(verbatim: "\(formatNumber(clampedCurrent))/\(formatNumber(target))")
-            + Text(verbatim: " ")
-            + Text(unit)
-        return AchievementProgress(current: clampedCurrent, target: target, text: text, repeatCount: repeatCount)
+        return AchievementProgress(
+            current: clampedCurrent,
+            target: target,
+            unitKey: unit,
+            repeatCount: repeatCount
+        )
     }
 
     private func levelProgress(current: Int, target: Int, repeatCount: Int) -> AchievementProgress {
         let clampedCurrent = max(0, current)
-        let text = Text(
-            String.localizedStringWithFormat(
-                String(localized: "Level %lld/%lld"),
-                clampedCurrent,
-                target
-            )
+        return AchievementProgress(
+            current: clampedCurrent,
+            target: target,
+            unitKey: nil,
+            repeatCount: repeatCount,
+            usesLevelFormat: true
         )
-        return AchievementProgress(current: clampedCurrent, target: target, text: text, repeatCount: repeatCount)
     }
 
     private func repeatCount(for type: AchievementType, isUnlocked: Bool) -> Int {
@@ -2381,12 +2382,41 @@ struct AchievementsGridView: View {
 struct AchievementProgress {
     let current: Int
     let target: Int
-    let text: Text
+    let unitKey: LocalizedStringKey?
     let repeatCount: Int
+    let usesLevelFormat: Bool
+
+    init(
+        current: Int,
+        target: Int,
+        unitKey: LocalizedStringKey?,
+        repeatCount: Int,
+        usesLevelFormat: Bool = false
+    ) {
+        self.current = current
+        self.target = target
+        self.unitKey = unitKey
+        self.repeatCount = repeatCount
+        self.usesLevelFormat = usesLevelFormat
+    }
 
     var fraction: Double {
         guard target > 0 else { return 0 }
         return min(Double(current) / Double(target), 1)
+    }
+
+    var text: Text {
+        if usesLevelFormat {
+            return Text("Level \(current)/\(target)")
+        }
+
+        let currentText = formatNumber(current)
+        let targetText = formatNumber(target)
+        let base = Text(verbatim: "\(currentText)/\(targetText)")
+        if let unitKey {
+            return base + Text(verbatim: " ") + Text(unitKey)
+        }
+        return base
     }
 }
 
