@@ -103,7 +103,7 @@ struct QuickProgressStepper: View {
                                     .multilineTextAlignment(.center)
                                     .keyboardType(.numberPad)
                                     .focused($isPageFieldFocused)
-                                    .frame(minWidth: pageFieldWidthValue)
+                                    .frame(width: pageFieldWidthValue)
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.7)
                                     .textFieldStyle(.plain)
@@ -135,13 +135,14 @@ struct QuickProgressStepper: View {
                                     .fixedSize(horizontal: true, vertical: false)
                                     .contentShape(Rectangle())
                                     .onTapGesture {
+                                        guard pendingPages == 0 else { return }
                                         startPageEditing()
                                     }
                             }
                         }
-                        .frame(minWidth: pageFieldWidthValue)
+                        .frame(width: pageFieldWidthValue)
                         .onPreferenceChange(PageFieldWidthKey.self) { width in
-                            if width > 0 {
+                            if !isEditingPage, width > 0 {
                                 pageFieldWidth = width
                             }
                         }
