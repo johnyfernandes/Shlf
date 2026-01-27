@@ -96,10 +96,7 @@ struct LevelDetailView: View {
                                                     )
                                             }
 
-                                            (
-                                                Text(Int(profile.xpProgressPercentage), format: .number)
-                                                + Text(verbatim: "%")
-                                            )
+                                            Text("\(Int(profile.xpProgressPercentage))%")
                                                 .font(.system(size: 20, weight: .bold, design: .rounded))
                                                 .foregroundStyle(Theme.Colors.text)
                                         }

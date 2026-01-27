@@ -9,6 +9,27 @@ import Foundation
 import SwiftData
 import SwiftUI
 
+// MARK: - Localization helper (respects in-app language override)
+func localized(_ key: String, locale: Locale) -> String {
+    if let bundle = Bundle.localizedBundle(for: locale) {
+        return bundle.localizedString(forKey: key, value: nil, table: nil)
+    }
+    return Bundle.main.localizedString(forKey: key, value: nil, table: nil)
+}
+
+private extension Bundle {
+    static func localizedBundle(for locale: Locale) -> Bundle? {
+        let candidates = [locale.identifier, locale.languageCode].compactMap { $0 }
+        for identifier in candidates {
+            if let path = Bundle.main.path(forResource: identifier, ofType: "lproj"),
+               let bundle = Bundle(path: path) {
+                return bundle
+            }
+        }
+        return nil
+    }
+}
+
 @Model
 final class ReadingGoal {
     var id: UUID = UUID()
@@ -86,13 +107,26 @@ enum GoalType: String, Codable, CaseIterable {
     var unitText: String {
         switch self {
         case .booksPerYear, .booksPerMonth:
-            return String(localized: "books")
+            return localized("books", locale: .current)
         case .pagesPerDay:
-            return String(localized: "pages")
+            return localized("pages", locale: .current)
         case .minutesPerDay:
-            return String(localized: "minutes")
+            return localized("minutes", locale: .current)
         case .readingStreak:
-            return String(localized: "days")
+            return localized("days", locale: .current)
+        }
+    }
+
+    func unitText(locale: Locale) -> String {
+        switch self {
+        case .booksPerYear, .booksPerMonth:
+            return localized("books", locale: locale)
+        case .pagesPerDay:
+            return localized("pages", locale: locale)
+        case .minutesPerDay:
+            return localized("minutes", locale: locale)
+        case .readingStreak:
+            return localized("days", locale: locale)
         }
     }
 

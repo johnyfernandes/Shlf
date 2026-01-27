@@ -252,7 +252,7 @@ struct BookPreviewView: View {
                                             .multilineTextAlignment(.trailing)
                                             .frame(width: 60)
 
-                                        (Text(verbatim: "/ ") + Text(totalPages, format: .number))
+                                        Text("/ \(totalPages, format: .number)")
                                             .font(.body)
                                             .foregroundStyle(.secondary)
                                     }

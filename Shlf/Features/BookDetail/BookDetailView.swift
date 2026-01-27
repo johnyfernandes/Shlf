@@ -782,12 +782,12 @@ struct BookDetailView: View {
         let accent = stat.accent.color(themeColor: themeColor)
         switch stat {
         case .pagesPercent:
-            var composed = AttributedString(String(localized: "You read"))
+            var composed = AttributedString(localized("You read", locale: locale))
             composed += AttributedString(" ")
             composed += coloredValueWithUnit(
                 value: summary.totalPagesRead,
-                singularKey: "page",
-                pluralKey: "pages",
+                singular: localized("page", locale: locale),
+                plural: localized("pages", locale: locale),
                 accent: accent
             )
             if let percent = summary.percentRead {
@@ -798,61 +798,61 @@ struct BookDetailView: View {
             composed += AttributedString(".")
             return Text(composed)
         case .timeRead:
-            var composed = AttributedString(String(localized: "You read for"))
+            var composed = AttributedString(localized("You read for", locale: locale))
             composed += AttributedString(" ")
             composed += coloredText(formatMinutes(summary.totalMinutesRead), color: accent)
             composed += AttributedString(".")
             return Text(composed)
         case .sessionCount:
-            var composed = AttributedString(String(localized: "You logged"))
+            var composed = AttributedString(localized("You logged", locale: locale))
             composed += AttributedString(" ")
             composed += coloredValueWithUnit(
                 value: summary.sessionCount,
-                singularKey: "session",
-                pluralKey: "sessions",
+                singular: localized("session", locale: locale),
+                plural: localized("sessions", locale: locale),
                 accent: accent
             )
             composed += AttributedString(".")
             return Text(composed)
         case .averagePages:
-            var composed = AttributedString(String(localized: "Average"))
+            var composed = AttributedString(localized("Average", locale: locale))
             composed += AttributedString(" ")
             composed += coloredText(formatNumber(summary.averagePagesPerSession), color: accent)
             composed += AttributedString(" ")
-            composed += AttributedString(String(localized: "pages per session."))
+            composed += AttributedString(localized("pages per session.", locale: locale))
             return Text(composed)
         case .averageSpeed:
-            var composed = AttributedString(String(localized: "Average"))
+            var composed = AttributedString(localized("Average", locale: locale))
             composed += AttributedString(" ")
             composed += coloredText(formatNumber(summary.averagePagesPerHour), color: accent)
             composed += AttributedString(" ")
-            composed += AttributedString(String(localized: "pages per hour."))
+            composed += AttributedString(localized("pages per hour.", locale: locale))
             return Text(composed)
         case .longestSession:
             if summary.longestSessionMinutes > 0 {
-                var composed = AttributedString(String(localized: "Longest session"))
+                var composed = AttributedString(localized("Longest session", locale: locale))
                 composed += AttributedString(" ")
                 composed += coloredText(formatMinutes(summary.longestSessionMinutes), color: accent)
                 composed += AttributedString(".")
                 return Text(composed)
             }
-            var composed = AttributedString(String(localized: "Longest session"))
+            var composed = AttributedString(localized("Longest session", locale: locale))
             composed += AttributedString(" ")
             composed += coloredValueWithUnit(
                 value: summary.longestSessionPages,
-                singularKey: "page",
-                pluralKey: "pages",
+                singular: localized("page", locale: locale),
+                plural: localized("pages", locale: locale),
                 accent: accent
             )
             composed += AttributedString(".")
             return Text(composed)
         case .streak:
-            var composed = AttributedString(String(localized: "Your book streak was"))
+            var composed = AttributedString(localized("Your book streak was", locale: locale))
             composed += AttributedString(" ")
             composed += coloredValueWithUnit(
                 value: summary.streakDays,
-                singularKey: "day",
-                pluralKey: "days",
+                singular: localized("day", locale: locale),
+                plural: localized("days", locale: locale),
                 accent: accent
             )
             composed += AttributedString(".")
@@ -860,7 +860,7 @@ struct BookDetailView: View {
         case .daysSinceLast:
             if let days = summary.daysSinceLastRead {
                 let relative = relativeDayString(days, locale: locale)
-                var composed = AttributedString(String(localized: "Last read"))
+                var composed = AttributedString(localized("Last read", locale: locale))
                 composed += AttributedString(" ")
                 composed += coloredNumberInFormattedString(relative, number: days, accent: accent)
                 composed += AttributedString(".")
@@ -869,7 +869,7 @@ struct BookDetailView: View {
             return Text("No reads yet")
         case .firstLastDate:
             if let first = summary.firstReadDate, let last = summary.lastReadDate {
-                var composed = AttributedString(String(localized: "First read"))
+                var composed = AttributedString(localized("First read", locale: locale))
                 composed += AttributedString(" ")
                 composed += coloredText(formatDate(first), color: accent)
                 composed += AttributedString(" • ")
@@ -898,6 +898,7 @@ struct BookDetailView: View {
 
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
+        formatter.locale = locale
         formatter.dateFormat = "d MMM"
         return formatter.string(from: date)
     }
@@ -911,14 +912,12 @@ struct BookDetailView: View {
 
     private func coloredValueWithUnit(
         value: Int,
-        singularKey: LocalizedStringKey,
-        pluralKey: LocalizedStringKey,
+        singular: String,
+        plural: String,
         accent: Color
     ) -> AttributedString {
         let numberString = NumberFormatter.localizedString(from: NSNumber(value: value), number: .decimal)
-        let unitText = value == 1
-            ? String(localized: "\(singularKey)")
-            : String(localized: "\(pluralKey)")
+        let unitText = value == 1 ? singular : plural
         var attributed = coloredText(numberString, color: accent)
         attributed += AttributedString(" ")
         attributed += AttributedString(unitText)

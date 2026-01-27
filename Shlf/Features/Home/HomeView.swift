@@ -6,12 +6,14 @@
 //
 
 import SwiftUI
+import Foundation
 import SwiftData
 import UniformTypeIdentifiers
 
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     @Query private var profiles: [UserProfile]
     @Query(sort: \Book.dateAdded, order: .reverse)
     private var allBooks: [Book]
@@ -325,6 +327,7 @@ struct HomeView: View {
 
 struct CurrentlyReadingCard: View {
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     let book: Book
 
     var body: some View {
@@ -357,21 +360,13 @@ struct CurrentlyReadingCard: View {
                                 .font(Theme.Typography.headline)
                                 .foregroundStyle(themeColor.color)
 
-                            (
-                                Text(verbatim: "/ ")
-                                + Text(totalPages, format: .number)
-                                + Text(verbatim: " ")
-                                + Text("pages")
-                            )
+                            Text("/ \(totalPages, format: .number) \(localized("pages", locale: locale))")
                                 .font(Theme.Typography.caption)
                                 .foregroundStyle(Theme.Colors.tertiaryText)
 
                             Spacer()
 
-                            (
-                                Text(Int(book.progressPercentage), format: .number)
-                                + Text(verbatim: "%")
-                            )
+                            Text("\(Int(book.progressPercentage))%")
                                 .font(Theme.Typography.subheadline)
                                 .fontWeight(.semibold)
                                 .foregroundStyle(themeColor.color)

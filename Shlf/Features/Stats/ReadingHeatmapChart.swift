@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ReadingHeatmapChart: View {
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     let sessions: [ReadingSession]
     let period: HeatmapPeriod
 
@@ -109,15 +110,11 @@ struct ReadingHeatmapChart: View {
         case .currentYear:
             let startOfYear = calendar.date(from: calendar.dateComponents([.year], from: todayDate))!
             let daysSinceStart = calendar.dateComponents([.day], from: startOfYear, to: todayDate).day! + 1
-            return Text(todayDate, format: .dateTime.year())
-            + Text(verbatim: " (")
-            + Text(
-                String.localizedStringWithFormat(
-                    String(localized: "%lld days"),
-                    daysSinceStart
-                )
+            let daysText = String.localizedStringWithFormat(
+                String(localized: "%lld days", locale: locale),
+                daysSinceStart
             )
-            + Text(verbatim: ")")
+            return Text("\(todayDate, format: .dateTime.year()) (\(daysText))")
         }
     }
 
@@ -155,7 +152,7 @@ struct ReadingHeatmapChart: View {
                                 .font(.caption2)
                             Text(
                                 String.localizedStringWithFormat(
-                                    String(localized: "%lld total"),
+                                    String(localized: "%lld total", locale: locale),
                                     totalPages
                                 )
                             )
@@ -172,7 +169,7 @@ struct ReadingHeatmapChart: View {
                                 .font(.caption2)
                             Text(
                                 String.localizedStringWithFormat(
-                                    String(localized: "%lld days"),
+                                    String(localized: "%lld days", locale: locale),
                                     totalDaysActive
                                 )
                             )
@@ -301,6 +298,7 @@ struct BookReadingData: Identifiable {
 struct DayDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     let date: Date
     let sessions: [ReadingSession]
 
@@ -397,11 +395,7 @@ struct DayDetailView: View {
                     Image(systemName: "doc.text.fill")
                         .foregroundStyle(themeColor.color)
 
-                    (
-                        Text(totalPages, format: .number)
-                        + Text(verbatim: " ")
-                        + Text("pages")
-                    )
+                    Text("\(totalPages, format: .number) \(localized("pages", locale: locale))")
                     .font(.title2)
                     .fontWeight(.bold)
 
@@ -410,12 +404,10 @@ struct DayDetailView: View {
                     Image(systemName: "books.vertical.fill")
                         .foregroundStyle(themeColor.color)
 
-                    let unitKey: LocalizedStringKey = booksRead.count == 1 ? "book" : "books"
-                    (
-                        Text(booksRead.count, format: .number)
-                        + Text(verbatim: " ")
-                        + Text(unitKey)
-                    )
+                    let unitText = booksRead.count == 1
+                        ? localized("book", locale: locale)
+                        : localized("books", locale: locale)
+                    Text("\(booksRead.count, format: .number) \(unitText)")
                     .font(.title2)
                     .fontWeight(.bold)
                 }
@@ -467,11 +459,7 @@ struct DayDetailView: View {
                                 HStack(spacing: 4) {
                                     Image(systemName: "book.pages")
                                         .font(.caption2)
-                                    (
-                                        Text(bookData.pages, format: .number)
-                                        + Text(verbatim: " ")
-                                        + Text("pages")
-                                    )
+                                    Text("\(bookData.pages, format: .number) \(localized("pages", locale: locale))")
                                     .font(.caption)
                                 }
                                 .foregroundStyle(themeColor.color)

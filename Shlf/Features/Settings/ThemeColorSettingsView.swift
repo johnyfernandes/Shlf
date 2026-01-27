@@ -31,7 +31,7 @@ struct ThemeColorSettingsView: View {
         }
 
         guard let currentPage = ReadingSessionActivityManager.shared.getCurrentPage(),
-              let currentXP = ReadingSessionActivityManager.shared.getCurrentXP() else {
+              ReadingSessionActivityManager.shared.getCurrentXP() != nil else {
             return
         }
 

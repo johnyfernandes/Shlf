@@ -107,7 +107,7 @@ struct BookDetailWatchView: View {
                             Text(book.currentPage, format: .number)
                                 .font(.system(size: 32, weight: .bold, design: .rounded))
 
-                            (Text(verbatim: "/ ") + Text(totalPages, format: .number))
+                            Text("/ \(totalPages, format: .number)")
                                 .font(.system(size: 12, weight: .medium, design: .rounded))
                                 .foregroundStyle(.secondary)
                         }

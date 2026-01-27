@@ -14,6 +14,7 @@ struct OnboardingView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.locale) private var locale
     @Query private var profiles: [UserProfile]
     @Binding var isPresented: Bool
 
@@ -193,6 +194,7 @@ private enum OnboardingStep: Int, CaseIterable {
 private struct OnboardingStepView: View {
     @Environment(\.themeColor) private var themeColor
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.locale) private var locale
     let step: OnboardingStep
     @Binding var selectedTheme: ThemeColor
     @Binding var selectedGoalType: GoalType
@@ -383,9 +385,7 @@ private struct OnboardingStepView: View {
                     .pickerStyle(.segmented)
 
                     Stepper(value: $goalValue, in: 5...180, step: selectedGoalType == .minutesPerDay ? 5 : 1) {
-                        Text(goalValue, format: .number)
-                            + Text(verbatim: " ")
-                            + Text(selectedGoalType.unitTextKey)
+                        Text("\(goalValue) \(selectedGoalType.unitText(locale: locale))")
                     }
                     .font(Theme.Typography.body)
                 }

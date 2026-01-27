@@ -193,10 +193,7 @@ struct ReadingSessionWidgetEntryView: View {
                     .font(.caption2)
                     .foregroundStyle(.white.opacity(0.9))
                 Spacer()
-                (
-                    Text(Int(entry.progress * 100), format: .number)
-                    + Text(verbatim: "%")
-                )
+                Text("\(Int(entry.progress * 100))%")
                 .font(.caption2.weight(.semibold))
                 .foregroundStyle(.white)
             }
@@ -269,13 +266,7 @@ struct ReadingSessionWidgetEntryView: View {
 
             Spacer()
 
-            (
-                Text(entry.sessionPagesRead, format: .number)
-                + Text(verbatim: "p")
-                + Text(verbatim: " · ")
-                + Text(entry.sessionElapsedMinutes, format: .number)
-                + Text(verbatim: "m")
-            )
+            Text("\(entry.sessionPagesRead)p · \(entry.sessionElapsedMinutes)m")
             .font(.caption2.weight(.medium))
             .foregroundStyle(.white.opacity(0.9))
         }
@@ -310,9 +301,7 @@ struct ReadingSessionWidgetEntryView: View {
                     if !entry.hasActiveSession {
                         HStack {
                             Label {
-                                Text(entry.pagesToday, format: .number)
-                                    + Text(verbatim: " ")
-                                    + Text("pages today")
+                                Text("\(entry.pagesToday) \(String(localized: "pages today"))")
                             } icon: {
                                 Image(systemName: "clock")
                             }

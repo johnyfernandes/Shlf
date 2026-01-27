@@ -11,6 +11,7 @@ import SwiftData
 struct LibraryView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     @Query(sort: \Book.dateAdded, order: .reverse) private var allBooks: [Book]
     @Binding var selectedTab: Int
 
@@ -203,6 +204,7 @@ struct LibraryView: View {
 
 struct BookRow: View {
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     let book: Book
 
     private var yearPublished: String? {
@@ -277,21 +279,13 @@ struct BookRow: View {
                                 .font(Theme.Typography.headline)
                                 .foregroundStyle(themeColor.color)
 
-                            Text(
-                                String.localizedStringWithFormat(
-                                    String(localized: "/ %lld pages"),
-                                    totalPages
-                                )
-                            )
+                            Text("/ \(totalPages, format: .number) \(localized("pages", locale: locale))")
                                 .font(Theme.Typography.caption)
                                 .foregroundStyle(Theme.Colors.tertiaryText)
 
                             Spacer()
 
-                            (
-                                Text(Int(book.progressPercentage), format: .number)
-                                + Text(verbatim: "%")
-                            )
+                            Text("\(Int(book.progressPercentage))%")
                                 .font(Theme.Typography.subheadline)
                                 .fontWeight(.semibold)
                                 .foregroundStyle(themeColor.color)

@@ -301,7 +301,7 @@ struct SettingsView: View {
             isMigratingCloud = false
 
             switch cloudStatus {
-            case .available(let snapshot):
+            case .available:
                 showCloudChoiceDialog = true
             case .empty:
                 migrateLocalToCloud()
@@ -400,7 +400,7 @@ struct SettingsView: View {
                     Text(profile.cloudSyncEnabled ? "Sync is on" : "iCloud data found")
                         .foregroundStyle(Theme.Colors.success)
                     if let lastActivity = snapshot.lastActivity {
-                    Text("Last activity") + Text(verbatim: " ") + Text(verbatim: formatDate(lastActivity))
+                        Text("Last activity \(formatDate(lastActivity))")
                     }
                 case .empty:
                     Text("No iCloud data yet")
@@ -760,7 +760,7 @@ struct ReadingPreferencesView: View {
                                         }
                                     } label: {
                                         HStack {
-                                            Text(verbatim: "\(amount)") + Text(verbatim: " ") + Text(amount == 1 ? "page" : "pages")
+                                            Text("\(amount) \(amount == 1 ? String(localized: "page") : String(localized: "pages"))")
                                                 .font(.subheadline.weight(.medium))
                                                 .foregroundStyle(.primary)
 

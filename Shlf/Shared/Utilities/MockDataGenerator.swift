@@ -485,7 +485,6 @@ final class MockDataGenerator {
             }
         }
 
-        let readingDayCount = max(1, readingPlan.filter { $0 }.count)
         let totalReadablePages = states.enumerated().reduce(0) { partial, entry in
             let (index, state) = entry
             return unreadIndices.contains(index) ? partial : partial + state.totalPages

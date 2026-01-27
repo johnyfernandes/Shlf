@@ -128,7 +128,7 @@ final class SessionManager {
             // Sync updated stats to Watch
             if let profile {
                 Task {
-                    await WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
+                    WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
                 }
             }
 
@@ -227,7 +227,7 @@ final class SessionManager {
             // Sync updated stats to Watch
             if let profile {
                 Task {
-                    await WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
+                    WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
                 }
             }
 

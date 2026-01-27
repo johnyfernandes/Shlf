@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 import SwiftData
 import Charts
 
@@ -13,6 +14,7 @@ struct StatsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.locale) private var locale
     @Environment(\.scenePhase) private var scenePhase
     @Query private var profiles: [UserProfile]
     @Query private var allSessions: [ReadingSession]
@@ -242,7 +244,6 @@ struct StatsView: View {
     }
 
     private var booksFinishedInRange: Int {
-        let calendar = Calendar.current
         return allBooks.filter { book in
             guard book.readingStatus == .finished,
                   let finished = book.dateFinished else { return false }
@@ -272,41 +273,35 @@ struct StatsView: View {
     }
 
     private var trendsDateRangeText: Text {
-        Text(trendsStartDate, format: .dateTime.day().month(.abbreviated))
-        + Text(verbatim: " – ")
-        + Text(trendsEndDate, format: .dateTime.day().month(.abbreviated))
+        Text("\(trendsStartDate, format: .dateTime.day().month(.abbreviated)) – \(trendsEndDate, format: .dateTime.day().month(.abbreviated))")
     }
 
-    private func trendTitle(prefix: LocalizedStringKey, value: Text, suffix: LocalizedStringKey? = nil, accent: Color) -> Text {
-        var text = Text(prefix)
-            .foregroundStyle(Theme.Colors.text)
-
-        text = text + Text(verbatim: " ")
-            .foregroundStyle(Theme.Colors.text)
-
-        text = text + value
-            .foregroundStyle(accent)
-
+    private func trendTitle(prefix: String, value: String, suffix: String? = nil, accent: Color) -> Text {
+        var attributed = AttributedString(prefix)
+        attributed += AttributedString(" ")
+        attributed += coloredText(value, color: accent)
         if let suffix {
-            text = text + Text(verbatim: " ")
-                .foregroundStyle(Theme.Colors.text)
-            text = text + Text(suffix)
-                .foregroundStyle(Theme.Colors.text)
+            attributed += AttributedString(" ")
+            attributed += AttributedString(suffix)
         }
-
-        return text
+        return Text(attributed)
     }
 
-    private func trendDelta(current: Int, previous: Int, unit: LocalizedStringKey) -> TrendDelta? {
+    private func trendDelta(current: Int, previous: Int, unitText: String) -> TrendDelta? {
         guard previous > 0 || current > 0 else { return nil }
         let delta = current - previous
         guard delta != 0 else { return nil }
         let isPositive = delta > 0
         let deltaValue = abs(delta)
-        let text = Text(deltaValue, format: .number)
-            + Text(verbatim: " ")
-            + Text(unit)
+        let deltaText = NumberFormatter.localizedString(from: NSNumber(value: deltaValue), number: .decimal)
+        let text = Text("\(deltaText) \(unitText)")
         return TrendDelta(text: text, isPositive: isPositive)
+    }
+
+    private func coloredText(_ text: String, color: Color) -> AttributedString {
+        var attributed = AttributedString(text)
+        attributed.foregroundColor = UIColor(color)
+        return attributed
     }
 
     private var todayTrackedSessions: [ReadingSession] {
@@ -636,15 +631,15 @@ struct StatsView: View {
             VStack(spacing: 12) {
                 TrendCard(
                     title: trendTitle(
-                        prefix: "You read",
-                        value: Text(formatNumber(pagesReadInRange)),
-                        suffix: "pages",
+                        prefix: localized("You read", locale: locale),
+                        value: formatNumber(pagesReadInRange),
+                        suffix: localized("pages", locale: locale),
                         accent: themeColor.color
                     ),
                     delta: trendDelta(
                         current: pagesReadInRange,
                         previous: previousTrendSessions.reduce(0) { $0 + $1.pagesRead },
-                        unit: "pages"
+                        unitText: localized("pages", locale: locale)
                     ),
                     accent: themeColor.color,
                     icon: .bars,
@@ -653,15 +648,15 @@ struct StatsView: View {
 
                 TrendCard(
                     title: trendTitle(
-                        prefix: "You read for",
-                        value: Text(formatNumber(minutesReadInRange)),
-                        suffix: "min",
+                        prefix: localized("You read for", locale: locale),
+                        value: formatNumber(minutesReadInRange),
+                        suffix: localized("min", locale: locale),
                         accent: Theme.Colors.secondary
                     ),
                     delta: trendDelta(
                         current: minutesReadInRange,
                         previous: previousTrendSessions.reduce(0) { $0 + $1.durationMinutes },
-                        unit: "min"
+                        unitText: localized("min", locale: locale)
                     ),
                     accent: Theme.Colors.secondary,
                     icon: .line,
@@ -670,15 +665,15 @@ struct StatsView: View {
 
                 TrendCard(
                     title: trendTitle(
-                        prefix: "You finished",
-                        value: Text(formatNumber(booksFinishedInRange)),
-                        suffix: "books",
+                        prefix: localized("You finished", locale: locale),
+                        value: formatNumber(booksFinishedInRange),
+                        suffix: localized("books", locale: locale),
                         accent: Theme.Colors.success
                     ),
                     delta: trendDelta(
                         current: booksFinishedInRange,
                         previous: previousBooksFinishedInRange,
-                        unit: "books"
+                        unitText: localized("books", locale: locale)
                     ),
                     accent: Theme.Colors.success,
                     icon: .bars,
@@ -687,8 +682,8 @@ struct StatsView: View {
 
                 TrendCard(
                     title: trendTitle(
-                        prefix: "Your top category was",
-                        value: topCategoryInRange.map(Text.init) ?? Text("No categories yet"),
+                        prefix: localized("Your top category was", locale: locale),
+                        value: topCategoryInRange ?? localized("No categories yet", locale: locale),
                         suffix: nil,
                         accent: topCategoryInRange == nil ? Theme.Colors.secondaryText : themeColor.color
                     ),
@@ -700,9 +695,9 @@ struct StatsView: View {
 
                 TrendCard(
                     title: trendTitle(
-                        prefix: "Your longest streak was",
-                        value: Text(formatNumber(profile.longestStreak)),
-                        suffix: "days",
+                        prefix: localized("Your longest streak was", locale: locale),
+                        value: formatNumber(profile.longestStreak),
+                        suffix: localized("days", locale: locale),
                         accent: Theme.Colors.warning
                     ),
                     delta: nil,
@@ -711,14 +706,12 @@ struct StatsView: View {
                     onTap: { selectedTrend = .streak }
                 )
 
-                let speedValue: Text = averageSpeedText == "—"
-                ? Text(verbatim: "—")
-                : Text(averageSpeedText)
-                let speedSuffix: LocalizedStringKey? = averageSpeedText == "—" ? nil : "pages/hour"
+                let speedValue = averageSpeedText == "—" ? "—" : averageSpeedText
+                let speedSuffix = averageSpeedText == "—" ? nil : localized("pages/hour", locale: locale)
                 let speedAccent = averageSpeedText == "—" ? Theme.Colors.secondaryText : Theme.Colors.primary
                 TrendCard(
                     title: trendTitle(
-                        prefix: "Your average reading speed was",
+                        prefix: localized("Your average reading speed was", locale: locale),
                         value: speedValue,
                         suffix: speedSuffix,
                         accent: speedAccent
@@ -938,25 +931,25 @@ struct StatsView: View {
         let repeatCount = repeatCount(for: type, isUnlocked: isUnlocked)
         switch type {
         case .firstBook:
-            return progress(current: totalBooksRead, target: 1, unit: "book", repeatCount: repeatCount)
+            return progress(current: totalBooksRead, target: 1, unitText: String(localized: "book", locale: locale), repeatCount: repeatCount)
         case .tenBooks:
-            return progress(current: totalBooksRead, target: 10, unit: "books", repeatCount: repeatCount)
+            return progress(current: totalBooksRead, target: 10, unitText: String(localized: "books", locale: locale), repeatCount: repeatCount)
         case .fiftyBooks:
-            return progress(current: totalBooksRead, target: 50, unit: "books", repeatCount: repeatCount)
+            return progress(current: totalBooksRead, target: 50, unitText: String(localized: "books", locale: locale), repeatCount: repeatCount)
         case .hundredBooks:
-            return progress(current: totalBooksRead, target: 100, unit: "books", repeatCount: repeatCount)
+            return progress(current: totalBooksRead, target: 100, unitText: String(localized: "books", locale: locale), repeatCount: repeatCount)
         case .hundredPages:
-            return progress(current: totalPagesRead, target: 100, unit: "pages", repeatCount: repeatCount)
+            return progress(current: totalPagesRead, target: 100, unitText: String(localized: "pages", locale: locale), repeatCount: repeatCount)
         case .thousandPages:
-            return progress(current: totalPagesRead, target: 1000, unit: "pages", repeatCount: repeatCount)
+            return progress(current: totalPagesRead, target: 1000, unitText: String(localized: "pages", locale: locale), repeatCount: repeatCount)
         case .tenThousandPages:
-            return progress(current: totalPagesRead, target: 10000, unit: "pages", repeatCount: repeatCount)
+            return progress(current: totalPagesRead, target: 10000, unitText: String(localized: "pages", locale: locale), repeatCount: repeatCount)
         case .sevenDayStreak:
-            return progress(current: streaksEnabled ? profile.currentStreak : 0, target: 7, unit: "days", repeatCount: repeatCount)
+            return progress(current: streaksEnabled ? profile.currentStreak : 0, target: 7, unitText: String(localized: "days", locale: locale), repeatCount: repeatCount)
         case .thirtyDayStreak:
-            return progress(current: streaksEnabled ? profile.currentStreak : 0, target: 30, unit: "days", repeatCount: repeatCount)
+            return progress(current: streaksEnabled ? profile.currentStreak : 0, target: 30, unitText: String(localized: "days", locale: locale), repeatCount: repeatCount)
         case .hundredDayStreak:
-            return progress(current: streaksEnabled ? profile.currentStreak : 0, target: 100, unit: "days", repeatCount: repeatCount)
+            return progress(current: streaksEnabled ? profile.currentStreak : 0, target: 100, unitText: String(localized: "days", locale: locale), repeatCount: repeatCount)
         case .levelFive:
             return levelProgress(current: profile.currentLevel, target: 5, repeatCount: repeatCount)
         case .levelTen:
@@ -964,18 +957,18 @@ struct StatsView: View {
         case .levelTwenty:
             return levelProgress(current: profile.currentLevel, target: 20, repeatCount: repeatCount)
         case .hundredPagesInDay:
-            return progress(current: todayPagesRead, target: 100, unit: "pages today", repeatCount: repeatCount)
+            return progress(current: todayPagesRead, target: 100, unitText: String(localized: "pages today", locale: locale), repeatCount: repeatCount)
         case .marathonReader:
-            return progress(current: todayMinutesRead, target: 180, unit: "min today", repeatCount: repeatCount)
+            return progress(current: todayMinutesRead, target: 180, unitText: String(localized: "min today", locale: locale), repeatCount: repeatCount)
         }
     }
 
-    private func progress(current: Int, target: Int, unit: LocalizedStringKey, repeatCount: Int) -> AchievementProgress {
+    private func progress(current: Int, target: Int, unitText: String, repeatCount: Int) -> AchievementProgress {
         let clampedCurrent = max(0, current)
         return AchievementProgress(
             current: clampedCurrent,
             target: target,
-            unitKey: unit,
+            unitText: unitText,
             repeatCount: repeatCount
         )
     }
@@ -985,7 +978,7 @@ struct StatsView: View {
         return AchievementProgress(
             current: clampedCurrent,
             target: target,
-            unitKey: nil,
+            unitText: nil,
             repeatCount: repeatCount,
             usesLevelFormat: true
         )
@@ -1882,6 +1875,7 @@ private struct TrendDetailView: View {
 
 struct ReadingActivityChart: View {
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     let sessions: [ReadingSession]
 
     @State private var selectedDate: Date?
@@ -1946,9 +1940,7 @@ struct ReadingActivityChart: View {
                         HStack(spacing: 4) {
                             Image(systemName: "chart.bar")
                                 .font(.caption2)
-                            Text(Int(averagePages), format: .number)
-                                + Text(verbatim: " ")
-                                + Text("avg")
+                            Text("\(Int(averagePages)) \(String(localized: "avg", locale: locale))")
                                 .font(.caption)
                         }
                         .foregroundStyle(Theme.Colors.secondaryText)
@@ -2382,20 +2374,20 @@ struct AchievementsGridView: View {
 struct AchievementProgress {
     let current: Int
     let target: Int
-    let unitKey: LocalizedStringKey?
+    let unitText: String?
     let repeatCount: Int
     let usesLevelFormat: Bool
 
     init(
         current: Int,
         target: Int,
-        unitKey: LocalizedStringKey?,
+        unitText: String?,
         repeatCount: Int,
         usesLevelFormat: Bool = false
     ) {
         self.current = current
         self.target = target
-        self.unitKey = unitKey
+        self.unitText = unitText
         self.repeatCount = repeatCount
         self.usesLevelFormat = usesLevelFormat
     }
@@ -2413,8 +2405,8 @@ struct AchievementProgress {
         let currentText = formatNumber(current)
         let targetText = formatNumber(target)
         let base = Text(verbatim: "\(currentText)/\(targetText)")
-        if let unitKey {
-            return base + Text(verbatim: " ") + Text(unitKey)
+        if let unitText {
+            return Text("\(currentText)/\(targetText) \(unitText)")
         }
         return base
     }
@@ -2432,6 +2424,7 @@ private func formatNumber(_ value: Int) -> String {
 
 struct GoalCard: View {
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     let goal: ReadingGoal
 
     var body: some View {
@@ -2446,10 +2439,7 @@ struct GoalCard: View {
 
                 Spacer()
 
-                (
-                    Text(Int(goal.progressPercentage), format: .number)
-                    + Text(verbatim: "%")
-                )
+                Text("\(Int(goal.progressPercentage))%")
                     .font(Theme.Typography.callout)
                     .foregroundStyle(themeColor.color)
             }
@@ -2458,15 +2448,7 @@ struct GoalCard: View {
                 .tint(themeColor.color)
 
             HStack {
-                Text(
-                    String.localizedStringWithFormat(
-                        String(localized: "%lld/%lld"),
-                        goal.currentValue,
-                        goal.targetValue
-                    )
-                )
-                + Text(verbatim: " ")
-                + Text(goal.type.unitTextKey)
+                Text("\(goal.currentValue)/\(goal.targetValue) \(goal.type.unitText(locale: locale))")
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
 
@@ -2594,6 +2576,7 @@ struct ManageGoalsView: View {
 
 struct GoalRow: View {
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     let goal: ReadingGoal
     let profile: UserProfile
     @Environment(\.modelContext) private var modelContext
@@ -2624,15 +2607,7 @@ struct GoalRow: View {
                     .tint(goal.isCompleted ? Theme.Colors.success : themeColor.color)
 
                 HStack {
-                    Text(
-                        String.localizedStringWithFormat(
-                            String(localized: "%lld/%lld"),
-                            goal.currentValue,
-                            goal.targetValue
-                        )
-                    )
-                    + Text(verbatim: " ")
-                    + Text(goal.type.unitTextKey)
+                    Text("\(goal.currentValue)/\(goal.targetValue) \(goal.type.unitText(locale: locale))")
                         .font(Theme.Typography.caption)
                         .foregroundStyle(Theme.Colors.secondaryText)
 

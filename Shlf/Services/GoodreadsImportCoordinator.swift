@@ -77,7 +77,7 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
         Task { [weak self] in
             await WebSessionCleaner.clear(domains: ["goodreads"])
             if let signInURL = self?.signInURL {
-                await MainActor.run {
+                _ = await MainActor.run {
                     self?.webView.load(URLRequest(url: signInURL))
                 }
             }

@@ -20,7 +20,7 @@ struct StatCard: View {
     // Extract primary color from gradient for effects
     private var primaryColor: Color {
         // Default colors based on common gradients
-        if let gradient = gradient {
+        if gradient != nil {
             // Keep streak gradient (orange/red)
             if icon.contains("flame") {
                 return Color.orange

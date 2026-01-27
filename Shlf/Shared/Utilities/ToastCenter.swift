@@ -29,7 +29,7 @@ final class ToastCenter: ObservableObject {
             showTask = Task { [weak self] in
                 try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
                 guard !Task.isCancelled else { return }
-                await self?.enqueue(toast)
+                self?.enqueue(toast)
             }
         } else {
             enqueue(toast)
@@ -97,8 +97,6 @@ final class ToastCenter: ObservableObject {
         case .medium:
             Haptics.impact(.medium)
         case .none:
-            break
-        case nil:
             break
         }
     }

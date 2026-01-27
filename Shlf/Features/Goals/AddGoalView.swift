@@ -12,6 +12,7 @@ struct AddGoalView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     @Bindable var profile: UserProfile
 
     @State private var selectedType: GoalType = .booksPerMonth
@@ -56,9 +57,7 @@ struct AddGoalView: View {
 
                 Section("Target") {
                     Stepper(value: $targetValue, in: 1...1000) {
-                        Text(targetValue, format: .number)
-                        + Text(verbatim: " ")
-                        + Text(selectedType.unitTextKey)
+                        Text("\(targetValue) \(selectedType.unitText(locale: locale))")
                     }
                     .font(Theme.Typography.body)
                 }
@@ -145,6 +144,7 @@ struct AddGoalView: View {
 
 struct GoalPreviewCard: View {
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     let type: GoalType
     let targetValue: Int
     let endDate: Date
@@ -174,10 +174,7 @@ struct GoalPreviewCard: View {
                 .tint(themeColor.color)
 
             HStack {
-                Text(verbatim: "0 / ")
-                    + Text(targetValue, format: .number)
-                    + Text(verbatim: " ")
-                    + Text(type.unitTextKey)
+                Text("0 / \(targetValue) \(type.unitText(locale: locale))")
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
 

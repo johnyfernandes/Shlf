@@ -130,6 +130,7 @@ struct ProgressSliderView: View {
                                     .foregroundStyle(isDragging ? themeColor.color : Theme.Colors.text)
                                     .monospacedDigit()
                                     .contentTransition(.numericText())
+                                    .animation(.snappy(duration: 0.2), value: currentPage)
                                     .contentShape(Rectangle())
                                     .onTapGesture {
                                         startPageEditing()
@@ -148,7 +149,6 @@ struct ProgressSliderView: View {
                                 .foregroundStyle(Theme.Colors.tertiaryText)
                         }
                     }
-                    .animation(.snappy(duration: 0.2), value: currentPage)
 
                     if let total = book.totalPages {
                         HStack(spacing: 4) {
