@@ -55,11 +55,11 @@ struct ProgressSliderView: View {
         if isEditingPage {
             return pageText.isEmpty ? "0" : pageText
         }
-        return "\(currentPage)"
+        return NumberFormatter.localizedString(from: NSNumber(value: currentPage), number: .decimal)
     }
 
     private var pageFieldWidthValue: CGFloat {
-        max(24, pageFieldWidth)
+        max(56, pageFieldWidth)
     }
 
     var body: some View {
@@ -90,6 +90,9 @@ struct ProgressSliderView: View {
                             Text(pageDisplayText)
                                 .font(.system(size: 42, weight: .bold, design: .rounded))
                                 .monospacedDigit()
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                                .fixedSize(horizontal: true, vertical: false)
                                 .background(
                                     GeometryReader { proxy in
                                         Color.clear.preference(key: PageFieldWidthKey.self, value: proxy.size.width)
@@ -104,7 +107,9 @@ struct ProgressSliderView: View {
                                     .multilineTextAlignment(.center)
                                     .keyboardType(.numberPad)
                                     .focused($isPageFieldFocused)
-                                    .frame(width: pageFieldWidthValue)
+                                    .frame(minWidth: pageFieldWidthValue)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.7)
                                     .textFieldStyle(.plain)
                                     .onSubmit {
                                         commitPageEdit()
@@ -129,6 +134,9 @@ struct ProgressSliderView: View {
                                     .font(.system(size: 42, weight: .bold, design: .rounded))
                                     .foregroundStyle(isDragging ? themeColor.color : Theme.Colors.text)
                                     .monospacedDigit()
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.7)
+                                    .fixedSize(horizontal: true, vertical: false)
                                     .contentTransition(.numericText())
                                     .animation(.snappy(duration: 0.2), value: currentPage)
                                     .contentShape(Rectangle())
@@ -137,6 +145,7 @@ struct ProgressSliderView: View {
                                     }
                             }
                         }
+                        .frame(minWidth: pageFieldWidthValue)
                         .onPreferenceChange(PageFieldWidthKey.self) { width in
                             if width > 0 {
                                 pageFieldWidth = width

@@ -29,15 +29,19 @@ struct QuickProgressStepper: View {
         book.currentPage + pendingPages
     }
 
+    private var totalPendingText: String {
+        NumberFormatter.localizedString(from: NSNumber(value: totalPendingPages), number: .decimal)
+    }
+
     private var pageDisplayText: String {
         if isEditingPage {
             return pageText.isEmpty ? "0" : pageText
         }
-        return "\(book.currentPage)"
+        return NumberFormatter.localizedString(from: NSNumber(value: book.currentPage), number: .decimal)
     }
 
     private var pageFieldWidthValue: CGFloat {
-        max(24, pageFieldWidth)
+        max(56, pageFieldWidth)
     }
 
     private var accentBackground: Color {
@@ -82,6 +86,9 @@ struct QuickProgressStepper: View {
                             Text(pageDisplayText)
                                 .font(.system(size: 36, weight: .bold, design: .rounded))
                                 .monospacedDigit()
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                                .fixedSize(horizontal: true, vertical: false)
                                 .background(
                                     GeometryReader { proxy in
                                         Color.clear.preference(key: PageFieldWidthKey.self, value: proxy.size.width)
@@ -96,7 +103,9 @@ struct QuickProgressStepper: View {
                                     .multilineTextAlignment(.center)
                                     .keyboardType(.numberPad)
                                     .focused($isPageFieldFocused)
-                                    .frame(width: pageFieldWidthValue)
+                                    .frame(minWidth: pageFieldWidthValue)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.7)
                                     .textFieldStyle(.plain)
                                     .onSubmit {
                                         commitPageEdit()
@@ -117,16 +126,20 @@ struct QuickProgressStepper: View {
                                         }
                                     }
                             } else {
-                                Text(book.currentPage, format: .number)
+                                Text(pageDisplayText)
                                     .font(.system(size: 36, weight: .bold, design: .rounded))
                                     .foregroundStyle(Theme.Colors.text)
                                     .monospacedDigit()
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.7)
+                                    .fixedSize(horizontal: true, vertical: false)
                                     .contentShape(Rectangle())
                                     .onTapGesture {
                                         startPageEditing()
                                     }
                             }
                         }
+                        .frame(minWidth: pageFieldWidthValue)
                         .onPreferenceChange(PageFieldWidthKey.self) { width in
                             if width > 0 {
                                 pageFieldWidth = width
@@ -138,10 +151,14 @@ struct QuickProgressStepper: View {
                                 .font(.title3)
                                 .foregroundStyle(themeColor.color)
 
-                            Text(totalPendingPages, format: .number)
+                            Text(totalPendingText)
                                 .font(.system(size: 36, weight: .bold, design: .rounded))
                                 .foregroundStyle(themeColor.color)
                                 .monospacedDigit()
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                                .fixedSize(horizontal: true, vertical: false)
+                                .frame(minWidth: pageFieldWidthValue)
                         }
                     }
                     .animation(.spring(response: 0.3, dampingFraction: 0.7), value: pendingPages)
