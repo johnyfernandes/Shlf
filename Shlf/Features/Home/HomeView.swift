@@ -357,11 +357,11 @@ struct CurrentlyReadingCard: View {
                                 .font(Theme.Typography.headline)
                                 .foregroundStyle(themeColor.color)
 
-                            Text(
-                                String.localizedStringWithFormat(
-                                    String(localized: "/ %lld pages"),
-                                    totalPages
-                                )
+                            (
+                                Text(verbatim: "/ ")
+                                + Text(totalPages, format: .number)
+                                + Text(verbatim: " ")
+                                + Text("pages")
                             )
                                 .font(Theme.Typography.caption)
                                 .foregroundStyle(Theme.Colors.tertiaryText)
