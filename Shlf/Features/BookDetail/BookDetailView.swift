@@ -294,7 +294,7 @@ struct BookDetailView: View {
                 pendingStatus = nil
             }
         } message: {
-            if let status = pendingStatus {
+            if pendingStatus != nil {
                 Text(
                     String.localizedStringWithFormat(
                         String(localized: "You're on page %lld. Your progress will be saved and automatically restored when you return to \"Currently Reading\"."),
@@ -782,92 +782,99 @@ struct BookDetailView: View {
         let accent = stat.accent.color(themeColor: themeColor)
         switch stat {
         case .pagesPercent:
-            let pagesText = coloredValueWithUnit(
+            var composed = AttributedString(String(localized: "You read"))
+            composed += AttributedString(" ")
+            composed += coloredValueWithUnit(
                 value: summary.totalPagesRead,
-                singular: Text("page"),
-                plural: Text("pages"),
+                singularKey: "page",
+                pluralKey: "pages",
                 accent: accent
             )
-            let percentText = summary.percentRead.map { percent in
-                Text(verbatim: " ")
-                    + Text(verbatim: "\(percent)").foregroundStyle(accent)
-                    + Text(verbatim: "%")
-            } ?? Text(verbatim: "")
-            return Text("You read")
-                + Text(verbatim: " ")
-                + pagesText
-                + percentText
-                + Text(verbatim: ".")
+            if let percent = summary.percentRead {
+                composed += AttributedString(" ")
+                composed += coloredText("\(percent)", color: accent)
+                composed += AttributedString("%")
+            }
+            composed += AttributedString(".")
+            return Text(composed)
         case .timeRead:
-            return Text("You read for")
-                + Text(verbatim: " ")
-                + Text(formatMinutes(summary.totalMinutesRead)).foregroundStyle(accent)
-                + Text(verbatim: ".")
+            var composed = AttributedString(String(localized: "You read for"))
+            composed += AttributedString(" ")
+            composed += coloredText(formatMinutes(summary.totalMinutesRead), color: accent)
+            composed += AttributedString(".")
+            return Text(composed)
         case .sessionCount:
-            let sessionsText = coloredValueWithUnit(
+            var composed = AttributedString(String(localized: "You logged"))
+            composed += AttributedString(" ")
+            composed += coloredValueWithUnit(
                 value: summary.sessionCount,
-                singular: Text("session"),
-                plural: Text("sessions"),
+                singularKey: "session",
+                pluralKey: "sessions",
                 accent: accent
             )
-            return Text("You logged")
-                + Text(verbatim: " ")
-                + sessionsText
-                + Text(verbatim: ".")
+            composed += AttributedString(".")
+            return Text(composed)
         case .averagePages:
-            return Text("Average")
-                + Text(verbatim: " ")
-                + Text(formatNumber(summary.averagePagesPerSession)).foregroundStyle(accent)
-                + Text(verbatim: " ")
-                + Text("pages per session.")
+            var composed = AttributedString(String(localized: "Average"))
+            composed += AttributedString(" ")
+            composed += coloredText(formatNumber(summary.averagePagesPerSession), color: accent)
+            composed += AttributedString(" ")
+            composed += AttributedString(String(localized: "pages per session."))
+            return Text(composed)
         case .averageSpeed:
-            return Text("Average")
-                + Text(verbatim: " ")
-                + Text(formatNumber(summary.averagePagesPerHour)).foregroundStyle(accent)
-                + Text(verbatim: " ")
-                + Text("pages per hour.")
+            var composed = AttributedString(String(localized: "Average"))
+            composed += AttributedString(" ")
+            composed += coloredText(formatNumber(summary.averagePagesPerHour), color: accent)
+            composed += AttributedString(" ")
+            composed += AttributedString(String(localized: "pages per hour."))
+            return Text(composed)
         case .longestSession:
             if summary.longestSessionMinutes > 0 {
-                return Text("Longest session")
-                    + Text(verbatim: " ")
-                    + Text(formatMinutes(summary.longestSessionMinutes)).foregroundStyle(accent)
-                    + Text(verbatim: ".")
+                var composed = AttributedString(String(localized: "Longest session"))
+                composed += AttributedString(" ")
+                composed += coloredText(formatMinutes(summary.longestSessionMinutes), color: accent)
+                composed += AttributedString(".")
+                return Text(composed)
             }
-            return Text("Longest session")
-                + Text(verbatim: " ")
-                + coloredValueWithUnit(
-                    value: summary.longestSessionPages,
-                    singular: Text("page"),
-                    plural: Text("pages"),
-                    accent: accent
-                )
-                + Text(verbatim: ".")
+            var composed = AttributedString(String(localized: "Longest session"))
+            composed += AttributedString(" ")
+            composed += coloredValueWithUnit(
+                value: summary.longestSessionPages,
+                singularKey: "page",
+                pluralKey: "pages",
+                accent: accent
+            )
+            composed += AttributedString(".")
+            return Text(composed)
         case .streak:
-            return Text("Your book streak was")
-                + Text(verbatim: " ")
-                + coloredValueWithUnit(
-                    value: summary.streakDays,
-                    singular: Text("day"),
-                    plural: Text("days"),
-                    accent: accent
-                )
-                + Text(verbatim: ".")
+            var composed = AttributedString(String(localized: "Your book streak was"))
+            composed += AttributedString(" ")
+            composed += coloredValueWithUnit(
+                value: summary.streakDays,
+                singularKey: "day",
+                pluralKey: "days",
+                accent: accent
+            )
+            composed += AttributedString(".")
+            return Text(composed)
         case .daysSinceLast:
             if let days = summary.daysSinceLastRead {
                 let relative = relativeDayString(days, locale: locale)
-                return Text("Last read")
-                    + Text(verbatim: " ")
-                    + coloredNumberInFormattedString(relative, number: days, accent: accent)
-                    + Text(verbatim: ".")
+                var composed = AttributedString(String(localized: "Last read"))
+                composed += AttributedString(" ")
+                composed += coloredNumberInFormattedString(relative, number: days, accent: accent)
+                composed += AttributedString(".")
+                return Text(composed)
             }
             return Text("No reads yet")
         case .firstLastDate:
             if let first = summary.firstReadDate, let last = summary.lastReadDate {
-                return Text("First read")
-                    + Text(verbatim: " ")
-                    + Text(formatDate(first)).foregroundStyle(accent)
-                    + Text(verbatim: " • ")
-                    + Text(formatDate(last)).foregroundStyle(accent)
+                var composed = AttributedString(String(localized: "First read"))
+                composed += AttributedString(" ")
+                composed += coloredText(formatDate(first), color: accent)
+                composed += AttributedString(" • ")
+                composed += coloredText(formatDate(last), color: accent)
+                return Text(composed)
             }
             return Text("No read dates yet")
         }
@@ -904,28 +911,37 @@ struct BookDetailView: View {
 
     private func coloredValueWithUnit(
         value: Int,
-        singular: Text,
-        plural: Text,
+        singularKey: LocalizedStringKey,
+        pluralKey: LocalizedStringKey,
         accent: Color
-    ) -> Text {
+    ) -> AttributedString {
         let numberString = NumberFormatter.localizedString(from: NSNumber(value: value), number: .decimal)
-        let unitText = value == 1 ? singular : plural
-        return Text(verbatim: numberString).foregroundStyle(accent)
-            + Text(verbatim: " ")
-            + unitText
+        let unitText = value == 1
+            ? String(localized: "\(singularKey)")
+            : String(localized: "\(pluralKey)")
+        var attributed = coloredText(numberString, color: accent)
+        attributed += AttributedString(" ")
+        attributed += AttributedString(unitText)
+        return attributed
     }
 
     private func coloredNumberInFormattedString(
         _ formatted: String,
         number: Int,
         accent: Color
-    ) -> Text {
+    ) -> AttributedString {
         let numberString = NumberFormatter.localizedString(from: NSNumber(value: number), number: .decimal)
         var attributed = AttributedString(formatted)
         if let range = attributed.range(of: numberString) {
             attributed[range].foregroundColor = UIColor(accent)
         }
-        return Text(attributed)
+        return attributed
+    }
+
+    private func coloredText(_ text: String, color: Color) -> AttributedString {
+        var attributed = AttributedString(text)
+        attributed.foregroundColor = UIColor(color)
+        return attributed
     }
 
     private func relativeDayString(_ days: Int, locale: Locale) -> String {
@@ -1721,7 +1737,7 @@ struct FinishBookLogView: View {
                             }
 
                         if let totalPages = book.totalPages, totalPages > 0 {
-                            (Text(verbatim: "/ ") + Text(totalPages, format: .number))
+                            Text("/ \(totalPages, format: .number)")
                                 .foregroundStyle(.secondary)
                         }
                     }

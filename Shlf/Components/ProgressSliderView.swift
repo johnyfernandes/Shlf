@@ -143,7 +143,7 @@ struct ProgressSliderView: View {
                         }
 
                         if let total = book.totalPages {
-                            (Text(verbatim: "/ ") + Text(total, format: .number))
+                            Text("/ \(total, format: .number)")
                                 .font(.title3)
                                 .foregroundStyle(Theme.Colors.tertiaryText)
                         }
@@ -152,10 +152,7 @@ struct ProgressSliderView: View {
 
                     if let total = book.totalPages {
                         HStack(spacing: 4) {
-                            (
-                                Text(Int(progressPercentage), format: .number)
-                                + Text(verbatim: "%")
-                            )
+                            Text("\(Int(progressPercentage))%")
                             .font(.caption.weight(.medium))
                             .foregroundStyle(themeColor.color)
                             .contentTransition(.numericText())

@@ -292,9 +292,7 @@ struct EditBookView: View {
             if let total = book.totalPages, total > 0 {
                 VStack(spacing: 8) {
                     HStack {
-                        Text(Int(book.progressPercentage), format: .number)
-                        + Text(verbatim: "% ")
-                        + Text("Complete")
+                        Text("\(Int(book.progressPercentage))% \(String(localized: "Complete"))")
                             .font(.caption)
                             .foregroundStyle(Theme.Colors.secondaryText)
 

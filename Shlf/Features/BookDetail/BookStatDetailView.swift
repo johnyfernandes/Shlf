@@ -169,14 +169,17 @@ struct BookStatDetailView: View {
     private func detailValueText() -> Text {
         switch stat {
         case .pagesPercent:
-            let percent = summary.percentRead.map { " \($0)%" } ?? ""
-            return Text(
-                String.localizedStringWithFormat(
-                    String(localized: "%lld pages"),
-                    summary.totalPagesRead
-                )
-            ) + Text(verbatim: percent)
-                .foregroundStyle(accent)
+            let base = String.localizedStringWithFormat(
+                String(localized: "%lld pages"),
+                summary.totalPagesRead
+            )
+            var attributed = AttributedString(base)
+            if let percent = summary.percentRead {
+                var percentText = AttributedString(" \(percent)%")
+                percentText.foregroundColor = UIColor(accent)
+                attributed += percentText
+            }
+            return Text(attributed)
         case .timeRead:
             return Text(formatMinutes(summary.totalMinutesRead))
                 .foregroundStyle(accent)
@@ -189,19 +192,11 @@ struct BookStatDetailView: View {
             )
             .foregroundStyle(accent)
         case .averagePages:
-            return (
-                Text(formatNumber(summary.averagePagesPerSession))
-                + Text(verbatim: " ")
-                + Text("pages/session")
-            )
-            .foregroundStyle(accent)
+            return Text("\(formatNumber(summary.averagePagesPerSession)) \(String(localized: "pages/session"))")
+                .foregroundStyle(accent)
         case .averageSpeed:
-            return (
-                Text(formatNumber(summary.averagePagesPerHour))
-                + Text(verbatim: " ")
-                + Text("pages/hour")
-            )
-            .foregroundStyle(accent)
+            return Text("\(formatNumber(summary.averagePagesPerHour)) \(String(localized: "pages/hour"))")
+                .foregroundStyle(accent)
         case .longestSession:
             if summary.longestSessionMinutes > 0 {
                 return Text(formatMinutes(summary.longestSessionMinutes))
