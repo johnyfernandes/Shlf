@@ -1964,8 +1964,13 @@ struct ReadingSessionRow: View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
-                    Text(session.displayName)
-                        .font(.subheadline.weight(.medium))
+                    if session.isActive {
+                        Text("Started at page \(session.startPage)")
+                            .font(.subheadline.weight(.medium))
+                    } else {
+                        Text("From page \(session.startPage) to page \(session.endPage)")
+                            .font(.subheadline.weight(.medium))
+                    }
 
                     if session.isImported || !session.countsTowardStats {
                         Text("Imported")
@@ -1994,12 +1999,7 @@ struct ReadingSessionRow: View {
                         .font(.caption)
                         .foregroundStyle(.tertiary)
 
-                    Text(
-                        String.localizedStringWithFormat(
-                            String(localized: "%lld min"),
-                            session.durationMinutes
-                        )
-                    )
+                    Text("\(session.durationMinutes) min")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -2007,12 +2007,7 @@ struct ReadingSessionRow: View {
 
             Spacer()
 
-            Text(
-                String.localizedStringWithFormat(
-                    String(localized: "%lld XP"),
-                    session.xpEarned
-                )
-            )
+            Text("\(session.xpEarned) XP")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.green)
         }

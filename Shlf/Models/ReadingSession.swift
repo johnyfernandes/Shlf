@@ -78,9 +78,16 @@ final class ReadingSession {
     /// Display name for the session showing page range
     var displayName: String {
         if isActive {
-            return "Started at page \(startPage)"
+            return String.localizedStringWithFormat(
+                String(localized: "Started at page %lld"),
+                Int64(startPage)
+            )
         } else {
-            return "From page \(startPage) to page \(endPage)"
+            return String.localizedStringWithFormat(
+                String(localized: "From page %lld to page %lld"),
+                Int64(startPage),
+                Int64(endPage)
+            )
         }
     }
 
