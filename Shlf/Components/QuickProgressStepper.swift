@@ -10,11 +10,13 @@ import SwiftUI
 struct QuickProgressStepper: View {
     @Environment(\.themeColor) private var themeColor
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.locale) private var locale
     @Bindable var book: Book
     let incrementAmount: Int
     @Binding var showConfetti: Bool
     let onSave: (Int) -> Void
 
+    @AppStorage("progressEditTooltipDismissed") private var hasDismissedEditTooltip = false
     @State private var pendingPages: Int = 0
     @State private var showSaveButton = false
     @State private var longPressTimer: Timer?
@@ -23,6 +25,7 @@ struct QuickProgressStepper: View {
     @State private var isEditingPage = false
     @State private var pageText = ""
     @State private var pageFieldWidth: CGFloat = 0
+    @State private var showEditTooltip = false
     @FocusState private var isPageFieldFocused: Bool
 
     private var totalPendingPages: Int {
@@ -52,12 +55,17 @@ struct QuickProgressStepper: View {
         themeColor.onColor(for: colorScheme)
     }
 
+    private var shouldShowEditTooltip: Bool {
+        !hasDismissedEditTooltip && !isEditingPage && pendingPages == 0
+    }
+
     var body: some View {
         VStack(spacing: Theme.Spacing.lg) {
             // Compact stepper
             HStack(spacing: Theme.Spacing.md) {
                 // Decrement button
                 Button {
+                    dismissEditTooltip()
                     decrementPage()
                 } label: {
                     Image(systemName: "minus.circle.fill")
@@ -100,11 +108,14 @@ struct QuickProgressStepper: View {
                                 TextField("", text: $pageText)
                                     .font(.system(size: 36, weight: .bold, design: .rounded))
                                     .foregroundStyle(themeColor.color)
+                                    .monospacedDigit()
                                     .multilineTextAlignment(.center)
                                     .keyboardType(.numberPad)
                                     .focused($isPageFieldFocused)
                                     .frame(width: pageFieldWidthValue)
                                     .lineLimit(1)
+                                    .minimumScaleFactor(0.7)
+                                    .fixedSize(horizontal: true, vertical: false)
                                     .textFieldStyle(.plain)
                                     .onSubmit {
                                         commitPageEdit()
@@ -133,12 +144,14 @@ struct QuickProgressStepper: View {
                                     .fixedSize(horizontal: true, vertical: false)
                                     .contentShape(Rectangle())
                                     .onTapGesture {
+                                        dismissEditTooltip()
                                         guard pendingPages == 0 else { return }
                                         startPageEditing()
                                     }
                             }
                         }
                         .frame(width: pageFieldWidthValue)
+                        .anchorPreference(key: PageNumberBoundsKey.self, value: .bounds) { $0 }
                         .onPreferenceChange(PageFieldWidthKey.self) { width in
                             if !isEditingPage, width > 0 {
                                 pageFieldWidth = width
@@ -157,6 +170,16 @@ struct QuickProgressStepper: View {
                                 .lineLimit(1)
                                 .fixedSize(horizontal: true, vertical: false)
                                 .frame(minWidth: pageFieldWidthValue)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .overlayPreferenceValue(PageNumberBoundsKey.self) { anchor in
+                        GeometryReader { proxy in
+                            if let anchor, showEditTooltip {
+                                let rect = proxy[anchor]
+                                editTooltipView
+                                    .position(x: rect.midX, y: rect.minY - 32)
+                            }
                         }
                     }
                     .animation(.spring(response: 0.3, dampingFraction: 0.7), value: pendingPages)
@@ -194,6 +217,7 @@ struct QuickProgressStepper: View {
 
                 // Increment button
                 Button {
+                    dismissEditTooltip()
                     incrementPage()
                 } label: {
                     Image(systemName: "plus.circle.fill")
@@ -218,6 +242,7 @@ struct QuickProgressStepper: View {
             // Save button (appears when there are pending changes)
             if showSaveButton {
                 Button {
+                    dismissEditTooltip()
                     saveProgress()
                 } label: {
                     HStack(spacing: Theme.Spacing.xs) {
@@ -291,6 +316,50 @@ struct QuickProgressStepper: View {
                 )
             )
         }
+        .onAppear {
+            if shouldShowEditTooltip {
+                showEditTooltip = true
+            }
+        }
+        .onChange(of: shouldShowEditTooltip) { _, newValue in
+            showEditTooltip = newValue
+        }
+        .onTapGesture {
+            dismissEditTooltip()
+        }
+    }
+
+    private var editTooltipView: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(localized("Tap here!", locale: locale))
+                .font(.caption.weight(.bold))
+            Text(localized("Tap here to edit your last page for this session.", locale: locale))
+                .font(.caption2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .foregroundStyle(themeColor.onColor(for: colorScheme))
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(themeColor.color.gradient)
+                .shadow(color: themeColor.color.opacity(0.35), radius: 6, y: 4)
+        )
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(themeColor.color)
+                .frame(width: 10, height: 10)
+                .rotationEffect(.degrees(45))
+                .offset(y: 6)
+        }
+        .frame(maxWidth: 220, alignment: .leading)
+        .allowsHitTesting(false)
+    }
+
+    private func dismissEditTooltip() {
+        guard showEditTooltip else { return }
+        showEditTooltip = false
+        hasDismissedEditTooltip = true
     }
 
     private func incrementPage() {
@@ -451,6 +520,14 @@ private struct PageFieldWidthKey: PreferenceKey {
         if next > 0 {
             value = next
         }
+    }
+}
+
+private struct PageNumberBoundsKey: PreferenceKey {
+    static var defaultValue: Anchor<CGRect>? = nil
+
+    static func reduce(value: inout Anchor<CGRect>?, nextValue: () -> Anchor<CGRect>?) {
+        value = nextValue() ?? value
     }
 }
 

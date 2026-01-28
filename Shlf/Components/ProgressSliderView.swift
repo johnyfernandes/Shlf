@@ -10,12 +10,14 @@ import SwiftUI
 struct ProgressSliderView: View {
     @Environment(\.themeColor) private var themeColor
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.locale) private var locale
     @Bindable var book: Book
     let incrementAmount: Int
     let showButtons: Bool
     @Binding var showConfetti: Bool
     let onSave: (Int) -> Void
 
+    @AppStorage("progressEditTooltipDismissed") private var hasDismissedEditTooltip = false
     @State private var sliderValue: Double = 0
     @State private var isDragging = false
     @State private var showSaveButton = false
@@ -24,6 +26,7 @@ struct ProgressSliderView: View {
     @State private var isEditingPage = false
     @State private var pageText = ""
     @State private var pageFieldWidth: CGFloat = 0
+    @State private var showEditTooltip = false
     @FocusState private var isPageFieldFocused: Bool
 
     private var currentPage: Int {
@@ -60,6 +63,10 @@ struct ProgressSliderView: View {
 
     private var pageFieldWidthValue: CGFloat {
         max(56, pageFieldWidth)
+    }
+
+    private var shouldShowEditTooltip: Bool {
+        !hasDismissedEditTooltip && !isEditingPage
     }
 
     var body: some View {
@@ -104,12 +111,14 @@ struct ProgressSliderView: View {
                                 TextField("", text: $pageText)
                                     .font(.system(size: 42, weight: .bold, design: .rounded))
                                     .foregroundStyle(themeColor.color)
+                                    .monospacedDigit()
                                     .multilineTextAlignment(.center)
                                     .keyboardType(.numberPad)
                                     .focused($isPageFieldFocused)
-                                    .frame(minWidth: pageFieldWidthValue)
+                                    .frame(width: pageFieldWidthValue)
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.7)
+                                    .fixedSize(horizontal: true, vertical: false)
                                     .textFieldStyle(.plain)
                                     .onSubmit {
                                         commitPageEdit()
@@ -141,13 +150,15 @@ struct ProgressSliderView: View {
                                     .animation(.snappy(duration: 0.2), value: currentPage)
                                     .contentShape(Rectangle())
                                     .onTapGesture {
+                                        dismissEditTooltip()
                                         startPageEditing()
                                     }
                             }
                         }
                         .frame(minWidth: pageFieldWidthValue)
+                        .anchorPreference(key: PageNumberBoundsKey.self, value: .bounds) { $0 }
                         .onPreferenceChange(PageFieldWidthKey.self) { width in
-                            if width > 0 {
+                            if !isEditingPage, width > 0 {
                                 pageFieldWidth = width
                             }
                         }
@@ -156,6 +167,16 @@ struct ProgressSliderView: View {
                             Text("/ \(total, format: .number)")
                                 .font(.title3)
                                 .foregroundStyle(Theme.Colors.tertiaryText)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .overlayPreferenceValue(PageNumberBoundsKey.self) { anchor in
+                        GeometryReader { proxy in
+                            if let anchor, showEditTooltip {
+                                let rect = proxy[anchor]
+                                editTooltipView
+                                    .position(x: rect.midX, y: rect.minY - 34)
+                            }
                         }
                     }
 
@@ -305,6 +326,17 @@ struct ProgressSliderView: View {
                 showSaveButton = newValue
             }
         }
+        .onAppear {
+            if shouldShowEditTooltip {
+                showEditTooltip = true
+            }
+        }
+        .onChange(of: shouldShowEditTooltip) { _, newValue in
+            showEditTooltip = newValue
+        }
+        .onTapGesture {
+            dismissEditTooltip()
+        }
         .alert("Finished Reading?", isPresented: $showFinishAlert) {
             Button("Mark as Finished") {
                 let pagesRead = currentPage - book.currentPage
@@ -343,6 +375,7 @@ struct ProgressSliderView: View {
     private func handleDragChanged(_ value: DragGesture.Value, in width: CGFloat) {
         if !isDragging {
             isDragging = true
+            dismissEditTooltip()
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         }
 
@@ -368,6 +401,7 @@ struct ProgressSliderView: View {
 
     private func saveProgress() {
         UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+        dismissEditTooltip()
 
         if let totalPages = book.totalPages, currentPage >= totalPages && book.readingStatus == .currentlyReading {
             showFinishAlert = true
@@ -377,6 +411,7 @@ struct ProgressSliderView: View {
     }
 
     private func applyProgressUpdate() {
+        dismissEditTooltip()
         let pagesRead = currentPage - book.currentPage
 
         book.currentPage = currentPage
@@ -404,6 +439,7 @@ struct ProgressSliderView: View {
     }
 
     private func incrementPage() {
+        dismissEditTooltip()
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
 
         withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) {
@@ -412,6 +448,7 @@ struct ProgressSliderView: View {
     }
 
     private func decrementPage() {
+        dismissEditTooltip()
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
 
         withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) {
@@ -447,6 +484,39 @@ struct ProgressSliderView: View {
         let maxPage = book.totalPages ?? Int.max
         return min(maxPage, max(minPage, value))
     }
+
+    private var editTooltipView: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(localized("Tap here!", locale: locale))
+                .font(.caption.weight(.bold))
+            Text(localized("Tap here to edit your last page for this session.", locale: locale))
+                .font(.caption2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .foregroundStyle(themeColor.onColor(for: colorScheme))
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(themeColor.color.gradient)
+                .shadow(color: themeColor.color.opacity(0.35), radius: 6, y: 4)
+        )
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(themeColor.color)
+                .frame(width: 10, height: 10)
+                .rotationEffect(.degrees(45))
+                .offset(y: 6)
+        }
+        .frame(maxWidth: 220, alignment: .leading)
+        .allowsHitTesting(false)
+    }
+
+    private func dismissEditTooltip() {
+        guard showEditTooltip else { return }
+        showEditTooltip = false
+        hasDismissedEditTooltip = true
+    }
 }
 
 private struct PageFieldWidthKey: PreferenceKey {
@@ -457,6 +527,14 @@ private struct PageFieldWidthKey: PreferenceKey {
         if next > 0 {
             value = next
         }
+    }
+}
+
+private struct PageNumberBoundsKey: PreferenceKey {
+    static var defaultValue: Anchor<CGRect>? = nil
+
+    static func reduce(value: inout Anchor<CGRect>?, nextValue: () -> Anchor<CGRect>?) {
+        value = nextValue() ?? value
     }
 }
 
