@@ -27,6 +27,7 @@ struct HomeView: View {
     @State private var showAddBook = false
     @State private var isEditingCards = false
     @State private var showLevelDetail = false
+    @State private var showStreakDetail = false
     @State private var showHomeCustomization = false
 
     private var profile: UserProfile {
@@ -80,8 +81,9 @@ struct HomeView: View {
     // Helper function to handle card taps
     private func handleCardTap(_ cardType: StatCardType) {
         if cardType == .level {
-            // Open Level detail view
             showLevelDetail = true
+        } else if cardType.isStreakCard {
+            showStreakDetail = true
         } else {
             // Navigate to Stats tab for all other cards
             selectedTab = 2
@@ -175,6 +177,10 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showLevelDetail) {
                 LevelDetailView(profile: profile)
+                    .presentationDetents([.medium, .large])
+            }
+            .sheet(isPresented: $showStreakDetail) {
+                StreakDetailView(profile: profile)
                     .presentationDetents([.medium, .large])
             }
             .sheet(isPresented: $showHomeCustomization) {
