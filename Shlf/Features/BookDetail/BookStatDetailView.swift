@@ -107,12 +107,13 @@ struct BookStatDetailView: View {
     }
 
     private var chartCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             Text("Activity")
                 .font(.headline)
 
             ReadingActivityChart(sessions: summary.sessions)
                 .frame(height: 180)
+                .padding(.top, 2)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
