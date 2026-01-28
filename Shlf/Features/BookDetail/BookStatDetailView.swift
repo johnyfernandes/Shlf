@@ -10,6 +10,7 @@ import SwiftUI
 struct BookStatDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     let stat: BookStatsCardType
     let book: Book
     let summary: BookStatsSummary
@@ -108,12 +109,12 @@ struct BookStatDetailView: View {
 
     private var chartCard: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Activity")
+            Text(localized("Activity", locale: locale))
                 .font(.headline)
 
             ReadingActivityChart(sessions: summary.sessions)
                 .frame(height: 180)
-                .padding(.top, 2)
+                .padding(.top, 8)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -126,7 +127,7 @@ struct BookStatDetailView: View {
 
     private var sessionsCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Recent Sessions")
+            Text(localized("Recent Sessions", locale: locale))
                 .font(.headline)
 
             VStack(spacing: 10) {
@@ -148,9 +149,9 @@ struct BookStatDetailView: View {
         VStack(alignment: .leading, spacing: 8) {
             InlineEmptyStateView(
                 icon: "chart.bar.xaxis",
-                title: "No activity yet",
-                message: "Log your first session to unlock detailed stats for this book.",
-                actionTitle: onPrimaryAction == nil ? nil : "Log session"
+                title: LocalizedStringKey(localized("No activity yet", locale: locale)),
+                message: LocalizedStringKey(localized("Log your first session to unlock detailed stats for this book.", locale: locale)),
+                actionTitle: onPrimaryAction == nil ? nil : LocalizedStringKey(localized("Log session", locale: locale))
             ) {
                 dismiss()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
@@ -170,10 +171,12 @@ struct BookStatDetailView: View {
     private func detailValueText() -> Text {
         switch stat {
         case .pagesPercent:
-            let base = String.localizedStringWithFormat(
-                String(localized: "%lld pages"),
-                summary.totalPagesRead
+            let unit = unitText(
+                value: summary.totalPagesRead,
+                singularKey: "page",
+                pluralKey: "pages"
             )
+            let base = "\(formatNumber(summary.totalPagesRead)) \(unit)"
             var attributed = AttributedString(base)
             if let percent = summary.percentRead {
                 var percentText = AttributedString(" \(percent)%")
@@ -186,17 +189,14 @@ struct BookStatDetailView: View {
                 .foregroundStyle(accent)
         case .sessionCount:
             return Text(
-                String.localizedStringWithFormat(
-                    String(localized: "%lld sessions"),
-                    summary.sessionCount
-                )
+                "\(formatNumber(summary.sessionCount)) \(unitText(value: summary.sessionCount, singularKey: "session", pluralKey: "sessions"))"
             )
             .foregroundStyle(accent)
         case .averagePages:
-            return Text("\(formatNumber(summary.averagePagesPerSession)) \(String(localized: "pages/session"))")
+            return Text("\(formatNumber(summary.averagePagesPerSession)) \(localized("pages/session", locale: locale))")
                 .foregroundStyle(accent)
         case .averageSpeed:
-            return Text("\(formatNumber(summary.averagePagesPerHour)) \(String(localized: "pages/hour"))")
+            return Text("\(formatNumber(summary.averagePagesPerHour)) \(localized("pages/hour", locale: locale))")
                 .foregroundStyle(accent)
         case .longestSession:
             if summary.longestSessionMinutes > 0 {
@@ -204,38 +204,29 @@ struct BookStatDetailView: View {
                     .foregroundStyle(accent)
             }
             return Text(
-                String.localizedStringWithFormat(
-                    String(localized: "%lld pages"),
-                    summary.longestSessionPages
-                )
+                "\(formatNumber(summary.longestSessionPages)) \(unitText(value: summary.longestSessionPages, singularKey: "page", pluralKey: "pages"))"
             )
                 .foregroundStyle(accent)
         case .streak:
             return Text(
-                String.localizedStringWithFormat(
-                    String(localized: "%lld days"),
-                    summary.streakDays
-                )
+                "\(formatNumber(summary.streakDays)) \(unitText(value: summary.streakDays, singularKey: "day", pluralKey: "days"))"
             )
                 .foregroundStyle(accent)
         case .daysSinceLast:
             if let value = summary.daysSinceLastRead {
                 return Text(
-                    String.localizedStringWithFormat(
-                        String(localized: "%lld days"),
-                        value
-                    )
+                    "\(formatNumber(value)) \(unitText(value: value, singularKey: "day", pluralKey: "days"))"
                 )
                     .foregroundStyle(accent)
             }
-            return Text("No reads yet")
+            return Text(localized("No reads yet", locale: locale))
                 .foregroundStyle(accent)
         case .firstLastDate:
             if let first = summary.firstReadDate, let last = summary.lastReadDate {
                 return Text(verbatim: "\(formatDate(first)) – \(formatDate(last))")
                     .foregroundStyle(accent)
             }
-            return Text("No dates yet")
+            return Text(localized("No dates yet", locale: locale))
                 .foregroundStyle(accent)
         }
     }
@@ -254,8 +245,19 @@ struct BookStatDetailView: View {
 
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
+        formatter.locale = locale
         formatter.dateFormat = "d MMM yyyy"
         return formatter.string(from: date)
+    }
+
+    private func unitText(value: Int, singularKey: String, pluralKey: String) -> String {
+        value == 1
+        ? localized(singularKey, locale: locale)
+        : localized(pluralKey, locale: locale)
+    }
+
+    private func formatNumber(_ value: Int) -> String {
+        NumberFormatter.localizedString(from: NSNumber(value: value), number: .decimal)
     }
 
     private func formatNumber(_ value: Double) -> String {
