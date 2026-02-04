@@ -283,7 +283,7 @@ enum PaywallPlan: CaseIterable {
     case monthly
     case lifetime
 
-    static let ordered: [PaywallPlan] = [.yearly, .monthly, .lifetime]
+    static let ordered: [PaywallPlan] = [.monthly, .yearly, .lifetime]
 
     var productID: String {
         switch self {
