@@ -31246,6 +31246,18 @@
         }
       }
     },
+    "Paywall.Features.Subtitle" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Dein kompletter Lesewerkzeugkasten." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Your complete reading toolkit." } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Tu kit completo de lectura." } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Votre boîte à outils de lecture." } },
+        "pt" : { "stringUnit" : { "state" : "translated", "value" : "O teu kit completo de leitura." } },
+        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "O teu kit completo de leitura." } },
+        "pt-PT" : { "stringUnit" : { "state" : "translated", "value" : "O teu kit completo de leitura." } }
+      }
+    },
     "Paywall.Footer.OneTime" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -31997,6 +32009,18 @@
             "value" : "Escolhe o teu plano"
           }
         }
+      }
+    },
+    "Paywall.Plans.Subtitle" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Jederzeit kündbar. Jahresplan spart am meisten." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel anytime. Yearly saves the most." } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Cancela cuando quieras. El anual ahorra más." } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Annulable à tout moment. L'annuel fait le plus d'économies." } },
+        "pt" : { "stringUnit" : { "state" : "translated", "value" : "Cancela quando quiseres. O anual poupa mais." } },
+        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "Cancela quando quiseres. O anual poupa mais." } },
+        "pt-PT" : { "stringUnit" : { "state" : "translated", "value" : "Cancela quando quiseres. O anual poupa mais." } }
       }
     },
     "Period" : {

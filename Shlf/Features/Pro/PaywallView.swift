@@ -87,8 +87,10 @@ struct PaywallView: View {
 
     private var featuresSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-            Text(localized("Paywall.Features.Title", locale: locale))
-                .font(Theme.Typography.headline)
+            PaywallSectionHeader(
+                title: localized("Paywall.Features.Title", locale: locale),
+                subtitle: localized("Paywall.Features.Subtitle", locale: locale)
+            )
 
             VStack(spacing: Theme.Spacing.sm) {
                 PaywallFeatureRow(icon: "books.vertical.fill", text: localized("Paywall.Feature.UnlimitedBooks", locale: locale))
@@ -99,40 +101,44 @@ struct PaywallView: View {
                 PaywallFeatureRow(icon: "icloud.fill", text: localized("Paywall.Feature.iCloud", locale: locale))
                 PaywallFeatureRow(icon: "arrow.down.doc.fill", text: localized("Paywall.Feature.Import", locale: locale))
             }
+            .padding(Theme.Spacing.lg)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: Theme.CornerRadius.lg, style: .continuous))
         }
-        .padding(Theme.Spacing.lg)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: Theme.CornerRadius.lg, style: .continuous))
     }
 
     private var planSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-            Text(localized("Paywall.Plans.Title", locale: locale))
-                .font(Theme.Typography.headline)
+            PaywallSectionHeader(
+                title: localized("Paywall.Plans.Title", locale: locale),
+                subtitle: localized("Paywall.Plans.Subtitle", locale: locale)
+            )
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Spacing.sm) {
                 ForEach(PaywallPlan.ordered, id: \.self) { plan in
                     Button {
                         selectedPlan = plan
                     } label: {
-                    PaywallPlanCard(
-                        plan: plan,
-                        title: plan.title(locale: locale),
-                        subtitle: plan.subtitle(locale: locale),
-                        priceText: storeKit.product(for: plan.productID)?.displayPrice ?? "--",
-                        periodText: plan.periodText(locale: locale),
-                        badgeText: badgeText(for: plan),
-                        isSelected: selectedPlan == plan,
-                        isRecommended: plan == .yearly,
-                        accentColor: themeColor.color,
-                        isNeutralTheme: themeColor == .neutral,
-                        colorScheme: colorScheme
-                    )
-                }
+                        PaywallPlanCard(
+                            plan: plan,
+                            title: plan.title(locale: locale),
+                            subtitle: plan.subtitle(locale: locale),
+                            priceText: storeKit.product(for: plan.productID)?.displayPrice ?? "--",
+                            periodText: plan.periodText(locale: locale),
+                            badgeText: badgeText(for: plan),
+                            isSelected: selectedPlan == plan,
+                            isRecommended: plan == .yearly,
+                            accentColor: themeColor.color,
+                            isNeutralTheme: themeColor == .neutral,
+                            colorScheme: colorScheme
+                        )
+                    }
                     .buttonStyle(.plain)
                     .disabled(storeKit.product(for: plan.productID) == nil && storeKit.isLoadingProducts)
                     .gridCellColumns(plan == .lifetime ? 2 : 1)
                 }
             }
+            .padding(Theme.Spacing.sm)
+            .background(Theme.Colors.secondaryBackground.opacity(colorScheme == .dark ? 0.35 : 0.6), in: RoundedRectangle(cornerRadius: Theme.CornerRadius.lg, style: .continuous))
         }
     }
 
@@ -415,6 +421,23 @@ private struct PaywallBadge: View {
     }
 }
 
+private struct PaywallSectionHeader: View {
+    let title: String
+    let subtitle: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            Text(title)
+                .font(Theme.Typography.headline)
+                .foregroundStyle(Theme.Colors.text)
+
+            Text(subtitle)
+                .font(Theme.Typography.caption)
+                .foregroundStyle(Theme.Colors.secondaryText)
+        }
+    }
+}
+
 struct PaywallPlanCard: View {
     let plan: PaywallPlan
     let title: String
@@ -471,6 +494,7 @@ struct PaywallPlanCard: View {
         }
         .padding(Theme.Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(minHeight: plan == .lifetime ? 120 : 132)
         .background(backgroundColor)
         .overlay(
             RoundedRectangle(cornerRadius: Theme.CornerRadius.lg, style: .continuous)
