@@ -23,6 +23,7 @@ struct OnboardingView: View {
     @State private var selectedGoalType: GoalType = .pagesPerDay
     @State private var goalValue: Int = 15
     @State private var skipGoalSetup = false
+    @State private var goalConfirmed = false
     @State private var liveActivitiesEnabled = true
     @State private var showUpgradeSheet = false
 
@@ -60,6 +61,7 @@ struct OnboardingView: View {
                 selectedGoalType: $selectedGoalType,
                 goalValue: $goalValue,
                 skipGoalSetup: $skipGoalSetup,
+                goalConfirmed: $goalConfirmed,
                 liveActivitiesEnabled: liveActivitiesEnabled,
                 isProUser: isProUser,
                 showUpgradeSheet: $showUpgradeSheet,
@@ -67,6 +69,7 @@ struct OnboardingView: View {
                 onSkip: { completeOnboarding() },
                 onNotNow: {
                     skipGoalSetup = true
+                    goalConfirmed = false
                     goToNextStep()
                 }
             )
@@ -127,7 +130,7 @@ struct OnboardingView: View {
         profile.hasCompletedOnboarding = true
         profile.themeColor = selectedTheme
 
-        if isProUser && !skipGoalSetup {
+        if isProUser && goalConfirmed && !skipGoalSetup {
             upsertDailyGoal(for: profile)
         }
 
@@ -213,6 +216,7 @@ private struct OnboardingBottomSheet: View {
     @Binding var selectedGoalType: GoalType
     @Binding var goalValue: Int
     @Binding var skipGoalSetup: Bool
+    @Binding var goalConfirmed: Bool
     let liveActivitiesEnabled: Bool
     let isProUser: Bool
     @Binding var showUpgradeSheet: Bool
@@ -228,11 +232,7 @@ private struct OnboardingBottomSheet: View {
 
             if hasDetailSheet {
                 Button {
-                    if requiresProForDetail && !isProUser {
-                        showUpgradeSheet = true
-                    } else {
-                        showDetailSheet = true
-                    }
+                    showDetailSheet = true
                 } label: {
                     HStack(spacing: 8) {
                         Image(systemName: detailButtonIcon)
@@ -323,16 +323,7 @@ private struct OnboardingBottomSheet: View {
     }
 
     private var detailButtonIcon: String {
-        switch step {
-        case .goal where !isProUser:
-            return "lock.fill"
-        default:
-            return "slider.horizontal.3"
-        }
-    }
-
-    private var requiresProForDetail: Bool {
-        step == .goal
+        "slider.horizontal.3"
     }
 
     private var detailSheet: some View {
@@ -360,6 +351,20 @@ private struct OnboardingBottomSheet: View {
                     default:
                         EmptyView()
                     }
+
+                    if step == .goal {
+                        saveGoalButton
+                        if goalConfirmed {
+                            HStack(spacing: 8) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(Theme.Colors.success)
+                                Text("Onboarding.Detail.GoalSaved")
+                                    .font(Theme.Typography.caption)
+                                    .foregroundStyle(Theme.Colors.secondaryText)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    }
                 }
                 .padding(Theme.Spacing.xl)
             }
@@ -375,6 +380,44 @@ private struct OnboardingBottomSheet: View {
         }
         .presentationDetents([.medium])
         .presentationDragIndicator(.visible)
+    }
+
+    private var saveGoalButton: some View {
+        Button {
+            if isProUser {
+                goalConfirmed = true
+            } else {
+                showUpgradeSheet = true
+            }
+        } label: {
+            HStack(spacing: 8) {
+                if !isProUser {
+                    Image(systemName: "lock.fill")
+                    Text("Pro")
+                        .font(.caption2)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(
+                            Capsule()
+                                .fill(Color.secondary.opacity(0.2))
+                        )
+                }
+                Text("Onboarding.Detail.SaveGoal")
+            }
+            .font(Theme.Typography.headline)
+            .foregroundStyle(isProUser ? Color.white : Theme.Colors.secondaryText)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, Theme.Spacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous)
+                    .fill(isProUser
+                        ? AnyShapeStyle(themeColor.gradient)
+                        : AnyShapeStyle(Color.secondary.opacity(0.2))
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+        .disabled(goalConfirmed && isProUser)
     }
 
     private var titleKey: LocalizedStringKey {

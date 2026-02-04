@@ -49645,6 +49645,28 @@
           }
         }
       }
+    },
+    "Onboarding.Detail.SaveGoal" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Ziel speichern" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Save goal" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Guardar objetivo" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Enregistrer l'objectif" } },
+        "pt" : { "stringUnit" : { "state" : "translated", "value" : "Guardar objetivo" } },
+        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "Salvar objetivo" } },
+        "pt-PT" : { "stringUnit" : { "state" : "translated", "value" : "Guardar objetivo" } }
+      }
+    },
+    "Onboarding.Detail.GoalSaved" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Ziel gespeichert" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Goal saved" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Objetivo guardado" } },
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Objectif enregistré" } },
+        "pt" : { "stringUnit" : { "state" : "translated", "value" : "Objetivo guardado" } },
+        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "Objetivo salvo" } },
+        "pt-PT" : { "stringUnit" : { "state" : "translated", "value" : "Objetivo guardado" } }
+      }
     }
   },
   "version" : "1.1"
