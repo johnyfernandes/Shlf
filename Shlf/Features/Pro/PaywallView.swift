@@ -15,6 +15,7 @@ struct PaywallView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.openURL) private var openURL
+    @Environment(\.locale) private var locale
     @Query private var profiles: [UserProfile]
     @State private var storeKit = StoreKitService.shared
     @State private var isPurchasing = false
@@ -29,11 +30,14 @@ struct PaywallView: View {
             ScrollView {
                 VStack(spacing: Theme.Spacing.xl) {
                     heroSection
-                    featureSection
+                    featuresSection
                     planSection
                     actionSection
+                    legalSection
                 }
-                .padding(Theme.Spacing.xl)
+                .padding(.horizontal, Theme.Spacing.xl)
+                .padding(.top, Theme.Spacing.xl)
+                .padding(.bottom, Theme.Spacing.xxl)
             }
             .task {
                 await storeKit.loadProducts()
@@ -47,7 +51,7 @@ struct PaywallView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
+                    Button(localized("Done", locale: locale)) {
                         dismiss()
                     }
                     .foregroundStyle(themeColor.color)
@@ -58,48 +62,76 @@ struct PaywallView: View {
 
     private var heroSection: some View {
         VStack(spacing: Theme.Spacing.md) {
-            Image(systemName: "crown.fill")
-                .font(.system(size: 80))
-                .foregroundStyle(.yellow)
+            PaywallHeroCard(
+                accent: themeColor.color,
+                colorScheme: colorScheme,
+                badges: [
+                    localized("Paywall.Badge.Live", locale: locale),
+                    localized("Paywall.Badge.Stats", locale: locale),
+                    localized("Paywall.Badge.Watch", locale: locale),
+                    localized("Paywall.Badge.Sync", locale: locale)
+                ]
+            )
+                .frame(maxWidth: .infinity)
 
-            Text("Upgrade to Pro")
+            Text(localized("Paywall.Header.Title", locale: locale))
                 .font(Theme.Typography.largeTitle)
+                .multilineTextAlignment(.center)
 
-            Text("Unlock the full Shlf experience")
+            Text(localized("Paywall.Header.Subtitle", locale: locale))
                 .font(Theme.Typography.body)
                 .foregroundStyle(Theme.Colors.secondaryText)
+                .multilineTextAlignment(.center)
         }
     }
 
-    private var featureSection: some View {
+    private var featuresSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-            PaywallFeatureRow(icon: "books.vertical.fill", text: "Unlimited books")
-            PaywallFeatureRow(icon: "chart.bar.fill", text: "Advanced statistics")
-            PaywallFeatureRow(icon: "target", text: "Custom reading goals")
-            PaywallFeatureRow(icon: "paintbrush.fill", text: "Themes & customization")
-            PaywallFeatureRow(icon: "cloud.fill", text: "Priority iCloud sync")
+            Text(localized("Paywall.Features.Title", locale: locale))
+                .font(Theme.Typography.headline)
+
+            VStack(spacing: Theme.Spacing.sm) {
+                PaywallFeatureRow(icon: "books.vertical.fill", text: localized("Paywall.Feature.UnlimitedBooks", locale: locale))
+                PaywallFeatureRow(icon: "bolt.horizontal.fill", text: localized("Paywall.Feature.LiveActivities", locale: locale))
+                PaywallFeatureRow(icon: "applewatch", text: localized("Paywall.Feature.Watch", locale: locale))
+                PaywallFeatureRow(icon: "chart.bar.xaxis", text: localized("Paywall.Feature.AdvancedStats", locale: locale))
+                PaywallFeatureRow(icon: "paintbrush.fill", text: localized("Paywall.Feature.Themes", locale: locale))
+                PaywallFeatureRow(icon: "icloud.fill", text: localized("Paywall.Feature.iCloud", locale: locale))
+                PaywallFeatureRow(icon: "arrow.down.doc.fill", text: localized("Paywall.Feature.Import", locale: locale))
+            }
         }
         .padding(Theme.Spacing.lg)
-        .padding(16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: Theme.CornerRadius.lg, style: .continuous))
     }
 
     private var planSection: some View {
-        VStack(spacing: Theme.Spacing.sm) {
-            ForEach(PaywallPlan.ordered, id: \.self) { plan in
-                Button {
-                    selectedPlan = plan
-                } label: {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            Text(localized("Paywall.Plans.Title", locale: locale))
+                .font(Theme.Typography.headline)
+
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Spacing.sm) {
+                ForEach(PaywallPlan.ordered, id: \.self) { plan in
+                    Button {
+                        selectedPlan = plan
+                    } label: {
                     PaywallPlanCard(
                         plan: plan,
+                        title: plan.title(locale: locale),
+                        subtitle: plan.subtitle(locale: locale),
                         priceText: storeKit.product(for: plan.productID)?.displayPrice ?? "--",
+                        periodText: plan.periodText(locale: locale),
                         badgeText: badgeText(for: plan),
                         isSelected: selectedPlan == plan,
-                        accentColor: themeColor.color
+                        isRecommended: plan == .yearly,
+                        accentColor: themeColor.color,
+                        isNeutralTheme: themeColor == .neutral,
+                        colorScheme: colorScheme
                     )
                 }
-                .buttonStyle(.plain)
-                .disabled(storeKit.product(for: plan.productID) == nil && storeKit.isLoadingProducts)
+                    .buttonStyle(.plain)
+                    .disabled(storeKit.product(for: plan.productID) == nil && storeKit.isLoadingProducts)
+                    .gridCellColumns(plan == .lifetime ? 2 : 1)
+                }
             }
         }
     }
@@ -110,7 +142,7 @@ struct PaywallView: View {
                 ProgressView()
             } else if let error = storeKit.lastLoadError {
                 VStack(spacing: Theme.Spacing.xs) {
-                    Text("Unable to load purchase options")
+                    Text(localized("Paywall.Error.Load", locale: locale))
                         .font(Theme.Typography.callout)
                         .foregroundStyle(Theme.Colors.secondaryText)
                         .multilineTextAlignment(.center)
@@ -120,7 +152,7 @@ struct PaywallView: View {
                         .foregroundStyle(Theme.Colors.tertiaryText)
                         .multilineTextAlignment(.center)
 
-                    Button("Try Again") {
+                    Button(localized("Try Again", locale: locale)) {
                         Task { await storeKit.loadProducts() }
                     }
                     .font(Theme.Typography.callout)
@@ -137,10 +169,15 @@ struct PaywallView: View {
                         ProgressView()
                             .tint(themeColor.onColor(for: colorScheme))
                     } else if let product = selectedProduct {
-                        Text("Continue with \(selectedPlan.title) - \(product.displayPrice)")
+                        let title = String.localizedStringWithFormat(
+                            localized("Paywall.CTA", locale: locale),
+                            selectedPlan.title(locale: locale),
+                            product.displayPrice
+                        )
+                        Text(title)
                             .font(Theme.Typography.headline)
                     } else {
-                        Text("No products available")
+                        Text(localized("Paywall.NoProducts", locale: locale))
                             .font(Theme.Typography.headline)
                     }
                 }
@@ -148,7 +185,7 @@ struct PaywallView: View {
                 .primaryButton(color: themeColor.color, foreground: themeColor.onColor(for: colorScheme))
                 .disabled(isPurchasing || selectedProduct == nil)
 
-                Button("Restore Purchases") {
+                Button(localized("Restore Purchases", locale: locale)) {
                     Task {
                         await storeKit.restorePurchases()
                         if let profile = profiles.first {
@@ -160,31 +197,33 @@ struct PaywallView: View {
                 .font(Theme.Typography.callout)
                 .foregroundStyle(themeColor.color)
 
-                Button("Manage Subscription") {
+                Button(localized("Manage Subscription", locale: locale)) {
                     openSubscriptions()
                 }
                 .font(Theme.Typography.callout)
                 .foregroundStyle(themeColor.color)
 
-                Text(selectedPlan.footerText)
+                Text(selectedPlan.footerText(locale: locale))
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.Colors.tertiaryText)
             }
 
-            Button("Not now") {
+            Button(localized("Not now", locale: locale)) {
                 dismiss()
             }
             .foregroundStyle(Theme.Colors.secondaryText)
-
-            HStack(spacing: Theme.Spacing.sm) {
-                Link("Terms", destination: URL(string: "https://shlf.app/terms")!)
-                Text(verbatim: "•")
-                    .foregroundStyle(Theme.Colors.tertiaryText)
-                Link("Privacy", destination: URL(string: "https://shlf.app/privacy")!)
-            }
-            .font(Theme.Typography.caption)
-            .foregroundStyle(Theme.Colors.tertiaryText)
         }
+    }
+
+    private var legalSection: some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            Link(localized("Terms", locale: locale), destination: URL(string: "https://shlf.app/terms")!)
+            Text(verbatim: "•")
+                .foregroundStyle(Theme.Colors.tertiaryText)
+            Link(localized("Privacy", locale: locale), destination: URL(string: "https://shlf.app/privacy")!)
+        }
+        .font(Theme.Typography.caption)
+        .foregroundStyle(Theme.Colors.tertiaryText)
     }
 
     private func purchase(_ product: Product) {
@@ -211,25 +250,28 @@ struct PaywallView: View {
     }
 
     private func badgeText(for plan: PaywallPlan) -> String? {
-        guard plan == .yearly else { return nil }
+        guard plan == .yearly else {
+            return plan == .lifetime ? localized("Paywall.Badge.OneTime", locale: locale) : nil
+        }
         guard let monthly = storeKit.product(for: PaywallPlan.monthly.productID)?.price,
               let yearly = storeKit.product(for: PaywallPlan.yearly.productID)?.price else {
-            return "Best Value"
+            return localized("Paywall.Badge.BestValue", locale: locale)
         }
 
         let monthlyValue = NSDecimalNumber(decimal: monthly).doubleValue
         let yearlyValue = NSDecimalNumber(decimal: yearly).doubleValue
-        guard monthlyValue > 0 else { return "Best Value" }
+        guard monthlyValue > 0 else { return localized("Paywall.Badge.BestValue", locale: locale) }
 
         let annualEquivalent = monthlyValue * 12.0
-        guard annualEquivalent > 0 else { return "Best Value" }
+        guard annualEquivalent > 0 else { return localized("Paywall.Badge.BestValue", locale: locale) }
 
         let savings = max(0, 1.0 - (yearlyValue / annualEquivalent))
         let percent = Int(round(savings * 100))
         if percent >= 5 {
-            return "Save \(percent)%"
+            let format = localized("Paywall.Badge.SavePercent", locale: locale)
+            return String.localizedStringWithFormat(format, percent)
         }
-        return "Best Value"
+        return localized("Paywall.Badge.BestValue", locale: locale)
     }
 }
 
@@ -251,36 +293,45 @@ enum PaywallPlan: CaseIterable {
         }
     }
 
-    var title: String {
+    func title(locale: Locale) -> String {
         switch self {
-        case .monthly: return "Monthly"
-        case .yearly: return "Yearly"
-        case .lifetime: return "Lifetime"
+        case .monthly:
+            return localized("Paywall.Plan.Monthly", locale: locale)
+        case .yearly:
+            return localized("Paywall.Plan.Yearly", locale: locale)
+        case .lifetime:
+            return localized("Paywall.Plan.Lifetime", locale: locale)
         }
     }
 
-    var subtitle: String {
+    func subtitle(locale: Locale) -> String {
         switch self {
-        case .monthly: return "Flexible, billed monthly"
-        case .yearly: return "Best value for readers"
-        case .lifetime: return "One-time purchase"
+        case .monthly:
+            return localized("Paywall.Plan.Monthly.Subtitle", locale: locale)
+        case .yearly:
+            return localized("Paywall.Plan.Yearly.Subtitle", locale: locale)
+        case .lifetime:
+            return localized("Paywall.Plan.Lifetime.Subtitle", locale: locale)
         }
     }
 
-    var periodText: String {
+    func periodText(locale: Locale) -> String {
         switch self {
-        case .monthly: return "per month"
-        case .yearly: return "per year"
-        case .lifetime: return "one-time"
+        case .monthly:
+            return localized("Paywall.Plan.Monthly.Period", locale: locale)
+        case .yearly:
+            return localized("Paywall.Plan.Yearly.Period", locale: locale)
+        case .lifetime:
+            return localized("Paywall.Plan.Lifetime.Period", locale: locale)
         }
     }
 
-    var footerText: String {
+    func footerText(locale: Locale) -> String {
         switch self {
         case .monthly, .yearly:
-            return "Recurring, cancel anytime."
+            return localized("Paywall.Footer.Recurring", locale: locale)
         case .lifetime:
-            return "One-time purchase. Yours forever."
+            return localized("Paywall.Footer.OneTime", locale: locale)
         }
     }
 
@@ -296,64 +347,145 @@ enum PaywallPlan: CaseIterable {
     }
 }
 
-struct PaywallPlanCard: View {
-    let plan: PaywallPlan
-    let priceText: String
-    let badgeText: String?
-    let isSelected: Bool
-    let accentColor: Color
+private struct PaywallHeroCard: View {
+    let accent: Color
+    let colorScheme: ColorScheme
+    let badges: [String]
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+        ZStack {
+            RoundedRectangle(cornerRadius: Theme.CornerRadius.xl, style: .continuous)
+                .fill(heroBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.CornerRadius.xl, style: .continuous)
+                        .stroke(accent.opacity(colorScheme == .dark ? 0.3 : 0.15), lineWidth: 1)
+                )
+
+            VStack(spacing: Theme.Spacing.md) {
+                RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous)
+                    .fill(Color.white.opacity(colorScheme == .dark ? 0.08 : 0.65))
+                    .frame(width: 180, height: 110)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous)
+                            .stroke(Color.white.opacity(colorScheme == .dark ? 0.18 : 0.3), lineWidth: 1)
+                    )
+                    .overlay(
+                        VStack(spacing: Theme.Spacing.xs) {
+                            Image(systemName: "book.pages.fill")
+                                .font(.system(size: 26, weight: .semibold))
+                                .foregroundStyle(accent)
+                            Text("Shlf Pro")
+                                .font(Theme.Typography.headline)
+                                .foregroundStyle(Theme.Colors.text)
+                        }
+                    )
+
                 HStack(spacing: Theme.Spacing.xs) {
-                    Text(plan.title)
+                    ForEach(badges, id: \.self) { badge in
+                        PaywallBadge(text: badge)
+                    }
+                }
+            }
+            .padding(Theme.Spacing.lg)
+        }
+        .shadow(color: Theme.Shadow.medium, radius: Theme.Elevation.level3, y: 6)
+    }
+
+    private var heroBackground: LinearGradient {
+        let base = accent.opacity(colorScheme == .dark ? 0.22 : 0.16)
+        let secondary = accent.opacity(colorScheme == .dark ? 0.08 : 0.05)
+        return LinearGradient(
+            colors: [base, secondary],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+}
+
+private struct PaywallBadge: View {
+    let text: String
+
+    var body: some View {
+        Text(text)
+            .font(Theme.Typography.caption)
+            .foregroundStyle(Theme.Colors.secondaryText)
+            .padding(.horizontal, Theme.Spacing.sm)
+            .padding(.vertical, Theme.Spacing.xs)
+            .background(.ultraThinMaterial, in: Capsule())
+    }
+}
+
+struct PaywallPlanCard: View {
+    let plan: PaywallPlan
+    let title: String
+    let subtitle: String
+    let priceText: String
+    let periodText: String
+    let badgeText: String?
+    let isSelected: Bool
+    let isRecommended: Bool
+    let accentColor: Color
+    let isNeutralTheme: Bool
+    let colorScheme: ColorScheme
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                    Text(title)
                         .font(Theme.Typography.headline)
                         .foregroundStyle(Theme.Colors.text)
 
-                    if let badge = badgeText {
-                        Text(badge)
-                            .font(Theme.Typography.caption2)
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, Theme.Spacing.xs)
-                            .padding(.vertical, 2)
-                            .background(accentColor, in: Capsule())
-                    }
-
-                    Spacer()
-                }
-
-                Text(plan.subtitle)
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(Theme.Colors.secondaryText)
-
-                HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.xs) {
-                    Text(priceText)
-                        .font(Theme.Typography.title3)
-                        .foregroundStyle(Theme.Colors.text)
-
-                    Text(plan.periodText)
+                    Text(subtitle)
                         .font(Theme.Typography.caption)
                         .foregroundStyle(Theme.Colors.secondaryText)
                 }
+
+                Spacer()
+
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(accentColor)
+                }
             }
-            .padding(Theme.Spacing.md)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(backgroundColor)
-            .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(borderColor, lineWidth: isSelected ? 2 : 1)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+            HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.xs) {
+                Text(priceText)
+                    .font(Theme.Typography.title3)
+                    .foregroundStyle(Theme.Colors.text)
+
+                Text(periodText)
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(Theme.Colors.secondaryText)
+            }
+
+            if let badge = badgeText {
+                Text(badge)
+                    .font(Theme.Typography.caption2)
+                    .foregroundStyle(badgeForeground)
+                    .padding(.horizontal, Theme.Spacing.xs)
+                    .padding(.vertical, 2)
+                    .background(badgeBackground, in: Capsule())
+            }
         }
+        .padding(Theme.Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(backgroundColor)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.CornerRadius.lg, style: .continuous)
+                .stroke(borderColor, lineWidth: isSelected ? 2 : 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: Theme.CornerRadius.lg, style: .continuous))
+        .shadow(color: Theme.Shadow.small, radius: Theme.Elevation.level1, y: 2)
     }
 
     private var backgroundColor: Color {
         if isSelected {
-            return accentColor.opacity(0.12)
+            return accentColor.opacity(0.14)
         }
-        if plan == .yearly {
-            return accentColor.opacity(0.06)
+        if isRecommended {
+            return accentColor.opacity(0.08)
         }
         return Theme.Colors.secondaryBackground
     }
@@ -362,10 +494,30 @@ struct PaywallPlanCard: View {
         if isSelected {
             return accentColor
         }
-        if plan == .yearly {
-            return accentColor.opacity(0.35)
+        if isRecommended {
+            return accentColor.opacity(0.4)
         }
         return Theme.Colors.tertiaryText.opacity(0.2)
+    }
+
+    private var badgeBackground: Color {
+        guard isNeutralTheme else {
+            return isRecommended ? accentColor : accentColor.opacity(0.15)
+        }
+        if isRecommended {
+            return colorScheme == .dark ? .white : .black
+        }
+        return colorScheme == .dark ? Color.white.opacity(0.14) : Color.black.opacity(0.08)
+    }
+
+    private var badgeForeground: Color {
+        guard isNeutralTheme else {
+            return isRecommended ? .white : accentColor
+        }
+        if isRecommended {
+            return colorScheme == .dark ? .black : .white
+        }
+        return Theme.Colors.text
     }
 }
 
@@ -379,7 +531,7 @@ struct PaywallFeatureRow: View {
             Image(systemName: icon)
                 .font(.title3)
                 .foregroundStyle(themeColor.color)
-                .frame(width: 30)
+                .frame(width: 28)
 
             Text(text)
                 .font(Theme.Typography.body)
@@ -387,5 +539,6 @@ struct PaywallFeatureRow: View {
 
             Spacer()
         }
+        .padding(.vertical, Theme.Spacing.xs)
     }
 }
