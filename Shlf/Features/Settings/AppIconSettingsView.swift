@@ -20,6 +20,7 @@ struct AppIconSettingsView: View {
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var showUpgradeSheet = false
+    private let simulatorIconKey = "Shlf.simulatorAppIconName"
 
     private let columns = [
         GridItem(.adaptive(minimum: 90), spacing: 16)
@@ -131,10 +132,20 @@ struct AppIconSettingsView: View {
             return
         }
         guard currentIconName != option.iconName else { return }
+        guard !isUpdating else { return }
 
         isUpdating = true
 
         #if canImport(UIKit)
+        #if targetEnvironment(simulator)
+        if let iconName = option.iconName {
+            UserDefaults.standard.set(iconName, forKey: simulatorIconKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: simulatorIconKey)
+        }
+        currentIconName = option.iconName
+        isUpdating = false
+        #else
         UIApplication.shared.setAlternateIconName(option.iconName) { error in
             DispatchQueue.main.async {
                 isUpdating = false
@@ -147,6 +158,7 @@ struct AppIconSettingsView: View {
                 }
             }
         }
+        #endif
         #else
         isUpdating = false
         #endif
@@ -154,7 +166,11 @@ struct AppIconSettingsView: View {
 
     private func currentAlternateIconName() -> String? {
         #if canImport(UIKit)
+        #if targetEnvironment(simulator)
+        return UserDefaults.standard.string(forKey: simulatorIconKey)
+        #else
         return UIApplication.shared.alternateIconName
+        #endif
         #else
         return nil
         #endif

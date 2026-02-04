@@ -258,7 +258,11 @@ struct PaywallView: View {
 
     private var currentAppIconImage: UIImage? {
         #if canImport(UIKit)
+        #if targetEnvironment(simulator)
+        let iconName = UserDefaults.standard.string(forKey: "Shlf.simulatorAppIconName")
+        #else
         let iconName = UIApplication.shared.alternateIconName
+        #endif
         let previewName: String
         switch iconName {
         case "AppIcon-Yellow":
@@ -402,34 +406,32 @@ private struct PaywallHeroCard: View {
                 )
 
             VStack(spacing: Theme.Spacing.md) {
-                VStack(spacing: Theme.Spacing.sm) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: Theme.CornerRadius.lg, style: .continuous)
-                            .fill(Color.white.opacity(colorScheme == .dark ? 0.08 : 0.6))
-                            .frame(width: 148, height: 148)
+                ZStack(alignment: .topTrailing) {
+                    if let iconImage {
+                        Image(uiImage: iconImage)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 132, height: 132)
+                            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                            .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.35 : 0.2), radius: 10, y: 5)
+                    } else {
+                        RoundedRectangle(cornerRadius: 28, style: .continuous)
+                            .fill(Color.white.opacity(colorScheme == .dark ? 0.1 : 0.7))
+                            .frame(width: 132, height: 132)
                             .overlay(
-                                RoundedRectangle(cornerRadius: Theme.CornerRadius.lg, style: .continuous)
-                                    .stroke(Color.white.opacity(colorScheme == .dark ? 0.18 : 0.28), lineWidth: 1)
+                                Image(systemName: "book.pages.fill")
+                                    .font(.system(size: 34, weight: .semibold))
+                                    .foregroundStyle(accent)
                             )
-
-                        if let iconImage {
-                            Image(uiImage: iconImage)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 128, height: 128)
-                                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-                                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.35 : 0.2), radius: 8, y: 4)
-                        } else {
-                            Image(systemName: "book.pages.fill")
-                                .font(.system(size: 34, weight: .semibold))
-                                .foregroundStyle(accent)
-                        }
                     }
 
-                    Text("Shlf Pro")
-                        .font(Theme.Typography.headline)
-                        .foregroundStyle(Theme.Colors.text)
+                    ProGlowBadge()
+                        .offset(x: 8, y: -8)
                 }
+
+                Text("Shlf Pro")
+                    .font(Theme.Typography.headline)
+                    .foregroundStyle(Theme.Colors.text)
 
                 HStack(spacing: Theme.Spacing.xs) {
                     ForEach(badges, id: \.self) { badge in
@@ -454,15 +456,54 @@ private struct PaywallHeroCard: View {
 }
 
 private struct PaywallBadge: View {
+    @Environment(\.themeColor) private var themeColor
+    @Environment(\.colorScheme) private var colorScheme
     let text: String
 
     var body: some View {
         Text(text)
             .font(Theme.Typography.caption)
-            .foregroundStyle(Theme.Colors.secondaryText)
+            .foregroundStyle(Theme.Colors.text)
             .padding(.horizontal, Theme.Spacing.sm)
-            .padding(.vertical, Theme.Spacing.xs)
-            .background(.ultraThinMaterial, in: Capsule())
+            .padding(.vertical, 6)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(Theme.Colors.secondaryBackground.opacity(colorScheme == .dark ? 0.55 : 0.85))
+                    .overlay(
+                        Capsule(style: .continuous)
+                            .stroke(themeColor.color.opacity(0.2), lineWidth: 1)
+                    )
+            )
+            .shadow(color: themeColor.color.opacity(0.15), radius: 6, y: 2)
+    }
+}
+
+private struct ProGlowBadge: View {
+    var body: some View {
+        Text("Pro")
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 1.0, green: 0.78, blue: 0.25),
+                                Color(red: 1.0, green: 0.45, blue: 0.0)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(Color.white.opacity(0.6), lineWidth: 0.8)
+            )
+            .shadow(color: Color.orange.opacity(0.85), radius: 10, y: 3)
+            .shadow(color: Color.yellow.opacity(0.75), radius: 14, y: 0)
     }
 }
 
