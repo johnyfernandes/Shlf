@@ -284,10 +284,6 @@ private struct OnboardingBottomSheet: View {
         .background(
             TopRoundedRectangle(radius: 32)
                 .fill(colorScheme == .dark ? Color.black.opacity(0.92) : Color.white.opacity(0.96))
-                .overlay(
-                    TopRoundedRectangle(radius: 32)
-                        .stroke(themeColor.color.opacity(colorScheme == .dark ? 0.2 : 0.15), lineWidth: 1)
-                )
         )
     }
 
