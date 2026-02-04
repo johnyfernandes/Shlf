@@ -259,6 +259,11 @@ final class UserProfile {
     var autoEndSessionEnabled: Bool = true // Auto-end sessions after inactivity
     var autoEndSessionHours: Int = 24 // Hours of inactivity before auto-end (default 24h)
 
+    // Notifications
+    var streakReminderEnabled: Bool = false
+    var streakReminderHour: Int = 21
+    var streakReminderMinute: Int = 0
+
     // Stats Display Preferences
     var chartTypeRawValue: String = "Bar Chart"
     var heatmapPeriodRawValue: String = "Last 12 Weeks"
@@ -335,7 +340,10 @@ final class UserProfile {
             StatCardType.currentStreak.rawValue,
             StatCardType.level.rawValue,
             StatCardType.booksRead.rawValue
-        ]
+        ],
+        streakReminderEnabled: Bool = false,
+        streakReminderHour: Int = 21,
+        streakReminderMinute: Int = 0
     ) {
         self.id = id
         self.totalXP = totalXP
@@ -366,6 +374,9 @@ final class UserProfile {
         self.hideAutoSessionsWatch = hideAutoSessionsWatch
         self.showSettingsOnWatch = showSettingsOnWatch
         self.homeCardOrder = homeCardOrder
+        self.streakReminderEnabled = streakReminderEnabled
+        self.streakReminderHour = streakReminderHour
+        self.streakReminderMinute = streakReminderMinute
         self.readingGoals = nil
         self.achievements = nil
     }

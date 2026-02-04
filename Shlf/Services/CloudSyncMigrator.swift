@@ -95,7 +95,10 @@ enum CloudSyncMigrator {
             hideAutoSessionsIPhone: sourceProfile.hideAutoSessionsIPhone,
             hideAutoSessionsWatch: sourceProfile.hideAutoSessionsWatch,
             showSettingsOnWatch: sourceProfile.showSettingsOnWatch,
-            homeCardOrder: sourceProfile.homeCardOrder
+            homeCardOrder: sourceProfile.homeCardOrder,
+            streakReminderEnabled: sourceProfile.streakReminderEnabled,
+            streakReminderHour: sourceProfile.streakReminderHour,
+            streakReminderMinute: sourceProfile.streakReminderMinute
         )
         profileCopy.chartTypeRawValue = sourceProfile.chartTypeRawValue
         profileCopy.heatmapPeriodRawValue = sourceProfile.heatmapPeriodRawValue

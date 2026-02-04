@@ -56,6 +56,9 @@ enum ReadingDataExporter {
         let showSettingsOnWatch: Bool
         let autoEndSessionEnabled: Bool
         let autoEndSessionHours: Int
+        let streakReminderEnabled: Bool
+        let streakReminderHour: Int
+        let streakReminderMinute: Int
         let chartTypeRawValue: String
         let heatmapPeriodRawValue: String
         let homeCardOrder: [String]
@@ -205,6 +208,9 @@ enum ReadingDataExporter {
                 showSettingsOnWatch: profile.showSettingsOnWatch,
                 autoEndSessionEnabled: profile.autoEndSessionEnabled,
                 autoEndSessionHours: profile.autoEndSessionHours,
+                streakReminderEnabled: profile.streakReminderEnabled,
+                streakReminderHour: profile.streakReminderHour,
+                streakReminderMinute: profile.streakReminderMinute,
                 chartTypeRawValue: profile.chartTypeRawValue,
                 heatmapPeriodRawValue: profile.heatmapPeriodRawValue,
                 homeCardOrder: profile.homeCardOrder,

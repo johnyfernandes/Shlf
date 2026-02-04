@@ -81,6 +81,12 @@ struct DeveloperSettingsView: View {
                 }
             }
 
+            Section("Notifications") {
+                Button("Trigger Streak Reminder") {
+                    Task { await NotificationScheduler.shared.sendTestNotification() }
+                }
+            }
+
             Section("Mock Data") {
                 Picker("Range", selection: $mockRange) {
                     ForEach(MockSeedRange.allCases) { range in

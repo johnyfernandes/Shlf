@@ -74,6 +74,14 @@ struct SettingsView: View {
                         }
                     }
 
+                    Section("Notifications") {
+                        NavigationLink {
+                            NotificationsSettingsView(profile: profile)
+                        } label: {
+                            Label("Reading Reminder", systemImage: "bell.badge.fill")
+                        }
+                    }
+
                     Section("Library") {
                         NavigationLink {
                             HomeCardSettingsView(profile: profile)

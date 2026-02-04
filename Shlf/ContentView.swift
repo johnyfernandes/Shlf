@@ -74,9 +74,15 @@ struct ContentView: View {
                 toastedAchievementIDs = Set(achievements.map(\.id))
                 didSeedAchievementToasts = true
             }
+            if let profile = profiles.first {
+                Task { await NotificationScheduler.shared.refreshSchedule(for: profile) }
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .readingSessionLogged)) { _ in
             toastCenter.show(.sessionLogged(tint: currentThemeColor.color), delay: 0.35)
+            if let profile = profiles.first {
+                Task { await NotificationScheduler.shared.refreshSchedule(for: profile) }
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("achievementUnlocked"))) { notification in
             if let achievement = notification.object as? Achievement {
@@ -85,6 +91,9 @@ struct ContentView: View {
         }
         .onChange(of: scenePhase) { _, newValue in
             toastCenter.updateScenePhase(newValue)
+            if newValue == .active, let profile = profiles.first {
+                Task { await NotificationScheduler.shared.refreshSchedule(for: profile) }
+            }
         }
         .environmentObject(toastCenter)
         .toastHost()
