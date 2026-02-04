@@ -8,6 +8,9 @@
 import SwiftUI
 import SwiftData
 import StoreKit
+#if canImport(UIKit)
+import UIKit
+#endif
 
 struct PaywallView: View {
     @Environment(\.dismiss) private var dismiss
@@ -65,6 +68,7 @@ struct PaywallView: View {
             PaywallHeroCard(
                 accent: themeColor.color,
                 colorScheme: colorScheme,
+                iconImage: currentAppIconImage,
                 badges: [
                     localized("Paywall.Badge.Live", locale: locale),
                     localized("Paywall.Badge.Stats", locale: locale),
@@ -252,6 +256,38 @@ struct PaywallView: View {
         openURL(url)
     }
 
+    private var currentAppIconImage: UIImage? {
+        #if canImport(UIKit)
+        let iconName = UIApplication.shared.alternateIconName
+        let previewName: String
+        switch iconName {
+        case "AppIcon-Yellow":
+            previewName = "AppIconPreview-Yellow"
+        case "AppIcon-Gray":
+            previewName = "AppIconPreview-Gray"
+        case "AppIcon-Pink":
+            previewName = "AppIconPreview-Pink"
+        case "AppIcon-Purple":
+            previewName = "AppIconPreview-Purple"
+        case "AppIcon-Black":
+            previewName = "AppIconPreview-Black"
+        case "AppIcon-Blue":
+            previewName = "AppIconPreview-Blue"
+        case "AppIcon-Red":
+            previewName = "AppIconPreview-Red"
+        case "AppIcon-Green":
+            previewName = "AppIconPreview-Green"
+        case "AppIcon-White":
+            previewName = "AppIconPreview-White"
+        default:
+            previewName = "AppIconPreview-Orange"
+        }
+        return UIImage(named: previewName)
+        #else
+        return nil
+        #endif
+    }
+
     private func badgeText(for plan: PaywallPlan) -> String? {
         guard plan == .yearly else {
             return plan == .lifetime ? localized("Paywall.Badge.OneTime", locale: locale) : nil
@@ -353,6 +389,7 @@ enum PaywallPlan: CaseIterable {
 private struct PaywallHeroCard: View {
     let accent: Color
     let colorScheme: ColorScheme
+    let iconImage: UIImage?
     let badges: [String]
 
     var body: some View {
@@ -365,23 +402,34 @@ private struct PaywallHeroCard: View {
                 )
 
             VStack(spacing: Theme.Spacing.md) {
-                RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous)
-                    .fill(Color.white.opacity(colorScheme == .dark ? 0.08 : 0.65))
-                    .frame(width: 180, height: 110)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous)
-                            .stroke(Color.white.opacity(colorScheme == .dark ? 0.18 : 0.3), lineWidth: 1)
-                    )
-                    .overlay(
-                        VStack(spacing: Theme.Spacing.xs) {
+                VStack(spacing: Theme.Spacing.sm) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: Theme.CornerRadius.lg, style: .continuous)
+                            .fill(Color.white.opacity(colorScheme == .dark ? 0.08 : 0.6))
+                            .frame(width: 148, height: 148)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: Theme.CornerRadius.lg, style: .continuous)
+                                    .stroke(Color.white.opacity(colorScheme == .dark ? 0.18 : 0.28), lineWidth: 1)
+                            )
+
+                        if let iconImage {
+                            Image(uiImage: iconImage)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 128, height: 128)
+                                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.35 : 0.2), radius: 8, y: 4)
+                        } else {
                             Image(systemName: "book.pages.fill")
-                                .font(.system(size: 26, weight: .semibold))
+                                .font(.system(size: 34, weight: .semibold))
                                 .foregroundStyle(accent)
-                            Text("Shlf Pro")
-                                .font(Theme.Typography.headline)
-                                .foregroundStyle(Theme.Colors.text)
                         }
-                    )
+                    }
+
+                    Text("Shlf Pro")
+                        .font(Theme.Typography.headline)
+                        .foregroundStyle(Theme.Colors.text)
+                }
 
                 HStack(spacing: Theme.Spacing.xs) {
                     ForEach(badges, id: \.self) { badge in
