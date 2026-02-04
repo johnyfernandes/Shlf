@@ -13,6 +13,7 @@ struct KindleImportView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.locale) private var locale
     @Bindable var profile: UserProfile
     @Query private var books: [Book]
     @AppStorage("kindle_is_connected") private var storedKindleConnected = false
@@ -288,20 +289,34 @@ struct KindleImportView: View {
             if let result {
                 Divider()
 
-                Text("Import Complete")
+                Text(localized("Import Complete", locale: locale))
                     .font(.headline)
 
-                summaryRow(title: Text("Imported \(result.importedCount) books"))
+                summaryRow(
+                    title: Text(
+                        String.localizedStringWithFormat(
+                            localized("Imported %lld books", locale: locale),
+                            result.importedCount
+                        )
+                    )
+                )
                 if result.skippedCount > 0 {
-                    summaryRow(title: Text("Skipped \(result.skippedCount) rows"))
+                    summaryRow(
+                        title: Text(
+                            String.localizedStringWithFormat(
+                                localized("Skipped %lld rows", locale: locale),
+                                result.skippedCount
+                            )
+                        )
+                    )
                 }
                 if result.reachedFreeLimit {
-                    summaryRow(title: Text("Stopped at free limit"))
+                    summaryRow(title: Text(localized("Stopped at free limit", locale: locale)))
 
                     Button {
                         showUpgradeSheet = true
                     } label: {
-                        Text("Upgrade to Pro")
+                        Text(localized("Upgrade to Pro", locale: locale))
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(themeColor.color)
                     }
@@ -324,7 +339,7 @@ struct KindleImportView: View {
 
                                     Text(
                                         String.localizedStringWithFormat(
-                                            String(localized: "Importing %lld of %lld books"),
+                                            localized("Importing %lld of %lld books", locale: locale),
                                             current,
                                             total
                                         )
@@ -333,7 +348,12 @@ struct KindleImportView: View {
                 .foregroundStyle(.secondary)
 
             if let title = importProgressTitle, !title.isEmpty {
-                Text("Adding \(title)")
+                Text(
+                    String.localizedStringWithFormat(
+                        localized("Adding %@", locale: locale),
+                        title
+                    )
+                )
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }

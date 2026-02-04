@@ -14,6 +14,7 @@ struct GoodreadsImportView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.locale) private var locale
     @Bindable var profile: UserProfile
     @Query private var books: [Book]
     @AppStorage("goodreads_is_connected") private var storedGoodreadsConnected = false
@@ -350,7 +351,7 @@ struct GoodreadsImportView: View {
             if isParsing {
                 HStack(spacing: 8) {
                     ProgressView()
-                    Text("Parsing CSV...")
+                    Text(localized("Parsing CSV...", locale: locale))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -374,26 +375,54 @@ struct GoodreadsImportView: View {
             if let result {
                 Divider()
 
-                Text("Import Complete")
+                Text(localized("Import Complete", locale: locale))
                     .font(.headline)
 
-                summaryRow(title: Text("Imported \(result.importedCount) books"))
+                summaryRow(
+                    title: Text(
+                        String.localizedStringWithFormat(
+                            localized("Imported %lld books", locale: locale),
+                            result.importedCount
+                        )
+                    )
+                )
                 if result.updatedCount > 0 {
-                    summaryRow(title: Text("Updated \(result.updatedCount) books"))
+                    summaryRow(
+                        title: Text(
+                            String.localizedStringWithFormat(
+                                localized("Updated %lld books", locale: locale),
+                                result.updatedCount
+                            )
+                        )
+                    )
                 }
                 if result.skippedCount > 0 {
-                    summaryRow(title: Text("Skipped \(result.skippedCount) rows"))
+                    summaryRow(
+                        title: Text(
+                            String.localizedStringWithFormat(
+                                localized("Skipped %lld rows", locale: locale),
+                                result.skippedCount
+                            )
+                        )
+                    )
                 }
                 if result.createdSessions > 0 {
-                    summaryRow(title: Text("Created \(result.createdSessions) imported sessions"))
+                    summaryRow(
+                        title: Text(
+                            String.localizedStringWithFormat(
+                                localized("Created %lld imported sessions", locale: locale),
+                                result.createdSessions
+                            )
+                        )
+                    )
                 }
                 if result.reachedFreeLimit {
-                    summaryRow(title: Text("Stopped at free limit"))
+                    summaryRow(title: Text(localized("Stopped at free limit", locale: locale)))
 
                     Button {
                         showUpgradeSheet = true
                     } label: {
-                        Text("Upgrade to Pro")
+                        Text(localized("Upgrade to Pro", locale: locale))
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(themeColor.color)
                     }
@@ -416,7 +445,7 @@ struct GoodreadsImportView: View {
 
                                     Text(
                                         String.localizedStringWithFormat(
-                                            String(localized: "Importing %lld of %lld books"),
+                                            localized("Importing %lld of %lld books", locale: locale),
                                             current,
                                             total
                                         )
@@ -425,7 +454,12 @@ struct GoodreadsImportView: View {
                 .foregroundStyle(.secondary)
 
             if let title = importProgressTitle, !title.isEmpty {
-                Text("Adding \(title)")
+                Text(
+                    String.localizedStringWithFormat(
+                        localized("Adding %@", locale: locale),
+                        title
+                    )
+                )
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
@@ -441,7 +475,7 @@ struct GoodreadsImportView: View {
 
                                     Text(
                                         String.localizedStringWithFormat(
-                                            String(localized: "Fetching descriptions %lld of %lld"),
+                                            localized("Fetching descriptions %lld of %lld", locale: locale),
                                             current,
                                             total
                                         )
@@ -450,7 +484,12 @@ struct GoodreadsImportView: View {
                 .foregroundStyle(.secondary)
 
             if let title = descriptionProgressTitle, !title.isEmpty {
-                Text("Adding description for \(title)")
+                Text(
+                    String.localizedStringWithFormat(
+                        localized("Adding description for %@", locale: locale),
+                        title
+                    )
+                )
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }

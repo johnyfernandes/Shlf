@@ -5061,6 +5061,7 @@
       }
     },
     "Adding %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -5154,6 +5155,7 @@
       }
     },
     "Adding description for %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -10356,6 +10358,7 @@
       }
     },
     "Created %lld imported sessions" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -15454,6 +15457,7 @@
       }
     },
     "Fetching descriptions %lld of %lld" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -18465,6 +18469,7 @@
       }
     },
     "Import Complete" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -18883,6 +18888,7 @@
       }
     },
     "Imported %lld books" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -19068,6 +19074,7 @@
       }
     },
     "Importing %lld of %lld books" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -30358,6 +30365,7 @@
       }
     },
     "Parsing CSV..." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -38420,6 +38428,7 @@
       }
     },
     "Skipped %lld rows" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -39428,6 +39437,7 @@
       }
     },
     "Stopped at free limit" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -44152,6 +44162,7 @@
       }
     },
     "Updated %lld books" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
