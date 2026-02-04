@@ -88,8 +88,8 @@ struct OnboardingView: View {
     }
 
     private var onboardingBackground: LinearGradient {
-        let top = themeColor.color.opacity(colorScheme == .dark ? 0.6 : 0.4)
-        let mid = themeColor.color.opacity(colorScheme == .dark ? 0.28 : 0.16)
+        let top = selectedTheme.color.opacity(colorScheme == .dark ? 0.6 : 0.4)
+        let mid = selectedTheme.color.opacity(colorScheme == .dark ? 0.28 : 0.16)
         let bottom = colorScheme == .dark ? Color.black : Color.white
         return LinearGradient(colors: [top, mid, bottom], startPoint: .top, endPoint: .bottom)
     }
