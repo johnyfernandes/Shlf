@@ -567,6 +567,32 @@ final class UserProfile {
         guard !cleanedNew.isEmpty else { return nil }
         let newKey = Self.normalizedSubjectKey(cleanedNew)
 
+        if newKey == oldKey {
+            if let index = subjectLibrary.firstIndex(where: { Self.normalizedSubjectKey($0) == oldKey }) {
+                subjectLibrary[index] = cleanedNew
+            } else {
+                subjectLibrary.append(cleanedNew)
+            }
+            subjectLibrary.sort { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+
+            for book in books {
+                guard let subjects = book.subjects else { continue }
+                var updated: [String] = []
+                var seen: Set<String> = []
+                for value in subjects {
+                    let valueKey = Self.normalizedSubjectKey(value)
+                    let resolved = valueKey == oldKey ? cleanedNew : value
+                    let resolvedKey = Self.normalizedSubjectKey(resolved)
+                    if seen.insert(resolvedKey).inserted {
+                        updated.append(resolved)
+                    }
+                }
+                book.subjects = updated.isEmpty ? nil : updated
+            }
+
+            return cleanedNew
+        }
+
         let canonicalNew: String
         if let existing = subjectLibrary.first(where: { Self.normalizedSubjectKey($0) == newKey }) {
             canonicalNew = existing
