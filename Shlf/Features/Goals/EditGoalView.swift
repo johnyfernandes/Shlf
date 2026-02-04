@@ -106,6 +106,11 @@ struct EditGoalView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
+                        // Persist manual adjustment relative to auto-tracked baseline
+                        let tracker = GoalTracker(modelContext: modelContext)
+                        let baseValue = tracker.baseProgress(for: goal, profile: profile)
+                        goal.manualAdjustment = goal.currentValue - baseValue
+
                         // CRITICAL: Save all changes before dismissing
                         try? modelContext.save()
                         dismiss()

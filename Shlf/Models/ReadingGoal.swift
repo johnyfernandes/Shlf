@@ -36,6 +36,7 @@ final class ReadingGoal {
     var typeRawValue: String = GoalType.booksPerYear.rawValue
     var targetValue: Int = 0
     var currentValue: Int = 0
+    var manualAdjustment: Int = 0
     var startDate: Date = Date()
     var endDate: Date = Date()
     var isCompleted: Bool = false

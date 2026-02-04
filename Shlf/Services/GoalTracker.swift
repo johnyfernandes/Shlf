@@ -29,12 +29,13 @@ class GoalTracker {
                 continue
             }
 
-            let newValue = calculateProgress(for: goal, profile: profile)
+            let baseValue = baseProgress(for: goal, profile: profile)
+            let adjustedValue = baseValue + goal.manualAdjustment
             // CRITICAL: Clamp to target and zero to prevent invalid progress values
-            goal.currentValue = min(max(0, newValue), goal.targetValue)
+            goal.currentValue = min(max(0, adjustedValue), goal.targetValue)
 
             // Auto-complete if target reached (daily goals never auto-complete)
-            if !goal.type.isDaily && newValue >= goal.targetValue {
+            if !goal.type.isDaily && goal.currentValue >= goal.targetValue {
                 goal.isCompleted = true
             }
         }
@@ -43,7 +44,7 @@ class GoalTracker {
         try? modelContext.save()
     }
 
-    private func calculateProgress(for goal: ReadingGoal, profile: UserProfile) -> Int {
+    func baseProgress(for goal: ReadingGoal, profile: UserProfile) -> Int {
         let calendar = Calendar.current
 
         switch goal.type {
