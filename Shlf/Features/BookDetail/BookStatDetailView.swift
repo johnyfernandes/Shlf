@@ -213,10 +213,9 @@ struct BookStatDetailView: View {
             )
                 .foregroundStyle(accent)
         case .daysSinceLast:
-            if let value = summary.daysSinceLastRead {
-                return Text(
-                    "\(formatNumber(value)) \(unitText(value: value, singularKey: "day", pluralKey: "days"))"
-                )
+            if let lastReadDate = summary.lastReadDate {
+                let relative = relativeTimeString(from: lastReadDate, locale: locale)
+                return Text(relative)
                     .foregroundStyle(accent)
             }
             return Text(localized("No reads yet", locale: locale))
@@ -248,6 +247,14 @@ struct BookStatDetailView: View {
         formatter.locale = locale
         formatter.dateFormat = "d MMM yyyy"
         return formatter.string(from: date)
+    }
+
+    private func relativeTimeString(from date: Date, locale: Locale) -> String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.locale = locale
+        formatter.unitsStyle = .full
+        let elapsedSeconds = max(1, Int(Date().timeIntervalSince(date)))
+        return formatter.localizedString(fromTimeInterval: -Double(elapsedSeconds))
     }
 
     private func unitText(value: Int, singularKey: String, pluralKey: String) -> String {

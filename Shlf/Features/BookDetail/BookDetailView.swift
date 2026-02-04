@@ -858,11 +858,11 @@ struct BookDetailView: View {
             composed += AttributedString(".")
             return Text(composed)
         case .daysSinceLast:
-            if let days = summary.daysSinceLastRead {
-                let relative = relativeDayString(days, locale: locale)
+            if let lastReadDate = summary.lastReadDate {
+                let (relative, highlightValue) = relativeTimeString(from: lastReadDate, locale: locale)
                 var composed = AttributedString(localized("Last read", locale: locale))
                 composed += AttributedString(" ")
-                composed += coloredNumberInFormattedString(relative, number: days, accent: accent)
+                composed += coloredNumberInFormattedString(relative, number: highlightValue, accent: accent)
                 composed += AttributedString(".")
                 return Text(composed)
             }
@@ -943,14 +943,21 @@ struct BookDetailView: View {
         return attributed
     }
 
-    private func relativeDayString(_ days: Int, locale: Locale) -> String {
-        let calendar = Calendar.current
-        let todayStart = calendar.startOfDay(for: Date())
-        let target = calendar.date(byAdding: .day, value: -days, to: todayStart) ?? todayStart
+    private func relativeTimeString(from date: Date, locale: Locale) -> (String, Int) {
         let formatter = RelativeDateTimeFormatter()
         formatter.locale = locale
         formatter.unitsStyle = .full
-        return formatter.localizedString(for: target, relativeTo: todayStart)
+        let elapsedSeconds = max(1, Int(Date().timeIntervalSince(date)))
+        let unitValue = relativeUnitValue(for: elapsedSeconds)
+        let interval = -Double(elapsedSeconds)
+        return (formatter.localizedString(fromTimeInterval: interval), unitValue)
+    }
+
+    private func relativeUnitValue(for seconds: Int) -> Int {
+        if seconds < 60 { return seconds }
+        if seconds < 3600 { return max(1, seconds / 60) }
+        if seconds < 86_400 { return max(1, seconds / 3600) }
+        return max(1, seconds / 86_400)
     }
 
     private func syncSubjectLibrary() {
