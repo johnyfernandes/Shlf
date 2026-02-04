@@ -113,7 +113,7 @@ struct PaywallView: View {
                 subtitle: localized("Paywall.Plans.Subtitle", locale: locale)
             )
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Spacing.sm) {
+            VStack(spacing: Theme.Spacing.sm) {
                 ForEach(PaywallPlan.ordered, id: \.self) { plan in
                     Button {
                         selectedPlan = plan
@@ -134,11 +134,8 @@ struct PaywallView: View {
                     }
                     .buttonStyle(.plain)
                     .disabled(storeKit.product(for: plan.productID) == nil && storeKit.isLoadingProducts)
-                    .gridCellColumns(plan == .lifetime ? 2 : 1)
                 }
             }
-            .padding(Theme.Spacing.sm)
-            .background(Theme.Colors.secondaryBackground.opacity(colorScheme == .dark ? 0.35 : 0.6), in: RoundedRectangle(cornerRadius: Theme.CornerRadius.lg, style: .continuous))
         }
     }
 
@@ -452,49 +449,44 @@ struct PaywallPlanCard: View {
     let colorScheme: ColorScheme
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+        HStack(alignment: .center, spacing: Theme.Spacing.md) {
+            selectionIndicator
+
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                HStack(spacing: Theme.Spacing.xs) {
                     Text(title)
                         .font(Theme.Typography.headline)
                         .foregroundStyle(Theme.Colors.text)
 
-                    Text(subtitle)
-                        .font(Theme.Typography.caption)
-                        .foregroundStyle(Theme.Colors.secondaryText)
+                    if let badge = badgeText {
+                        Text(badge)
+                            .font(Theme.Typography.caption2)
+                            .foregroundStyle(badgeForeground)
+                            .padding(.horizontal, Theme.Spacing.xs)
+                            .padding(.vertical, 2)
+                            .background(badgeBackground, in: Capsule())
+                    }
                 }
 
-                Spacer()
-
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.title3)
-                        .foregroundStyle(accentColor)
-                }
-            }
-
-            HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.xs) {
-                Text(priceText)
-                    .font(Theme.Typography.title3)
-                    .foregroundStyle(Theme.Colors.text)
-
-                Text(periodText)
+                Text(subtitle)
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
 
-            if let badge = badgeText {
-                Text(badge)
-                    .font(Theme.Typography.caption2)
-                    .foregroundStyle(badgeForeground)
-                    .padding(.horizontal, Theme.Spacing.xs)
-                    .padding(.vertical, 2)
-                    .background(badgeBackground, in: Capsule())
+            Spacer(minLength: Theme.Spacing.sm)
+
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(priceText)
+                    .font(Theme.Typography.title3)
+                    .foregroundStyle(Theme.Colors.text)
+                Text(periodText)
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(Theme.Colors.secondaryText)
             }
         }
         .padding(Theme.Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .frame(minHeight: plan == .lifetime ? 120 : 132)
+        .frame(minHeight: 86)
         .background(backgroundColor)
         .overlay(
             RoundedRectangle(cornerRadius: Theme.CornerRadius.lg, style: .continuous)
@@ -542,6 +534,20 @@ struct PaywallPlanCard: View {
             return colorScheme == .dark ? .black : .white
         }
         return Theme.Colors.text
+    }
+
+    private var selectionIndicator: some View {
+        ZStack {
+            Circle()
+                .stroke(borderColor, lineWidth: isSelected ? 2 : 1)
+                .frame(width: 18, height: 18)
+            if isSelected {
+                Circle()
+                    .fill(accentColor)
+                    .frame(width: 10, height: 10)
+            }
+        }
+        .frame(width: 22, height: 22)
     }
 }
 
