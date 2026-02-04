@@ -204,6 +204,7 @@ private struct OnboardingBottomSheet: View {
     @Environment(\.themeColor) private var themeColor
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.locale) private var locale
+    @State private var showDetailSheet = false
     let step: OnboardingStep
     let stepIndex: Int
     let totalSteps: Int
@@ -225,26 +226,29 @@ private struct OnboardingBottomSheet: View {
         VStack(spacing: Theme.Spacing.md) {
             onboardingHeader(title: titleKey, subtitle: subtitleKey)
 
-            if showsDetailContent {
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: Theme.Spacing.md) {
-                        switch step {
-                        case .sessions:
-                            LiveActivityCard(isEnabled: liveActivitiesEnabled)
-                        case .goal:
-                            goalPicker
-                        case .theme:
-                            themePicker
-                            Text("Onboarding.Theme.ProNote")
-                                .font(Theme.Typography.caption)
-                                .foregroundStyle(Theme.Colors.secondaryText)
-                        default:
-                            EmptyView()
-                        }
+            if hasDetailSheet {
+                Button {
+                    if requiresProForDetail && !isProUser {
+                        showUpgradeSheet = true
+                    } else {
+                        showDetailSheet = true
                     }
-                    .frame(maxWidth: .infinity)
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: detailButtonIcon)
+                        Text(detailButtonLabel)
+                    }
+                    .font(.caption)
+                    .foregroundStyle(Theme.Colors.secondaryText)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.06))
+                    )
                 }
-                .frame(maxHeight: 120)
+                .buttonStyle(.plain)
+                .accessibilityLabel("Options")
             }
 
             pageDots
@@ -285,6 +289,9 @@ private struct OnboardingBottomSheet: View {
             TopRoundedRectangle(radius: 32)
                 .fill(colorScheme == .dark ? Color.black.opacity(0.92) : Color.white.opacity(0.96))
         )
+        .sheet(isPresented: $showDetailSheet) {
+            detailSheet
+        }
     }
 
     private var pageDots: some View {
@@ -298,8 +305,76 @@ private struct OnboardingBottomSheet: View {
         }
     }
 
-    private var showsDetailContent: Bool {
+    private var hasDetailSheet: Bool {
         step == .sessions || step == .goal || step == .theme
+    }
+
+    private var detailButtonLabel: LocalizedStringKey {
+        switch step {
+        case .sessions:
+            return "Onboarding.Detail.ConfigureSessions"
+        case .goal:
+            return "Onboarding.Detail.ConfigureGoal"
+        case .theme:
+            return "Onboarding.Detail.ConfigureTheme"
+        default:
+            return "Onboarding.Detail.Configure"
+        }
+    }
+
+    private var detailButtonIcon: String {
+        switch step {
+        case .goal where !isProUser:
+            return "lock.fill"
+        default:
+            return "slider.horizontal.3"
+        }
+    }
+
+    private var requiresProForDetail: Bool {
+        step == .goal
+    }
+
+    private var detailSheet: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: Theme.Spacing.md) {
+                    switch step {
+                    case .sessions:
+                        LiveActivityCard(isEnabled: liveActivitiesEnabled)
+                    case .goal:
+                        goalPicker
+                    case .theme:
+                        if !isProUser {
+                            OnboardingCallout(
+                                title: "Onboarding.Theme.ProTitle",
+                                message: "Onboarding.Theme.ProMessage",
+                                actionTitle: "Onboarding.Theme.Upgrade",
+                                action: { showUpgradeSheet = true }
+                            )
+                        }
+                        themePicker
+                        Text("Onboarding.Theme.ProNote")
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(Theme.Colors.secondaryText)
+                    default:
+                        EmptyView()
+                    }
+                }
+                .padding(Theme.Spacing.xl)
+            }
+            .navigationTitle(titleKey)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Onboarding.Detail.Done") {
+                        showDetailSheet = false
+                    }
+                }
+            }
+        }
+        .presentationDetents([.medium])
+        .presentationDragIndicator(.visible)
     }
 
     private var titleKey: LocalizedStringKey {
