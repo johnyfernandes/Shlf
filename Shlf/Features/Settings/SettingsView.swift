@@ -25,6 +25,7 @@ struct SettingsView: View {
     @State private var cloudStatus: CloudDataStatus = .checking
     @State private var showCloudChoiceDialog = false
     @State private var showOnboarding = false
+    @State private var showFocusInfo = false
 
     private var isProUser: Bool {
         ProAccess.isProUser(profile: profile)
@@ -203,6 +204,11 @@ struct SettingsView: View {
                             .foregroundStyle(Theme.Colors.secondaryText)
                     }
                 }
+            }
+            .alert("Notifications.StreakReminder.Focus.InfoTitle", isPresented: $showFocusInfo) {
+                Button("Notifications.StreakReminder.Focus.InfoDismiss", role: .cancel) {}
+            } message: {
+                Text("Notifications.StreakReminder.Focus.InfoMessage")
             }
             .labelStyle(SettingsLabelStyle())
             .tint(profile.themeColor.color)
@@ -1156,8 +1162,19 @@ extension SettingsView {
                     set: { handleFocusRespectToggle($0) }
                 )) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Notifications.StreakReminder.Focus.Title")
-                            .font(.subheadline.weight(.medium))
+                        HStack(spacing: 6) {
+                            Text("Notifications.StreakReminder.Focus.Title")
+                                .font(.subheadline.weight(.medium))
+                            Button {
+                                showFocusInfo = true
+                            } label: {
+                                Image(systemName: "info.circle")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Notifications.StreakReminder.Focus.Info")
+                        }
                         Text("Notifications.StreakReminder.Focus.Description")
                             .font(.caption)
                             .foregroundStyle(.secondary)
