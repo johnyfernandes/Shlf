@@ -461,16 +461,27 @@ private struct OnboardingBottomSheet: View {
                         selectedTheme = theme
                     }
                 } label: {
-                    Circle()
-                        .fill(theme.gradient)
-                        .frame(width: 44, height: 44)
-                        .overlay(
-                            Circle()
-                                .strokeBorder(
-                                    selectedTheme == theme ? theme.onColor(for: colorScheme) : .clear,
-                                    lineWidth: 3
-                                )
-                        )
+                    VStack(spacing: 6) {
+                        Circle()
+                            .fill(theme.gradient)
+                            .frame(width: 44, height: 44)
+                            .overlay(
+                                Circle()
+                                    .strokeBorder(
+                                        selectedTheme == theme ? theme.onColor(for: colorScheme) : .clear,
+                                        lineWidth: 3
+                                    )
+                            )
+                        Text(isFree ? "Free" : "Pro")
+                            .font(.caption2)
+                            .foregroundStyle(isFree ? Theme.Colors.secondaryText : theme.color)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 2)
+                            .background(
+                                Capsule()
+                                    .fill(isFree ? Color.secondary.opacity(0.12) : theme.color.opacity(0.15))
+                            )
+                    }
                 }
                 .buttonStyle(.plain)
             }
