@@ -263,6 +263,7 @@ final class UserProfile {
     var streakReminderEnabled: Bool = false
     var streakReminderHour: Int = 21
     var streakReminderMinute: Int = 0
+    var streakReminderRespectFocus: Bool = true
 
     // Stats Display Preferences
     var chartTypeRawValue: String = "Bar Chart"
@@ -343,7 +344,8 @@ final class UserProfile {
         ],
         streakReminderEnabled: Bool = false,
         streakReminderHour: Int = 21,
-        streakReminderMinute: Int = 0
+        streakReminderMinute: Int = 0,
+        streakReminderRespectFocus: Bool = true
     ) {
         self.id = id
         self.totalXP = totalXP
@@ -377,6 +379,7 @@ final class UserProfile {
         self.streakReminderEnabled = streakReminderEnabled
         self.streakReminderHour = streakReminderHour
         self.streakReminderMinute = streakReminderMinute
+        self.streakReminderRespectFocus = streakReminderRespectFocus
         self.readingGoals = nil
         self.achievements = nil
     }

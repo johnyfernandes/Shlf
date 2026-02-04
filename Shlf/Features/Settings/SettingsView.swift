@@ -74,13 +74,7 @@ struct SettingsView: View {
                         }
                     }
 
-                    Section("Notifications.Section") {
-                        NavigationLink {
-                            NotificationsSettingsView(profile: profile)
-                        } label: {
-                            Label("Notifications.StreakReminder.Label", systemImage: "bell.badge.fill")
-                        }
-                    }
+                    notificationsSection
 
                     Section("Library") {
                         NavigationLink {
@@ -1079,6 +1073,7 @@ struct DataManagementView: View {
         }
     }
 
+
     private func exportReadingData() {
         isExporting = true
 
@@ -1143,6 +1138,43 @@ struct DataManagementView: View {
     private func deleteAll<T: PersistentModel>(_ type: T.Type) throws {
         let items = try modelContext.fetch(FetchDescriptor<T>())
         items.forEach { modelContext.delete($0) }
+    }
+}
+
+extension SettingsView {
+    private var notificationsSection: some View {
+        Section("Notifications.Section") {
+            NavigationLink {
+                NotificationsSettingsView(profile: profile)
+            } label: {
+                Label("Notifications.StreakReminder.Label", systemImage: "bell.badge.fill")
+            }
+
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                Toggle(isOn: Binding(
+                    get: { profile.streakReminderRespectFocus },
+                    set: { handleFocusRespectToggle($0) }
+                )) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Notifications.StreakReminder.Focus.Title")
+                            .font(.subheadline.weight(.medium))
+                        Text("Notifications.StreakReminder.Focus.Description")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .disabled(!profile.streakReminderEnabled)
+                .opacity(profile.streakReminderEnabled ? 1 : 0.6)
+            }
+        }
+    }
+
+    private func handleFocusRespectToggle(_ isOn: Bool) {
+        profile.streakReminderRespectFocus = isOn
+        Task { @MainActor in
+            await NotificationScheduler.shared.refreshSchedule(for: profile)
+            try? modelContext.save()
+        }
     }
 }
 

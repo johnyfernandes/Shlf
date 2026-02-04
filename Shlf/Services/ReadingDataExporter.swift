@@ -59,6 +59,7 @@ enum ReadingDataExporter {
         let streakReminderEnabled: Bool
         let streakReminderHour: Int
         let streakReminderMinute: Int
+        let streakReminderRespectFocus: Bool
         let chartTypeRawValue: String
         let heatmapPeriodRawValue: String
         let homeCardOrder: [String]
@@ -211,6 +212,7 @@ enum ReadingDataExporter {
                 streakReminderEnabled: profile.streakReminderEnabled,
                 streakReminderHour: profile.streakReminderHour,
                 streakReminderMinute: profile.streakReminderMinute,
+                streakReminderRespectFocus: profile.streakReminderRespectFocus,
                 chartTypeRawValue: profile.chartTypeRawValue,
                 heatmapPeriodRawValue: profile.heatmapPeriodRawValue,
                 homeCardOrder: profile.homeCardOrder,

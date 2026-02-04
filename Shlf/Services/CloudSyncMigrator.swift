@@ -98,7 +98,8 @@ enum CloudSyncMigrator {
             homeCardOrder: sourceProfile.homeCardOrder,
             streakReminderEnabled: sourceProfile.streakReminderEnabled,
             streakReminderHour: sourceProfile.streakReminderHour,
-            streakReminderMinute: sourceProfile.streakReminderMinute
+            streakReminderMinute: sourceProfile.streakReminderMinute,
+            streakReminderRespectFocus: sourceProfile.streakReminderRespectFocus
         )
         profileCopy.chartTypeRawValue = sourceProfile.chartTypeRawValue
         profileCopy.heatmapPeriodRawValue = sourceProfile.heatmapPeriodRawValue

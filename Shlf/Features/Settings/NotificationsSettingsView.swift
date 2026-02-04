@@ -100,4 +100,5 @@ struct NotificationsSettingsView: View {
             try? modelContext.save()
         }
     }
+
 }

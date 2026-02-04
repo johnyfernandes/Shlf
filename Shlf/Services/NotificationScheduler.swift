@@ -56,6 +56,7 @@ final class NotificationScheduler {
         content.title = String(localized: "Notifications.StreakReminder.Title")
         content.body = String(localized: "Notifications.StreakReminder.Body")
         content.sound = .default
+        content.interruptionLevel = profile.streakReminderRespectFocus ? .active : .timeSensitive
 
         let components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: fireDate)
         let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
