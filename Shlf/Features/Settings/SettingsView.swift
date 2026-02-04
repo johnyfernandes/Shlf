@@ -444,6 +444,7 @@ struct SettingsView: View {
                         showBadge: true,
                         fallbackTint: themeColor.color
                     )
+                    .padding(.trailing, Theme.Spacing.xs)
 
                     Text("Shlf Pro")
                         .font(Theme.Typography.headline)
@@ -451,8 +452,14 @@ struct SettingsView: View {
                     Spacer()
 
                     Text("Active")
-                        .font(Theme.Typography.callout)
+                        .font(Theme.Typography.caption)
                         .foregroundStyle(Theme.Colors.success)
+                        .padding(.horizontal, Theme.Spacing.sm)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule(style: .continuous)
+                                .fill(Theme.Colors.secondaryBackground.opacity(0.6))
+                        )
                 }
             } else {
                 Button {
