@@ -81,9 +81,14 @@ struct DeveloperSettingsView: View {
                 }
             }
 
-            Section("Notifications") {
-                Button("Trigger Streak Reminder") {
-                    Task { await NotificationScheduler.shared.sendTestNotification() }
+            Section("Notifications.Section") {
+                Button("Developer.Notifications.Trigger") {
+                    Task {
+                        let granted = await NotificationScheduler.shared.requestAuthorization()
+                        if granted {
+                            await NotificationScheduler.shared.sendTestNotification()
+                        }
+                    }
                 }
             }
 

@@ -74,11 +74,11 @@ struct SettingsView: View {
                         }
                     }
 
-                    Section("Notifications") {
+                    Section("Notifications.Section") {
                         NavigationLink {
                             NotificationsSettingsView(profile: profile)
                         } label: {
-                            Label("Reading Reminder", systemImage: "bell.badge.fill")
+                            Label("Notifications.StreakReminder.Label", systemImage: "bell.badge.fill")
                         }
                     }
 

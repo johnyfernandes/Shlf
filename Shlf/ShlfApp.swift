@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import UserNotifications
 
 @main
 struct ShlfApp: App {
@@ -19,6 +20,7 @@ struct ShlfApp: App {
 #endif
 
     init() {
+        UNUserNotificationCenter.current().delegate = AppNotificationDelegate.shared
         do {
             // Use shared configuration for app group access (widget/Live Activity)
             // Note: Schema is defined in SwiftDataConfig
