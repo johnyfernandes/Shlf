@@ -13,6 +13,7 @@ import UIKit
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.requestReview) private var requestReview
+    @Environment(\.themeColor) private var themeColor
     @Bindable var profile: UserProfile
 
     @State private var storeKit = StoreKitService.shared
@@ -436,8 +437,13 @@ struct SettingsView: View {
         Section {
             if isProUser {
                 HStack {
-                    Image(systemName: "crown.fill")
-                        .foregroundStyle(.yellow)
+                    AppIconBadgeView(
+                        iconImage: currentAppIconImage,
+                        badgeColor: currentAppIconAccent.color,
+                        badgeIsLight: currentAppIconAccent.isLight,
+                        showBadge: true,
+                        fallbackTint: themeColor.color
+                    )
 
                     Text("Shlf Pro")
                         .font(Theme.Typography.headline)
@@ -455,8 +461,13 @@ struct SettingsView: View {
                     HStack {
                         VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
                             HStack {
-                                Image(systemName: "crown.fill")
-                                    .foregroundStyle(.yellow)
+                                AppIconBadgeView(
+                                    iconImage: currentAppIconImage,
+                                    badgeColor: currentAppIconAccent.color,
+                                    badgeIsLight: currentAppIconAccent.isLight,
+                                    showBadge: false,
+                                    fallbackTint: themeColor.color
+                                )
 
                                 Text("Upgrade to Pro")
                                     .font(Theme.Typography.headline)
@@ -489,6 +500,76 @@ struct SettingsView: View {
         }
     }
 
+    private var currentAppIconImage: UIImage? {
+        #if canImport(UIKit)
+        #if targetEnvironment(simulator)
+        let iconName = UserDefaults.standard.string(forKey: "Shlf.simulatorAppIconName")
+        #else
+        let iconName = UIApplication.shared.alternateIconName
+        #endif
+        let previewName: String
+        switch iconName {
+        case "AppIcon-Yellow":
+            previewName = "AppIconPreview-Yellow"
+        case "AppIcon-Gray":
+            previewName = "AppIconPreview-Gray"
+        case "AppIcon-Pink":
+            previewName = "AppIconPreview-Pink"
+        case "AppIcon-Purple":
+            previewName = "AppIconPreview-Purple"
+        case "AppIcon-Black":
+            previewName = "AppIconPreview-Black"
+        case "AppIcon-Blue":
+            previewName = "AppIconPreview-Blue"
+        case "AppIcon-Red":
+            previewName = "AppIconPreview-Red"
+        case "AppIcon-Green":
+            previewName = "AppIconPreview-Green"
+        case "AppIcon-White":
+            previewName = "AppIconPreview-White"
+        default:
+            previewName = "AppIconPreview-Orange"
+        }
+        return UIImage(named: previewName)
+        #else
+        return nil
+        #endif
+    }
+
+    private var currentAppIconAccent: (color: Color, isLight: Bool) {
+        #if canImport(UIKit)
+        #if targetEnvironment(simulator)
+        let iconName = UserDefaults.standard.string(forKey: "Shlf.simulatorAppIconName")
+        #else
+        let iconName = UIApplication.shared.alternateIconName
+        #endif
+        switch iconName {
+        case "AppIcon-Yellow":
+            return (Color.yellow, true)
+        case "AppIcon-Gray":
+            return (Color.gray, true)
+        case "AppIcon-Pink":
+            return (Color.pink, true)
+        case "AppIcon-Purple":
+            return (Color.purple, false)
+        case "AppIcon-Black":
+            return (Color.black, false)
+        case "AppIcon-Blue":
+            return (Color.blue, false)
+        case "AppIcon-Red":
+            return (Color.red, false)
+        case "AppIcon-Green":
+            return (Color.green, false)
+        case "AppIcon-White":
+            return (Color.white, true)
+        default:
+            return (Color.orange, false)
+        }
+        #else
+        return (Color.orange, false)
+        #endif
+    }
+
 }
 
 private enum CloudDataStatus {
@@ -497,6 +578,64 @@ private enum CloudDataStatus {
     case available(CloudSyncMigrator.CloudSnapshot)
     case empty
     case error(String)
+}
+
+private struct AppIconBadgeView: View {
+    @Environment(\.themeColor) private var themeColor
+    let iconImage: UIImage?
+    let badgeColor: Color
+    let badgeIsLight: Bool
+    let showBadge: Bool
+    let fallbackTint: Color
+
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            if let iconImage {
+                Image(uiImage: iconImage)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 20, height: 20)
+                    .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+            } else {
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .fill(fallbackTint.opacity(0.2))
+                    .frame(width: 20, height: 20)
+                    .overlay(
+                        Image(systemName: "book.pages.fill")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(fallbackTint)
+                    )
+            }
+
+            if showBadge {
+                Text("Pro")
+                    .font(.system(size: 7, weight: .semibold))
+                    .foregroundStyle(badgeIsLight ? Color.black.opacity(0.85) : .white)
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 1)
+                    .background(
+                        RoundedRectangle(cornerRadius: 5, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        badgeColor.opacity(badgeIsLight ? 0.9 : 0.95),
+                                        badgeColor.opacity(badgeIsLight ? 0.75 : 0.7)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 5, style: .continuous)
+                            .stroke(badgeIsLight ? Color.black.opacity(0.2) : Color.white.opacity(0.6), lineWidth: 0.6)
+                    )
+                    .shadow(color: badgeColor.opacity(badgeIsLight ? 0.35 : 0.85), radius: 5, y: 2)
+                    .shadow(color: badgeColor.opacity(badgeIsLight ? 0.25 : 0.75), radius: 7, y: 0)
+                    .offset(x: 6, y: -6)
+            }
+        }
+    }
 }
 
 struct AboutView: View {
