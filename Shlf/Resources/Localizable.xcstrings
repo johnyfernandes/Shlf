@@ -27575,6 +27575,7 @@
       }
     },
     "Onboarding.Import.ProNote" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -27897,6 +27898,7 @@
       }
     },
     "Onboarding.Pill.Goals" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -27943,6 +27945,7 @@
       }
     },
     "Onboarding.Pill.Goodreads" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -27989,6 +27992,7 @@
       }
     },
     "Onboarding.Pill.iCloud" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -28035,6 +28039,7 @@
       }
     },
     "Onboarding.Pill.Kindle" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -28081,6 +28086,7 @@
       }
     },
     "Onboarding.Pill.LiveSync" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -28127,6 +28133,7 @@
       }
     },
     "Onboarding.Pill.Scan" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -28173,6 +28180,7 @@
       }
     },
     "Onboarding.Pill.ShareCards" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -28219,6 +28227,7 @@
       }
     },
     "Onboarding.Pill.SmartSearch" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -28265,6 +28274,7 @@
       }
     },
     "Onboarding.Pill.Streaks" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -28311,6 +28321,7 @@
       }
     },
     "Onboarding.Pill.TrackFormats" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -28357,6 +28368,7 @@
       }
     },
     "Onboarding.Pill.Trends" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -28403,6 +28415,7 @@
       }
     },
     "Onboarding.Pill.Watch" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -30682,6 +30695,53 @@
         }
       }
     },
+    "Paywall.Badge.Live" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En directo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En direct"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Em direto"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ao vivo"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Em direto"
+          }
+        }
+      }
+    },
     "Paywall.Badge.OneTime" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -30772,6 +30832,147 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Poupa %d%%"
+          }
+        }
+      }
+    },
+    "Paywall.Badge.Stats" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Statistiken"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stats"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estadísticas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stats"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estatísticas"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estatísticas"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estatísticas"
+          }
+        }
+      }
+    },
+    "Paywall.Badge.Sync" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync"
+          }
+        }
+      }
+    },
+    "Paywall.Badge.Watch" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Watch"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Watch"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Watch"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Watch"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Watch"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Watch"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Watch"
           }
         }
       }
@@ -31199,6 +31400,53 @@
         }
       }
     },
+    "Paywall.Features.Subtitle" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein kompletter Lesewerkzeugkasten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your complete reading toolkit."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu kit completo de lectura."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre boîte à outils de lecture."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O teu kit completo de leitura."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O teu kit completo de leitura."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O teu kit completo de leitura."
+          }
+        }
+      }
+    },
     "Paywall.Features.Title" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -31244,18 +31492,6 @@
             "value" : "Tudo incluído"
           }
         }
-      }
-    },
-    "Paywall.Features.Subtitle" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Dein kompletter Lesewerkzeugkasten." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Your complete reading toolkit." } },
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Tu kit completo de lectura." } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Votre boîte à outils de lecture." } },
-        "pt" : { "stringUnit" : { "state" : "translated", "value" : "O teu kit completo de leitura." } },
-        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "O teu kit completo de leitura." } },
-        "pt-PT" : { "stringUnit" : { "state" : "translated", "value" : "O teu kit completo de leitura." } }
       }
     },
     "Paywall.Footer.OneTime" : {
@@ -31491,54 +31727,6 @@
             "value" : "Sem produtos disponíveis"
           }
         }
-      }
-    },
-    "Paywall.Badge.Live" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Live" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Live" } },
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "En directo" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "En direct" } },
-        "pt" : { "stringUnit" : { "state" : "translated", "value" : "Em direto" } },
-        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "Ao vivo" } },
-        "pt-PT" : { "stringUnit" : { "state" : "translated", "value" : "Em direto" } }
-      }
-    },
-    "Paywall.Badge.Stats" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Statistiken" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Stats" } },
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Estadísticas" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Stats" } },
-        "pt" : { "stringUnit" : { "state" : "translated", "value" : "Estatísticas" } },
-        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "Estatísticas" } },
-        "pt-PT" : { "stringUnit" : { "state" : "translated", "value" : "Estatísticas" } }
-      }
-    },
-    "Paywall.Badge.Watch" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Watch" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Watch" } },
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Watch" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Watch" } },
-        "pt" : { "stringUnit" : { "state" : "translated", "value" : "Watch" } },
-        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "Watch" } },
-        "pt-PT" : { "stringUnit" : { "state" : "translated", "value" : "Watch" } }
-      }
-    },
-    "Paywall.Badge.Sync" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Sync" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sync" } },
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Sync" } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Sync" } },
-        "pt" : { "stringUnit" : { "state" : "translated", "value" : "Sync" } },
-        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "Sync" } },
-        "pt-PT" : { "stringUnit" : { "state" : "translated", "value" : "Sync" } }
       }
     },
     "Paywall.Plan.Lifetime" : {
@@ -31964,6 +32152,53 @@
         }
       }
     },
+    "Paywall.Plans.Subtitle" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jederzeit kündbar. Jahresplan spart am meisten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel anytime. Yearly saves the most."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancela cuando quieras. El anual ahorra más."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annulable à tout moment. L'annuel fait le plus d'économies."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancela quando quiseres. O anual poupa mais."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancela quando quiseres. O anual poupa mais."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancela quando quiseres. O anual poupa mais."
+          }
+        }
+      }
+    },
     "Paywall.Plans.Title" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -32009,18 +32244,6 @@
             "value" : "Escolhe o teu plano"
           }
         }
-      }
-    },
-    "Paywall.Plans.Subtitle" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Jederzeit kündbar. Jahresplan spart am meisten." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel anytime. Yearly saves the most." } },
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Cancela cuando quieras. El anual ahorra más." } },
-        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Annulable à tout moment. L'annuel fait le plus d'économies." } },
-        "pt" : { "stringUnit" : { "state" : "translated", "value" : "Cancela quando quiseres. O anual poupa mais." } },
-        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "Cancela quando quiseres. O anual poupa mais." } },
-        "pt-PT" : { "stringUnit" : { "state" : "translated", "value" : "Cancela quando quiseres. O anual poupa mais." } }
       }
     },
     "Period" : {

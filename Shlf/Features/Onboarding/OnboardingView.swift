@@ -36,26 +36,40 @@ struct OnboardingView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        ZStack {
+            onboardingBackground
+                .ignoresSafeArea()
+
             TabView(selection: $currentStep) {
                 ForEach(steps, id: \.self) { step in
                     OnboardingStepView(
-                        step: step,
-                        selectedTheme: $selectedTheme,
-                        selectedGoalType: $selectedGoalType,
-                        goalValue: $goalValue,
-                        skipGoalSetup: $skipGoalSetup,
-                        liveActivitiesEnabled: liveActivitiesEnabled,
-                        isProUser: isProUser,
-                        showUpgradeSheet: $showUpgradeSheet
+                        step: step
                     )
                     .tag(step)
                 }
             }
-            .tabViewStyle(.page(indexDisplayMode: .always))
-            .indexViewStyle(.page(backgroundDisplayMode: .always))
-
-            onboardingFooter
+            .tabViewStyle(.page(indexDisplayMode: .never))
+        }
+        .safeAreaInset(edge: .bottom) {
+            OnboardingBottomSheet(
+                step: currentStep,
+                stepIndex: currentStepIndex,
+                totalSteps: steps.count,
+                isLastStep: currentStep == steps.last,
+                selectedTheme: $selectedTheme,
+                selectedGoalType: $selectedGoalType,
+                goalValue: $goalValue,
+                skipGoalSetup: $skipGoalSetup,
+                liveActivitiesEnabled: liveActivitiesEnabled,
+                isProUser: isProUser,
+                showUpgradeSheet: $showUpgradeSheet,
+                onPrimary: { advanceOrComplete() },
+                onSkip: { completeOnboarding() },
+                onNotNow: {
+                    skipGoalSetup = true
+                    goToNextStep()
+                }
+            )
         }
         .withDynamicTheme(selectedTheme)
         .onAppear {
@@ -69,41 +83,15 @@ struct OnboardingView: View {
         }
     }
 
-    private var onboardingFooter: some View {
-        VStack(spacing: Theme.Spacing.md) {
-            Button {
-                advanceOrComplete()
-            } label: {
-                Text(currentStep == steps.last ? "Onboarding.Button.GetStarted" : "Onboarding.Button.Continue")
-                    .font(Theme.Typography.headline)
-                    .foregroundStyle(themeColor.onColor(for: colorScheme))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, Theme.Spacing.md)
-                    .background(
-                        RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous)
-                            .fill(themeColor.gradient)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous)
-                                    .stroke(themeColor.color.opacity(colorScheme == .dark ? 0.35 : 0.2), lineWidth: 1)
-                            )
-                    )
-                    .shadow(color: themeColor.color.opacity(0.35), radius: 12, y: 6)
-            }
+    private var currentStepIndex: Int {
+        steps.firstIndex(of: currentStep) ?? 0
+    }
 
-            if !currentStep.isSetupStep {
-                Button("Onboarding.Button.Skip") {
-                    completeOnboarding()
-                }
-                .foregroundStyle(Theme.Colors.secondaryText)
-            } else if currentStep == .goal {
-                Button("Onboarding.Button.NotNow") {
-                    skipGoalSetup = true
-                    goToNextStep()
-                }
-                .foregroundStyle(Theme.Colors.secondaryText)
-            }
-        }
-        .padding(Theme.Spacing.xl)
+    private var onboardingBackground: LinearGradient {
+        let top = themeColor.color.opacity(colorScheme == .dark ? 0.6 : 0.4)
+        let mid = themeColor.color.opacity(colorScheme == .dark ? 0.28 : 0.16)
+        let bottom = colorScheme == .dark ? Color.black : Color.white
+        return LinearGradient(colors: [top, mid, bottom], startPoint: .top, endPoint: .bottom)
     }
 
     private func advanceOrComplete() {
@@ -194,8 +182,32 @@ private enum OnboardingStep: Int, CaseIterable {
 private struct OnboardingStepView: View {
     @Environment(\.themeColor) private var themeColor
     @Environment(\.colorScheme) private var colorScheme
+    let step: OnboardingStep
+
+    var body: some View {
+        VStack {
+            Spacer(minLength: Theme.Spacing.xxl)
+            OnboardingRender(
+                step: step,
+                colorScheme: colorScheme,
+                accent: themeColor.color
+            )
+            .frame(maxWidth: 360)
+            Spacer(minLength: Theme.Spacing.xxxl)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, Theme.Spacing.xl)
+    }
+}
+
+private struct OnboardingBottomSheet: View {
+    @Environment(\.themeColor) private var themeColor
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.locale) private var locale
     let step: OnboardingStep
+    let stepIndex: Int
+    let totalSteps: Int
+    let isLastStep: Bool
     @Binding var selectedTheme: ThemeColor
     @Binding var selectedGoalType: GoalType
     @Binding var goalValue: Int
@@ -203,124 +215,126 @@ private struct OnboardingStepView: View {
     let liveActivitiesEnabled: Bool
     let isProUser: Bool
     @Binding var showUpgradeSheet: Bool
+    let onPrimary: () -> Void
+    let onSkip: () -> Void
+    let onNotNow: () -> Void
+
+    private let sheetHeight: CGFloat = 300
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: Theme.Spacing.xl) {
-                Spacer(minLength: Theme.Spacing.lg)
+        VStack(spacing: Theme.Spacing.md) {
+            onboardingHeader(title: titleKey, subtitle: subtitleKey)
 
-                switch step {
-                case .welcome:
-                    onboardingHeader(
-                        title: "Onboarding.Welcome.Title",
-                        subtitle: "Onboarding.Welcome.Subtitle"
-                    )
-                    OnboardingHero {
-                        PlaceholderLibraryStack(colorScheme: colorScheme)
+            if showsDetailContent {
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: Theme.Spacing.md) {
+                        switch step {
+                        case .sessions:
+                            LiveActivityCard(isEnabled: liveActivitiesEnabled)
+                        case .goal:
+                            goalPicker
+                        case .theme:
+                            themePicker
+                            Text("Onboarding.Theme.ProNote")
+                                .font(Theme.Typography.caption)
+                                .foregroundStyle(Theme.Colors.secondaryText)
+                        default:
+                            EmptyView()
+                        }
                     }
-                    onboardingPillRow([
-                        FeaturePill(icon: "barcode.viewfinder", text: "Onboarding.Pill.Scan"),
-                        FeaturePill(icon: "doc.text.magnifyingglass", text: "Onboarding.Pill.SmartSearch"),
-                        FeaturePill(icon: "list.bullet", text: "Onboarding.Pill.TrackFormats")
-                    ])
-                    .padding(.top, Theme.Spacing.md)
-
-                case .sessions:
-                    onboardingHeader(
-                        title: "Onboarding.Sessions.Title",
-                        subtitle: "Onboarding.Sessions.Subtitle"
-                    )
-                    OnboardingHero {
-                        PlaceholderLiveActivity(colorScheme: colorScheme)
-                    }
-                    LiveActivityCard(isEnabled: liveActivitiesEnabled)
-
-                case .habits:
-                    onboardingHeader(
-                        title: "Onboarding.Habits.Title",
-                        subtitle: "Onboarding.Habits.Subtitle"
-                    )
-                    OnboardingHero {
-                        PlaceholderStats(colorScheme: colorScheme)
-                    }
-                    onboardingPillRow([
-                        FeaturePill(icon: "flame.fill", text: "Onboarding.Pill.Streaks"),
-                        FeaturePill(icon: "target", text: "Onboarding.Pill.Goals"),
-                        FeaturePill(icon: "chart.bar.xaxis", text: "Onboarding.Pill.Trends")
-                    ])
-                    .padding(.top, Theme.Spacing.md)
-
-                case .devices:
-                    onboardingHeader(
-                        title: "Onboarding.Devices.Title",
-                        subtitle: "Onboarding.Devices.Subtitle"
-                    )
-                    OnboardingHero {
-                        PlaceholderDevices(colorScheme: colorScheme)
-                    }
-                    onboardingPillRow([
-                        FeaturePill(icon: "applewatch", text: "Onboarding.Pill.Watch"),
-                        FeaturePill(icon: "icloud", text: "Onboarding.Pill.iCloud"),
-                        FeaturePill(icon: "rectangle.and.pencil.and.ellipsis", text: "Onboarding.Pill.LiveSync")
-                    ])
-                    .padding(.top, Theme.Spacing.md)
-
-                case .importShare:
-                    onboardingHeader(
-                        title: "Onboarding.Import.Title",
-                        subtitle: "Onboarding.Import.Subtitle"
-                    )
-                    OnboardingHero {
-                        PlaceholderImportShare(colorScheme: colorScheme)
-                    }
-                    onboardingPillRow([
-                        FeaturePill(icon: "books.vertical", text: "Onboarding.Pill.Goodreads"),
-                        FeaturePill(icon: "book.closed", text: "Onboarding.Pill.Kindle"),
-                        FeaturePill(icon: "square.and.arrow.up", text: "Onboarding.Pill.ShareCards")
-                    ])
-                    .padding(.top, Theme.Spacing.md)
-                    Text("Onboarding.Import.ProNote")
-                        .font(Theme.Typography.caption)
-                        .foregroundStyle(Theme.Colors.secondaryText)
-
-                case .goal:
-                    onboardingHeader(
-                        title: "Onboarding.Goal.Title",
-                        subtitle: "Onboarding.Goal.Subtitle"
-                    )
-                    OnboardingHero {
-                        PlaceholderGoal(colorScheme: colorScheme)
-                    }
-                    goalPicker
-
-                case .theme:
-                    onboardingHeader(
-                        title: "Onboarding.Theme.Title",
-                        subtitle: "Onboarding.Theme.Subtitle"
-                    )
-                    OnboardingHero {
-                        PlaceholderTheme(colorScheme: colorScheme, accent: selectedTheme.color)
-                    }
-                    themePicker
-                    Text("Onboarding.Theme.ProNote")
-                        .font(Theme.Typography.caption)
-                        .foregroundStyle(Theme.Colors.secondaryText)
+                    .frame(maxWidth: .infinity)
                 }
-
-                Spacer(minLength: Theme.Spacing.xl)
+                .frame(maxHeight: 120)
             }
-            .padding(.horizontal, Theme.Spacing.xl)
-            .padding(.top, Theme.Spacing.lg)
-            .padding(.bottom, Theme.Spacing.xl)
+
+            pageDots
+
+            Button(action: onPrimary) {
+                Text(isLastStep ? "Onboarding.Button.GetStarted" : "Onboarding.Button.Continue")
+                    .font(Theme.Typography.headline)
+                    .foregroundStyle(themeColor.onColor(for: colorScheme))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, Theme.Spacing.md)
+                    .background(
+                        RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous)
+                            .fill(themeColor.gradient)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous)
+                                    .stroke(themeColor.color.opacity(colorScheme == .dark ? 0.35 : 0.2), lineWidth: 1)
+                            )
+                    )
+                    .shadow(color: themeColor.color.opacity(0.35), radius: 12, y: 6)
+            }
+
+            if !step.isSetupStep {
+                Button("Onboarding.Button.Skip") {
+                    onSkip()
+                }
+                .foregroundStyle(Theme.Colors.secondaryText)
+            } else if step == .goal {
+                Button("Onboarding.Button.NotNow") {
+                    onNotNow()
+                }
+                .foregroundStyle(Theme.Colors.secondaryText)
+            }
         }
-        .scrollIndicators(.hidden)
+        .padding(Theme.Spacing.xl)
+        .frame(maxWidth: .infinity)
+        .frame(height: sheetHeight)
+        .background(
+            TopRoundedRectangle(radius: 32)
+                .fill(colorScheme == .dark ? Color.black.opacity(0.92) : Color.white.opacity(0.96))
+                .overlay(
+                    TopRoundedRectangle(radius: 32)
+                        .stroke(themeColor.color.opacity(colorScheme == .dark ? 0.2 : 0.15), lineWidth: 1)
+                )
+        )
+    }
+
+    private var pageDots: some View {
+        HStack(spacing: 6) {
+            ForEach(0..<totalSteps, id: \.self) { index in
+                Capsule()
+                    .fill(index == stepIndex ? themeColor.color : Theme.Colors.tertiaryText.opacity(0.35))
+                    .frame(width: index == stepIndex ? 18 : 6, height: 6)
+                    .animation(.snappy, value: stepIndex)
+            }
+        }
+    }
+
+    private var showsDetailContent: Bool {
+        step == .sessions || step == .goal || step == .theme
+    }
+
+    private var titleKey: LocalizedStringKey {
+        switch step {
+        case .welcome: return "Onboarding.Welcome.Title"
+        case .sessions: return "Onboarding.Sessions.Title"
+        case .habits: return "Onboarding.Habits.Title"
+        case .devices: return "Onboarding.Devices.Title"
+        case .importShare: return "Onboarding.Import.Title"
+        case .goal: return "Onboarding.Goal.Title"
+        case .theme: return "Onboarding.Theme.Title"
+        }
+    }
+
+    private var subtitleKey: LocalizedStringKey {
+        switch step {
+        case .welcome: return "Onboarding.Welcome.Subtitle"
+        case .sessions: return "Onboarding.Sessions.Subtitle"
+        case .habits: return "Onboarding.Habits.Subtitle"
+        case .devices: return "Onboarding.Devices.Subtitle"
+        case .importShare: return "Onboarding.Import.Subtitle"
+        case .goal: return "Onboarding.Goal.Subtitle"
+        case .theme: return "Onboarding.Theme.Subtitle"
+        }
     }
 
     @ViewBuilder
     private func onboardingHeader(title: LocalizedStringKey, subtitle: LocalizedStringKey) -> some View {
         VStack(spacing: Theme.Spacing.sm) {
             Text(title)
-                .font(.system(size: 34, weight: .semibold))
+                .font(.system(size: 26, weight: .semibold))
                 .foregroundStyle(Theme.Colors.text)
                 .multilineTextAlignment(.center)
 
@@ -328,42 +342,6 @@ private struct OnboardingStepView: View {
                 .font(Theme.Typography.body)
                 .foregroundStyle(Theme.Colors.secondaryText)
                 .multilineTextAlignment(.center)
-        }
-    }
-
-    @ViewBuilder
-    private func onboardingPillRow(_ pills: [FeaturePill]) -> some View {
-        let pillAccent = themeColor == .neutral ? Theme.Colors.text : themeColor.color
-        let pillForeground = Theme.Colors.text
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 10)], spacing: 10) {
-            ForEach(pills) { pill in
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(pillAccent)
-                        .frame(width: 6, height: 6)
-                    Image(systemName: pill.icon)
-                        .font(.caption)
-                        .foregroundStyle(pillAccent)
-                    Text(pill.text)
-                        .font(Theme.Typography.caption)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(
-                    Capsule()
-                        .fill(.ultraThinMaterial)
-                        .overlay(
-                            Capsule()
-                                .fill(themeColor.color.opacity(colorScheme == .dark ? 0.18 : 0.12))
-                        )
-                        .overlay(
-                            Capsule()
-                                .stroke(themeColor.color.opacity(colorScheme == .dark ? 0.35 : 0.2), lineWidth: 1)
-                        )
-                )
-                .foregroundStyle(pillForeground)
-                .shadow(color: themeColor.color.opacity(colorScheme == .dark ? 0.25 : 0.15), radius: 6, y: 3)
-            }
         }
     }
 
@@ -389,9 +367,9 @@ private struct OnboardingStepView: View {
                     }
                     .font(Theme.Typography.body)
                 }
-                .padding(16)
+                .padding(12)
                 .background(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05))
                 )
             }
@@ -400,7 +378,7 @@ private struct OnboardingStepView: View {
 
     private var themePicker: some View {
         let orderedColors = ThemeColorSettingsViewOrderedColors.ordered
-        return LazyVGrid(columns: [GridItem(.adaptive(minimum: 72), spacing: 16)], spacing: 16) {
+        return LazyVGrid(columns: [GridItem(.adaptive(minimum: 56), spacing: 12)], spacing: 12) {
             ForEach(orderedColors) { theme in
                 let isFree = ThemeColorSettingsViewOrderedColors.freeColors.contains(theme)
                 Button {
@@ -412,30 +390,70 @@ private struct OnboardingStepView: View {
                         selectedTheme = theme
                     }
                 } label: {
-                    VStack(spacing: 8) {
-                        Circle()
-                            .fill(theme.gradient)
-                            .frame(width: 56, height: 56)
-                            .overlay(
-                                Circle()
-                                    .strokeBorder(
-                                        selectedTheme == theme ? theme.onColor(for: colorScheme) : .clear,
-                                        lineWidth: 3
-                                    )
-                            )
-                        Text(theme.displayNameKey)
-                            .font(.caption)
-                            .foregroundStyle(selectedTheme == theme ? theme.color : Theme.Colors.secondaryText)
-                    }
+                    Circle()
+                        .fill(theme.gradient)
+                        .frame(width: 44, height: 44)
+                        .overlay(
+                            Circle()
+                                .strokeBorder(
+                                    selectedTheme == theme ? theme.onColor(for: colorScheme) : .clear,
+                                    lineWidth: 3
+                                )
+                        )
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(16)
+        .padding(12)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05))
         )
+    }
+}
+
+private struct OnboardingRender: View {
+    let step: OnboardingStep
+    let colorScheme: ColorScheme
+    let accent: Color
+
+    var body: some View {
+        if let image = UIImage(named: renderAssetName) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFit()
+                .shadow(color: accent.opacity(colorScheme == .dark ? 0.5 : 0.25), radius: 24, y: 14)
+        } else {
+            RoundedRectangle(cornerRadius: 48, style: .continuous)
+                .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 48, style: .continuous)
+                        .stroke(accent.opacity(colorScheme == .dark ? 0.35 : 0.18), lineWidth: 1)
+                )
+                .overlay(
+                    Image(systemName: "iphone")
+                        .font(.system(size: 70, weight: .light))
+                        .foregroundStyle(accent.opacity(colorScheme == .dark ? 0.6 : 0.4))
+                )
+                .frame(maxHeight: 520)
+        }
+    }
+
+    private var renderAssetName: String {
+        "OnboardingStep\(step.rawValue + 1)-\(colorScheme == .dark ? "Dark" : "Light")"
+    }
+}
+
+private struct TopRoundedRectangle: Shape {
+    let radius: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        let path = UIBezierPath(
+            roundedRect: rect,
+            byRoundingCorners: [.topLeft, .topRight],
+            cornerRadii: CGSize(width: radius, height: radius)
+        )
+        return Path(path.cgPath)
     }
 }
 
