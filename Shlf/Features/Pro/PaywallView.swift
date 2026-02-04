@@ -69,6 +69,8 @@ struct PaywallView: View {
                 accent: themeColor.color,
                 colorScheme: colorScheme,
                 iconImage: currentAppIconImage,
+                badgeColor: currentAppIconAccent.color,
+                badgeIsLight: currentAppIconAccent.isLight,
                 badges: [
                     localized("Paywall.Badge.Live", locale: locale),
                     localized("Paywall.Badge.Stats", locale: locale),
@@ -292,6 +294,40 @@ struct PaywallView: View {
         #endif
     }
 
+    private var currentAppIconAccent: (color: Color, isLight: Bool) {
+        #if canImport(UIKit)
+        #if targetEnvironment(simulator)
+        let iconName = UserDefaults.standard.string(forKey: "Shlf.simulatorAppIconName")
+        #else
+        let iconName = UIApplication.shared.alternateIconName
+        #endif
+        switch iconName {
+        case "AppIcon-Yellow":
+            return (Color.yellow, true)
+        case "AppIcon-Gray":
+            return (Color.gray, true)
+        case "AppIcon-Pink":
+            return (Color.pink, true)
+        case "AppIcon-Purple":
+            return (Color.purple, false)
+        case "AppIcon-Black":
+            return (Color.black, false)
+        case "AppIcon-Blue":
+            return (Color.blue, false)
+        case "AppIcon-Red":
+            return (Color.red, false)
+        case "AppIcon-Green":
+            return (Color.green, false)
+        case "AppIcon-White":
+            return (Color.white, true)
+        default:
+            return (Color.orange, false)
+        }
+        #else
+        return (Color.orange, false)
+        #endif
+    }
+
     private func badgeText(for plan: PaywallPlan) -> String? {
         guard plan == .yearly else {
             return plan == .lifetime ? localized("Paywall.Badge.OneTime", locale: locale) : nil
@@ -394,6 +430,8 @@ private struct PaywallHeroCard: View {
     let accent: Color
     let colorScheme: ColorScheme
     let iconImage: UIImage?
+    let badgeColor: Color
+    let badgeIsLight: Bool
     let badges: [String]
 
     var body: some View {
@@ -425,7 +463,7 @@ private struct PaywallHeroCard: View {
                             )
                     }
 
-                    ProGlowBadge()
+                    ProGlowBadge(color: badgeColor, isLight: badgeIsLight)
                         .offset(x: 8, y: -8)
                 }
 
@@ -479,10 +517,14 @@ private struct PaywallBadge: View {
 }
 
 private struct ProGlowBadge: View {
+    let color: Color
+    let isLight: Bool
+    @State private var animate = false
+
     var body: some View {
         Text("Pro")
             .font(.caption2.weight(.semibold))
-            .foregroundStyle(.white)
+            .foregroundStyle(isLight ? Color.black.opacity(0.85) : .white)
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
             .background(
@@ -490,8 +532,8 @@ private struct ProGlowBadge: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 1.0, green: 0.78, blue: 0.25),
-                                Color(red: 1.0, green: 0.45, blue: 0.0)
+                                color.opacity(isLight ? 0.9 : 0.95),
+                                color.opacity(isLight ? 0.75 : 0.7)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -500,10 +542,41 @@ private struct ProGlowBadge: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .stroke(Color.white.opacity(0.6), lineWidth: 0.8)
+                    .stroke(isLight ? Color.black.opacity(0.2) : Color.white.opacity(0.6), lineWidth: 0.8)
             )
-            .shadow(color: Color.orange.opacity(0.85), radius: 10, y: 3)
-            .shadow(color: Color.yellow.opacity(0.75), radius: 14, y: 0)
+            .shadow(color: color.opacity(isLight ? 0.35 : 0.85), radius: 10, y: 3)
+            .shadow(color: color.opacity(isLight ? 0.25 : 0.75), radius: 14, y: 0)
+            .overlay(alignment: .topLeading) {
+                Sparkle(color: .white.opacity(0.9), size: 10, delay: 0.0, animate: $animate)
+                    .offset(x: -6, y: -6)
+            }
+            .overlay(alignment: .bottomTrailing) {
+                Sparkle(color: .white.opacity(0.8), size: 8, delay: 0.9, animate: $animate)
+                    .offset(x: 8, y: 6)
+            }
+            .onAppear { animate = true }
+    }
+
+    private struct Sparkle: View {
+        let color: Color
+        let size: CGFloat
+        let delay: Double
+        @Binding var animate: Bool
+
+        var body: some View {
+            Image(systemName: "sparkles")
+                .font(.system(size: size, weight: .bold))
+                .foregroundStyle(color)
+                .opacity(animate ? 1 : 0.2)
+                .scaleEffect(animate ? 1.0 : 0.6)
+                .rotationEffect(.degrees(animate ? 12 : -8))
+                .animation(
+                    .easeInOut(duration: 1.6)
+                        .repeatForever(autoreverses: true)
+                        .delay(delay),
+                    value: animate
+                )
+        }
     }
 }
 
