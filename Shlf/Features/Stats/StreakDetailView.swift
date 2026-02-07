@@ -13,6 +13,7 @@ struct StreakDetailView: View {
     @Environment(\.themeColor) private var themeColor
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.locale) private var locale
     @Bindable var profile: UserProfile
     @Query(sort: [SortDescriptor(\StreakEvent.date, order: .reverse)]) private var events: [StreakEvent]
     @Query private var sessions: [ReadingSession]
@@ -21,7 +22,7 @@ struct StreakDetailView: View {
     @State private var showUpgradeSheet = false
     @State private var showPardonConfirm = false
     @State private var isApplyingPardon = false
-    @State private var pardonError: String?
+    @State private var pardonError: LocalizedStringKey?
 
     private var isProUser: Bool {
         ProAccess.isProUser(profile: profile)
@@ -90,14 +91,6 @@ struct StreakDetailView: View {
                     .foregroundStyle(themeColor.color)
                 }
             }
-            .confirmationDialog("Use Streak Protection?", isPresented: $showPardonConfirm, titleVisibility: .visible) {
-                Button("Use Pardon") {
-                    applyPardon()
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text(pardonConfirmMessage)
-            }
             .alert("Streak Protection", isPresented: Binding(
                 get: { pardonError != nil },
                 set: { _ in pardonError = nil }
@@ -135,12 +128,7 @@ struct StreakDetailView: View {
                     Image(systemName: "trophy.fill")
                         .foregroundStyle(Theme.Colors.warning)
 
-                    Text(
-                        String.localizedStringWithFormat(
-                            String(localized: "Streak.LongestChain"),
-                            profile.longestStreak
-                        )
-                    )
+                    Text("Streak.LongestChain \(profile.longestStreak)")
                     .font(Theme.Typography.callout)
                     .foregroundStyle(Theme.Colors.secondaryText)
 
@@ -240,6 +228,14 @@ struct StreakDetailView: View {
                 }
                 .primaryButton(color: themeColor.color, foreground: themeColor.onColor(for: colorScheme))
                 .disabled(isApplyingPardon)
+                .confirmationDialog("Use Streak Protection?", isPresented: $showPardonConfirm, titleVisibility: .visible) {
+                    Button("Use Pardon") {
+                        applyPardon()
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text(pardonConfirmMessage)
+                }
             case .cooldown(let nextAvailable):
                 Text("Pardon is cooling down.")
                     .font(Theme.Typography.callout)
@@ -273,7 +269,7 @@ struct StreakDetailView: View {
                 if isProUser {
                     Picker("History", selection: $historyFilter) {
                         ForEach(StreakHistoryFilter.allCases, id: \.self) { filter in
-                            Text(filter.title).tag(filter)
+                            Text(filter.titleKey).tag(filter)
                         }
                     }
                     .pickerStyle(.segmented)
@@ -394,7 +390,7 @@ struct StreakDetailView: View {
                             }
                         }
 
-                        Text(isToday ? String(localized: "Streak.Today") : shortWeekdayLabel(for: date))
+                        Text(isToday ? String(localized: "Streak.Today", locale: locale) : shortWeekdayLabel(for: date))
                             .font(.caption2.weight(.medium))
                             .foregroundStyle(Theme.Colors.secondaryText)
                     }
@@ -406,7 +402,7 @@ struct StreakDetailView: View {
 
     private func shortWeekdayLabel(for date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale.current
+        formatter.locale = locale
         formatter.setLocalizedDateFormatFromTemplate("EEE")
         return formatter.string(from: date)
     }
@@ -439,7 +435,7 @@ struct StreakDetailView: View {
         return calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: lastDay))
     }
 
-    private var pardonConfirmMessage: String {
+    private var pardonConfirmMessage: LocalizedStringKey {
         switch pardonEligibility {
         case .available(let missedDay, let deadline):
             return "Restore your streak for \(formatDate(missedDay)). Available until \(formatTime(deadline))."
@@ -460,7 +456,7 @@ struct StreakDetailView: View {
             if case .available = eligibility {
                 WatchConnectivityManager.shared.sendProfileStatsToWatch(profile)
             } else if let eligibility {
-                pardonError = eligibility.errorMessage
+                pardonError = pardonErrorMessage(for: eligibility)
             } else {
                 pardonError = "Pardon could not be applied."
             }
@@ -468,12 +464,25 @@ struct StreakDetailView: View {
         }
     }
 
+    private func pardonErrorMessage(for eligibility: StreakPardonEligibility) -> LocalizedStringKey {
+        switch eligibility {
+        case .cooldown(let nextAvailable):
+            return "Pardon available again on \(formatTime(nextAvailable))."
+        case .expired(let missedDay):
+            return "Pardon window expired for \(formatDate(missedDay))."
+        case .notNeeded:
+            return "No missed day to pardon."
+        case .available:
+            return ""
+        }
+    }
+
     private func formatDate(_ date: Date) -> String {
-        date.formatted(date: .abbreviated, time: .omitted)
+        date.formatted(Date.FormatStyle(date: .abbreviated, time: .omitted).locale(locale))
     }
 
     private func formatTime(_ date: Date) -> String {
-        date.formatted(date: .abbreviated, time: .shortened)
+        date.formatted(Date.FormatStyle(date: .abbreviated, time: .shortened).locale(locale))
     }
 }
 
@@ -481,7 +490,7 @@ private enum StreakHistoryFilter: CaseIterable {
     case last90Days
     case all
 
-    var title: String {
+    var titleKey: LocalizedStringKey {
         switch self {
         case .last90Days: return "90 days"
         case .all: return "All"
@@ -490,6 +499,7 @@ private enum StreakHistoryFilter: CaseIterable {
 }
 
 private struct StreakEventRow: View {
+    @Environment(\.locale) private var locale
     let event: StreakEvent
     let pagesRead: Int?
 
@@ -500,10 +510,10 @@ private struct StreakEventRow: View {
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(event.title)
+                Text(title(for: event))
                     .font(Theme.Typography.callout)
                     .foregroundStyle(Theme.Colors.text)
-                if let subtitle = event.subtitle {
+                if let subtitle = subtitle(for: event) {
                     Text(subtitle)
                         .font(Theme.Typography.caption)
                         .foregroundStyle(Theme.Colors.secondaryText)
@@ -525,6 +535,36 @@ private struct StreakEventRow: View {
         .padding(Theme.Spacing.sm)
         .background(Theme.Colors.secondaryBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
+
+    private func title(for event: StreakEvent) -> LocalizedStringKey {
+        switch event.type {
+        case .day:
+            return "Streak day"
+        case .saved:
+            return "Saved streak"
+        case .lost:
+            return "Streak lost"
+        case .started:
+            return "Streak started"
+        }
+    }
+
+    private func subtitle(for event: StreakEvent) -> LocalizedStringKey? {
+        let dateText = event.date.formatted(
+            Date.FormatStyle(date: .abbreviated, time: .omitted).locale(locale)
+        )
+        switch event.type {
+        case .day:
+            if event.streakLength > 0 {
+                return "\(dateText) • Day \(event.streakLength)"
+            }
+            return "\(dateText)"
+        case .saved, .lost:
+            return "\(dateText) • \(event.streakLength) days"
+        case .started:
+            return "\(dateText)"
+        }
+    }
 }
 
 private extension StreakEvent {
@@ -533,11 +573,11 @@ private extension StreakEvent {
         case .day:
             return String(localized: "Streak day")
         case .saved:
-            return "Saved streak"
+            return String(localized: "Saved streak")
         case .lost:
-            return "Streak lost"
+            return String(localized: "Streak lost")
         case .started:
-            return "Streak started"
+            return String(localized: "Streak started")
         }
     }
 
@@ -554,9 +594,17 @@ private extension StreakEvent {
             }
             return dateText
         case .saved:
-            return "\(dateText) • \(streakLength) days"
+            return String.localizedStringWithFormat(
+                String(localized: "%@ • %lld days"),
+                dateText,
+                streakLength
+            )
         case .lost:
-            return "\(dateText) • \(streakLength) days"
+            return String.localizedStringWithFormat(
+                String(localized: "%@ • %lld days"),
+                dateText,
+                streakLength
+            )
         case .started:
             return dateText
         }
@@ -585,23 +633,6 @@ private extension StreakEvent {
             return Theme.Colors.error
         case .started:
             return Theme.Colors.secondaryText
-        }
-    }
-}
-
-private extension StreakPardonEligibility {
-    var errorMessage: String {
-        switch self {
-        case .cooldown(let nextAvailable):
-            let dateText = nextAvailable.formatted(date: .abbreviated, time: .shortened)
-            return "Pardon available again on \(dateText)."
-        case .expired(let missedDay):
-            let dateText = missedDay.formatted(date: .abbreviated, time: .omitted)
-            return "Pardon window expired for \(dateText)."
-        case .notNeeded:
-            return "No missed day to pardon."
-        case .available:
-            return ""
         }
     }
 }
