@@ -57,69 +57,48 @@ struct ReadingSessionWidgetLiveActivity: Widget {
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.center) {
-                    let timerWidth: CGFloat = 86
+                    let timerWidth: CGFloat = 90
                     let topOffset: CGFloat = -4
 
-                    HStack(alignment: .top, spacing: 10) {
-                        liveActivityCover(
-                            context: context,
-                            size: CGSize(width: 38, height: 52),
-                            cornerRadius: 6
-                        )
+                    ZStack(alignment: .topTrailing) {
+                        HStack(alignment: .top, spacing: 10) {
+                            liveActivityCover(
+                                context: context,
+                                size: CGSize(width: 38, height: 52),
+                                cornerRadius: 6
+                            )
 
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(context.attributes.bookTitle)
-                                .font(.headline.weight(.semibold))
-                                .lineLimit(1)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(context.attributes.bookTitle)
+                                    .font(.headline.weight(.semibold))
+                                    .lineLimit(1)
 
-                            Text(context.attributes.bookAuthor)
-                                .font(.caption)
+                                Text(context.attributes.bookAuthor)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+
+                                Text(
+                                    String.localizedStringWithFormat(
+                                        String(localized: "%lld/%lld pages"),
+                                        context.state.currentPage,
+                                        context.attributes.totalPages
+                                    )
+                                )
+                                .font(.caption2.weight(.semibold))
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
-
-                            Text(
-                                String.localizedStringWithFormat(
-                                    String(localized: "%lld/%lld pages"),
-                                    context.state.currentPage,
-                                    context.attributes.totalPages
-                                )
-                            )
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                        }
-
-                        Spacer(minLength: 8)
-
-                        ZStack(alignment: .topTrailing) {
-                            if context.state.isPaused {
-                                Text("Paused")
-                                    .font(.caption2.weight(.semibold))
-                                    .foregroundStyle(.orange)
-                                    .offset(y: -12)
-                                    .padding(.trailing, 6)
                             }
 
-                            ZStack(alignment: .trailing) {
-                                Text("99:59:59")
-                                    .font(.system(size: 22, weight: .semibold, design: .rounded))
-                                    .monospacedDigit()
-                                    .hidden()
-
-                                if context.state.isPaused,
-                                   let pausedElapsed = context.state.pausedElapsedSeconds {
-                                    Text(formattedElapsed(seconds: pausedElapsed))
-                                        .font(.system(size: 22, weight: .semibold, design: .rounded))
-                                        .monospacedDigit()
-                                } else {
-                                    LiveActivityTimerView(startTime: context.state.timerStartTime)
-                                        .font(.system(size: 22, weight: .semibold, design: .rounded))
-                                        .monospacedDigit()
-                                }
-                            }
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
+                            Spacer(minLength: 8)
                         }
+                        .padding(.trailing, timerWidth + 4)
+
+                        timerStack(
+                            isPaused: context.state.isPaused,
+                            pausedElapsedSeconds: context.state.pausedElapsedSeconds,
+                            startTime: context.state.timerStartTime
+                        )
                         .frame(width: timerWidth, alignment: .trailing)
                     }
                     .padding(.top, 2)
@@ -207,26 +186,12 @@ struct ReadingSessionLockScreenView: View {
 
                 Spacer()
 
-                VStack(alignment: .trailing, spacing: 2) {
-                    if context.state.isPaused {
-                        Text("Paused")
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(.orange)
-                    }
-
-                    if context.state.isPaused,
-                       let pausedElapsed = context.state.pausedElapsedSeconds {
-                        Text(formattedElapsed(seconds: pausedElapsed))
-                            .font(.headline)
-                            .monospacedDigit()
-                    } else {
-                        LiveActivityTimerView(startTime: context.state.timerStartTime)
-                            .font(.headline)
-                            .monospacedDigit()
-                    }
-
-                }
-                .frame(width: 72, alignment: .trailing)
+                timerStack(
+                    isPaused: context.state.isPaused,
+                    pausedElapsedSeconds: context.state.pausedElapsedSeconds,
+                    startTime: context.state.timerStartTime
+                )
+                .frame(width: 80, alignment: .trailing)
             }
             .frame(maxWidth: .infinity)
 
@@ -345,6 +310,39 @@ struct ReadingSessionLockScreenView: View {
             )
         }
         .buttonStyle(.plain)
+    }
+}
+
+private func timerStack(
+    isPaused: Bool,
+    pausedElapsedSeconds: Int?,
+    startTime: Date
+) -> some View {
+    VStack(alignment: .trailing, spacing: 2) {
+        if isPaused {
+            Text("Paused")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.orange)
+        }
+
+        ZStack(alignment: .trailing) {
+            Text("99:59:59")
+                .font(.system(size: 22, weight: .semibold, design: .rounded))
+                .monospacedDigit()
+                .hidden()
+
+            if isPaused, let pausedElapsedSeconds {
+                Text(formattedElapsed(seconds: pausedElapsedSeconds))
+                    .font(.system(size: 22, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
+            } else {
+                LiveActivityTimerView(startTime: startTime)
+                    .font(.system(size: 22, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
+            }
+        }
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
     }
 }
 
