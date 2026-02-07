@@ -357,21 +357,25 @@ struct LogReadingSessionView: View {
                         }
                         .frame(maxWidth: .infinity)
                     } else {
-                        Button("Start Timer") {
+                        Button {
                             startTimer()
-                        }
-                        .font(Theme.Typography.headline)
-                        .foregroundStyle(themeColor.onColor(for: colorScheme))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, Theme.Spacing.md)
-                        .background(
-                            RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous)
-                                .fill(themeColor.color)
-                                .overlay(
+                        } label: {
+                            Text("Start Timer")
+                                .font(Theme.Typography.headline)
+                                .foregroundStyle(themeColor.onColor(for: colorScheme))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, Theme.Spacing.md)
+                                .background(
                                     RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous)
-                                        .stroke(themeColor.color.opacity(colorScheme == .dark ? 0.25 : 0.2), lineWidth: 1)
+                                        .fill(themeColor.color)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: Theme.CornerRadius.md, style: .continuous)
+                                                .stroke(themeColor.color.opacity(colorScheme == .dark ? 0.25 : 0.2), lineWidth: 1)
+                                        )
                                 )
-                        )
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
                         .shadow(color: themeColor.color.opacity(0.3), radius: 10, y: 4)
                         .frame(maxWidth: .infinity)
                     }
