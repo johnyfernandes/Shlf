@@ -490,7 +490,7 @@ struct LogReadingSessionView: View {
         }
     }
 
-    private func cardHeader(title: String, icon: String) -> some View {
+    private func cardHeader(title: LocalizedStringKey, icon: String) -> some View {
         HStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.caption.weight(.semibold))
@@ -505,7 +505,7 @@ struct LogReadingSessionView: View {
         }
     }
 
-    private func progressValueChip(title: String, value: String) -> some View {
+    private func progressValueChip(title: LocalizedStringKey, value: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.caption2.weight(.medium))
@@ -525,7 +525,7 @@ struct LogReadingSessionView: View {
         )
     }
 
-    private func progressInputChip(title: String, text: Binding<String>, showTooltip: Bool) -> some View {
+    private func progressInputChip(title: LocalizedStringKey, text: Binding<String>, showTooltip: Bool) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.caption2.weight(.medium))
@@ -588,7 +588,7 @@ struct LogReadingSessionView: View {
         .shadow(color: Theme.Shadow.small, radius: 3, y: 1)
     }
 
-    private func statusPill(text: String, isPaused: Bool) -> some View {
+    private func statusPill(text: LocalizedStringKey, isPaused: Bool) -> some View {
         Text(text)
             .font(.caption.weight(.semibold))
             .foregroundStyle(isPaused ? Color.orange : themeColor.color)
