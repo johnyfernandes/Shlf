@@ -824,17 +824,25 @@ struct LogReadingSessionView: View {
     private func finishSession() {
         guard let startTime = timerStartTime else { return }
         let totalElapsed = isPaused ? pausedElapsedTime : pausedElapsedTime + Date().timeIntervalSince(startTime)
-        durationMinutes = max(1, Int(totalElapsed / 60))
-        timerStartTime = nil
-        isPaused = false
-        pausedElapsedTime = 0
+        let resolvedMinutes = max(1, Int(totalElapsed / 60))
 
-        // End Live Activity and save
-        saveSession()
+        dismissAndPerform {
+            durationMinutes = resolvedMinutes
+            timerStartTime = nil
+            isPaused = false
+            pausedElapsedTime = 0
+            saveSessionCore()
+        }
     }
 
     private func finishActiveSession(_ activeSession: ActiveReadingSession) {
         Haptics.impact(.medium)
+        dismissAndPerform {
+            finishActiveSessionCore(activeSession)
+        }
+    }
+
+    private func finishActiveSessionCore(_ activeSession: ActiveReadingSession) {
         let session = ReadingSession(
             startDate: activeSession.startDate,
             endDate: Date(),
@@ -911,11 +919,16 @@ struct LogReadingSessionView: View {
         }
 
         notifySessionLogged()
-        dismiss()
     }
 
     private func saveSession() {
         Haptics.impact(.medium)
+        dismissAndPerform {
+            saveSessionCore()
+        }
+    }
+
+    private func saveSessionCore() {
         // Delete any active session for this book
         if let activeSession = activeSessionForBook {
             let endedId = activeSession.id
@@ -987,12 +1000,18 @@ struct LogReadingSessionView: View {
         }
     }
 
-    WidgetDataExporter.exportSnapshot(modelContext: modelContext)
+        WidgetDataExporter.exportSnapshot(modelContext: modelContext)
 
-    try? modelContext.save()
-    notifySessionLogged()
-    dismiss()
-}
+        try? modelContext.save()
+        notifySessionLogged()
+    }
+
+    private func dismissAndPerform(_ work: @escaping () -> Void) {
+        dismiss()
+        Task { @MainActor in
+            work()
+        }
+    }
 }
 
 struct ActiveSessionTimerView: View {
