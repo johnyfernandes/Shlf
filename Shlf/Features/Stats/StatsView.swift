@@ -2456,20 +2456,16 @@ struct GoalCard: View {
 
                 if let daysLeft = Calendar.current.dateComponents([.day], from: Date(), to: goal.endDate).day {
                     if goal.type.isDaily {
-                        Text("Resets at midnight")
+                        Text(verbatim: localized("Goals.ResetsAtMidnight", locale: locale))
                             .font(Theme.Typography.caption)
                             .foregroundStyle(Theme.Colors.tertiaryText)
                     } else if daysLeft >= 0 {
-                        Text(
-                            String.localizedStringWithFormat(
-                                String(localized: "%lld days left"),
-                                daysLeft
-                            )
-                        )
+                        let format = localized("Goals.DaysLeft %lld", locale: locale)
+                        Text(String(format: format, locale: locale, arguments: [daysLeft]))
                             .font(Theme.Typography.caption)
                             .foregroundStyle(Theme.Colors.tertiaryText)
                     } else {
-                        Text("Expired")
+                        Text(verbatim: localized("Goals.Expired", locale: locale))
                             .font(Theme.Typography.caption)
                             .foregroundStyle(Theme.Colors.error)
                     }
@@ -2615,21 +2611,17 @@ struct GoalRow: View {
 
                     if let daysLeft = Calendar.current.dateComponents([.day], from: Date(), to: goal.endDate).day, daysLeft >= 0 {
                         if goal.type.isDaily {
-                            Text("Resets at midnight")
+                            Text(verbatim: localized("Goals.ResetsAtMidnight", locale: locale))
                                 .font(Theme.Typography.caption)
                                 .foregroundStyle(Theme.Colors.tertiaryText)
                         } else {
-                            Text(
-                                String.localizedStringWithFormat(
-                                    String(localized: "%lld days left"),
-                                    daysLeft
-                                )
-                            )
+                            let format = localized("Goals.DaysLeft %lld", locale: locale)
+                            Text(String(format: format, locale: locale, arguments: [daysLeft]))
                                 .font(Theme.Typography.caption)
                                 .foregroundStyle(Theme.Colors.tertiaryText)
                         }
                     } else if !goal.isCompleted {
-                        Text("Expired")
+                        Text(verbatim: localized("Goals.Expired", locale: locale))
                             .font(Theme.Typography.caption)
                             .foregroundStyle(Theme.Colors.error)
                     }
