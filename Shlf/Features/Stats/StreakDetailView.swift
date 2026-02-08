@@ -390,7 +390,7 @@ struct StreakDetailView: View {
                             }
                         }
 
-                        Text(isToday ? String(localized: "Streak.Today", locale: locale) : shortWeekdayLabel(for: date))
+                        Text(verbatim: isToday ? localized("Streak.Today", locale: locale) : shortWeekdayLabel(for: date))
                             .font(.caption2.weight(.medium))
                             .foregroundStyle(Theme.Colors.secondaryText)
                     }

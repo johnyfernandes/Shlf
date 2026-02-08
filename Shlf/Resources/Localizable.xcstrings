@@ -44041,6 +44041,7 @@
       }
     },
     "Streak.Today" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
