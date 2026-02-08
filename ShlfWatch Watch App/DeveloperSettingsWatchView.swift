@@ -23,25 +23,25 @@ struct DeveloperSettingsWatchView: View {
             themeSection()
             mockDataSection()
         }
-        .navigationTitle("Developer")
+        .navigationTitle("Watch.Developer")
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Generate Mock Data?", isPresented: $showGenerateAlert) {
+        .alert("Watch.GenerateMockData.Title", isPresented: $showGenerateAlert) {
             Button("Cancel", role: .cancel) {}
-            Button("Generate", role: .destructive) {
+            Button("Watch.Generate", role: .destructive) {
                 generateMockData()
             }
         } message: {
-            Text("This will wipe existing reading data on this Watch.")
+            Text("Watch.GenerateMockData.Message")
         }
-        .alert("Clear Mock Data?", isPresented: $showClearAlert) {
+        .alert("Watch.ClearMockData.Title", isPresented: $showClearAlert) {
             Button("Cancel", role: .cancel) {}
-            Button("Clear", role: .destructive) {
+            Button("Watch.Clear", role: .destructive) {
                 clearMockData()
             }
         } message: {
-            Text("Removes only the last generated mock dataset.")
+            Text("Watch.ClearMockData.Message")
         }
-        .alert("Mock Data Error", isPresented: $showError) {
+        .alert("Watch.MockDataError", isPresented: $showError) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(errorMessage)
@@ -49,18 +49,18 @@ struct DeveloperSettingsWatchView: View {
     }
 
     private func themeSection() -> some View {
-        Section("Theme Preview") {
-            Toggle("Override Theme", isOn: $debugThemeOverrideEnabled)
+        Section("Watch.ThemePreview") {
+            Toggle("Watch.OverrideTheme", isOn: $debugThemeOverrideEnabled)
                 .tint(themeColor.color)
 
             if debugThemeOverrideEnabled {
-                Picker("Theme Color", selection: $debugThemeOverrideRawValue) {
+                Picker("Watch.ThemeColor", selection: $debugThemeOverrideRawValue) {
                     ForEach(ThemeColor.allCases) { color in
                         Text(color.displayNameKey).tag(color.rawValue)
                     }
                 }
             } else {
-                Text("Follows iPhone theme when connected.")
+                Text("Watch.FollowsPhoneTheme")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
@@ -68,28 +68,28 @@ struct DeveloperSettingsWatchView: View {
     }
 
     private func mockDataSection() -> some View {
-        Section("Mock Data") {
-            Picker("Range", selection: $mockRange) {
+        Section("Watch.MockData") {
+            Picker("Watch.Range", selection: $mockRange) {
                 ForEach(MockSeedRange.allCases) { range in
                     Text(range.rawValue).tag(range)
                 }
             }
 
-            Picker("Density", selection: $mockIntensity) {
+            Picker("Watch.Density", selection: $mockIntensity) {
                 ForEach(MockSeedIntensity.allCases) { intensity in
                     Text(intensity.rawValue).tag(intensity)
                 }
             }
 
-            Toggle("Include Pardon", isOn: $includePardon)
+            Toggle("Watch.IncludePardon", isOn: $includePardon)
                 .tint(themeColor.color)
 
-            Button("Generate Mock Data") {
+            Button("Watch.GenerateMockData") {
                 showGenerateAlert = true
             }
             .disabled(isSeeding)
 
-            Button("Clear Mock Data", role: .destructive) {
+            Button("Watch.ClearMockData", role: .destructive) {
                 showClearAlert = true
             }
             .disabled(isSeeding || mockSummary == nil)
@@ -97,7 +97,7 @@ struct DeveloperSettingsWatchView: View {
             if isSeeding {
                 VStack(alignment: .leading, spacing: 4) {
                     ProgressView()
-                    Text(statusMessage.isEmpty ? "Working..." : statusMessage)
+                    Text(statusMessage.isEmpty ? String(localized: "Watch.Working") : statusMessage)
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
@@ -105,7 +105,7 @@ struct DeveloperSettingsWatchView: View {
 
             if let summary = mockSummary {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Last Seed")
+                    Text("Watch.LastSeed")
                         .font(.caption)
                     Text(verbatim: "\(summary.rangeLabel) · \(summary.intensityLabel)")
                         .font(.caption2)
@@ -126,7 +126,7 @@ struct DeveloperSettingsWatchView: View {
 
     private func generateMockData() {
         isSeeding = true
-        statusMessage = "Starting..."
+        statusMessage = String(localized: "Watch.Starting")
 
         Task { @MainActor in
             let generator = MockDataGenerator(modelContext: modelContext)
@@ -142,7 +142,7 @@ struct DeveloperSettingsWatchView: View {
                     }
                 )
                 mockSummary = summary
-                statusMessage = "Done"
+                statusMessage = String(localized: "Watch.Done")
             } catch {
                 errorMessage = error.localizedDescription
                 showError = true
@@ -153,13 +153,13 @@ struct DeveloperSettingsWatchView: View {
 
     private func clearMockData() {
         isSeeding = true
-        statusMessage = "Clearing..."
+        statusMessage = String(localized: "Watch.Clearing")
 
         let generator = MockDataGenerator(modelContext: modelContext)
         do {
             _ = try generator.clearMockData()
             mockSummary = MockDataStore.shared.summary
-            statusMessage = "Done"
+            statusMessage = String(localized: "Watch.Done")
         } catch {
             errorMessage = error.localizedDescription
             showError = true

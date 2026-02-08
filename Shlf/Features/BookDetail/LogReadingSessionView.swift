@@ -288,7 +288,7 @@ struct LogReadingSessionView: View {
                     VStack(spacing: 12) {
                         statusPill(text: session.isPaused ? "Paused" : "Reading...", isPaused: session.isPaused)
 
-                        Text("Started on \(session.sourceDevice)")
+                        Text("Session.StartedOn \(session.sourceDevice)")
                             .font(.caption)
                             .foregroundStyle(.secondary)
 

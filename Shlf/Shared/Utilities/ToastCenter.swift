@@ -170,7 +170,7 @@ struct ToastData: Identifiable, Equatable {
 
     static func sessionLogged(tint: Color?) -> ToastData {
         ToastData(
-            title: "Session logged",
+            title: "Toast.SessionLogged",
             style: .successCheck,
             tint: tint,
             duration: 3,

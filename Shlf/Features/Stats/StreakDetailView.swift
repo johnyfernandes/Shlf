@@ -81,23 +81,23 @@ struct StreakDetailView: View {
                     .padding(Theme.Spacing.md)
                 }
             }
-            .navigationTitle("Streak")
+            .navigationTitle("Streak.Title")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
+                    Button("Common.Done") {
                         dismiss()
                     }
                     .foregroundStyle(themeColor.color)
                 }
             }
-            .alert("Streak Protection", isPresented: Binding(
+            .alert("Streak.Protection.Title", isPresented: Binding(
                 get: { pardonError != nil },
                 set: { _ in pardonError = nil }
             )) {
-                Button("OK") {}
+                Button("Common.OK") {}
             } message: {
-                Text(pardonError ?? "Something went wrong.")
+                Text(pardonError ?? "Common.Error.Generic")
             }
             .sheet(isPresented: $showUpgradeSheet) {
                 PaywallView()
@@ -145,34 +145,34 @@ struct StreakDetailView: View {
             if let daysSince = daysSinceLastStreakDay {
                 switch daysSince {
                 case 0:
-                    Text("Streak is active today.")
+                    Text("Streak.Status.ActiveToday")
                         .font(Theme.Typography.callout)
                     if let deadline = streakDeadline {
-                        Text("Keep it going by \(formatTime(deadline)).")
+                        Text("Streak.Status.KeepGoingBy \(formatTime(deadline))")
                             .font(Theme.Typography.caption)
                             .foregroundStyle(Theme.Colors.secondaryText)
                     }
                 case 1:
-                    Text("Streak is at risk.")
+                    Text("Streak.Status.AtRisk")
                         .font(Theme.Typography.callout)
                         .foregroundStyle(Theme.Colors.warning)
                     if let deadline = streakDeadline {
-                        Text("Read by \(formatTime(deadline)) to keep it.")
+                        Text("Streak.Status.ReadByToKeep \(formatTime(deadline))")
                             .font(Theme.Typography.caption)
                             .foregroundStyle(Theme.Colors.secondaryText)
                     }
                 default:
-                    Text("Streak lost.")
+                    Text("Streak.Status.Lost")
                         .font(Theme.Typography.callout)
                         .foregroundStyle(Theme.Colors.error)
                     if let missedDay = missedDayDate {
-                        Text("Missed \(formatDate(missedDay)).")
+                        Text("Streak.Status.MissedOn \(formatDate(missedDay))")
                             .font(Theme.Typography.caption)
                             .foregroundStyle(Theme.Colors.secondaryText)
                     }
                 }
             } else {
-                Text("Start your first streak by logging a session.")
+                Text("Streak.Status.StartFirst")
                     .font(Theme.Typography.callout)
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
@@ -185,16 +185,16 @@ struct StreakDetailView: View {
                 HStack(spacing: Theme.Spacing.xs) {
                     Image(systemName: "shield.fill")
                         .foregroundStyle(themeColor.color)
-                    Text("Streak Protection")
+                    Text("Streak.Protection.Title")
                         .font(Theme.Typography.headline)
                 }
 
                 if !isProUser {
-                    Text("Protect missed days with a 48-hour pardon window.")
+                    Text("Streak.Protection.Upsell")
                         .font(Theme.Typography.callout)
                         .foregroundStyle(Theme.Colors.secondaryText)
 
-                    Button("Upgrade to Pro") {
+                    Button("Common.UpgradeToPro") {
                         showUpgradeSheet = true
                     }
                     .font(Theme.Typography.callout)
@@ -210,9 +210,9 @@ struct StreakDetailView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
             switch pardonEligibility {
             case .available(let missedDay, let deadline):
-                Text("Missed \(formatDate(missedDay)).")
+                Text("Streak.Protection.MissedOn \(formatDate(missedDay))")
                     .font(Theme.Typography.callout)
-                Text("Pardon available until \(formatTime(deadline)).")
+                Text("Streak.Protection.AvailableUntil \(formatTime(deadline))")
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
 
@@ -223,33 +223,33 @@ struct StreakDetailView: View {
                         ProgressView()
                             .tint(.white)
                     } else {
-                        Text("Use Pardon")
+                        Text("Streak.Protection.UsePardon")
                     }
                 }
                 .primaryButton(color: themeColor.color, foreground: themeColor.onColor(for: colorScheme))
                 .disabled(isApplyingPardon)
-                .confirmationDialog("Use Streak Protection?", isPresented: $showPardonConfirm, titleVisibility: .visible) {
-                    Button("Use Pardon") {
+                .confirmationDialog("Streak.Protection.ConfirmTitle", isPresented: $showPardonConfirm, titleVisibility: .visible) {
+                    Button("Streak.Protection.UsePardon") {
                         applyPardon()
                     }
-                    Button("Cancel", role: .cancel) {}
+                    Button("Common.Cancel", role: .cancel) {}
                 } message: {
                     Text(pardonConfirmMessage)
                 }
             case .cooldown(let nextAvailable):
-                Text("Pardon is cooling down.")
+                Text("Streak.Protection.Cooldown")
                     .font(Theme.Typography.callout)
-                Text("Next available \(formatDate(nextAvailable)).")
+                Text("Streak.Protection.NextAvailable \(formatDate(nextAvailable))")
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
             case .expired(let missedDay):
-                Text("Pardon window expired.")
+                Text("Streak.Protection.Expired")
                     .font(Theme.Typography.callout)
-                Text("Missed \(formatDate(missedDay)).")
+                Text("Streak.Protection.MissedOn \(formatDate(missedDay))")
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
             case .notNeeded:
-                Text("No missed day to pardon.")
+                Text("Streak.Protection.NoMissedDay")
                     .font(Theme.Typography.callout)
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
@@ -262,12 +262,12 @@ struct StreakDetailView: View {
                 HStack(spacing: Theme.Spacing.xs) {
                     Image(systemName: "clock.arrow.circlepath")
                         .foregroundStyle(themeColor.color)
-                    Text("History")
+                    Text("Streak.History.Title")
                         .font(Theme.Typography.headline)
                 }
 
                 if isProUser {
-                    Picker("History", selection: $historyFilter) {
+                    Picker("Streak.History.Title", selection: $historyFilter) {
                         ForEach(StreakHistoryFilter.allCases, id: \.self) { filter in
                             Text(filter.titleKey).tag(filter)
                         }
@@ -275,7 +275,7 @@ struct StreakDetailView: View {
                     .pickerStyle(.segmented)
 
                     if filteredEvents.isEmpty {
-                        Text("No streak history yet.")
+                        Text("Streak.History.Empty")
                             .font(Theme.Typography.callout)
                             .foregroundStyle(Theme.Colors.secondaryText)
                             .padding(.top, Theme.Spacing.xs)
@@ -291,11 +291,11 @@ struct StreakDetailView: View {
                         .padding(.top, Theme.Spacing.xs)
                     }
                 } else {
-                    Text("Streak history is available with Pro.")
+                    Text("Streak.History.ProOnly")
                         .font(Theme.Typography.callout)
                         .foregroundStyle(Theme.Colors.secondaryText)
 
-                    Button("Upgrade to Pro") {
+                    Button("Common.UpgradeToPro") {
                         showUpgradeSheet = true
                     }
                     .font(Theme.Typography.callout)
@@ -438,9 +438,9 @@ struct StreakDetailView: View {
     private var pardonConfirmMessage: LocalizedStringKey {
         switch pardonEligibility {
         case .available(let missedDay, let deadline):
-            return "Restore your streak for \(formatDate(missedDay)). Available until \(formatTime(deadline))."
+            return "Streak.Protection.ConfirmMessage \(formatDate(missedDay)) \(formatTime(deadline))"
         default:
-            return "Restore your streak with a pardon."
+            return "Streak.Protection.ConfirmMessage.Generic"
         }
     }
 
@@ -458,7 +458,7 @@ struct StreakDetailView: View {
             } else if let eligibility {
                 pardonError = pardonErrorMessage(for: eligibility)
             } else {
-                pardonError = "Pardon could not be applied."
+                pardonError = "Streak.Protection.ApplyFailed"
             }
             isApplyingPardon = false
         }
@@ -467,11 +467,11 @@ struct StreakDetailView: View {
     private func pardonErrorMessage(for eligibility: StreakPardonEligibility) -> LocalizedStringKey {
         switch eligibility {
         case .cooldown(let nextAvailable):
-            return "Pardon available again on \(formatTime(nextAvailable))."
+            return "Streak.Protection.AvailableAgain \(formatTime(nextAvailable))"
         case .expired(let missedDay):
-            return "Pardon window expired for \(formatDate(missedDay))."
+            return "Streak.Protection.ExpiredFor \(formatDate(missedDay))"
         case .notNeeded:
-            return "No missed day to pardon."
+            return "Streak.Protection.NoMissedDay"
         case .available:
             return ""
         }
@@ -492,8 +492,8 @@ private enum StreakHistoryFilter: CaseIterable {
 
     var titleKey: LocalizedStringKey {
         switch self {
-        case .last90Days: return "90 days"
-        case .all: return "All"
+        case .last90Days: return "Streak.History.90Days"
+        case .all: return "Common.All"
         }
     }
 }
@@ -514,17 +514,13 @@ private struct StreakEventRow: View {
                     .font(Theme.Typography.callout)
                     .foregroundStyle(Theme.Colors.text)
                 if let subtitle = subtitle(for: event) {
-                    Text(subtitle)
+                    Text(verbatim: subtitle)
                         .font(Theme.Typography.caption)
                         .foregroundStyle(Theme.Colors.secondaryText)
                 }
                 if let pagesRead {
-                    Text(
-                        String.localizedStringWithFormat(
-                            String(localized: "%lld pages"),
-                            pagesRead
-                        )
-                    )
+                    let pagesFormat = localized("Streak.Event.PagesRead %lld", locale: locale)
+                    Text(String(format: pagesFormat, locale: locale, arguments: [pagesRead]))
                     .font(.caption2.weight(.medium))
                     .foregroundStyle(Theme.Colors.secondaryText)
                 }
@@ -539,30 +535,32 @@ private struct StreakEventRow: View {
     private func title(for event: StreakEvent) -> LocalizedStringKey {
         switch event.type {
         case .day:
-            return "Streak day"
+            return "Streak.Event.Day"
         case .saved:
-            return "Saved streak"
+            return "Streak.Event.Saved"
         case .lost:
-            return "Streak lost"
+            return "Streak.Event.Lost"
         case .started:
-            return "Streak started"
+            return "Streak.Event.Started"
         }
     }
 
-    private func subtitle(for event: StreakEvent) -> LocalizedStringKey? {
+    private func subtitle(for event: StreakEvent) -> String? {
         let dateText = event.date.formatted(
             Date.FormatStyle(date: .abbreviated, time: .omitted).locale(locale)
         )
         switch event.type {
         case .day:
             if event.streakLength > 0 {
-                return "\(dateText) • Day \(event.streakLength)"
+                let detailFormat = localized("Streak.Event.DayDetail %1$@ %2$lld", locale: locale)
+                return String(format: detailFormat, locale: locale, arguments: [dateText, event.streakLength])
             }
-            return "\(dateText)"
+            return dateText
         case .saved, .lost:
-            return "\(dateText) • \(event.streakLength) days"
+            let detailFormat = localized("Streak.Event.LengthDetail %1$@ %2$lld", locale: locale)
+            return String(format: detailFormat, locale: locale, arguments: [dateText, event.streakLength])
         case .started:
-            return "\(dateText)"
+            return dateText
         }
     }
 }
@@ -571,13 +569,13 @@ private extension StreakEvent {
     var title: String {
         switch type {
         case .day:
-            return String(localized: "Streak day")
+            return String(localized: "Streak.Event.Day")
         case .saved:
-            return String(localized: "Saved streak")
+            return String(localized: "Streak.Event.Saved")
         case .lost:
-            return String(localized: "Streak lost")
+            return String(localized: "Streak.Event.Lost")
         case .started:
-            return String(localized: "Streak started")
+            return String(localized: "Streak.Event.Started")
         }
     }
 
@@ -586,24 +584,24 @@ private extension StreakEvent {
         switch type {
         case .day:
             if streakLength > 0 {
-                return String.localizedStringWithFormat(
-                    String(localized: "%@ • Day %lld"),
-                    dateText,
-                    streakLength
+                return String(
+                    format: String(localized: "Streak.Event.DayDetail %1$@ %2$lld"),
+                    locale: .current,
+                    arguments: [dateText, streakLength]
                 )
             }
             return dateText
         case .saved:
-            return String.localizedStringWithFormat(
-                String(localized: "%@ • %lld days"),
-                dateText,
-                streakLength
+            return String(
+                format: String(localized: "Streak.Event.LengthDetail %1$@ %2$lld"),
+                locale: .current,
+                arguments: [dateText, streakLength]
             )
         case .lost:
-            return String.localizedStringWithFormat(
-                String(localized: "%@ • %lld days"),
-                dateText,
-                streakLength
+            return String(
+                format: String(localized: "Streak.Event.LengthDetail %1$@ %2$lld"),
+                locale: .current,
+                arguments: [dateText, streakLength]
             )
         case .started:
             return dateText

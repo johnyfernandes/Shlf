@@ -70,7 +70,7 @@ struct SessionsListWatchView: View {
 
             // Today's Sessions
             if !todaysSessions.isEmpty {
-                Section("Today") {
+                Section("Watch.Today") {
                     ForEach(todaysSessions) { session in
                         NavigationLink(destination: SessionDetailWatchView(session: session)) {
                             SessionRowWatch(session: session)
@@ -81,7 +81,7 @@ struct SessionsListWatchView: View {
 
             // Older Sessions
             if !olderSessions.isEmpty {
-                Section("Earlier") {
+                Section("Watch.Earlier") {
                     ForEach(olderSessions.prefix(10)) { session in
                         NavigationLink(destination: SessionDetailWatchView(session: session)) {
                             SessionRowWatch(session: session)
@@ -97,7 +97,7 @@ struct SessionsListWatchView: View {
                         .font(.largeTitle)
                         .foregroundStyle(.secondary)
 
-                    Text("No Sessions Yet")
+                    Text("Watch.NoSessionsYet")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -105,7 +105,7 @@ struct SessionsListWatchView: View {
                 .padding()
             }
         }
-        .navigationTitle("Sessions")
+        .navigationTitle("Watch.Sessions")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -129,9 +129,9 @@ struct TodaysSummaryCard: View {
     var body: some View {
         VStack(spacing: 8) {
             HStack(spacing: 16) {
-                StatItem(icon: "book.fill", value: "\(totalPages)", label: "pages")
-                StatItem(icon: "clock.fill", value: "\(totalMinutes)", label: "min")
-                StatItem(icon: "star.fill", value: "\(totalXP)", label: "XP")
+                StatItem(icon: "book.fill", value: "\(totalPages)", label: "Watch.Pages")
+                StatItem(icon: "clock.fill", value: "\(totalMinutes)", label: "Watch.Min")
+                StatItem(icon: "star.fill", value: "\(totalXP)", label: "Watch.XP")
             }
         }
         .padding(.vertical, 4)
@@ -174,7 +174,12 @@ struct SessionRowWatch: View {
 
     private var metricsText: String {
         let pages = session.pagesRead >= 0 ? "+\(session.pagesRead)" : "\(session.pagesRead)"
-        return "\(pages) • \(session.durationMinutes) min • \(timeAgo)"
+        return String.localizedStringWithFormat(
+            String(localized: "Watch.SessionMetrics"),
+            pages,
+            session.durationMinutes,
+            timeAgo
+        )
     }
 
     var body: some View {
@@ -194,7 +199,7 @@ struct SessionRowWatch: View {
             }
 
             if session.isImported || !session.countsTowardStats {
-                Text("Imported")
+                Text("Watch.Imported")
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(.orange)
             }

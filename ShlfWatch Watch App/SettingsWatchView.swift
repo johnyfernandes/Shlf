@@ -33,16 +33,19 @@ struct SettingsWatchView: View {
                                     // Send to iPhone immediately
                                     WatchConnectivityManager.shared.sendProfileSettingsToPhone(profile)
                                 } catch {
-                                    saveErrorMessage = "Failed to save: \(error.localizedDescription)"
+                                    saveErrorMessage = String.localizedStringWithFormat(
+                                        String(localized: "Watch.SaveErrorDetail"),
+                                        error.localizedDescription
+                                    )
                                     showSaveError = true
                                     profile.hideAutoSessionsWatch = !newValue // Revert on failure
                                 }
                             }
                         )) {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Hide Quick Sessions")
+                                Text("Watch.HideQuickSessions")
                                     .font(.caption)
-                                Text("Only show timer sessions")
+                                Text("Watch.OnlyTimerSessions")
                                     .font(.caption2)
                                     .foregroundStyle(.secondary)
                             }
@@ -57,16 +60,19 @@ struct SettingsWatchView: View {
                                     try modelContext.save()
                                     WatchConnectivityManager.shared.sendProfileSettingsToPhone(profile)
                                 } catch {
-                                    saveErrorMessage = "Failed to save: \(error.localizedDescription)"
+                                    saveErrorMessage = String.localizedStringWithFormat(
+                                        String(localized: "Watch.SaveErrorDetail"),
+                                        error.localizedDescription
+                                    )
                                     showSaveError = true
                                     profile.useCircularProgressWatch = !newValue // Revert on failure
                                 }
                             }
                         )) {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Circular Progress")
+                                Text("Watch.CircularProgress")
                                     .font(.caption)
-                                Text("Show progress as a ring")
+                                Text("Watch.ShowProgressRing")
                                     .font(.caption2)
                                     .foregroundStyle(.secondary)
                             }
@@ -81,50 +87,53 @@ struct SettingsWatchView: View {
                                     try modelContext.save()
                                     WatchConnectivityManager.shared.sendProfileSettingsToPhone(profile)
                                 } catch {
-                                    saveErrorMessage = "Failed to save: \(error.localizedDescription)"
+                                    saveErrorMessage = String.localizedStringWithFormat(
+                                        String(localized: "Watch.SaveErrorDetail"),
+                                        error.localizedDescription
+                                    )
                                     showSaveError = true
                                     profile.enableWatchPositionMarking = !newValue // Revert on failure
                                 }
                             }
                         )) {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Mark Position")
+                                Text("Watch.MarkPosition")
                                     .font(.caption)
-                                Text("Save page + line number")
+                                Text("Watch.SavePageLine")
                                     .font(.caption2)
                                     .foregroundStyle(.secondary)
                             }
                         }
                         .tint(themeColor.color)
                     } header: {
-                        Text("Customization")
+                        Text("Watch.Customization")
                     }
 
                     Section {
-                        Text("Quick sessions are created when you tap +1, +5, etc. Timer sessions are created using the reading timer.")
+                        Text("Watch.QuickSessionsInfo")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
 
                     #if DEBUG
-                    Section("Developer") {
-                        NavigationLink("Developer Tools") {
+                    Section("Watch.Developer") {
+                        NavigationLink("Watch.DeveloperTools") {
                             DeveloperSettingsWatchView()
                         }
                     }
                     #endif
                 } else {
                     Section {
-                        Text("Settings are managed from your iPhone.")
+                        Text("Watch.SettingsManagedOniPhone")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
             }
         }
-        .navigationTitle("Settings")
+        .navigationTitle("Watch.Settings")
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Save Error", isPresented: $showSaveError) {
+        .alert("Watch.SaveError", isPresented: $showSaveError) {
             Button("OK") {}
         } message: {
             Text(saveErrorMessage)

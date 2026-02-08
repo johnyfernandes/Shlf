@@ -92,7 +92,7 @@ struct ContentView: View {
                                         Text(verbatim: "•")
                                             .font(.caption2)
                                             .foregroundStyle(.secondary)
-                                        Text("Paused")
+                                        Text("Watch.Paused")
                                             .font(.system(.caption2, design: .rounded))
                                             .foregroundStyle(.orange)
                                     }
@@ -130,10 +130,10 @@ struct ContentView: View {
                         .font(.system(size: 40))
                         .foregroundStyle(.secondary)
 
-                    Text("No books")
+                    Text("Watch.NoBooks")
                         .font(.headline)
 
-                    Text("Start reading on your iPhone")
+                    Text("Watch.StartReadingOnIPhone")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -150,7 +150,7 @@ struct ContentView: View {
                     }
                 }
                 .listStyle(.plain)
-                .navigationTitle("Reading")
+                .navigationTitle("Watch.Reading")
                 .toolbar { settingsToolbar }
             }
         }

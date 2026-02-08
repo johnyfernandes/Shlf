@@ -84,7 +84,7 @@ struct LogSessionWatchView: View {
                         .foregroundStyle(effectiveIsPaused ? Color.orange : themeColor.color)
                         .monospacedDigit()
 
-                    Text(isActive ? (effectiveIsPaused ? "Paused" : "Reading...") : "Ready")
+                    Text(isActive ? (effectiveIsPaused ? "Watch.Paused" : "Watch.ReadingInProgress") : "Watch.Ready")
                         .font(.caption)
                         .foregroundStyle(effectiveIsPaused ? Color.orange : Color.secondary)
                 }
@@ -97,7 +97,7 @@ struct LogSessionWatchView: View {
                             Text(startPage, format: .number)
                                 .font(.title3)
                                 .fontWeight(.semibold)
-                            Text("Start")
+                            Text("Watch.Start")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -110,7 +110,7 @@ struct LogSessionWatchView: View {
                             Text(currentPage, format: .number)
                                 .font(.title3)
                                 .fontWeight(.semibold)
-                            Text("Current")
+                            Text("Watch.Current")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -152,7 +152,7 @@ struct LogSessionWatchView: View {
                             Text(pagesRead, format: .number)
                                 .font(.title3)
                                 .fontWeight(.semibold)
-                            Text("pages")
+                            Text("Watch.Pages")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -162,7 +162,7 @@ struct LogSessionWatchView: View {
                             Text(xpEarned, format: .number)
                                 .font(.title3)
                                 .fontWeight(.semibold)
-                            Text("XP")
+                            Text("Watch.XP")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -178,7 +178,7 @@ struct LogSessionWatchView: View {
                         Button {
                             startSession()
                         } label: {
-                            Label("Start Reading", systemImage: "play.circle.fill")
+                            Label("Watch.StartReading", systemImage: "play.circle.fill")
                                 .frame(maxWidth: .infinity)
                                 .foregroundStyle(themeColor.onColor(for: colorScheme))
                         }
@@ -194,7 +194,7 @@ struct LogSessionWatchView: View {
                             }
                         } label: {
                             Label(
-                                effectiveIsPaused ? "Resume" : "Pause",
+                                effectiveIsPaused ? "Watch.Resume" : "Watch.Pause",
                                 systemImage: effectiveIsPaused ? "play.circle.fill" : "pause.circle.fill"
                             )
                                 .frame(maxWidth: .infinity)
@@ -205,7 +205,7 @@ struct LogSessionWatchView: View {
                         Button {
                             stopSession()
                         } label: {
-                            Label("Finish Session", systemImage: "checkmark.circle.fill")
+                            Label("Watch.FinishSession", systemImage: "checkmark.circle.fill")
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.borderedProminent)
@@ -219,7 +219,7 @@ struct LogSessionWatchView: View {
                                 showMarkPageSheet = true
                             } label: {
                                 Label(
-                                    showPositionMarked ? "Position Saved!" : "Mark Position",
+                                    showPositionMarked ? "Watch.PositionSaved" : "Watch.MarkPosition",
                                     systemImage: showPositionMarked ? "checkmark.circle.fill" : "bookmark.fill"
                                 )
                                 .frame(maxWidth: .infinity)
@@ -233,7 +233,7 @@ struct LogSessionWatchView: View {
             }
             .padding()
         }
-        .navigationTitle("Reading Session")
+        .navigationTitle("Watch.ReadingSession")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(isActive)
         .toolbar {
@@ -250,13 +250,13 @@ struct LogSessionWatchView: View {
                 }
             }
         }
-        .alert("Leave Active Session?", isPresented: $showBackButtonAlert) {
+        .alert("Watch.LeaveActiveSession", isPresented: $showBackButtonAlert) {
             Button("Cancel", role: .cancel) {}
-            Button("Leave Session", role: .destructive) {
+            Button("Watch.LeaveSession", role: .destructive) {
                 dismiss()
             }
         } message: {
-            Text("Your session is still active. Leaving won't end it, but you won't be able to track pages until you return.")
+            Text("Watch.LeaveSessionMessage")
         }
         .sheet(isPresented: $showMarkPageSheet) {
             MarkPositionSheet(
@@ -328,11 +328,11 @@ struct LogSessionWatchView: View {
                 elapsedTime += 1
             }
         }
-        .alert("Active Session Found", isPresented: $showActiveSessionAlert) {
+        .alert("Watch.ActiveSessionFound", isPresented: $showActiveSessionAlert) {
             Button("Cancel", role: .cancel) {
                 pendingActiveSession = nil
             }
-            Button("End & Start New", role: .destructive) {
+            Button("Watch.EndStartNew", role: .destructive) {
                 if let existing = pendingActiveSession {
                     endExistingSessionAndStartNew(existing)
                 }
@@ -342,13 +342,13 @@ struct LogSessionWatchView: View {
                let bookTitle = existing.book?.title {
                 Text(
                     String.localizedStringWithFormat(
-                        String(localized: "There's an active session for \"%@\" started on %@. End it and start a new one?"),
+                        String(localized: "Watch.ActiveSessionDetail"),
                         bookTitle,
                         existing.sourceDevice
                     )
                 )
             } else {
-                Text("There's already an active reading session. End it and start a new one?")
+                Text("Watch.ActiveSessionGeneric")
             }
         }
     }
