@@ -10,20 +10,24 @@ import SwiftUI
 struct LevelDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     @Bindable var profile: UserProfile
 
     private var xpPerPageSubtitle: String {
-        "Earn \(XPCalculator.xpPerPage) XP per page"
+        let format = localized("Level.XPPerPage.Subtitle %lld", locale: locale)
+        return String(format: format, locale: locale, arguments: [XPCalculator.xpPerPage])
     }
 
     private var xpPerPageDetail: String {
-        "\(XPCalculator.xpPerPage) XP per page read"
+        let format = localized("Level.XPPerPage.Detail %lld", locale: locale)
+        return String(format: format, locale: locale, arguments: [XPCalculator.xpPerPage])
     }
 
     private var durationBonusDetail: String {
         let bonusValues = XPCalculator.durationBonuses.map { "\($0.bonus)" }.joined(separator: "/")
         let timeValues = XPCalculator.durationBonuses.map { formatMinutes($0.minMinutes) }.joined(separator: "/")
-        return "\(bonusValues) XP at \(timeValues)"
+        let format = localized("Level.DurationBonus.Detail %@ %@", locale: locale)
+        return String(format: format, locale: locale, arguments: [bonusValues, timeValues])
     }
 
     var body: some View {
@@ -51,7 +55,7 @@ struct LevelDetailView: View {
                                     .foregroundStyle(themeColor.color)
                                     .frame(width: 16)
 
-                                Text("Your Progress")
+                                Text(verbatim: localized("Level.Progress.Title", locale: locale))
                                     .font(.headline)
                             }
 
@@ -111,9 +115,10 @@ struct LevelDetailView: View {
                                         .foregroundStyle(themeColor.color)
 
                                     Text(
-                                        String.localizedStringWithFormat(
-                                            String(localized: "Level %lld"),
-                                            profile.currentLevel
+                                        String(
+                                            format: localized("Level.LevelFormat %lld", locale: locale),
+                                            locale: locale,
+                                            arguments: [profile.currentLevel]
                                         )
                                     )
                                         .font(.title2)
@@ -125,9 +130,10 @@ struct LevelDetailView: View {
                                         .foregroundStyle(themeColor.color)
 
                                     Text(
-                                        String.localizedStringWithFormat(
-                                            String(localized: "%lld XP"),
-                                            profile.totalXP
+                                        String(
+                                            format: localized("Level.XPFormat %lld", locale: locale),
+                                            locale: locale,
+                                            arguments: [profile.totalXP]
                                         )
                                     )
                                         .font(.title2)
@@ -149,7 +155,7 @@ struct LevelDetailView: View {
                                     .foregroundStyle(themeColor.color)
                                     .frame(width: 16)
 
-                                Text("XP Breakdown")
+                                Text(verbatim: localized("Level.Breakdown.Title", locale: locale))
                                     .font(.headline)
                             }
 
@@ -177,16 +183,17 @@ struct LevelDetailView: View {
                                     .shadow(color: themeColor.color.opacity(0.3), radius: 6, y: 3)
 
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text("Current Level")
+                                        Text(verbatim: localized("Level.CurrentLevel", locale: locale))
                                             .font(.subheadline)
                                             .fontWeight(.semibold)
                                             .foregroundStyle(Theme.Colors.text)
                                             .lineLimit(2)
 
                                         Text(
-                                            String.localizedStringWithFormat(
-                                                String(localized: "Level %lld"),
-                                                profile.currentLevel
+                                            String(
+                                                format: localized("Level.LevelFormat %lld", locale: locale),
+                                                locale: locale,
+                                                arguments: [profile.currentLevel]
                                             )
                                         )
                                             .font(.caption)
@@ -197,9 +204,10 @@ struct LevelDetailView: View {
                                             Image(systemName: "bolt.fill")
                                                 .font(.caption2)
                                             Text(
-                                                String.localizedStringWithFormat(
-                                                    String(localized: "%lld total XP"),
-                                                    profile.totalXP
+                                                String(
+                                                    format: localized("Level.TotalXPFormat %lld", locale: locale),
+                                                    locale: locale,
+                                                    arguments: [profile.totalXP]
                                                 )
                                             )
                                                 .font(.caption)
@@ -235,16 +243,17 @@ struct LevelDetailView: View {
                                     .shadow(color: themeColor.color.opacity(0.3), radius: 6, y: 3)
 
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text("Next Level")
+                                        Text(verbatim: localized("Level.NextLevel", locale: locale))
                                             .font(.subheadline)
                                             .fontWeight(.semibold)
                                             .foregroundStyle(Theme.Colors.text)
                                             .lineLimit(2)
 
                                         Text(
-                                            String.localizedStringWithFormat(
-                                                String(localized: "Level %lld"),
-                                                profile.currentLevel + 1
+                                            String(
+                                                format: localized("Level.LevelFormat %lld", locale: locale),
+                                                locale: locale,
+                                                arguments: [profile.currentLevel + 1]
                                             )
                                         )
                                             .font(.caption)
@@ -255,9 +264,10 @@ struct LevelDetailView: View {
                                             Image(systemName: "bolt.fill")
                                                 .font(.caption2)
                                             Text(
-                                                String.localizedStringWithFormat(
-                                                    String(localized: "%lld XP needed"),
-                                                    profile.xpForNextLevel - profile.totalXP
+                                                String(
+                                                    format: localized("Level.XPNeededFormat %lld", locale: locale),
+                                                    locale: locale,
+                                                    arguments: [profile.xpForNextLevel - profile.totalXP]
                                                 )
                                             )
                                                 .font(.caption)
@@ -283,7 +293,7 @@ struct LevelDetailView: View {
                                     .foregroundStyle(themeColor.color)
                                     .frame(width: 16)
 
-                                Text("Earn XP By")
+                                Text(verbatim: localized("Level.EarnXPBy", locale: locale))
                                     .font(.headline)
                             }
 
@@ -311,7 +321,7 @@ struct LevelDetailView: View {
                                     .shadow(color: themeColor.color.opacity(0.3), radius: 6, y: 3)
 
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text("Reading Pages")
+                                        Text(verbatim: localized("Level.ReadingPages", locale: locale))
                                             .font(.subheadline)
                                             .fontWeight(.semibold)
                                             .foregroundStyle(Theme.Colors.text)
@@ -359,13 +369,13 @@ struct LevelDetailView: View {
                                     .shadow(color: themeColor.color.opacity(0.3), radius: 6, y: 3)
 
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text("Session Bonus")
+                                        Text(verbatim: localized("Level.SessionBonus", locale: locale))
                                             .font(.subheadline)
                                             .fontWeight(.semibold)
                                             .foregroundStyle(Theme.Colors.text)
                                             .lineLimit(2)
 
-                                        Text("Read longer sessions")
+                                        Text(verbatim: localized("Level.SessionBonus.Subtitle", locale: locale))
                                             .font(.caption)
                                             .foregroundStyle(Theme.Colors.secondaryText)
                                             .lineLimit(1)
@@ -395,12 +405,14 @@ struct LevelDetailView: View {
                     .padding(.bottom, 40)
                 }
             }
-            .navigationTitle("Your Level")
+            .navigationTitle("Level.Title")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
+                    Button {
                         dismiss()
+                    } label: {
+                        Text(verbatim: localized("Common.Done", locale: locale))
                     }
                     .foregroundStyle(themeColor.color)
                 }
