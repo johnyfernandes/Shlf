@@ -179,6 +179,7 @@ struct SessionRowWatch: View {
     private var timeAgo: String {
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .short
+        formatter.locale = locale
         return formatter.localizedString(for: session.startDate, relativeTo: Date())
     }
 
