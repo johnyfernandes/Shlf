@@ -227,7 +227,7 @@ private struct FeatureRequestRow: View {
                 .foregroundStyle(Theme.Colors.secondaryText)
                 .lineLimit(2)
 
-            HStack(spacing: Theme.Spacing.m) {
+            HStack(spacing: Theme.Spacing.md) {
                 Text(FeatureRequestCategory.localizedTitle(for: request.category, locale: locale))
                     .font(.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
@@ -243,14 +243,14 @@ private struct FeatureRequestRow: View {
     }
 }
 
-private struct VoteButtons: View {
+struct VoteButtons: View {
     let myVote: Bool?
     let upvotes: Int
     let downvotes: Int
     let onVote: (Bool) -> Void
 
     var body: some View {
-        HStack(spacing: Theme.Spacing.s) {
+        HStack(spacing: Theme.Spacing.sm) {
             Button {
                 onVote(true)
             } label: {
@@ -272,7 +272,7 @@ private struct VoteButtons: View {
     }
 }
 
-private struct FeatureVote {
+struct FeatureVote {
     let request: FeatureRequest
     let isUpvote: Bool
 }

@@ -72,5 +72,7 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<key>SHLF_API_KEY</key>
+	<string>shlf_app_f26063a27d063b111e1481f4d62fb857a861db075d9603215e07be40376d15d8</string>
 </dict>
 </plist>

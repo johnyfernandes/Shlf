@@ -178,6 +178,20 @@ struct SettingsView: View {
                         }
                     }
 
+                    Section("Feedback") {
+                        NavigationLink {
+                            FeedbackView()
+                        } label: {
+                            Label("Send Feedback", systemImage: "bubble.left.and.text.bubble.right")
+                        }
+
+                        NavigationLink {
+                            FeatureRequestsView()
+                        } label: {
+                            Label("Feature Requests", systemImage: "lightbulb")
+                        }
+                    }
+
                     Section("Data") {
                         NavigationLink {
                             DataManagementView()
