@@ -164,7 +164,17 @@ struct StatItem: View {
 
 struct SessionRowWatch: View {
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     let session: ReadingSession
+
+    private var sessionTitle: String {
+        String(
+            format: watchLocalized("Watch.Session.FromTo %lld %lld", locale: locale),
+            locale: locale,
+            session.startPage,
+            session.endPage
+        )
+    }
 
     private var timeAgo: String {
         let formatter = RelativeDateTimeFormatter()
@@ -185,7 +195,7 @@ struct SessionRowWatch: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text(session.displayName)
+                Text(sessionTitle)
                     .font(.headline)
                 Spacer()
                 Text(
