@@ -19,6 +19,7 @@ struct BookDetailWatchView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.locale) private var locale
     @Bindable var book: Book
     @Query private var profiles: [UserProfile]
 
@@ -118,12 +119,8 @@ struct BookDetailWatchView: View {
                             .font(.system(size: 36, weight: .bold, design: .rounded))
                             .foregroundStyle(themeColor.color)
 
-                        Text(
-                            String.localizedStringWithFormat(
-                                String(localized: "Watch.Book.ProgressOfPages %lld"),
-                                totalPages
-                            )
-                        )
+                        let pagesFormat = watchLocalized("Watch.Book.ProgressOfPages %lld", locale: locale)
+                        Text(String(format: pagesFormat, locale: locale, totalPages))
                             .font(.caption)
                             .foregroundStyle(.secondary)
 

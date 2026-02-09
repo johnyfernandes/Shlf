@@ -657,6 +657,7 @@
       }
     },
     "Watch.Book.ProgressOfPages %lld" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
