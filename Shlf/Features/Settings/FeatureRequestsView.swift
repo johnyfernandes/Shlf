@@ -258,6 +258,7 @@ struct VoteButtons: View {
                     .labelStyle(.titleAndIcon)
             }
             .buttonStyle(.plain)
+            .foregroundStyle(myVote == true ? Color.green : Theme.Colors.secondaryText)
 
             Button {
                 onVote(false)
@@ -266,9 +267,9 @@ struct VoteButtons: View {
                     .labelStyle(.titleAndIcon)
             }
             .buttonStyle(.plain)
+            .foregroundStyle(myVote == false ? Color.red : Theme.Colors.secondaryText)
         }
         .font(.caption)
-        .foregroundStyle(Theme.Colors.secondaryText)
     }
 }
 
