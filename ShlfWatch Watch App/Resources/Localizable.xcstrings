@@ -889,6 +889,7 @@
       }
     },
     "Watch.Date" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -985,6 +986,7 @@
       }
     },
     "Watch.End" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1145,6 +1147,7 @@
       }
     },
     "Watch.ImportedSession" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1369,6 +1372,7 @@
       }
     },
     "Watch.ManualSession" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1612,6 +1616,7 @@
       }
     },
     "Watch.Progress" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1628,6 +1633,7 @@
       }
     },
     "Watch.QuickLog" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1821,6 +1827,7 @@
       }
     },
     "Watch.SessionDetails" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
