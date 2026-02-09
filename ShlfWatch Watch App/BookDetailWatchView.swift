@@ -120,7 +120,7 @@ struct BookDetailWatchView: View {
 
                         Text(
                             String.localizedStringWithFormat(
-                                String(localized: "of %lld pages"),
+                                String(localized: "Watch.Book.ProgressOfPages %lld"),
                                 totalPages
                             )
                         )
@@ -170,7 +170,7 @@ struct BookDetailWatchView: View {
                     Button {
                         showingAddPages = true
                     } label: {
-                        Label("Custom Amount", systemImage: "slider.horizontal.3")
+                        Label("Watch.Book.CustomAmount", systemImage: "slider.horizontal.3")
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
@@ -179,7 +179,7 @@ struct BookDetailWatchView: View {
                     NavigationLink {
                         LogSessionWatchView(book: book)
                     } label: {
-                        Label("Log Session", systemImage: "clock.fill")
+                        Label("Watch.Book.LogSession", systemImage: "clock.fill")
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
@@ -187,7 +187,7 @@ struct BookDetailWatchView: View {
                     NavigationLink {
                         SessionsListWatchView(book: book)
                     } label: {
-                        Label("View Sessions", systemImage: "list.bullet")
+                        Label("Watch.Book.ViewSessions", systemImage: "list.bullet")
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
@@ -198,7 +198,7 @@ struct BookDetailWatchView: View {
                         .padding(.vertical, 2)
 
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Last Position")
+                        Text("Watch.Book.LastPosition")
                             .font(.caption)
                             .foregroundStyle(.secondary)
 
@@ -225,7 +225,7 @@ struct BookDetailWatchView: View {
                             ) // No pages read, just position change
                             WatchConnectivityManager.shared.sendPageDelta(delta)
                         } label: {
-                            Label("Resume Here", systemImage: "arrow.forward.circle")
+                            Label("Watch.Book.ResumeHere", systemImage: "arrow.forward.circle")
                                 .font(.caption)
                         }
                         .buttonStyle(.bordered)
@@ -382,7 +382,7 @@ struct AddPagesWatchView: View {
                 .focused($isFocused)
                 .frame(height: 80)
 
-            Text(intAmount == 0 ? "Use Digital Crown" : intAmount > 0 ? "pages to add" : "pages to remove")
+            Text(intAmount == 0 ? String(localized: "Watch.Book.UseDigitalCrown") : intAmount > 0 ? String(localized: "Watch.Book.PagesToAdd") : String(localized: "Watch.Book.PagesToRemove"))
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .padding(.top, 4)

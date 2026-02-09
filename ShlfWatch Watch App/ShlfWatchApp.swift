@@ -14,6 +14,7 @@ struct ShlfWatch_Watch_AppApp: App {
     @State private var modelContainer: ModelContainer?
     @State private var modelError: Error?
     @Environment(\.scenePhase) private var scenePhase
+    @AppStorage("debugWatchLanguageOverride") private var debugLanguageOverride = WatchAppLanguage.system.rawValue
 
     init() {
         do {
@@ -38,6 +39,13 @@ struct ShlfWatch_Watch_AppApp: App {
         }
     }
 
+    private var resolvedLocale: Locale? {
+        guard let language = WatchAppLanguage(rawValue: debugLanguageOverride) else {
+            return nil
+        }
+        return language.locale
+    }
+
     var body: some Scene {
         WindowGroup {
             if let error = modelError {
@@ -45,6 +53,7 @@ struct ShlfWatch_Watch_AppApp: App {
             } else if let container = modelContainer {
                 ContentView()
                     .modelContainer(container)
+                    .environment(\.locale, resolvedLocale ?? Locale.current)
                     .onAppear {
                         WatchConnectivityManager.shared.configure(modelContext: container.mainContext)
                         WatchConnectivityManager.shared.activate()

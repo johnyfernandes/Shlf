@@ -7,6 +7,7 @@ struct DeveloperSettingsWatchView: View {
     @Environment(\.themeColor) private var themeColor
     @AppStorage("debugWatchThemeOverrideEnabled") private var debugThemeOverrideEnabled = false
     @AppStorage("debugWatchThemeOverrideColor") private var debugThemeOverrideRawValue = ThemeColor.blue.rawValue
+    @AppStorage("debugWatchLanguageOverride") private var debugLanguageOverride = WatchAppLanguage.system.rawValue
     @State private var mockRange: MockSeedRange = .month
     @State private var mockIntensity: MockSeedIntensity = .balanced
     @State private var includePardon = true
@@ -21,6 +22,7 @@ struct DeveloperSettingsWatchView: View {
     var body: some View {
         List {
             themeSection()
+            languageSection()
             mockDataSection()
         }
         .navigationTitle("Watch.Developer")
@@ -64,6 +66,21 @@ struct DeveloperSettingsWatchView: View {
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
+        }
+    }
+
+    private func languageSection() -> some View {
+        Section("Watch.Language") {
+            Picker("Watch.Language", selection: $debugLanguageOverride) {
+                ForEach(WatchAppLanguage.allCases) { language in
+                    Text(language.displayNameKey)
+                        .tag(language.rawValue)
+                }
+            }
+
+            Text("Watch.Language.Help")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
         }
     }
 
