@@ -565,7 +565,7 @@ private struct OnboardingRender: View {
     }
 
     private var renderAssetName: String {
-        "OnboardingStep\(step.rawValue + 1)-\(colorScheme == .dark ? "Dark" : "Light")"
+        "Onboarding\(step.rawValue + 1)"
     }
 }
 
