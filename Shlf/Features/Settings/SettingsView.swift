@@ -14,6 +14,7 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.requestReview) private var requestReview
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     @Bindable var profile: UserProfile
 
     @State private var storeKit = StoreKitService.shared
@@ -187,7 +188,7 @@ struct SettingsView: View {
                         NavigationLink {
                             FeedbackView()
                         } label: {
-                            Label("Send Feedback", systemImage: "bubble.left.and.text.bubble.right")
+                            Label(localized("Send Feedback", locale: locale), systemImage: "bubble.left.and.text.bubble.right")
                         }
 
                         NavigationLink {
@@ -742,6 +743,7 @@ struct AboutView: View {
 struct ReadingPreferencesView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     @Bindable var profile: UserProfile
     @State private var showSaveError = false
     @State private var saveErrorMessage = ""
@@ -770,11 +772,11 @@ struct ReadingPreferencesView: View {
                                 .foregroundStyle(themeColor.color)
                                 .frame(width: 16)
 
-                            Text("About")
+                            Text(localized("About", locale: locale))
                                 .font(.headline)
                         }
 
-                        Text("Customize how you track your reading progress")
+                        Text(localized("Customize how you track your reading progress", locale: locale))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -814,11 +816,11 @@ struct ReadingPreferencesView: View {
                                         .frame(width: 28)
 
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text("Stepper")
+                                        Text(localized("Stepper", locale: locale))
                                             .font(.subheadline.weight(.medium))
                                             .foregroundStyle(.primary)
 
-                                        Text("Use +/- buttons to increment page by page")
+                                        Text(localized("Use +/- buttons to increment page by page", locale: locale))
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
                                     }
@@ -859,11 +861,11 @@ struct ReadingPreferencesView: View {
                                         .frame(width: 28)
 
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text("Slider")
+                                        Text(localized("Slider", locale: locale))
                                             .font(.subheadline.weight(.medium))
                                             .foregroundStyle(.primary)
 
-                                        Text("Drag the slider to quickly jump to any page")
+                                        Text(localized("Drag the slider to quickly jump to any page", locale: locale))
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
                                     }
@@ -940,7 +942,7 @@ struct ReadingPreferencesView: View {
                                     .font(.headline)
                             }
 
-                            Text("When using +/- buttons, this is how many pages to add or remove with each tap")
+                            Text(localized("When using +/- buttons, this is how many pages to add or remove with each tap", locale: locale))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
 

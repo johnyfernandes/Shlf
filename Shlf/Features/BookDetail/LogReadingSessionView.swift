@@ -14,6 +14,7 @@ struct LogReadingSessionView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.themeColor) private var themeColor
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.locale) private var locale
     @Query private var profiles: [UserProfile]
     @Query private var activeSessions: [ActiveReadingSession]
 
@@ -247,7 +248,7 @@ struct LogReadingSessionView: View {
 
     private var progressCard: some View {
         sessionCard {
-            cardHeader(title: "Reading Progress", icon: "book.pages")
+            cardHeader(title: localized("Reading Progress", locale: locale), icon: "book.pages")
 
             HStack(spacing: 12) {
                 progressValueChip(title: "From", value: "\(actualStartPage)")
@@ -276,7 +277,7 @@ struct LogReadingSessionView: View {
 
     private var durationCard: some View {
         sessionCard {
-            cardHeader(title: "Duration", icon: "timer")
+            cardHeader(title: localized("Duration", locale: locale), icon: "timer")
 
             VStack(spacing: 12) {
                 if activeSessionForBook == nil {
@@ -448,7 +449,7 @@ struct LogReadingSessionView: View {
 
     private var quoteCard: some View {
         sessionCard {
-            cardHeader(title: "Save Quote", icon: "quote.bubble")
+            cardHeader(title: localized("Save Quote", locale: locale), icon: "quote.bubble")
 
             Button {
                 showAddQuote = true
@@ -463,7 +464,7 @@ struct LogReadingSessionView: View {
 
     private var sessionDetailsCard: some View {
         sessionCard {
-            cardHeader(title: "Session Details", icon: "calendar")
+            cardHeader(title: localized("Session Details", locale: locale), icon: "calendar")
 
             DatePicker("Session Date", selection: $sessionDate, displayedComponents: [.date, .hourAndMinute])
                 .tint(themeColor.color)
@@ -490,7 +491,7 @@ struct LogReadingSessionView: View {
         }
     }
 
-    private func cardHeader(title: LocalizedStringKey, icon: String) -> some View {
+    private func cardHeader(title: String, icon: String) -> some View {
         HStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.caption.weight(.semibold))
@@ -608,7 +609,7 @@ struct LogReadingSessionView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Tap here!")
                 .font(.caption.weight(.bold))
-            Text("Tap here to edit your last page for this session.")
+            Text(localized("Tap here to edit your last page for this session.", locale: locale))
                 .font(.caption2)
                 .fixedSize(horizontal: false, vertical: true)
         }

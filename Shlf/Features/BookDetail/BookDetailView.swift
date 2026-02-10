@@ -314,7 +314,7 @@ struct BookDetailView: View {
                 sessionToDelete = nil
             }
         } message: {
-            Text("This removes the session and updates stats. If it was your latest session, your current page will roll back to the previous one.")
+            Text(localized("This removes the session and updates stats. If it was your latest session, your current page will roll back to the previous one.", locale: locale))
         }
         .confirmationDialog("Finish Book", isPresented: $showFinishOptions, titleVisibility: .visible) {
             Button("Finished Before Tracking") {
@@ -1817,7 +1817,7 @@ struct FinishBookLogView: View {
                     if includeDuration {
                         DurationPickerView(minutes: $durationMinutes, maxHours: 99)
                     } else {
-                        Text("This finish will count pages only.")
+                        Text(localized("This finish will count pages only.", locale: locale))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

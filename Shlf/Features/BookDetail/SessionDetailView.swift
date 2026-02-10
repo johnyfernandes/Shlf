@@ -12,6 +12,7 @@ struct SessionDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
 
     let session: ReadingSession
     let book: Book
@@ -56,7 +57,7 @@ struct SessionDetailView: View {
             }
             return endDate.formatted(date: .abbreviated, time: .omitted)
         }
-        return "In progress"
+        return localized("In progress", locale: locale)
     }
 
     private var pagesReadText: String {
@@ -133,7 +134,7 @@ struct SessionDetailView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This removes the session and updates stats. If it was your latest session, your current page will roll back to the previous one.")
+            Text(localized("This removes the session and updates stats. If it was your latest session, your current page will roll back to the previous one.", locale: locale))
         }
     }
 

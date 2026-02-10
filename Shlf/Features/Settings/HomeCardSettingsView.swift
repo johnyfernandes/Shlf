@@ -12,6 +12,7 @@ import UniformTypeIdentifiers
 struct HomeCardSettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     @Bindable var profile: UserProfile
     @State private var showSaveError = false
     @State private var saveErrorMessage = ""
@@ -76,11 +77,11 @@ struct HomeCardSettingsView: View {
                                 .foregroundStyle(themeColor.color)
                                 .frame(width: 16)
 
-                            Text("About")
+                            Text(localized("About", locale: locale))
                                 .font(.headline)
                         }
 
-                        Text("Customize which stats appear on your home page. You can show up to 3 cards.")
+                        Text(localized("Customize which stats appear on your home page. You can show up to 3 cards.", locale: locale))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }

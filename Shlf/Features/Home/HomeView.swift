@@ -134,7 +134,7 @@ struct HomeView: View {
                                         isEditingCards = false
                                     }
                                 } label: {
-                                    Text("Done")
+                                    Text(localized("Done", locale: locale))
                                         .font(.body.weight(.semibold))
                                         .foregroundStyle(themeColor.color)
                                 }
@@ -143,7 +143,7 @@ struct HomeView: View {
                                     Button {
                                         showHomeCustomization = true
                                     } label: {
-                                        Label("Customize Home Screen", systemImage: "slider.horizontal.3")
+                                        Label(localized("Customize Home Screen", locale: locale), systemImage: "slider.horizontal.3")
                                     }
 
                                     Button {
@@ -151,7 +151,7 @@ struct HomeView: View {
                                             isEditingCards = true
                                         }
                                     } label: {
-                                        Label("Edit Cards", systemImage: "square.grid.3x3")
+                                        Label(localized("Edit Cards", locale: locale), systemImage: "square.grid.3x3")
                                     }
                                 } label: {
                                     Image(systemName: "ellipsis.circle")
@@ -204,7 +204,7 @@ struct HomeView: View {
                 .font(.title3)
                 .foregroundStyle(Theme.Colors.tertiaryText)
 
-            Text("Ready to read?")
+            Text(localized("Ready to read?", locale: locale))
                 .font(.title3)
                 .foregroundStyle(Theme.Colors.secondaryText)
 
@@ -303,7 +303,7 @@ struct HomeView: View {
     private var currentlyReadingSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             HStack {
-            Text("Currently Reading")
+            Text(localized("Currently Reading", locale: locale))
                     .sectionHeader()
 
                 Spacer()

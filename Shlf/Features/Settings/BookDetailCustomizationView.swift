@@ -12,6 +12,7 @@ import UniformTypeIdentifiers
 struct BookDetailCustomizationView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     @Bindable var profile: UserProfile
     @State private var showSaveError = false
     @State private var saveErrorMessage = ""
@@ -35,7 +36,7 @@ struct BookDetailCustomizationView: View {
             backgroundGradient
             contentView
         }
-        .navigationTitle("Book Details")
+        .navigationTitle(localized("Book Details", locale: locale))
         .navigationBarTitleDisplayMode(.inline)
         .environment(\.editMode, $editMode)
         .toolbar {
@@ -43,8 +44,8 @@ struct BookDetailCustomizationView: View {
                 editButton
             }
         }
-        .alert("Save Error", isPresented: $showSaveError) {
-            Button("OK") {}
+        .alert(localized("Save Error", locale: locale), isPresented: $showSaveError) {
+            Button(localized("OK", locale: locale)) {}
         } message: {
             Text(saveErrorMessage)
         }
@@ -89,11 +90,11 @@ struct BookDetailCustomizationView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
-                Text("About")
+                Text(localized("About", locale: locale))
                     .font(.headline)
             }
 
-            Text("Customize which sections appear on book detail pages and their order. Drag to reorder sections.")
+            Text(localized("Customize which sections appear on book detail pages and their order. Drag to reorder sections.", locale: locale))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }

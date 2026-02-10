@@ -80,7 +80,7 @@ struct LibraryView: View {
                             Button {
                                 showLibraryShare = true
                             } label: {
-                                Label("Share Library", systemImage: "square.and.arrow.up")
+                                Label(localized("Share Library", locale: locale), systemImage: "square.and.arrow.up")
                             }
                         } label: {
                             Image(systemName: "ellipsis.circle")
