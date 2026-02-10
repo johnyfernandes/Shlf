@@ -820,6 +820,7 @@
       }
     },
     "%lld books finished" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1382,6 +1383,7 @@
       }
     },
     "%lld sessions logged" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1428,6 +1430,7 @@
       }
     },
     "%lld sessions tagged" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1474,6 +1477,7 @@
       }
     },
     "%lld timed sessions" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {

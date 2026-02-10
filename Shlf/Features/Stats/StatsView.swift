@@ -1341,6 +1341,7 @@ private struct CalendarCoverStack: View {
 private struct TrendDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     let metric: TrendMetric
     let sessions: [ReadingSession]
     let books: [Book]
@@ -1837,22 +1838,25 @@ private struct TrendDetailView: View {
         switch metric {
         case .pages:
             return Text(
-                String.localizedStringWithFormat(
-                    String(localized: "%lld sessions logged"),
+                String(
+                    format: localized("%lld sessions logged", locale: locale),
+                    locale: locale,
                     sessions.count
                 )
             )
         case .minutes:
             return Text(
-                String.localizedStringWithFormat(
-                    String(localized: "%lld sessions logged"),
+                String(
+                    format: localized("%lld sessions logged", locale: locale),
+                    locale: locale,
                     sessions.count
                 )
             )
         case .books:
             return Text(
-                String.localizedStringWithFormat(
-                    String(localized: "%lld books finished"),
+                String(
+                    format: localized("%lld books finished", locale: locale),
+                    locale: locale,
                     finishedBooksInRange.count
                 )
             )
@@ -1860,8 +1864,9 @@ private struct TrendDetailView: View {
             return categoryCounts.isEmpty
             ? nil
             : Text(
-                String.localizedStringWithFormat(
-                    String(localized: "%lld sessions tagged"),
+                String(
+                    format: localized("%lld sessions tagged", locale: locale),
+                    locale: locale,
                     categoryCounts.first?.1 ?? 0
                 )
             )
@@ -1871,8 +1876,9 @@ private struct TrendDetailView: View {
             return sessions.isEmpty
             ? nil
             : Text(
-                String.localizedStringWithFormat(
-                    String(localized: "%lld timed sessions"),
+                String(
+                    format: localized("%lld timed sessions", locale: locale),
+                    locale: locale,
                     sessions.count
                 )
             )
