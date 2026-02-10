@@ -29,6 +29,7 @@ struct HomeView: View {
     @State private var showLevelDetail = false
     @State private var showStreakDetail = false
     @State private var showHomeCustomization = false
+    @State private var showSettings = false
 
     private var profile: UserProfile {
         if let existing = profiles.first {
@@ -153,6 +154,12 @@ struct HomeView: View {
                                     } label: {
                                         Label(localized("Edit Cards", locale: locale), systemImage: "square.grid.3x3")
                                     }
+
+                                    Button {
+                                        showSettings = true
+                                    } label: {
+                                        Label(localized("Settings", locale: locale), systemImage: "gearshape")
+                                    }
                                 } label: {
                                     Image(systemName: "ellipsis.circle")
                                         .font(.title2)
@@ -187,6 +194,9 @@ struct HomeView: View {
                 NavigationStack {
                     HomeCardSettingsView(profile: profile)
                 }
+            }
+            .sheet(isPresented: $showSettings) {
+                SettingsView(profile: profile)
             }
         }
     }
