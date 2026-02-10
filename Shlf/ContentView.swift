@@ -12,6 +12,7 @@ import UIKit
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.locale) private var locale
     @Query private var profiles: [UserProfile]
     @Query private var activeSessions: [ActiveReadingSession]
     @Query(sort: [SortDescriptor(\Achievement.unlockedAt, order: .reverse)]) private var achievements: [Achievement]
@@ -139,9 +140,10 @@ struct ContentView: View {
         guard !toastedAchievementIDs.contains(achievement.id) else { return }
         toastedAchievementIDs.insert(achievement.id)
 
-        let message = String.localizedStringWithFormat(
-            String(localized: "Achievement unlocked: %@"),
-            achievement.type.localizedName
+        let message = String(
+            format: localized("Achievement unlocked: %@", locale: locale),
+            locale: locale,
+            achievement.type.localizedName(locale: locale)
         )
         toastCenter.show(.achievementUnlocked(title: message, tint: currentThemeColor.color), delay: 0.2)
     }

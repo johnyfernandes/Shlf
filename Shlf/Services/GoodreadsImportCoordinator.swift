@@ -89,16 +89,51 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
     }
 
     static func hasGoodreadsSession() async -> Bool {
+        let url = URL(string: "https://www.goodreads.com/review/import")!
+        let cookies = await cookiesFromStore(for: url)
+        var request = URLRequest(url: url)
+        request.httpShouldHandleCookies = false
+        let headerFields = HTTPCookie.requestHeaderFields(with: cookies)
+        for (header, value) in headerFields {
+            request.setValue(value, forHTTPHeaderField: header)
+        }
+
+        do {
+            let session = URLSession(configuration: .ephemeral)
+            let (data, response) = try await session.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200..<400).contains(httpResponse.statusCode) else {
+                return false
+            }
+
+            let finalURL = httpResponse.url ?? url
+            let path = finalURL.path.lowercased()
+            if path.contains("sign_in") || path.contains("signin") || path.contains("sign_up") || path.contains("signup") {
+                return false
+            }
+
+            if let body = String(data: data, encoding: .utf8) {
+                let lower = body.lowercased()
+                if lower.contains("name=\"user[email]\"") || lower.contains("name=\"user[password]\"") || lower.contains("sign in") {
+                    return false
+                }
+            }
+
+            return finalURL.host?.contains("goodreads.com") == true
+        } catch {
+            return false
+        }
+    }
+
+    private static func cookiesFromStore(for url: URL) async -> [HTTPCookie] {
         await withCheckedContinuation { continuation in
             WKWebsiteDataStore.default().httpCookieStore.getAllCookies { cookies in
-                let now = Date()
-                let connected = cookies.contains { cookie in
-                    let domain = cookie.domain.lowercased()
-                    let isGoodreads = domain.contains("goodreads.com")
-                    let expires = cookie.expiresDate ?? now.addingTimeInterval(3600)
-                    return isGoodreads && expires > now
+                let host = url.host?.lowercased() ?? ""
+                let filtered = cookies.filter { cookie in
+                    let domain = cookie.domain.trimmingCharacters(in: CharacterSet(charactersIn: ".")).lowercased()
+                    return host.hasSuffix(domain)
                 }
-                continuation.resume(returning: connected)
+                continuation.resume(returning: filtered)
             }
         }
     }

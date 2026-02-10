@@ -85,17 +85,39 @@ final class KindleImportCoordinator: NSObject, ObservableObject {
     }
 
     static func hasAmazonSession() async -> Bool {
-        await withCheckedContinuation { continuation in
-            WKWebsiteDataStore.default().httpCookieStore.getAllCookies { cookies in
-                let now = Date()
-                let connected = cookies.contains { cookie in
-                    let domain = cookie.domain.lowercased()
-                    let isAmazon = domain.contains("amazon") || domain.contains("read.amazon")
-                    let expires = cookie.expiresDate ?? now.addingTimeInterval(3600)
-                    return isAmazon && expires > now
-                }
-                continuation.resume(returning: connected)
+        let url = URL(string: "https://read.amazon.com/kindle-library")!
+        let cookies = await cookies(for: url)
+        var request = URLRequest(url: url)
+        request.httpShouldHandleCookies = false
+        let headerFields = HTTPCookie.requestHeaderFields(with: cookies)
+        for (header, value) in headerFields {
+            request.setValue(value, forHTTPHeaderField: header)
+        }
+
+        do {
+            let session = URLSession(configuration: .ephemeral)
+            let (data, response) = try await session.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse,
+                  (200..<400).contains(httpResponse.statusCode) else {
+                return false
             }
+
+            let finalURL = httpResponse.url ?? url
+            let path = finalURL.path.lowercased()
+            if path.contains("signin") || path.contains("sign-in") || path.contains("ap/signin") {
+                return false
+            }
+
+            if let body = String(data: data, encoding: .utf8) {
+                let lower = body.lowercased()
+                if lower.contains("sign in") && (lower.contains("amazon") || lower.contains("kindle")) {
+                    return false
+                }
+            }
+
+            return finalURL.host?.contains("read.amazon") == true
+        } catch {
+            return false
         }
     }
 
@@ -182,6 +204,19 @@ final class KindleImportCoordinator: NSObject, ObservableObject {
             if error != nil {
                 self.phase = .failed("We couldn't read your Kindle library. Please try again.")
                 self.errorMessage = "We couldn't read your Kindle library. Please try again."
+            }
+        }
+    }
+
+    private static func cookies(for url: URL) async -> [HTTPCookie] {
+        await withCheckedContinuation { continuation in
+            WKWebsiteDataStore.default().httpCookieStore.getAllCookies { cookies in
+                let host = url.host?.lowercased() ?? ""
+                let filtered = cookies.filter { cookie in
+                    let domain = cookie.domain.trimmingCharacters(in: CharacterSet(charactersIn: ".")).lowercased()
+                    return host.hasSuffix(domain)
+                }
+                continuation.resume(returning: filtered)
             }
         }
     }

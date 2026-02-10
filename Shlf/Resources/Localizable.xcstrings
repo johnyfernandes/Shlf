@@ -3258,6 +3258,7 @@
       }
     },
     "Achievement unlocked: %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
