@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import OSLog
 
 @MainActor
 enum SwiftDataConfig {
@@ -36,7 +37,7 @@ enum SwiftDataConfig {
         let fileName = mode == .cloud ? "ShlfCloud.sqlite" : "Shlf.sqlite"
         let modelConfiguration = ModelConfiguration(
             schema: schema,
-            url: containerURL(fileName: fileName),
+            url: try containerURL(fileName: fileName),
             cloudKitDatabase: mode == .cloud ? .private(cloudContainerId) : .none
         )
 
@@ -58,11 +59,24 @@ enum SwiftDataConfig {
         defaults.set(mode.rawValue, forKey: storageModeKey)
     }
 
-    private static func containerURL(fileName: String) -> URL {
+    enum AppGroupError: LocalizedError {
+        case missingAppGroupContainer(String)
+
+        var errorDescription: String? {
+            switch self {
+            case .missingAppGroupContainer(let id):
+                return "App group container not found: \(id)"
+            }
+        }
+    }
+
+    private static func containerURL(fileName: String) throws -> URL {
         guard let appGroupURL = FileManager.default.containerURL(
             forSecurityApplicationGroupIdentifier: appGroupID
         ) else {
-            fatalError("App group container not found: \(appGroupID)")
+            Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.shlf.app", category: "SwiftData")
+                .error("App group container not found: \(appGroupID)")
+            throw AppGroupError.missingAppGroupContainer(appGroupID)
         }
 
         return appGroupURL.appendingPathComponent(fileName)

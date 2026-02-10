@@ -167,8 +167,13 @@ struct SettingsView: View {
                             Label("Onboarding", systemImage: "sparkles")
                         }
 
-                        Link(destination: URL(string: "https://shlf.app")!) {
+                        if let url = URL(string: "https://shlf.app") {
+                            Link(destination: url) {
+                                Label("Visit shlf.app", systemImage: "safari")
+                            }
+                        } else {
                             Label("Visit shlf.app", systemImage: "safari")
+                                .foregroundStyle(Theme.Colors.secondaryText)
                         }
 
                         Button {
@@ -697,16 +702,31 @@ struct AboutView: View {
                     .padding(.horizontal, Theme.Spacing.xl)
 
                 VStack(spacing: Theme.Spacing.sm) {
-                    Link(destination: URL(string: "https://shlf.app/privacy")!) {
+                    if let url = URL(string: "https://shlf.app/privacy") {
+                        Link(destination: url) {
+                            Label("Privacy Policy", systemImage: "hand.raised")
+                        }
+                    } else {
                         Label("Privacy Policy", systemImage: "hand.raised")
+                            .foregroundStyle(Theme.Colors.secondaryText)
                     }
 
-                    Link(destination: URL(string: "https://shlf.app/support")!) {
+                    if let url = URL(string: "https://shlf.app/support") {
+                        Link(destination: url) {
+                            Label("Support", systemImage: "questionmark.circle")
+                        }
+                    } else {
                         Label("Support", systemImage: "questionmark.circle")
+                            .foregroundStyle(Theme.Colors.secondaryText)
                     }
 
-                    Link(destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!) {
+                    if let url = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/") {
+                        Link(destination: url) {
+                            Label("EULA", systemImage: "doc.text")
+                        }
+                    } else {
                         Label("EULA", systemImage: "doc.text")
+                            .foregroundStyle(Theme.Colors.secondaryText)
                     }
                 }
                 .font(Theme.Typography.body)

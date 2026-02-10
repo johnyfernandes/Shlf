@@ -225,11 +225,22 @@ struct PaywallView: View {
     }
 
     private var legalSection: some View {
-        HStack(spacing: Theme.Spacing.sm) {
-            Link(localized("Terms", locale: locale), destination: URL(string: "https://shlf.app/terms")!)
+        let termsURL = URL(string: "https://shlf.app/terms")
+        let privacyURL = URL(string: "https://shlf.app/privacy")
+
+        return HStack(spacing: Theme.Spacing.sm) {
+            if let termsURL {
+                Link(localized("Terms", locale: locale), destination: termsURL)
+            } else {
+                Text(localized("Terms", locale: locale))
+            }
             Text(verbatim: "•")
                 .foregroundStyle(Theme.Colors.tertiaryText)
-            Link(localized("Privacy", locale: locale), destination: URL(string: "https://shlf.app/privacy")!)
+            if let privacyURL {
+                Link(localized("Privacy", locale: locale), destination: privacyURL)
+            } else {
+                Text(localized("Privacy", locale: locale))
+            }
         }
         .font(Theme.Typography.caption)
         .foregroundStyle(Theme.Colors.tertiaryText)
