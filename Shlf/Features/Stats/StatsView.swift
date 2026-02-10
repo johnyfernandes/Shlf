@@ -1577,10 +1577,11 @@ private struct TrendDetailView: View {
     }
 
     private func metricChartCard(valueKeyPath: KeyPath<DailySnapshot, Int>, title: LocalizedStringKey, highlight: Text) -> some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             Text(title)
                 .font(Theme.Typography.headline)
                 .foregroundStyle(Theme.Colors.text)
+                .padding(.bottom, Theme.Spacing.xs)
 
             if dailySnapshots.allSatisfy({ $0[keyPath: valueKeyPath] == 0 }) {
                 Text("No activity yet in this range.")
