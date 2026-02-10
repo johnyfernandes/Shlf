@@ -14,9 +14,10 @@ private enum ReadingConstants {
     static let defaultMaxPages = 1000
 }
 
+private let watchLogger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.shlf.app", category: "WatchSync")
+
 class WatchConnectivityManager: NSObject {
     static let shared = WatchConnectivityManager()
-    static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.shlf.app", category: "WatchSync")
     static let languageOverrideKey = "languageOverride"
 
     private var modelContainer: ModelContainer?
@@ -53,7 +54,7 @@ class WatchConnectivityManager: NSObject {
 
         let removedCount = oldCount - endedActiveSessionIDs.count
         if removedCount > 0 {
-            Self.logger.info("🧹 Cleaned up \(removedCount) old ended session IDs (kept \(self.endedActiveSessionIDs.count))")
+            watchLogger.info("🧹 Cleaned up \(removedCount) old ended session IDs (kept \(self.endedActiveSessionIDs.count))")
         }
     }
 
@@ -88,12 +89,12 @@ class WatchConnectivityManager: NSObject {
         let session = WCSession.default
         session.delegate = self
         session.activate()
-        Self.logger.info("WatchConnectivity activated on iPhone")
+        watchLogger.info("WatchConnectivity activated on iPhone")
     }
 
     func sendLanguageOverrideToWatch(_ rawValue: String) {
         guard WCSession.default.activationState == .activated else {
-            Self.logger.warning("WC not activated")
+            watchLogger.warning("WC not activated")
             return
         }
 
@@ -102,15 +103,15 @@ class WatchConnectivityManager: NSObject {
 
         do {
             try WCSession.default.updateApplicationContext(context)
-            Self.logger.info("📤 Sent language override to Watch: \(rawValue)")
+            watchLogger.info("📤 Sent language override to Watch: \(rawValue)")
         } catch {
-            Self.logger.error("Failed to update language override context: \(error)")
+            watchLogger.error("Failed to update language override context: \(error)")
         }
     }
 
     func sendPageDeltaToWatch(bookUUID: UUID, delta: Int, newPage: Int? = nil) {
         guard WCSession.default.activationState == .activated else {
-            Self.logger.warning("WC not activated")
+            watchLogger.warning("WC not activated")
             return
         }
 
@@ -122,25 +123,25 @@ class WatchConnectivityManager: NSObject {
                     ["pageDelta": data],
                     replyHandler: nil,
                     errorHandler: { error in
-                        Self.logger.error("❌ sendMessage failed: \(error.localizedDescription)")
+                        watchLogger.error("❌ sendMessage failed: \(error.localizedDescription)")
                         // Automatic fallback to guaranteed delivery
                         WCSession.default.transferUserInfo(["pageDelta": data])
-                        Self.logger.info("↩️ Auto-fallback: Queued page delta for guaranteed delivery")
+                        watchLogger.info("↩️ Auto-fallback: Queued page delta for guaranteed delivery")
                     }
                 )
-                Self.logger.info("📤 Sent page delta (instant): \(delta)")
+                watchLogger.info("📤 Sent page delta (instant): \(delta)")
             } else {
                 WCSession.default.transferUserInfo(["pageDelta": data])
-                Self.logger.info("📦 Queued page delta (guaranteed): \(delta)")
+                watchLogger.info("📦 Queued page delta (guaranteed): \(delta)")
             }
         } catch {
-            Self.logger.error("Encoding error: \(error)")
+            watchLogger.error("Encoding error: \(error)")
         }
     }
 
     func sendSessionDeletionToWatch(sessionIds: [UUID]) {
         guard WCSession.default.activationState == .activated else {
-            Self.logger.warning("WC not activated")
+            watchLogger.warning("WC not activated")
             return
         }
 
@@ -153,27 +154,27 @@ class WatchConnectivityManager: NSObject {
                     ["sessionDeletion": data],
                     replyHandler: nil,
                     errorHandler: { error in
-                        Self.logger.error("Failed to send session deletion to Watch: \(error)")
+                        watchLogger.error("Failed to send session deletion to Watch: \(error)")
                     }
                 )
-                Self.logger.info("📤 Sent session deletion to Watch: \(sessionIds.count) session(s)")
+                watchLogger.info("📤 Sent session deletion to Watch: \(sessionIds.count) session(s)")
             } else {
                 WCSession.default.transferUserInfo(["sessionDeletion": data])
-                Self.logger.info("📦 Queued session deletion to Watch: \(sessionIds.count) session(s)")
+                watchLogger.info("📦 Queued session deletion to Watch: \(sessionIds.count) session(s)")
             }
         } catch {
-            Self.logger.error("Encoding error: \(error)")
+            watchLogger.error("Encoding error: \(error)")
         }
     }
 
     func sendSessionToWatch(_ session: ReadingSession) {
         guard WCSession.default.activationState == .activated else {
-            Self.logger.warning("WC not activated")
+            watchLogger.warning("WC not activated")
             return
         }
 
         guard let bookId = session.book?.id else {
-            Self.logger.warning("Cannot send session without book")
+            watchLogger.warning("Cannot send session without book")
             return
         }
 
@@ -198,16 +199,16 @@ class WatchConnectivityManager: NSObject {
                     ["session": data],
                     replyHandler: nil,
                     errorHandler: { error in
-                        Self.logger.error("Failed to send session to Watch: \(error)")
+                        watchLogger.error("Failed to send session to Watch: \(error)")
                     }
                 )
-                Self.logger.info("Sent session to Watch: \(session.pagesRead) pages")
+                watchLogger.info("Sent session to Watch: \(session.pagesRead) pages")
             } else {
                 WCSession.default.transferUserInfo(["session": data])
-                Self.logger.info("Queued session to Watch: \(session.pagesRead) pages")
+                watchLogger.info("Queued session to Watch: \(session.pagesRead) pages")
             }
         } catch {
-            Self.logger.error("Encoding error: \(error)")
+            watchLogger.error("Encoding error: \(error)")
         }
     }
 
@@ -234,16 +235,16 @@ class WatchConnectivityManager: NSObject {
                     ["profileSettings": data],
                     replyHandler: nil,
                     errorHandler: { error in
-                        Self.logger.error("Failed to send profile settings: \(error)")
+                        watchLogger.error("Failed to send profile settings: \(error)")
                     }
                 )
-                Self.logger.info("Sent profile settings to Watch")
+                watchLogger.info("Sent profile settings to Watch")
             } else {
                 WCSession.default.transferUserInfo(["profileSettings": data])
-                Self.logger.info("Queued profile settings to Watch")
+                watchLogger.info("Queued profile settings to Watch")
             }
         } catch {
-            Self.logger.error("Encoding error: \(error)")
+            watchLogger.error("Encoding error: \(error)")
         }
     }
 
@@ -264,30 +265,30 @@ class WatchConnectivityManager: NSObject {
                     ["profileStats": data],
                     replyHandler: nil,
                     errorHandler: { error in
-                        Self.logger.error("❌ sendMessage failed: \(error.localizedDescription)")
+                        watchLogger.error("❌ sendMessage failed: \(error.localizedDescription)")
                         // Automatic fallback to guaranteed delivery
                         WCSession.default.transferUserInfo(["profileStats": data])
-                        Self.logger.info("↩️ Auto-fallback: Queued profile stats")
+                        watchLogger.info("↩️ Auto-fallback: Queued profile stats")
                     }
                 )
-                Self.logger.info("📤 Sent profile stats (instant): XP=\(profile.totalXP)")
+                watchLogger.info("📤 Sent profile stats (instant): XP=\(profile.totalXP)")
             } else {
                 WCSession.default.transferUserInfo(["profileStats": data])
-                Self.logger.info("📦 Queued profile stats (guaranteed): XP=\(profile.totalXP)")
+                watchLogger.info("📦 Queued profile stats (guaranteed): XP=\(profile.totalXP)")
             }
         } catch {
-            Self.logger.error("Encoding error: \(error)")
+            watchLogger.error("Encoding error: \(error)")
         }
     }
 
     func sendActiveSessionToWatch(_ activeSession: ActiveReadingSession) {
         guard WCSession.default.activationState == .activated else {
-            Self.logger.warning("WC not activated")
+            watchLogger.warning("WC not activated")
             return
         }
 
         guard let bookId = activeSession.book?.id else {
-            Self.logger.warning("Cannot send active session without book")
+            watchLogger.warning("Cannot send active session without book")
             return
         }
 
@@ -312,18 +313,18 @@ class WatchConnectivityManager: NSObject {
                     ["activeSession": data],
                     replyHandler: nil,
                     errorHandler: { error in
-                        Self.logger.error("❌ sendMessage failed: \(error.localizedDescription)")
+                        watchLogger.error("❌ sendMessage failed: \(error.localizedDescription)")
                         WCSession.default.transferUserInfo(["activeSession": data])
-                        Self.logger.info("↩️ Auto-fallback: Queued active session")
+                        watchLogger.info("↩️ Auto-fallback: Queued active session")
                     }
                 )
-                Self.logger.info("📤 Sent active session (instant): \(activeSession.pagesRead) pages")
+                watchLogger.info("📤 Sent active session (instant): \(activeSession.pagesRead) pages")
             } else {
                 WCSession.default.transferUserInfo(["activeSession": data])
-                Self.logger.info("📦 Queued active session (guaranteed): \(activeSession.pagesRead) pages")
+                watchLogger.info("📦 Queued active session (guaranteed): \(activeSession.pagesRead) pages")
             }
         } catch {
-            Self.logger.error("Encoding error: \(error)")
+            watchLogger.error("Encoding error: \(error)")
         }
     }
 
@@ -338,19 +339,19 @@ class WatchConnectivityManager: NSObject {
 
         // Use transferUserInfo so the end signal always lands and doesn't block UI
         WCSession.default.transferUserInfo(payload)
-        Self.logger.info("📦 Queued active session end (guaranteed)")
+        watchLogger.info("📦 Queued active session end (guaranteed)")
     }
 
     /// Sends a consolidated session completion message to Watch (ATOMIC - replaces separate messages)
     /// Combines activeSessionEnd, completedSession, and liveActivityEnd into a single atomic transfer
     func sendSessionCompletionToWatch(activeSessionId: UUID, completedSession: ReadingSession) {
         guard WCSession.default.activationState == .activated else {
-            Self.logger.warning("WC not activated")
+            watchLogger.warning("WC not activated")
             return
         }
 
         guard let bookId = completedSession.book?.id else {
-            Self.logger.warning("Session has no book")
+            watchLogger.warning("Session has no book")
             return
         }
 
@@ -381,20 +382,20 @@ class WatchConnectivityManager: NSObject {
             WCSession.default.transferUserInfo(["sessionCompletion": data])
             endedActiveSessionIDs[activeSessionId] = Date()
 
-            Self.logger.info("📦 Queued session completion to Watch (atomic): \(completedSession.endPage - completedSession.startPage) pages, \(completedSession.xpEarned) XP")
+            watchLogger.info("📦 Queued session completion to Watch (atomic): \(completedSession.endPage - completedSession.startPage) pages, \(completedSession.xpEarned) XP")
         } catch {
-            Self.logger.error("Encoding error: \(error)")
+            watchLogger.error("Encoding error: \(error)")
         }
     }
 
     func sendBookPositionToWatch(_ position: BookPosition) {
         guard WCSession.default.activationState == .activated else {
-            Self.logger.warning("WC not activated")
+            watchLogger.warning("WC not activated")
             return
         }
 
         guard let bookId = position.book?.id else {
-            Self.logger.warning("Cannot send position without book")
+            watchLogger.warning("Cannot send position without book")
             return
         }
 
@@ -414,27 +415,27 @@ class WatchConnectivityManager: NSObject {
                     ["bookPosition": data],
                     replyHandler: nil,
                     errorHandler: { error in
-                        Self.logger.error("Failed to send position to Watch: \(error)")
+                        watchLogger.error("Failed to send position to Watch: \(error)")
                     }
                 )
-                Self.logger.info("Sent position to Watch: Page \(position.pageNumber)")
+                watchLogger.info("Sent position to Watch: Page \(position.pageNumber)")
             } else {
                 WCSession.default.transferUserInfo(["bookPosition": data])
-                Self.logger.info("Queued position to Watch: Page \(position.pageNumber)")
+                watchLogger.info("Queued position to Watch: Page \(position.pageNumber)")
             }
         } catch {
-            Self.logger.error("Encoding error: \(error)")
+            watchLogger.error("Encoding error: \(error)")
         }
     }
 
     func sendQuotesToWatch(for book: Book) {
         guard WCSession.default.activationState == .activated else {
-            Self.logger.warning("WC not activated")
+            watchLogger.warning("WC not activated")
             return
         }
 
         guard let quotes = book.quotes, !quotes.isEmpty else {
-            Self.logger.info("No quotes to send for book")
+            watchLogger.info("No quotes to send for book")
             return
         }
 
@@ -457,16 +458,16 @@ class WatchConnectivityManager: NSObject {
                     ["quotes": data],
                     replyHandler: nil,
                     errorHandler: { error in
-                        Self.logger.error("Failed to send quotes to Watch: \(error)")
+                        watchLogger.error("Failed to send quotes to Watch: \(error)")
                     }
                 )
-                Self.logger.info("Sent \(quotes.count) quotes to Watch")
+                watchLogger.info("Sent \(quotes.count) quotes to Watch")
             } else {
                 WCSession.default.transferUserInfo(["quotes": data])
-                Self.logger.info("Queued \(quotes.count) quotes to Watch")
+                watchLogger.info("Queued \(quotes.count) quotes to Watch")
             }
         } catch {
-            Self.logger.error("Encoding error: \(error)")
+            watchLogger.error("Encoding error: \(error)")
         }
     }
 
@@ -491,7 +492,7 @@ class WatchConnectivityManager: NSObject {
     @MainActor
     private func performSyncBooksToWatch() async {
         guard WCSession.default.activationState == .activated else {
-            Self.logger.warning("Cannot sync - WC not activated")
+            watchLogger.warning("Cannot sync - WC not activated")
             return
         }
 
@@ -499,12 +500,12 @@ class WatchConnectivityManager: NSObject {
             do {
                 try modelContext.save()
             } catch {
-                Self.logger.error("Pre-sync save failed: \(error)")
+                watchLogger.error("Pre-sync save failed: \(error)")
             }
         }
 
         guard let syncContext = makeSyncContext() else {
-            Self.logger.warning("Cannot sync - context not configured")
+            watchLogger.warning("Cannot sync - context not configured")
             return
         }
 
@@ -516,7 +517,7 @@ class WatchConnectivityManager: NSObject {
             let allBooks = try syncContext.fetch(booksDescriptor)
             let currentlyReading = allBooks.filter { $0.readingStatus == .currentlyReading }
 
-            Self.logger.info("Syncing \(currentlyReading.count) books to Watch...")
+            watchLogger.info("Syncing \(currentlyReading.count) books to Watch...")
 
             // Convert books to transferable format
             let bookTransfers = currentlyReading.map { book in
@@ -546,7 +547,7 @@ class WatchConnectivityManager: NSObject {
                 return bookIds.contains(book.id)
             }
 
-            Self.logger.info("Syncing \(relevantSessions.count) sessions to Watch...")
+            watchLogger.info("Syncing \(relevantSessions.count) sessions to Watch...")
 
             // Convert sessions to transferable format
             let sessionTransfers = relevantSessions.compactMap { session -> SessionTransfer? in
@@ -579,9 +580,9 @@ class WatchConnectivityManager: NSObject {
 
             // Use updateApplicationContext for guaranteed delivery
             try WCSession.default.updateApplicationContext(context)
-            Self.logger.info("Sent \(bookTransfers.count) books and \(sessionTransfers.count) sessions to Watch")
+            watchLogger.info("Sent \(bookTransfers.count) books and \(sessionTransfers.count) sessions to Watch")
         } catch {
-            Self.logger.error("Failed to sync to Watch: \(error)")
+            watchLogger.error("Failed to sync to Watch: \(error)")
         }
     }
 }
@@ -593,9 +594,9 @@ extension WatchConnectivityManager: WCSessionDelegate {
         error: Error?
     ) {
         if let error = error {
-            Self.logger.error("WC activation error: \(error)")
+            watchLogger.error("WC activation error: \(error)")
         } else {
-            Self.logger.info("WC activated: \(activationState.rawValue)")
+            watchLogger.info("WC activated: \(activationState.rawValue)")
             // Sync books to watch when activated
             Task { @MainActor in
                 await WatchConnectivityManager.shared.syncBooksToWatch()
@@ -604,11 +605,11 @@ extension WatchConnectivityManager: WCSessionDelegate {
     }
 
     nonisolated func sessionDidBecomeInactive(_ session: WCSession) {
-        Self.logger.warning("WC session became inactive")
+        watchLogger.warning("WC session became inactive")
     }
 
     nonisolated func sessionDidDeactivate(_ session: WCSession) {
-        Self.logger.warning("WC session deactivated")
+        watchLogger.warning("WC session deactivated")
         // Reactivate session for new watch
         session.activate()
     }
@@ -621,17 +622,17 @@ extension WatchConnectivityManager: WCSessionDelegate {
         _ session: WCSession,
         didReceiveMessage message: [String: Any]
     ) {
-        Self.logger.info("iPhone received message")
+        watchLogger.info("iPhone received message")
 
         // Handle page delta
         if let pageDeltaData = message["pageDelta"] as? Data {
             Task { @MainActor in
                 do {
                     let delta = try JSONDecoder().decode(PageDelta.self, from: pageDeltaData)
-                    Self.logger.info("Received page delta: \(delta.delta) for book")
+                    watchLogger.info("Received page delta: \(delta.delta) for book")
                     await self.handlePageDelta(delta)
                 } catch {
-                    Self.logger.error("Page delta decoding error: \(error)")
+                    watchLogger.error("Page delta decoding error: \(error)")
                 }
             }
         }
@@ -641,10 +642,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
             Task { @MainActor in
                 do {
                     let sessionTransfer = try JSONDecoder().decode(SessionTransfer.self, from: sessionData)
-                    Self.logger.info("Received session from Watch: \(sessionTransfer.endPage - sessionTransfer.startPage) pages")
+                    watchLogger.info("Received session from Watch: \(sessionTransfer.endPage - sessionTransfer.startPage) pages")
                     await self.handleWatchSession(sessionTransfer)
                 } catch {
-                    Self.logger.error("Session decoding error: \(error)")
+                    watchLogger.error("Session decoding error: \(error)")
                 }
             }
         }
@@ -654,10 +655,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
             Task { @MainActor in
                 do {
                     let settings = try JSONDecoder().decode(ProfileSettingsTransfer.self, from: profileData)
-                    Self.logger.info("Received profile settings from Watch")
+                    watchLogger.info("Received profile settings from Watch")
                     await self.handleProfileSettings(settings)
                 } catch {
-                    Self.logger.error("Profile settings decoding error: \(error)")
+                    watchLogger.error("Profile settings decoding error: \(error)")
                 }
             }
         }
@@ -667,10 +668,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
             Task { @MainActor in
                 do {
                     let stats = try JSONDecoder().decode(ProfileStatsTransfer.self, from: statsData)
-                    Self.logger.info("Received profile stats from Watch: XP=\(stats.totalXP), Streak=\(stats.currentStreak)")
+                    watchLogger.info("Received profile stats from Watch: XP=\(stats.totalXP), Streak=\(stats.currentStreak)")
                     await self.handleProfileStats(stats)
                 } catch {
-                    Self.logger.error("Profile stats decoding error: \(error)")
+                    watchLogger.error("Profile stats decoding error: \(error)")
                 }
             }
         }
@@ -680,10 +681,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
             Task { @MainActor in
                 do {
                     let transfer = try JSONDecoder().decode(LiveActivityStartTransfer.self, from: liveActivityData)
-                    Self.logger.info("Received Live Activity start from Watch: \(transfer.bookTitle)")
+                    watchLogger.info("Received Live Activity start from Watch: \(transfer.bookTitle)")
                     await self.handleLiveActivityStart(transfer)
                 } catch {
-                    Self.logger.error("Live Activity start decoding error: \(error)")
+                    watchLogger.error("Live Activity start decoding error: \(error)")
                 }
             }
         }
@@ -695,7 +696,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                     let transfer = try JSONDecoder().decode(LiveActivityUpdateTransfer.self, from: liveActivityData)
                     await self.handleLiveActivityUpdate(transfer)
                 } catch {
-                    Self.logger.error("Live Activity update decoding error: \(error)")
+                    watchLogger.error("Live Activity update decoding error: \(error)")
                 }
             }
         }
@@ -707,7 +708,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                     let transfer = try JSONDecoder().decode(LiveActivityStateTransfer.self, from: liveActivityData)
                     await self.handleLiveActivityState(transfer)
                 } catch {
-                    Self.logger.error("Live Activity state decoding error: \(error)")
+                    watchLogger.error("Live Activity state decoding error: \(error)")
                 }
             }
         }
@@ -724,10 +725,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
             Task { @MainActor in
                 do {
                     let transfer = try JSONDecoder().decode(ActiveSessionTransfer.self, from: activeSessionData)
-                    Self.logger.info("Received active session from Watch: \(transfer.pagesRead) pages")
+                    watchLogger.info("Received active session from Watch: \(transfer.pagesRead) pages")
                     await self.handleActiveSession(transfer)
                 } catch {
-                    Self.logger.error("Active session decoding error: \(error)")
+                    watchLogger.error("Active session decoding error: \(error)")
                 }
             }
         }
@@ -745,10 +746,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
             Task { @MainActor in
                 do {
                     let completion = try JSONDecoder().decode(SessionCompletionTransfer.self, from: completionData)
-                    Self.logger.info("✅ Received atomic session completion from Watch: \(completion.completedSession.endPage - completion.completedSession.startPage) pages")
+                    watchLogger.info("✅ Received atomic session completion from Watch: \(completion.completedSession.endPage - completion.completedSession.startPage) pages")
                     await self.handleSessionCompletion(completion)
                 } catch {
-                    Self.logger.error("Session completion decoding error: \(error)")
+                    watchLogger.error("Session completion decoding error: \(error)")
                 }
             }
         }
@@ -758,10 +759,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
             Task { @MainActor in
                 do {
                     let transfer = try JSONDecoder().decode(BookPositionTransfer.self, from: positionData)
-                    Self.logger.info("Received book position from Watch: Page \(transfer.pageNumber)")
+                    watchLogger.info("Received book position from Watch: Page \(transfer.pageNumber)")
                     await self.handleBookPosition(transfer)
                 } catch {
-                    Self.logger.error("Book position decoding error: \(error)")
+                    watchLogger.error("Book position decoding error: \(error)")
                 }
             }
         }
@@ -771,26 +772,26 @@ extension WatchConnectivityManager: WCSessionDelegate {
             Task { @MainActor in
                 do {
                     let transfers = try JSONDecoder().decode([QuoteTransfer].self, from: quotesData)
-                    Self.logger.info("Received \(transfers.count) quotes from Watch")
+                    watchLogger.info("Received \(transfers.count) quotes from Watch")
                     await self.handleQuotes(transfers)
                 } catch {
-                    Self.logger.error("Quotes decoding error: \(error)")
+                    watchLogger.error("Quotes decoding error: \(error)")
                 }
             }
         }
     }
 
     nonisolated func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any]) {
-        Self.logger.info("iPhone received userInfo payload")
+        watchLogger.info("iPhone received userInfo payload")
 
         if let pageDeltaData = userInfo["pageDelta"] as? Data {
             Task { @MainActor in
                 do {
                     let delta = try JSONDecoder().decode(PageDelta.self, from: pageDeltaData)
-                    Self.logger.info("Received queued page delta: \(delta.delta)")
+                    watchLogger.info("Received queued page delta: \(delta.delta)")
                     await self.handlePageDelta(delta)
                 } catch {
-                    Self.logger.error("Page delta userInfo decoding error: \(error)")
+                    watchLogger.error("Page delta userInfo decoding error: \(error)")
                 }
             }
         }
@@ -799,10 +800,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
             Task { @MainActor in
                 do {
                     let sessionTransfer = try JSONDecoder().decode(SessionTransfer.self, from: sessionData)
-                    Self.logger.info("Received queued session from Watch: \(sessionTransfer.endPage - sessionTransfer.startPage) pages")
+                    watchLogger.info("Received queued session from Watch: \(sessionTransfer.endPage - sessionTransfer.startPage) pages")
                     await self.handleWatchSession(sessionTransfer)
                 } catch {
-                    Self.logger.error("Session userInfo decoding error: \(error)")
+                    watchLogger.error("Session userInfo decoding error: \(error)")
                 }
             }
         }
@@ -811,10 +812,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
             Task { @MainActor in
                 do {
                     let settings = try JSONDecoder().decode(ProfileSettingsTransfer.self, from: profileData)
-                    Self.logger.info("Received queued profile settings from Watch")
+                    watchLogger.info("Received queued profile settings from Watch")
                     await self.handleProfileSettings(settings)
                 } catch {
-                    Self.logger.error("Profile settings userInfo decoding error: \(error)")
+                    watchLogger.error("Profile settings userInfo decoding error: \(error)")
                 }
             }
         }
@@ -823,10 +824,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
             Task { @MainActor in
                 do {
                     let stats = try JSONDecoder().decode(ProfileStatsTransfer.self, from: statsData)
-                    Self.logger.info("Received queued profile stats from Watch: XP=\(stats.totalXP), Streak=\(stats.currentStreak)")
+                    watchLogger.info("Received queued profile stats from Watch: XP=\(stats.totalXP), Streak=\(stats.currentStreak)")
                     await self.handleProfileStats(stats)
                 } catch {
-                    Self.logger.error("Profile stats userInfo decoding error: \(error)")
+                    watchLogger.error("Profile stats userInfo decoding error: \(error)")
                 }
             }
         }
@@ -836,10 +837,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
             Task { @MainActor in
                 do {
                     let transfer = try JSONDecoder().decode(LiveActivityStartTransfer.self, from: liveActivityData)
-                    Self.logger.info("📦 Received queued Live Activity start from Watch: \(transfer.bookTitle)")
+                    watchLogger.info("📦 Received queued Live Activity start from Watch: \(transfer.bookTitle)")
                     await self.handleLiveActivityStart(transfer)
                 } catch {
-                    Self.logger.error("Live Activity start userInfo decoding error: \(error)")
+                    watchLogger.error("Live Activity start userInfo decoding error: \(error)")
                 }
             }
         }
@@ -851,7 +852,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                     let transfer = try JSONDecoder().decode(LiveActivityUpdateTransfer.self, from: liveActivityData)
                     await self.handleLiveActivityUpdate(transfer)
                 } catch {
-                    Self.logger.error("Live Activity update userInfo decoding error: \(error)")
+                    watchLogger.error("Live Activity update userInfo decoding error: \(error)")
                 }
             }
         }
@@ -863,7 +864,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                     let transfer = try JSONDecoder().decode(LiveActivityStateTransfer.self, from: liveActivityData)
                     await self.handleLiveActivityState(transfer)
                 } catch {
-                    Self.logger.error("Live Activity state userInfo decoding error: \(error)")
+                    watchLogger.error("Live Activity state userInfo decoding error: \(error)")
                 }
             }
         }
@@ -880,10 +881,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
             Task { @MainActor in
                 do {
                     let transfer = try JSONDecoder().decode(ActiveSessionTransfer.self, from: activeSessionData)
-                    Self.logger.info("📦 Received queued active session from Watch: \(transfer.pagesRead) pages")
+                    watchLogger.info("📦 Received queued active session from Watch: \(transfer.pagesRead) pages")
                     await self.handleActiveSession(transfer)
                 } catch {
-                    Self.logger.error("Active session userInfo decoding error: \(error)")
+                    watchLogger.error("Active session userInfo decoding error: \(error)")
                 }
             }
         }
@@ -901,10 +902,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
             Task { @MainActor in
                 do {
                     let completion = try JSONDecoder().decode(SessionCompletionTransfer.self, from: completionData)
-                    Self.logger.info("✅📦 Received queued atomic session completion from Watch: \(completion.completedSession.endPage - completion.completedSession.startPage) pages")
+                    watchLogger.info("✅📦 Received queued atomic session completion from Watch: \(completion.completedSession.endPage - completion.completedSession.startPage) pages")
                     await self.handleSessionCompletion(completion)
                 } catch {
-                    Self.logger.error("Session completion userInfo decoding error: \(error)")
+                    watchLogger.error("Session completion userInfo decoding error: \(error)")
                 }
             }
         }
@@ -914,10 +915,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
             Task { @MainActor in
                 do {
                     let transfer = try JSONDecoder().decode(BookPositionTransfer.self, from: positionData)
-                    Self.logger.info("📦 Received queued book position from Watch: Page \(transfer.pageNumber)")
+                    watchLogger.info("📦 Received queued book position from Watch: Page \(transfer.pageNumber)")
                     await self.handleBookPosition(transfer)
                 } catch {
-                    Self.logger.error("Book position userInfo decoding error: \(error)")
+                    watchLogger.error("Book position userInfo decoding error: \(error)")
                 }
             }
         }
@@ -927,10 +928,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
             Task { @MainActor in
                 do {
                     let transfers = try JSONDecoder().decode([QuoteTransfer].self, from: quotesData)
-                    Self.logger.info("📦 Received queued \(transfers.count) quotes from Watch")
+                    watchLogger.info("📦 Received queued \(transfers.count) quotes from Watch")
                     await self.handleQuotes(transfers)
                 } catch {
-                    Self.logger.error("Quotes userInfo decoding error: \(error)")
+                    watchLogger.error("Quotes userInfo decoding error: \(error)")
                 }
             }
         }
@@ -939,7 +940,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
     @MainActor
     private func handlePageDelta(_ delta: PageDelta) async {
         guard let modelContext = resolvedModelContext() else {
-            Self.logger.warning("ModelContext not configured")
+            watchLogger.warning("ModelContext not configured")
             return
         }
 
@@ -953,13 +954,13 @@ extension WatchConnectivityManager: WCSessionDelegate {
             let books = try modelContext.fetch(descriptor)
 
             guard let book = books.first else {
-                Self.logger.warning("Book not found with UUID: \(delta.bookUUID)")
+                watchLogger.warning("Book not found with UUID: \(delta.bookUUID)")
                 return
             }
 
             if let lastTimestamp = lastPageUpdateTimestamps[delta.bookUUID],
                delta.timestamp <= lastTimestamp {
-                Self.logger.info("Ignoring stale page update for book \(delta.bookUUID)")
+                watchLogger.info("Ignoring stale page update for book \(delta.bookUUID)")
                 return
             }
             lastPageUpdateTimestamps[delta.bookUUID] = delta.timestamp
@@ -972,7 +973,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
             // Save context
             try modelContext.save()
 
-            Self.logger.info("Updated book: \(book.title) to page \(book.currentPage)")
+            watchLogger.info("Updated book: \(book.title) to page \(book.currentPage)")
 
             // Update Live Activity if running
             await ReadingSessionActivityManager.shared.updateCurrentPage(book.currentPage)
@@ -980,7 +981,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
             // Refresh widget with updated progress
             WidgetDataExporter.exportSnapshot(modelContext: modelContext)
         } catch {
-            Self.logger.error("Failed to update book: \(error)")
+            watchLogger.error("Failed to update book: \(error)")
         }
     }
 
@@ -1007,7 +1008,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
             let endsClose = abs(sessionEnd.timeIntervalSince(transferEnd)) < tolerance
 
             if startsClose && endsClose {
-                Self.logger.warning("⚠️ Potential duplicate session detected: \(session.id)")
+                watchLogger.warning("⚠️ Potential duplicate session detected: \(session.id)")
                 return session
             }
         }
@@ -1018,7 +1019,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
     @MainActor
     private func handleWatchSession(_ transfer: SessionTransfer) async {
         guard let modelContext = resolvedModelContext() else {
-            Self.logger.warning("ModelContext not configured")
+            watchLogger.warning("ModelContext not configured")
             return
         }
 
@@ -1063,11 +1064,11 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 // Calculate XP delta and only award the difference
                 xpDelta = shouldCount ? (existingSession.xpEarned - previousXP) : 0
                 xpForActivity = shouldCount ? existingSession.xpEarned : 0
-                Self.logger.info("Updated existing session from Watch (XP delta: \(xpDelta))")
+                watchLogger.info("Updated existing session from Watch (XP delta: \(xpDelta))")
             } else {
                 // CRITICAL: Check for duplicate sessions before creating new one
                 if let duplicate = findDuplicateSession(for: transfer, in: modelContext) {
-                    Self.logger.warning("🚫 Duplicate session detected - merging instead of creating new")
+                    watchLogger.warning("🚫 Duplicate session detected - merging instead of creating new")
 
                     // Update the duplicate instead of creating new
                     let previousXP = duplicate.xpEarned
@@ -1084,7 +1085,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                     bookForSession = duplicate.book
                     xpDelta = shouldCount ? (duplicate.xpEarned - previousXP) : 0
                     xpForActivity = shouldCount ? duplicate.xpEarned : 0
-                    Self.logger.info("Merged duplicate session (XP delta: \(xpDelta))")
+                    watchLogger.info("Merged duplicate session (XP delta: \(xpDelta))")
 
                     try modelContext.save()
 
@@ -1109,7 +1110,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 let books = try modelContext.fetch(bookDescriptor)
 
                 guard let book = books.first else {
-                    Self.logger.warning("Book not found for Watch session: \(transfer.bookId)")
+                    watchLogger.warning("Book not found for Watch session: \(transfer.bookId)")
                     return
                 }
 
@@ -1136,7 +1137,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 xpDelta = shouldCount ? session.xpEarned : 0
                 xpForActivity = shouldCount ? session.xpEarned : 0
                 sessionToMarkAwarded = session // Mark this session after awarding XP
-                Self.logger.info("Created new session from Watch: \(transfer.endPage - transfer.startPage) pages, \(session.xpEarned) XP")
+                watchLogger.info("Created new session from Watch: \(transfer.endPage - transfer.startPage) pages, \(session.xpEarned) XP")
             }
 
             // Align book progress to session
@@ -1184,14 +1185,14 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 )
             }
         } catch {
-            Self.logger.error("Failed to handle Watch session: \(error)")
+            watchLogger.error("Failed to handle Watch session: \(error)")
         }
     }
 
     @MainActor
     private func handleProfileSettings(_ settings: ProfileSettingsTransfer) async {
         guard let modelContext = modelContext else {
-            Self.logger.warning("ModelContext not configured")
+            watchLogger.warning("ModelContext not configured")
             return
         }
 
@@ -1207,10 +1208,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 profile.themeColorRawValue = settings.themeColorRawValue
                 profile.streaksPaused = settings.streaksPaused
                 try modelContext.save()
-                Self.logger.info("Updated profile settings from Watch")
+                watchLogger.info("Updated profile settings from Watch")
             }
         } catch {
-            Self.logger.error("Failed to update profile settings: \(error)")
+            watchLogger.error("Failed to update profile settings: \(error)")
         }
     }
 
@@ -1218,7 +1219,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
     private func handleProfileStats(_ stats: ProfileStatsTransfer) async {
         // iPhone is the source of truth for stats (Watch only creates/view sessions).
         // Ignore Watch-sent stats to prevent stale overrides after deletions/edits on iPhone.
-        Self.logger.info("Ignoring profile stats from Watch (iPhone authoritative)")
+        watchLogger.info("Ignoring profile stats from Watch (iPhone authoritative)")
     }
 
     // MARK: - Live Activity Handlers
@@ -1226,7 +1227,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
     @MainActor
     private func handleLiveActivityStart(_ transfer: LiveActivityStartTransfer) async {
         guard let modelContext = resolvedModelContext() else {
-            Self.logger.warning("ModelContext not configured")
+            watchLogger.warning("ModelContext not configured")
             return
         }
 
@@ -1248,7 +1249,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
             }
 
             guard let book else {
-                Self.logger.warning("Book not found for Live Activity: \(transfer.bookTitle)")
+                watchLogger.warning("Book not found for Live Activity: \(transfer.bookTitle)")
                 return
             }
 
@@ -1265,9 +1266,9 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 startTime: transfer.startTime,
                 themeColorHex: themeHex
             )
-            Self.logger.info("✅ Started Live Activity from Watch: \(transfer.bookTitle)")
+            watchLogger.info("✅ Started Live Activity from Watch: \(transfer.bookTitle)")
         } catch {
-            Self.logger.error("Failed to start Live Activity from Watch: \(error)")
+            watchLogger.error("Failed to start Live Activity from Watch: \(error)")
         }
     }
 
@@ -1281,7 +1282,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
         if let modelContext = modelContext {
             WidgetDataExporter.exportSnapshot(modelContext: modelContext)
         }
-        Self.logger.info("Updated Live Activity from Watch: Page \(transfer.currentPage)")
+        watchLogger.info("Updated Live Activity from Watch: Page \(transfer.currentPage)")
     }
 
     @MainActor
@@ -1290,7 +1291,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
         if let last = lastLiveActivityStateTimestamp, transfer.timestamp <= last {
             let drift = abs(transfer.timestamp.timeIntervalSince(last))
             if drift > clockSkewTolerance {
-                Self.logger.info("Ignoring stale Live Activity state update")
+                watchLogger.info("Ignoring stale Live Activity state update")
                 return
             }
         }
@@ -1303,10 +1304,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
         if transfer.isPaused {
             await ReadingSessionActivityManager.shared.pauseActivity()
-            Self.logger.info("⏸️ Paused Live Activity from Watch")
+            watchLogger.info("⏸️ Paused Live Activity from Watch")
         } else {
             await ReadingSessionActivityManager.shared.resumeActivity()
-            Self.logger.info("▶️ Resumed Live Activity from Watch")
+            watchLogger.info("▶️ Resumed Live Activity from Watch")
         }
     }
 
@@ -1316,7 +1317,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
         if let modelContext = resolvedModelContext() {
             WidgetDataExporter.exportSnapshot(modelContext: modelContext)
         }
-        Self.logger.info("🛑 Ended Live Activity from Watch")
+        watchLogger.info("🛑 Ended Live Activity from Watch")
     }
 
     // MARK: - Active Session Handlers
@@ -1324,7 +1325,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
     @MainActor
     private func handleActiveSession(_ transfer: ActiveSessionTransfer) async {
         guard let modelContext = resolvedModelContext() else {
-            Self.logger.warning("ModelContext not configured")
+            watchLogger.warning("ModelContext not configured")
             return
         }
 
@@ -1341,13 +1342,13 @@ extension WatchConnectivityManager: WCSessionDelegate {
         if let lastEnd = lastActiveSessionEndDate, transfer.lastUpdated <= lastEnd {
             let drift = abs(lastEnd.timeIntervalSince(transfer.lastUpdated))
             if drift > clockSkewTolerance && adjustedStartDate <= lastEnd {
-                Self.logger.info("Ignoring stale active session update (ended at \(lastEnd))")
+                watchLogger.info("Ignoring stale active session update (ended at \(lastEnd))")
                 return
             }
         }
 
         if endedActiveSessionIDs[transfer.id] != nil {
-            Self.logger.info("Ignoring active session update for ended id \(transfer.id)")
+            watchLogger.info("Ignoring active session update for ended id \(transfer.id)")
             return
         }
 
@@ -1366,10 +1367,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 if isStale {
                     let drift = abs(transfer.lastUpdated.timeIntervalSince(existingSession.lastUpdated))
                     if !(stateChanged && drift <= clockSkewTolerance) {
-                        Self.logger.info("Ignoring stale active session update from Watch (existing newer)")
+                        watchLogger.info("Ignoring stale active session update from Watch (existing newer)")
                         return
                     }
-                    Self.logger.info("Accepting state change despite clock drift (\(Int(drift))s)")
+                    watchLogger.info("Accepting state change despite clock drift (\(Int(drift))s)")
                 }
 
                 // UPDATE in place
@@ -1382,7 +1383,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 existingSession.totalPausedDuration = min(clampedPausedDuration, maxPausedDuration)
                 existingSession.lastUpdated = max(existingSession.lastUpdated, transfer.lastUpdated)
                 existingSession.book?.currentPage = clampedPage
-                Self.logger.info("✅ Updated session from Watch: \(transfer.pagesRead) pages")
+                watchLogger.info("✅ Updated session from Watch: \(transfer.pagesRead) pages")
                 liveActivityStartDate = existingSession.startDate
 
                 // Force immediate widget update
@@ -1391,7 +1392,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
             } else {
                 // ENFORCE SINGLE SESSION: Delete all existing sessions before creating new one
                 for oldSession in existingSessions {
-                    Self.logger.info("🧹 Deleting old active session \(oldSession.id) to enforce single session")
+                    watchLogger.info("🧹 Deleting old active session \(oldSession.id) to enforce single session")
                     modelContext.delete(oldSession)
                 }
                 // Find the book
@@ -1403,7 +1404,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 let books = try modelContext.fetch(bookDescriptor)
 
                 guard let book = books.first else {
-                    Self.logger.warning("Book not found: \(transfer.bookId)")
+                    watchLogger.warning("Book not found: \(transfer.bookId)")
                     return
                 }
 
@@ -1425,7 +1426,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 )
                 modelContext.insert(activeSession)
                 book.currentPage = clampedPage
-                Self.logger.info("✅ Created session from Watch: \(transfer.pagesRead) pages")
+                watchLogger.info("✅ Created session from Watch: \(transfer.pagesRead) pages")
             }
 
             // Update Live Activity FIRST (real-time)
@@ -1446,14 +1447,14 @@ extension WatchConnectivityManager: WCSessionDelegate {
             // Post notification to update UI
             NotificationCenter.default.post(name: Notification.Name("watchSessionReceived"), object: nil)
         } catch {
-            Self.logger.error("Failed to handle active session: \(error)")
+            watchLogger.error("Failed to handle active session: \(error)")
         }
     }
 
     @MainActor
     private func handleActiveSessionEnd(endedId: UUID? = nil) async {
         guard let modelContext = resolvedModelContext() else {
-            Self.logger.warning("ModelContext not configured")
+            watchLogger.warning("ModelContext not configured")
             return
         }
 
@@ -1468,7 +1469,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
             }
 
             try modelContext.save()
-            Self.logger.info("Ended all active sessions from Watch")
+            watchLogger.info("Ended all active sessions from Watch")
             lastActiveSessionEndDate = Date()
 
             // Remember explicitly-ended id even if none existed locally
@@ -1483,7 +1484,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
             // Post notification to update UI
             NotificationCenter.default.post(name: Notification.Name("watchSessionReceived"), object: nil)
         } catch {
-            Self.logger.error("Failed to end active sessions: \(error)")
+            watchLogger.error("Failed to end active sessions: \(error)")
         }
     }
 
@@ -1496,14 +1497,14 @@ extension WatchConnectivityManager: WCSessionDelegate {
         if let endDate = session.endDate {
             // endDate should be >= startDate
             guard endDate >= session.startDate else {
-                Self.logger.error("⚠️ Invalid session: endDate < startDate")
+                watchLogger.error("⚠️ Invalid session: endDate < startDate")
                 return false
             }
 
             // endDate should not be too far in future (5 min tolerance)
             let maxFuture = Date().addingTimeInterval(300)
             guard endDate <= maxFuture else {
-                Self.logger.error("⚠️ Invalid session: endDate in future")
+                watchLogger.error("⚠️ Invalid session: endDate in future")
                 return false
             }
 
@@ -1511,19 +1512,19 @@ extension WatchConnectivityManager: WCSessionDelegate {
             // For older sessions, log warning but still process (late sync is OK)
             let timeSinceEnd = Date().timeIntervalSince(endDate)
             if timeSinceEnd > 3600 { // 1 hour
-                Self.logger.info("ℹ️ Processing old session (ended \(Int(timeSinceEnd/60)) min ago)")
+                watchLogger.info("ℹ️ Processing old session (ended \(Int(timeSinceEnd/60)) min ago)")
             }
         }
 
         // Validate pages are reasonable
         guard session.startPage >= 0 && session.endPage >= 0 else {
-            Self.logger.error("⚠️ Invalid session: negative pages")
+            watchLogger.error("⚠️ Invalid session: negative pages")
             return false
         }
 
         // Validate duration is reasonable (< 24 hours)
         guard session.durationMinutes >= 0 && session.durationMinutes < 1440 else {
-            Self.logger.error("⚠️ Invalid session: duration out of range")
+            watchLogger.error("⚠️ Invalid session: duration out of range")
             return false
         }
 
@@ -1533,17 +1534,17 @@ extension WatchConnectivityManager: WCSessionDelegate {
     @MainActor
     private func handleSessionCompletion(_ completion: SessionCompletionTransfer) async {
         guard let modelContext = resolvedModelContext() else {
-            Self.logger.warning("ModelContext not configured")
+            watchLogger.warning("ModelContext not configured")
             return
         }
 
         // VALIDATION: Ensure completion data is valid before processing
         guard validateSessionCompletion(completion) else {
-            Self.logger.error("❌ Session completion validation failed, ignoring")
+            watchLogger.error("❌ Session completion validation failed, ignoring")
             return
         }
 
-        Self.logger.info("🎯 Processing atomic session completion from Watch")
+        watchLogger.info("🎯 Processing atomic session completion from Watch")
 
         // 1. End active session
         endedActiveSessionIDs[completion.activeSessionId] = Date()
@@ -1556,10 +1557,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
             let activeSessions = try modelContext.fetch(descriptor)
             for session in activeSessions {
                 modelContext.delete(session)
-                Self.logger.info("✅ Deleted active session: \(completion.activeSessionId)")
+                watchLogger.info("✅ Deleted active session: \(completion.activeSessionId)")
             }
         } catch {
-            Self.logger.error("Failed to delete active session: \(error)")
+            watchLogger.error("Failed to delete active session: \(error)")
         }
 
         // 2. Process completed session (includes ending Live Activity if session has endDate)
@@ -1569,13 +1570,13 @@ extension WatchConnectivityManager: WCSessionDelegate {
         WidgetDataExporter.exportSnapshot(modelContext: modelContext)
         NotificationCenter.default.post(name: Notification.Name("watchSessionReceived"), object: nil)
 
-        Self.logger.info("✅ Atomic session completion handled successfully")
+        watchLogger.info("✅ Atomic session completion handled successfully")
     }
 
     @MainActor
     private func handleBookPosition(_ transfer: BookPositionTransfer) async {
         guard let modelContext = resolvedModelContext() else {
-            Self.logger.warning("ModelContext not configured")
+            watchLogger.warning("ModelContext not configured")
             return
         }
 
@@ -1589,7 +1590,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
             let books = try modelContext.fetch(bookDescriptor)
 
             guard let book = books.first else {
-                Self.logger.warning("Book not found for position: \(transfer.bookId)")
+                watchLogger.warning("Book not found for position: \(transfer.bookId)")
                 return
             }
 
@@ -1611,16 +1612,16 @@ extension WatchConnectivityManager: WCSessionDelegate {
             book.bookPositions?.append(position)
 
             try modelContext.save()
-            Self.logger.info("✅ Saved book position from Watch: Page \(transfer.pageNumber)")
+            watchLogger.info("✅ Saved book position from Watch: Page \(transfer.pageNumber)")
         } catch {
-            Self.logger.error("Failed to handle book position: \(error)")
+            watchLogger.error("Failed to handle book position: \(error)")
         }
     }
 
     @MainActor
     private func handleQuotes(_ transfers: [QuoteTransfer]) async {
         guard let modelContext = resolvedModelContext() else {
-            Self.logger.warning("ModelContext not configured")
+            watchLogger.warning("ModelContext not configured")
             return
         }
 
@@ -1635,7 +1636,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 let books = try modelContext.fetch(bookDescriptor)
 
                 guard let book = books.first else {
-                    Self.logger.warning("Book not found for quote: \(transfer.bookId)")
+                    watchLogger.warning("Book not found for quote: \(transfer.bookId)")
                     continue
                 }
 
@@ -1659,9 +1660,9 @@ extension WatchConnectivityManager: WCSessionDelegate {
             }
 
             try modelContext.save()
-            Self.logger.info("✅ Saved \(transfers.count) quotes from Watch")
+            watchLogger.info("✅ Saved \(transfers.count) quotes from Watch")
         } catch {
-            Self.logger.error("Failed to handle quotes: \(error)")
+            watchLogger.error("Failed to handle quotes: \(error)")
         }
     }
 }
