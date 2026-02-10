@@ -34,6 +34,8 @@ struct LogReadingSessionView: View {
     @State private var pendingActiveSession: ActiveReadingSession?
     @State private var activeSessionSnapshot = false
     @State private var xpGradientPhase: CGFloat = -0.6
+    @State private var showSaveError = false
+    @State private var saveErrorMessage = ""
     @FocusState private var focusedField: FocusField?
 
     enum FocusField: Hashable {
@@ -212,6 +214,11 @@ struct LogReadingSessionView: View {
             } message: {
                 Text("This will end the timer and discard your session progress.")
             }
+            .alert(localized("Save Error", locale: locale), isPresented: $showSaveError) {
+                Button(localized("OK", locale: locale)) {}
+            } message: {
+                Text(saveErrorMessage)
+            }
             .onChange(of: activeSessionForBook?.id) { _, newValue in
                 if newValue != nil {
                     activeSessionSnapshot = true
@@ -313,7 +320,7 @@ struct LogReadingSessionView: View {
                                     session.pausedAt = nil
                                 }
                                 session.lastUpdated = Date()
-                                try? modelContext.save()
+                                saveContext("LogReadingSessionView.toggleSessionPause")
                                 WatchConnectivityManager.shared.sendActiveSessionToWatch(session)
                                 WidgetDataExporter.exportSnapshot(modelContext: modelContext)
                                 syncLiveActivity(with: session)
@@ -605,6 +612,16 @@ struct LogReadingSessionView: View {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 
+    private func saveContext(_ context: String) {
+        do {
+            try modelContext.save()
+        } catch {
+            saveErrorMessage = error.localizedDescription
+            showSaveError = true
+            AppLogger.logError(error, context: context, logger: AppLogger.database)
+        }
+    }
+
     private var endPageTooltip: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Tap here!")
@@ -644,7 +661,7 @@ struct LogReadingSessionView: View {
         if let activeSession = activeSessionForBook {
             let endedId = activeSession.id
             modelContext.delete(activeSession)
-            try? modelContext.save()
+            saveContext("LogReadingSessionView.discardSession.deleteActiveSession")
             WatchConnectivityManager.shared.sendActiveSessionEndToWatch(activeSessionId: endedId)
             Task {
                 await ReadingSessionActivityManager.shared.endActivity()
@@ -674,7 +691,7 @@ struct LogReadingSessionView: View {
         // Delete the existing active session
         let endedId = existingSession.id
         modelContext.delete(existingSession)
-        try? modelContext.save()
+        saveContext("LogReadingSessionView.endExistingSessionAndStartNew.deleteActiveSession")
 
         // Notify Watch
         WatchConnectivityManager.shared.sendActiveSessionEndToWatch(activeSessionId: endedId)
@@ -741,7 +758,7 @@ struct LogReadingSessionView: View {
             session.currentPage = clampedValue
             session.lastUpdated = Date()
             endPage = clampedValue
-            try? modelContext.save()
+            saveContext("LogReadingSessionView.updateActiveSessionPage")
             WatchConnectivityManager.shared.sendActiveSessionToWatch(session)
             WidgetDataExporter.exportSnapshot(modelContext: modelContext)
             syncLiveActivity(with: session)
@@ -791,7 +808,7 @@ struct LogReadingSessionView: View {
             sourceDevice: "iPhone"
         )
         modelContext.insert(activeSession)
-        try? modelContext.save()
+        saveContext("LogReadingSessionView.startActiveSession")
 
         // Sync to Watch
         WatchConnectivityManager.shared.sendActiveSessionToWatch(activeSession)
@@ -901,7 +918,7 @@ struct LogReadingSessionView: View {
         WidgetDataExporter.exportSnapshot(modelContext: modelContext)
 
         // SAVE FIRST before any async operations
-        try? modelContext.save()
+        saveContext("LogReadingSessionView.finishActiveSession")
 
         // Now send updates AFTER save
         if let profile = profiles.first {
@@ -1008,7 +1025,7 @@ struct LogReadingSessionView: View {
 
         WidgetDataExporter.exportSnapshot(modelContext: modelContext)
 
-        try? modelContext.save()
+        saveContext("LogReadingSessionView.saveSessionCore")
         notifySessionLogged()
     }
 
