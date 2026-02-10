@@ -17,6 +17,7 @@ private enum ReadingConstants {
 class WatchConnectivityManager: NSObject {
     static let shared = WatchConnectivityManager()
     static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.shlf.app", category: "WatchSync")
+    static let languageOverrideKey = "languageOverride"
 
     private var modelContainer: ModelContainer?
     private var modelContext: ModelContext?
@@ -88,6 +89,23 @@ class WatchConnectivityManager: NSObject {
         session.delegate = self
         session.activate()
         Self.logger.info("WatchConnectivity activated on iPhone")
+    }
+
+    func sendLanguageOverrideToWatch(_ rawValue: String) {
+        guard WCSession.default.activationState == .activated else {
+            Self.logger.warning("WC not activated")
+            return
+        }
+
+        var context = WCSession.default.applicationContext
+        context[Self.languageOverrideKey] = rawValue
+
+        do {
+            try WCSession.default.updateApplicationContext(context)
+            Self.logger.info("📤 Sent language override to Watch: \(rawValue)")
+        } catch {
+            Self.logger.error("Failed to update language override context: \(error)")
+        }
     }
 
     func sendPageDeltaToWatch(bookUUID: UUID, delta: Int, newPage: Int? = nil) {

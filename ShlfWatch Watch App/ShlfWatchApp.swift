@@ -15,6 +15,7 @@ struct ShlfWatch_Watch_AppApp: App {
     @State private var modelError: Error?
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage("debugWatchLanguageOverride") private var debugLanguageOverride = WatchAppLanguage.system.rawValue
+    @AppStorage("phoneLanguageOverride") private var phoneLanguageOverride = WatchAppLanguage.system.rawValue
 
     init() {
         do {
@@ -40,10 +41,21 @@ struct ShlfWatch_Watch_AppApp: App {
     }
 
     private var resolvedLocale: Locale? {
-        guard let language = WatchAppLanguage(rawValue: debugLanguageOverride) else {
-            return nil
+        if let language = WatchAppLanguage(rawValue: debugLanguageOverride),
+           language != .system {
+            return language.locale
         }
-        return language.locale
+
+        if let phoneLanguage = WatchAppLanguage(rawValue: phoneLanguageOverride),
+           phoneLanguage != .system {
+            return phoneLanguage.locale
+        }
+
+        if phoneLanguageOverride != WatchAppLanguage.system.rawValue {
+            return Locale(identifier: phoneLanguageOverride)
+        }
+
+        return nil
     }
 
     var body: some Scene {

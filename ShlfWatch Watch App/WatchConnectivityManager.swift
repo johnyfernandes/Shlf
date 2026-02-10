@@ -18,6 +18,8 @@ private enum ReadingConstants {
 class WatchConnectivityManager: NSObject {
     static let shared = WatchConnectivityManager()
     static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.shlf.watch", category: "WatchSync")
+    static let languageOverrideKey = "languageOverride"
+    static let phoneLanguageOverrideStorageKey = "phoneLanguageOverride"
     private var modelContext: ModelContext?
     private var lastActiveSessionEndDate: Date?
     private var endedActiveSessionIDs: [UUID: Date] = [:] // Track UUID -> timestamp when ended
@@ -56,6 +58,11 @@ class WatchConnectivityManager: NSObject {
         if removedCount > 0 {
             Self.logger.info("🧹 Cleaned up \(removedCount) old ended session IDs (kept \(self.endedActiveSessionIDs.count))")
         }
+    }
+
+    private func storePhoneLanguageOverride(_ rawValue: String) {
+        UserDefaults.standard.set(rawValue, forKey: Self.phoneLanguageOverrideStorageKey)
+        Self.logger.info("🌐 Stored phone language override: \(rawValue)")
     }
 
     func configure(modelContext: ModelContext) {
@@ -596,6 +603,12 @@ extension WatchConnectivityManager: WCSessionDelegate {
     ) {
         Self.logger.info("Watch received message")
 
+        if let languageOverride = message[Self.languageOverrideKey] as? String {
+            Task { @MainActor in
+                self.storePhoneLanguageOverride(languageOverride)
+            }
+        }
+
         // Handle page delta from iPhone
         if let pageDeltaData = message["pageDelta"] as? Data {
             Task { @MainActor in
@@ -710,6 +723,12 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
     nonisolated func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any]) {
         Self.logger.info("Watch received userInfo payload")
+
+        if let languageOverride = userInfo[Self.languageOverrideKey] as? String {
+            Task { @MainActor in
+                self.storePhoneLanguageOverride(languageOverride)
+            }
+        }
 
         if let pageDeltaData = userInfo["pageDelta"] as? Data {
             Task { @MainActor in
@@ -1060,10 +1079,16 @@ extension WatchConnectivityManager: WCSessionDelegate {
     ) {
         Self.logger.info("Watch received application context")
 
+        if let languageOverride = applicationContext[Self.languageOverrideKey] as? String {
+            Task { @MainActor in
+                self.storePhoneLanguageOverride(languageOverride)
+            }
+        }
+
         let booksData = applicationContext["books"] as? Data
         let sessionsData = applicationContext["sessions"] as? Data
 
-        if booksData == nil && sessionsData == nil {
+        if booksData == nil && sessionsData == nil && applicationContext[Self.languageOverrideKey] == nil {
             Self.logger.warning("No data in context")
             return
         }

@@ -43,6 +43,9 @@ struct ShlfApp: App {
                         .onAppear {
                             WatchConnectivityManager.shared.configure(modelContext: container.mainContext, container: container)
                             WatchConnectivityManager.shared.activate()
+#if DEBUG
+                            WatchConnectivityManager.shared.sendLanguageOverrideToWatch(developerLanguageOverride)
+#endif
                             WidgetDataExporter.exportSnapshot(modelContext: container.mainContext)
                             Task {
                                 await ReadingSessionActivityManager.shared.rehydrateExistingActivity()
@@ -83,6 +86,11 @@ struct ShlfApp: App {
                 }
             }
             .debugLocale(debugLanguage)
+#if DEBUG
+            .onChange(of: developerLanguageOverride) { _, newValue in
+                WatchConnectivityManager.shared.sendLanguageOverrideToWatch(newValue)
+            }
+#endif
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
             guard let container = modelContainer else { return }
