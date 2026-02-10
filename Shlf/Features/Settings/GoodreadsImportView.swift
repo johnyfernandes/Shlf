@@ -72,13 +72,13 @@ struct GoodreadsImportView: View {
 
             ScrollView {
                 VStack(spacing: 20) {
-                    if showCoordinatorProgress {
-                        coordinatorProgressCard
-                    }
                     automatedImportSection
                     manualImportSection
                     if isImporting || result != nil {
                         importStatusSection
+                    }
+                    if showCoordinatorProgress {
+                        coordinatorProgressCard
                     }
                 }
                 .padding(.horizontal, 20)

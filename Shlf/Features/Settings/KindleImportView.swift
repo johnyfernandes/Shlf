@@ -60,12 +60,12 @@ struct KindleImportView: View {
 
             ScrollView {
                 VStack(spacing: 20) {
-                    if showCoordinatorProgress {
-                        coordinatorProgressCard
-                    }
                     importSection
                     if isImporting || result != nil {
                         importStatusSection
+                    }
+                    if showCoordinatorProgress {
+                        coordinatorProgressCard
                     }
                 }
                 .padding(.horizontal, 20)
