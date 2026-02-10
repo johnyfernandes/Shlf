@@ -1021,9 +1021,11 @@ struct DataManagementView: View {
     @State private var exportErrorMessage = ""
     @State private var showExportError = false
     @State private var showResetAlert = false
+    @State private var showResetConfirmAlert = false
     @State private var isResetting = false
     @State private var resetErrorMessage = ""
     @State private var showResetError = false
+    @State private var resetConfirmText = ""
 
     var body: some View {
         Form {
@@ -1097,11 +1099,24 @@ struct DataManagementView: View {
         }
         .alert("Reset App?", isPresented: $showResetAlert) {
             Button("Cancel", role: .cancel) {}
-            Button("Reset", role: .destructive) {
-                resetApp()
+            Button("Continue", role: .destructive) {
+                resetConfirmText = ""
+                showResetConfirmAlert = true
             }
         } message: {
             Text("This will permanently delete your books, sessions, goals, quotes, and streak history from this device. If iCloud Sync is enabled, it also removes them from iCloud.")
+        }
+        .alert("Type RESET to confirm", isPresented: $showResetConfirmAlert) {
+            TextField("RESET", text: $resetConfirmText)
+                .textInputAutocapitalization(.characters)
+                .autocorrectionDisabled(true)
+            Button("Cancel", role: .cancel) {}
+            Button("Reset", role: .destructive) {
+                resetApp()
+            }
+            .disabled(resetConfirmText != "RESET")
+        } message: {
+            Text("This action cannot be undone.")
         }
         .alert("Reset Error", isPresented: $showResetError) {
             Button("OK") {}
@@ -1173,6 +1188,7 @@ struct DataManagementView: View {
                 try modelContext.save()
                 WidgetDataExporter.exportSnapshot(modelContext: modelContext)
                 await ImageCacheManager.shared.clearCache()
+                resetTooltipPreferences()
                 isResetting = false
             } catch {
                 resetErrorMessage = error.localizedDescription
@@ -1185,6 +1201,12 @@ struct DataManagementView: View {
     private func deleteAll<T: PersistentModel>(_ type: T.Type) throws {
         let items = try modelContext.fetch(FetchDescriptor<T>())
         items.forEach { modelContext.delete($0) }
+    }
+
+    private func resetTooltipPreferences() {
+        let defaults = UserDefaults.standard
+        defaults.removeObject(forKey: "progressEditTooltipDismissed")
+        defaults.removeObject(forKey: "logSessionToPageTooltipDismissed")
     }
 }
 
