@@ -91,6 +91,15 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
     static func hasGoodreadsSession() async -> Bool {
         let url = URL(string: "https://www.goodreads.com/review/import")!
         let cookies = await cookiesFromStore(for: url)
+        let now = Date()
+        let hasAuthCookie = cookies.contains { cookie in
+            let domain = cookie.domain.lowercased()
+            guard domain.contains("goodreads.com") else { return false }
+            let expires = cookie.expiresDate ?? now.addingTimeInterval(3600)
+            guard expires > now else { return false }
+            let name = cookie.name.lowercased()
+            return name.contains("session") || name.contains("logged_in") || name.contains("user") || name.contains("uid")
+        }
         var request = URLRequest(url: url)
         request.httpShouldHandleCookies = false
         let headerFields = HTTPCookie.requestHeaderFields(with: cookies)
@@ -103,7 +112,7 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
             let (data, response) = try await session.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse,
                   (200..<400).contains(httpResponse.statusCode) else {
-                return false
+                return hasAuthCookie
             }
 
             let finalURL = httpResponse.url ?? url
@@ -114,14 +123,14 @@ final class GoodreadsImportCoordinator: NSObject, ObservableObject {
 
             if let body = String(data: data, encoding: .utf8) {
                 let lower = body.lowercased()
-                if lower.contains("name=\"user[email]\"") || lower.contains("name=\"user[password]\"") || lower.contains("sign in") {
+                if lower.contains("name=\"user[email]\"") || lower.contains("name=\"user[password]\"") || lower.contains("form id=\"sign_in\"") {
                     return false
                 }
             }
 
             return finalURL.host?.contains("goodreads.com") == true
         } catch {
-            return false
+            return hasAuthCookie
         }
     }
 

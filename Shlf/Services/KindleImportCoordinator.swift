@@ -108,13 +108,6 @@ final class KindleImportCoordinator: NSObject, ObservableObject {
                 return false
             }
 
-            if let body = String(data: data, encoding: .utf8) {
-                let lower = body.lowercased()
-                if lower.contains("sign in") && (lower.contains("amazon") || lower.contains("kindle")) {
-                    return false
-                }
-            }
-
             return finalURL.host?.contains("read.amazon") == true
         } catch {
             return false
