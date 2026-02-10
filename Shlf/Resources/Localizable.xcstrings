@@ -5678,6 +5678,7 @@
       }
     },
     "App" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -5706,19 +5707,19 @@
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "App"
+            "value" : "Aplicação"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "App"
+            "value" : "Aplicativo"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "App"
+            "value" : "Aplicação"
           }
         }
       }

@@ -185,17 +185,21 @@ struct QuickProgressStepper: View {
                     .animation(.spring(response: 0.3, dampingFraction: 0.7), value: pendingPages)
 
                     if let total = book.totalPages {
+                        let clampedCurrent = min(totalPendingPages, total)
+                        let percent = total > 0 ? Int((Double(clampedCurrent) / Double(total) * 100).rounded()) : 0
+                        let remaining = max(0, total - clampedCurrent)
+
                         HStack(spacing: 4) {
                             Text(
                                 String.localizedStringWithFormat(
-                                    localized("of %lld", locale: locale),
-                                    total
+                                    localized("%lld%%", locale: locale),
+                                    percent
                                 )
                             )
-                                .font(Theme.Typography.subheadline)
-                                .foregroundStyle(Theme.Colors.tertiaryText)
+                            .font(Theme.Typography.subheadline)
+                            .foregroundStyle(themeColor.color)
 
-                            if total > book.currentPage {
+                            if remaining > 0 {
                                 Text(verbatim: "•")
                                     .font(Theme.Typography.subheadline)
                                     .foregroundStyle(Theme.Colors.tertiaryText)
@@ -203,11 +207,11 @@ struct QuickProgressStepper: View {
                                 Text(
                                     String.localizedStringWithFormat(
                                         localized("%lld left", locale: locale),
-                                        total - book.currentPage
+                                        remaining
                                     )
                                 )
-                                    .font(Theme.Typography.subheadline)
-                                    .foregroundStyle(Theme.Colors.tertiaryText)
+                                .font(Theme.Typography.subheadline)
+                                .foregroundStyle(Theme.Colors.tertiaryText)
                             }
                         }
                     }

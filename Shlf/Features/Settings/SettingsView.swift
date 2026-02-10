@@ -76,6 +76,41 @@ struct SettingsView: View {
                         }
                     }
 
+                    Section("Sync & Integrations") {
+                        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                            Toggle("iCloud Sync", isOn: Binding(
+                                get: { profile.cloudSyncEnabled },
+                                set: { handleCloudSyncToggle($0) }
+                            ))
+                            .disabled(!isProUser || isMigratingCloud)
+                            .confirmationDialog("Use iCloud Data?", isPresented: $showCloudChoiceDialog, titleVisibility: .visible) {
+                                Button("Use iCloud Data") {
+                                    enableCloudUsingRemoteData()
+                                }
+                                Button("Replace iCloud with This iPhone", role: .destructive) {
+                                    migrateLocalToCloud()
+                                }
+                                Button("Cancel", role: .cancel) {}
+                            } message: {
+                                Text(cloudChoiceMessage)
+                            }
+
+                            cloudStatusInline
+                        }
+
+                        NavigationLink {
+                            GoodreadsImportView(profile: profile)
+                        } label: {
+                            Label("Goodreads", systemImage: "books.vertical")
+                        }
+
+                        NavigationLink {
+                            KindleImportView(profile: profile)
+                        } label: {
+                            Label("Kindle", systemImage: "book.closed")
+                        }
+                    }
+
                     notificationsSection
 
                     Section("Library") {
@@ -112,75 +147,11 @@ struct SettingsView: View {
                         }
                     }
 
-                    Section("Sync & Integrations") {
-                        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                            Toggle("iCloud Sync", isOn: Binding(
-                                get: { profile.cloudSyncEnabled },
-                                set: { handleCloudSyncToggle($0) }
-                            ))
-                            .disabled(!isProUser || isMigratingCloud)
-                            .confirmationDialog("Use iCloud Data?", isPresented: $showCloudChoiceDialog, titleVisibility: .visible) {
-                                Button("Use iCloud Data") {
-                                    enableCloudUsingRemoteData()
-                                }
-                                Button("Replace iCloud with This iPhone", role: .destructive) {
-                                    migrateLocalToCloud()
-                                }
-                                Button("Cancel", role: .cancel) {}
-                            } message: {
-                                Text(cloudChoiceMessage)
-                            }
-
-                            cloudStatusInline
-                        }
-
-                        NavigationLink {
-                            GoodreadsImportView(profile: profile)
-                        } label: {
-                            Label("Goodreads", systemImage: "books.vertical")
-                        }
-
-                        NavigationLink {
-                            KindleImportView(profile: profile)
-                        } label: {
-                            Label("Kindle", systemImage: "book.closed")
-                        }
-                    }
-
                     Section("Devices") {
                         NavigationLink {
                             WatchSettingsView()
                         } label: {
                             Label("Apple Watch", systemImage: "applewatch")
-                        }
-                    }
-
-                    Section("App") {
-                        NavigationLink {
-                            AboutView()
-                        } label: {
-                            Label("About", systemImage: "info.circle")
-                        }
-
-                        Button {
-                            showOnboarding = true
-                        } label: {
-                            Label("Onboarding", systemImage: "sparkles")
-                        }
-
-                        if let url = URL(string: "https://shlf.app") {
-                            Link(destination: url) {
-                                Label("Visit shlf.app", systemImage: "safari")
-                            }
-                        } else {
-                            Label("Visit shlf.app", systemImage: "safari")
-                                .foregroundStyle(Theme.Colors.secondaryText)
-                        }
-
-                        Button {
-                            requestReview()
-                        } label: {
-                            Label("Rate Shlf", systemImage: "star")
                         }
                     }
 
@@ -213,8 +184,37 @@ struct SettingsView: View {
                     } label: {
                         Label("Developer", systemImage: "hammer.fill")
                     }
-                }
+                    }
                 #endif
+
+                    Section(localized("App", locale: locale)) {
+                        NavigationLink {
+                            AboutView()
+                        } label: {
+                            Label("About", systemImage: "info.circle")
+                        }
+
+                        Button {
+                            showOnboarding = true
+                        } label: {
+                            Label("Onboarding", systemImage: "sparkles")
+                        }
+
+                        if let url = URL(string: "https://shlf.app") {
+                            Link(destination: url) {
+                                Label("Visit shlf.app", systemImage: "safari")
+                            }
+                        } else {
+                            Label("Visit shlf.app", systemImage: "safari")
+                                .foregroundStyle(Theme.Colors.secondaryText)
+                        }
+
+                        Button {
+                            requestReview()
+                        } label: {
+                            Label("Rate Shlf", systemImage: "star")
+                        }
+                    }
 
                 Section {
                     HStack {
