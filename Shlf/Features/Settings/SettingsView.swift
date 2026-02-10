@@ -1106,8 +1106,8 @@ struct DataManagementView: View {
         } message: {
             Text("This will permanently delete your books, sessions, goals, quotes, and streak history from this device. If iCloud Sync is enabled, it also removes them from iCloud.")
         }
-        .alert("Type RESET to confirm", isPresented: $showResetConfirmAlert) {
-            TextField("RESET", text: $resetConfirmText)
+        .alert("Settings.ResetConfirm.Title", isPresented: $showResetConfirmAlert) {
+            TextField("Settings.ResetConfirm.Placeholder", text: $resetConfirmText)
                 .textInputAutocapitalization(.characters)
                 .autocorrectionDisabled(true)
             Button("Cancel", role: .cancel) {}
@@ -1116,7 +1116,7 @@ struct DataManagementView: View {
             }
             .disabled(resetConfirmText != "RESET")
         } message: {
-            Text("This action cannot be undone.")
+            Text("Settings.ResetConfirm.Message")
         }
         .alert("Reset Error", isPresented: $showResetError) {
             Button("OK") {}

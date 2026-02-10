@@ -258,8 +258,8 @@ struct LogReadingSessionView: View {
             cardHeader(title: localized("Reading Progress", locale: locale), icon: "book.pages")
 
             HStack(spacing: 12) {
-                progressValueChip(title: "From", value: "\(actualStartPage)")
-                progressInputChip(title: "To", text: $endPageText, showTooltip: showToPageTooltip)
+                progressValueChip(title: "LogSession.From", value: "\(actualStartPage)")
+                progressInputChip(title: "LogSession.To", text: $endPageText, showTooltip: showToPageTooltip)
             }
 
             HStack {
