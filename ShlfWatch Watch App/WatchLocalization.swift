@@ -16,7 +16,7 @@ func watchLocalized(_ key: String, locale: Locale) -> String {
 
 private extension Bundle {
     static func watchLocalizedBundle(for locale: Locale) -> Bundle? {
-        let candidates = [locale.identifier, locale.languageCode].compactMap { $0 }
+        let candidates = [locale.identifier, locale.shlfLanguageCode].compactMap { $0 }
         for identifier in candidates {
             if let path = Bundle.main.path(forResource: identifier, ofType: "lproj"),
                let bundle = Bundle(path: path) {
@@ -24,5 +24,14 @@ private extension Bundle {
             }
         }
         return nil
+    }
+}
+
+private extension Locale {
+    var shlfLanguageCode: String? {
+        if #available(watchOS 9.0, *) {
+            return language.languageCode?.identifier
+        }
+        return languageCode
     }
 }
