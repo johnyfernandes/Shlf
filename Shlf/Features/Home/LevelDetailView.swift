@@ -100,7 +100,12 @@ struct LevelDetailView: View {
                                                     )
                                             }
 
-                                            Text("\(Int(profile.xpProgressPercentage))%")
+                Text(
+                    String.localizedStringWithFormat(
+                        String(localized: "%lld%%"),
+                        Int(profile.xpProgressPercentage)
+                    )
+                )
                                                 .font(.system(size: 20, weight: .bold, design: .rounded))
                                                 .foregroundStyle(Theme.Colors.text)
                                         }

@@ -165,18 +165,29 @@ struct GoalPreviewCard: View {
 
                 Spacer()
 
-                Text(verbatim: "0%")
-                    .font(Theme.Typography.callout)
-                    .foregroundStyle(themeColor.color)
+                Text(
+                    String.localizedStringWithFormat(
+                        String(localized: "%lld%%"),
+                        0
+                    )
+                )
+                .font(Theme.Typography.callout)
+                .foregroundStyle(themeColor.color)
             }
 
             ProgressView(value: 0, total: 100)
                 .tint(themeColor.color)
 
             HStack {
-                Text("0 / \(targetValue) \(type.unitText(locale: locale))")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(Theme.Colors.secondaryText)
+                Text(
+                    String.localizedStringWithFormat(
+                        String(localized: "0 / %lld %@"),
+                        targetValue,
+                        type.unitText(locale: locale)
+                    )
+                )
+                .font(Theme.Typography.caption)
+                .foregroundStyle(Theme.Colors.secondaryText)
 
                 Spacer()
 

@@ -423,7 +423,12 @@ struct SettingsView: View {
                     Text(profile.cloudSyncEnabled ? "Sync is on" : "iCloud data found")
                         .foregroundStyle(Theme.Colors.success)
                     if let lastActivity = snapshot.lastActivity {
-                        Text("Last activity \(formatDate(lastActivity))")
+                        Text(
+                            String.localizedStringWithFormat(
+                                String(localized: "Last activity %@"),
+                                formatDate(lastActivity)
+                            )
+                        )
                     }
                 case .empty:
                     Text("No iCloud data yet")

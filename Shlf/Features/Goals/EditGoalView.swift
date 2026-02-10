@@ -36,12 +36,24 @@ struct EditGoalView: View {
                 Section("Progress") {
                     VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                         HStack {
-                            Text("\(goal.currentValue)/\(goal.targetValue) \(goal.type.unitText(locale: locale))")
-                                .font(Theme.Typography.title3)
+                            Text(
+                                String.localizedStringWithFormat(
+                                    String(localized: "%lld / %lld %@"),
+                                    goal.currentValue,
+                                    goal.targetValue,
+                                    goal.type.unitText(locale: locale)
+                                )
+                            )
+                            .font(Theme.Typography.title3)
 
                             Spacer()
 
-                            Text("\(Int(goal.progressPercentage))%")
+                            Text(
+                                String.localizedStringWithFormat(
+                                    String(localized: "%lld%%"),
+                                    Int(goal.progressPercentage)
+                                )
+                            )
                             .font(Theme.Typography.title2)
                             .foregroundStyle(goal.isCompleted ? Theme.Colors.success : themeColor.color)
                         }

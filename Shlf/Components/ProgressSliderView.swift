@@ -164,9 +164,14 @@ struct ProgressSliderView: View {
                         }
 
                         if let total = book.totalPages {
-                            Text("/ \(total, format: .number)")
-                                .font(.title3)
-                                .foregroundStyle(Theme.Colors.tertiaryText)
+                            Text(
+                                String.localizedStringWithFormat(
+                                    localized("/ %lld", locale: locale),
+                                    total
+                                )
+                            )
+                            .font(.title3)
+                            .foregroundStyle(Theme.Colors.tertiaryText)
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -182,7 +187,12 @@ struct ProgressSliderView: View {
 
                     if let total = book.totalPages {
                         HStack(spacing: 4) {
-                            Text("\(Int(progressPercentage))%")
+                            Text(
+                                String.localizedStringWithFormat(
+                                    localized("%lld%%", locale: locale),
+                                    Int(progressPercentage)
+                                )
+                            )
                             .font(.caption.weight(.medium))
                             .foregroundStyle(themeColor.color)
                             .contentTransition(.numericText())
@@ -194,7 +204,7 @@ struct ProgressSliderView: View {
 
                                 Text(
                                     String.localizedStringWithFormat(
-                                        String(localized: "%lld left"),
+                                        localized("%lld left", locale: locale),
                                         total - currentPage
                                     )
                                 )
@@ -280,19 +290,19 @@ struct ProgressSliderView: View {
                         if currentPage > book.currentPage {
                             Text(
                                 String.localizedStringWithFormat(
-                                    String(localized: "Save +%lld pages"),
+                                    localized("Save +%lld pages", locale: locale),
                                     currentPage - book.currentPage
                                 )
                             )
                         } else if currentPage < book.currentPage {
                             Text(
                                 String.localizedStringWithFormat(
-                                    String(localized: "Save %lld pages"),
+                                    localized("Save %lld pages", locale: locale),
                                     currentPage - book.currentPage
                                 )
                             )
                         } else {
-                            Text("No changes")
+                            Text(localized("No changes", locale: locale))
                         }
                         Image(systemName: "checkmark")
                     }
@@ -308,7 +318,7 @@ struct ProgressSliderView: View {
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .toolbar {
             ToolbarItem(placement: .keyboard) {
-                Button("Done") {
+                Button(localized("Done", locale: locale)) {
                     commitPageEdit()
                 }
             }
@@ -363,12 +373,12 @@ struct ProgressSliderView: View {
                 }
             }
         } message: {
-            Text(
-                String.localizedStringWithFormat(
-                    String(localized: "You've reached the last page of %@. Would you like to mark it as finished?"),
-                    book.title
-                )
-            )
+                    Text(
+                        String.localizedStringWithFormat(
+                            localized("You've reached the last page of %@. Would you like to mark it as finished?", locale: locale),
+                            book.title
+                        )
+                    )
         }
     }
 

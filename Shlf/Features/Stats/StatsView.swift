@@ -2399,7 +2399,13 @@ struct AchievementProgress {
 
     var text: Text {
         if usesLevelFormat {
-            return Text("Level \(current)/\(target)")
+            return Text(
+                String.localizedStringWithFormat(
+                    String(localized: "Level %lld/%lld"),
+                    current,
+                    target
+                )
+            )
         }
 
         let currentText = formatNumber(current)
@@ -2439,7 +2445,12 @@ struct GoalCard: View {
 
                 Spacer()
 
-                Text("\(Int(goal.progressPercentage))%")
+                Text(
+                    String.localizedStringWithFormat(
+                        String(localized: "%lld%%"),
+                        Int(goal.progressPercentage)
+                    )
+                )
                     .font(Theme.Typography.callout)
                     .foregroundStyle(themeColor.color)
             }

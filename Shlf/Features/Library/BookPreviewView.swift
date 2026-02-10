@@ -252,7 +252,12 @@ struct BookPreviewView: View {
                                             .multilineTextAlignment(.trailing)
                                             .frame(width: 60)
 
-                                        Text("/ \(totalPages, format: .number)")
+                                        Text(
+                                            String.localizedStringWithFormat(
+                                                String(localized: "/ %lld"),
+                                                totalPages
+                                            )
+                                        )
                                             .font(.body)
                                             .foregroundStyle(.secondary)
                                     }

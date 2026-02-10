@@ -241,12 +241,12 @@ struct BookDetailView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text(
-                String.localizedStringWithFormat(
-                    String(localized: "This will permanently delete %@ and all reading sessions."),
-                    book.title
+                Text(
+                    String.localizedStringWithFormat(
+                        localized("This will permanently delete %@ and all reading sessions.", locale: locale),
+                        book.title
+                    )
                 )
-            )
         }
         .onAppear {
             if !hasInitializedBookStatsRange {
@@ -297,7 +297,7 @@ struct BookDetailView: View {
             if pendingStatus != nil {
                 Text(
                     String.localizedStringWithFormat(
-                        String(localized: "You're on page %lld. Your progress will be saved and automatically restored when you return to \"Currently Reading\"."),
+                        localized("You're on page %lld. Your progress will be saved and automatically restored when you return to \"Currently Reading\".", locale: locale),
                         book.currentPage
                     )
                 )
@@ -483,7 +483,7 @@ struct BookDetailView: View {
                 HStack(spacing: 4) {
                     Image(systemName: "bookmark.fill")
                         .font(.caption2)
-                    Text(String.localizedStringWithFormat(String(localized: "Saved at page %lld"), saved))
+                    Text(String.localizedStringWithFormat(localized("Saved at page %lld", locale: locale), saved))
                         .font(.caption2.weight(.medium))
                 }
                 .foregroundStyle(.orange)
@@ -518,12 +518,12 @@ struct BookDetailView: View {
 
                 if let activeSession = activeSessions.first {
                     VStack(alignment: .leading, spacing: 3) {
-                        Text("Active Session")
+                        Text(localized("Active Session", locale: locale))
                             .font(.subheadline.weight(.semibold))
 
                         Text(
                             String.localizedStringWithFormat(
-                                String(localized: "%@ • Started at page %lld"),
+                                localized("%@ • Started at page %lld", locale: locale),
                                 activeSession.sourceDevice,
                                 activeSession.currentPage
                             )
@@ -591,18 +591,18 @@ struct BookDetailView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
-                Text(String(localized: "Add total pages"))
+                Text(localized("Add total pages", locale: locale))
                     .font(.headline)
             }
 
-            Text(String(localized: "Add pages to track progress and sessions."))
+            Text(localized("Add pages to track progress and sessions.", locale: locale))
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
             Button {
                 showEditBook = true
             } label: {
-                Text(String(localized: "Add pages"))
+                Text(localized("Add pages", locale: locale))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(themeColor.color)
             }
@@ -876,7 +876,7 @@ struct BookDetailView: View {
                 composed += coloredText(formatDate(last), color: accent)
                 return Text(composed)
             }
-            return Text("No read dates yet")
+            return Text(localized("No read dates yet", locale: locale))
         }
     }
 
@@ -885,15 +885,15 @@ struct BookDetailView: View {
             let hours = minutes / 60
             let mins = minutes % 60
             if mins == 0 {
-                return String.localizedStringWithFormat(String(localized: "%lldh"), hours)
+                return String.localizedStringWithFormat(localized("%lldh", locale: locale), hours)
             }
-            return String.localizedStringWithFormat(String(localized: "%lldh %lldm"), hours, mins)
+            return String.localizedStringWithFormat(localized("%lldh %lldm", locale: locale), hours, mins)
         }
-        return String.localizedStringWithFormat(String(localized: "%lldm"), minutes)
+        return String.localizedStringWithFormat(localized("%lldm", locale: locale), minutes)
     }
 
     private func formatDays(_ value: Int) -> String {
-        String.localizedStringWithFormat(String(localized: "%lld days"), value)
+        String.localizedStringWithFormat(localized("%lld days", locale: locale), value)
     }
 
     private func formatDate(_ date: Date) -> String {
@@ -1289,9 +1289,9 @@ struct BookDetailView: View {
                         HStack(spacing: 6) {
                             Text(
                                 showAllSessions
-                                ? "Show Less"
+                                ? localized("Show Less", locale: locale)
                                 : String.localizedStringWithFormat(
-                                    String(localized: "Show All (%lld)"),
+                                    localized("Show All (%lld)", locale: locale),
                                     sessions.count
                                 )
                             )
@@ -1388,9 +1388,9 @@ struct BookDetailView: View {
                     HStack(spacing: 6) {
                         Text(
                             showAllSubjects
-                            ? "Show Less"
+                            ? localized("Show Less", locale: locale)
                             : String.localizedStringWithFormat(
-                                String(localized: "Show All (%lld)"),
+                                localized("Show All (%lld)", locale: locale),
                                 subjects.count
                             )
                         )
@@ -1428,25 +1428,25 @@ struct BookDetailView: View {
                         .foregroundStyle(themeColor.color)
                         .frame(width: 16)
 
-                    Text("Details")
+                    Text(localized("Details", locale: locale))
                         .font(.headline)
                 }
 
                 VStack(spacing: 10) {
                     if let publisher = book.publisher, profile?.showPublisher ?? true {
-                        metadataRow(icon: "building.2.fill", label: "Publisher", value: publisher)
+                        metadataRow(icon: "building.2.fill", label: localized("Publisher", locale: locale), value: publisher)
                     }
 
                     if let publishedDate = book.publishedDate, profile?.showPublishedDate ?? true {
-                        metadataRow(icon: "calendar", label: "Published", value: publishedDate)
+                        metadataRow(icon: "calendar", label: localized("Published Date", locale: locale), value: publishedDate)
                     }
 
                     if let language = book.language, profile?.showLanguage ?? true {
-                        metadataRow(icon: "globe", label: "Language", value: language)
+                        metadataRow(icon: "globe", label: localized("Language", locale: locale), value: language)
                     }
 
                     if let isbn = book.isbn, profile?.showISBN ?? true {
-                        metadataRow(icon: "barcode", label: "ISBN", value: isbn)
+                        metadataRow(icon: "barcode", label: localized("ISBN", locale: locale), value: isbn)
                     }
                 }
             }
@@ -1671,6 +1671,7 @@ struct FinishBookLogView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     @Query private var profiles: [UserProfile]
     @Query private var activeSessions: [ActiveReadingSession]
 
@@ -1721,9 +1722,9 @@ struct FinishBookLogView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Reading Progress") {
+                Section(localized("Reading Progress", locale: locale)) {
                     HStack {
-                        Text("From Page")
+                        Text(localized("From Page", locale: locale))
                         Spacer()
                         Text(verbatim: "0")
                             .foregroundStyle(.secondary)
@@ -1731,7 +1732,7 @@ struct FinishBookLogView: View {
                     }
 
                     HStack {
-                        Text("To Page")
+                        Text(localized("To Page", locale: locale))
                         Spacer()
                         TextField("0", text: $endPageText)
                             .keyboardType(.numberPad)
@@ -1743,7 +1744,12 @@ struct FinishBookLogView: View {
                             }
 
                         if let totalPages = book.totalPages, totalPages > 0 {
-                            Text("/ \(totalPages, format: .number)")
+                            Text(
+                                String.localizedStringWithFormat(
+                                    localized("/ %lld", locale: locale),
+                                    totalPages
+                                )
+                            )
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -1752,7 +1758,7 @@ struct FinishBookLogView: View {
                         Image(systemName: "book.pages")
                             .foregroundStyle(themeColor.color)
 
-                        Text("Pages Read")
+                        Text(localized("Pages Read", locale: locale))
                         Spacer()
                         Text(pagesRead, format: .number)
                             .font(Theme.Typography.headline)
@@ -1760,15 +1766,15 @@ struct FinishBookLogView: View {
                     }
                 }
 
-                Section("Dates") {
+                Section(localized("Dates", locale: locale)) {
                     DatePicker(
-                        "Finished on",
+                        localized("Finished on", locale: locale),
                         selection: $finishDate,
                         in: (useStartDate ? startDate : Date.distantPast)...Date(),
                         displayedComponents: [.date]
                     )
 
-                    Toggle("Add start date", isOn: $useStartDate)
+                    Toggle(localized("Add start date", locale: locale), isOn: $useStartDate)
                         .onChange(of: useStartDate) { _, newValue in
                             if newValue, startDate > finishDate {
                                 startDate = finishDate
@@ -1777,20 +1783,20 @@ struct FinishBookLogView: View {
 
                     if useStartDate {
                         DatePicker(
-                            "Started on",
+                            localized("Started on", locale: locale),
                             selection: $startDate,
                             in: ...finishDate,
                             displayedComponents: [.date]
                         )
                     }
 
-                    Text("Dates track your reading window. Time spent is separate.")
+                    Text(localized("Dates track your reading window. Time spent is separate.", locale: locale))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
-                Section("Time Spent") {
-                    Toggle("Track time spent", isOn: $includeDuration)
+                Section(localized("Time Spent", locale: locale)) {
+                    Toggle(localized("Track time spent", locale: locale), isOn: $includeDuration)
                         .onChange(of: includeDuration) { _, newValue in
                             if newValue {
                                 durationMinutes = max(1, lastDurationMinutes)
@@ -1980,6 +1986,7 @@ struct FinishBookLogView: View {
 // MARK: - Reading Session Row
 
 struct ReadingSessionRow: View {
+    @Environment(\.locale) private var locale
     let session: ReadingSession
 
     var body: some View {
@@ -1987,15 +1994,26 @@ struct ReadingSessionRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
                     if session.isActive {
-                        Text("Started at page \(session.startPage)")
+                        Text(
+                            String.localizedStringWithFormat(
+                                localized("Started at page %lld", locale: locale),
+                                session.startPage
+                            )
+                        )
                             .font(.subheadline.weight(.medium))
                     } else {
-                        Text("From page \(session.startPage) to page \(session.endPage)")
+                        Text(
+                            String.localizedStringWithFormat(
+                                localized("From page %lld to page %lld", locale: locale),
+                                session.startPage,
+                                session.endPage
+                            )
+                        )
                             .font(.subheadline.weight(.medium))
                     }
 
                     if session.isImported || !session.countsTowardStats {
-                        Text("Imported")
+                        Text(localized("Imported", locale: locale))
                             .font(.caption2.weight(.semibold))
                             .foregroundStyle(.orange)
                             .padding(.horizontal, 6)
@@ -2021,7 +2039,12 @@ struct ReadingSessionRow: View {
                         .font(.caption)
                         .foregroundStyle(.tertiary)
 
-                    Text("\(session.durationMinutes) min")
+                    Text(
+                        String.localizedStringWithFormat(
+                            localized("%lld min", locale: locale),
+                            session.durationMinutes
+                        )
+                    )
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -2029,7 +2052,12 @@ struct ReadingSessionRow: View {
 
             Spacer()
 
-            Text("\(session.xpEarned) XP")
+            Text(
+                String.localizedStringWithFormat(
+                    localized("%lld XP", locale: locale),
+                    session.xpEarned
+                )
+            )
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.green)
         }

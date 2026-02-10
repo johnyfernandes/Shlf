@@ -279,16 +279,26 @@ struct BookRow: View {
                                 .font(Theme.Typography.headline)
                                 .foregroundStyle(themeColor.color)
 
-                            Text("/ \(totalPages, format: .number) \(localized("pages", locale: locale))")
-                                .font(Theme.Typography.caption)
-                                .foregroundStyle(Theme.Colors.tertiaryText)
+                            Text(
+                                String.localizedStringWithFormat(
+                                    localized("/ %lld pages", locale: locale),
+                                    totalPages
+                                )
+                            )
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(Theme.Colors.tertiaryText)
 
                             Spacer()
 
-                            Text("\(Int(book.progressPercentage))%")
-                                .font(Theme.Typography.subheadline)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(themeColor.color)
+                            Text(
+                                String.localizedStringWithFormat(
+                                    localized("%lld%%", locale: locale),
+                                    Int(book.progressPercentage)
+                                )
+                            )
+                            .font(Theme.Typography.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(themeColor.color)
                         }
 
                         ProgressView(value: book.progressPercentage, total: 100)

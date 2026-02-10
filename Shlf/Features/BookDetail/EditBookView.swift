@@ -13,6 +13,7 @@ struct EditBookView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     @Bindable var book: Book
     @Query private var profiles: [UserProfile]
 
@@ -201,7 +202,7 @@ struct EditBookView: View {
                     .font(.system(size: 40))
                     .foregroundStyle(themeColor.color.opacity(0.6))
 
-                Text("Add Cover")
+                Text(localized("Add Cover", locale: locale))
                     .font(.caption2)
                     .foregroundStyle(themeColor.color.opacity(0.6))
             }
@@ -213,33 +214,33 @@ struct EditBookView: View {
     private var essentialInfoSection: some View {
         VStack(spacing: 16) {
             ModernTextField(
-                title: "Title",
+                title: localized("Title", locale: locale),
                 text: $book.title,
                 icon: "text.alignleft",
-                placeholder: "Enter book title",
+                placeholder: localized("Enter book title", locale: locale),
                 focused: $focusedField,
                 field: .title
             )
             .onChange(of: book.title) { _, _ in hasUnsavedChanges = true }
 
             ModernTextField(
-                title: "Author",
+                title: localized("Author", locale: locale),
                 text: $book.author,
                 icon: "person.fill",
-                placeholder: "Enter author name",
+                placeholder: localized("Enter author name", locale: locale),
                 focused: $focusedField,
                 field: .author
             )
             .onChange(of: book.author) { _, _ in hasUnsavedChanges = true }
 
             ModernTextField(
-                title: "ISBN",
+                title: localized("ISBN", locale: locale),
                 text: Binding(
                     get: { book.isbn ?? "" },
                     set: { book.isbn = $0.isEmpty ? nil : $0 }
                 ),
                 icon: "barcode",
-                placeholder: "Optional",
+                placeholder: localized("Optional", locale: locale),
                 focused: $focusedField,
                 field: .isbn
             )
@@ -263,7 +264,7 @@ struct EditBookView: View {
             }
             .padding(.leading, 2)
 
-            Text("Update your current page and total pages.")
+            Text(localized("Update your current page and total pages.", locale: locale))
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .padding(.leading, 2)
@@ -292,7 +293,13 @@ struct EditBookView: View {
             if let total = book.totalPages, total > 0 {
                 VStack(spacing: 8) {
                     HStack {
-                        Text("\(Int(book.progressPercentage))% \(String(localized: "Complete"))")
+                        Text(
+                            String.localizedStringWithFormat(
+                                localized("%lld%% %@", locale: locale),
+                                Int(book.progressPercentage),
+                                localized("Complete", locale: locale)
+                            )
+                        )
                             .font(.caption)
                             .foregroundStyle(Theme.Colors.secondaryText)
 
@@ -300,7 +307,7 @@ struct EditBookView: View {
 
                         Text(
                             String.localizedStringWithFormat(
-                                String(localized: "%lld pages left"),
+                                localized("%lld pages left", locale: locale),
                                 max(0, total - book.currentPage)
                             )
                         )
@@ -404,7 +411,7 @@ struct EditBookView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 20)
 
-                Text("Publishing Details")
+                Text(localized("Publishing Details", locale: locale))
                     .font(Theme.Typography.headline)
                     .foregroundStyle(Theme.Colors.text)
             }
@@ -412,37 +419,37 @@ struct EditBookView: View {
 
             VStack(spacing: 12) {
                 ModernTextField(
-                    title: "Publisher",
+                    title: localized("Publisher", locale: locale),
                     text: Binding(
                         get: { book.publisher ?? "" },
                         set: { book.publisher = $0.isEmpty ? nil : $0 }
                     ),
                     icon: "building.2.fill",
-                    placeholder: "Optional",
+                    placeholder: localized("Optional", locale: locale),
                     focused: $focusedField,
                     field: .publisher
                 )
 
                 ModernTextField(
-                    title: "Published Date",
+                    title: localized("Published Date", locale: locale),
                     text: Binding(
                         get: { book.publishedDate ?? "" },
                         set: { book.publishedDate = $0.isEmpty ? nil : $0 }
                     ),
                     icon: "calendar",
-                    placeholder: "e.g., 2024",
+                    placeholder: localized("e.g., 2024", locale: locale),
                     focused: $focusedField,
                     field: .publishedDate
                 )
 
                 ModernTextField(
-                    title: "Language",
+                    title: localized("Language", locale: locale),
                     text: Binding(
                         get: { book.language ?? "" },
                         set: { book.language = $0.isEmpty ? nil : $0 }
                     ),
                     icon: "globe",
-                    placeholder: "e.g., English",
+                    placeholder: localized("e.g., English", locale: locale),
                     focused: $focusedField,
                     field: .language
                 )
@@ -460,7 +467,7 @@ struct EditBookView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 20)
 
-                Text("Description")
+                Text(localized("Description", locale: locale))
                     .font(Theme.Typography.headline)
                     .foregroundStyle(Theme.Colors.text)
             }
@@ -622,10 +629,10 @@ struct EditBookView: View {
 // MARK: - Modern Text Field
 
 struct ModernTextField<Field: Hashable>: View {
-    let title: LocalizedStringKey
+    let title: String
     @Binding var text: String
     let icon: String
-    let placeholder: LocalizedStringKey
+    let placeholder: String
     @FocusState.Binding var focused: Field?
     let field: Field
     @Environment(\.themeColor) private var themeColor

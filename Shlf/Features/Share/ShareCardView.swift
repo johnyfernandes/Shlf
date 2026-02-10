@@ -336,7 +336,12 @@ private struct ShareHeroView: View {
                                 .foregroundStyle(primaryText.opacity(0.6))
 
                             if let progress {
-                                Text("\(Int((progress * 100).rounded()))%")
+                                Text(
+                                    String.localizedStringWithFormat(
+                                        String(localized: "%lld%%"),
+                                        Int((progress * 100).rounded())
+                                    )
+                                )
                                     .font(.system(size: 22 * scale, weight: .bold, design: .rounded))
                                     .foregroundStyle(primaryText)
                             }

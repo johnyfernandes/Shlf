@@ -128,7 +128,12 @@ struct StreakDetailView: View {
                     Image(systemName: "trophy.fill")
                         .foregroundStyle(Theme.Colors.warning)
 
-                    Text("Streak.LongestChain \(profile.longestStreak)")
+                    Text(
+                        String.localizedStringWithFormat(
+                            String(localized: "Streak.LongestChain %lld"),
+                            profile.longestStreak
+                        )
+                    )
                     .font(Theme.Typography.callout)
                     .foregroundStyle(Theme.Colors.secondaryText)
 
@@ -148,7 +153,12 @@ struct StreakDetailView: View {
                     Text("Streak.Status.ActiveToday")
                         .font(Theme.Typography.callout)
                     if let deadline = streakDeadline {
-                        Text("Streak.Status.KeepGoingBy \(formatTime(deadline))")
+                        Text(
+                            String.localizedStringWithFormat(
+                                String(localized: "Streak.Status.KeepGoingBy %@"),
+                                formatTime(deadline)
+                            )
+                        )
                             .font(Theme.Typography.caption)
                             .foregroundStyle(Theme.Colors.secondaryText)
                     }
@@ -157,7 +167,12 @@ struct StreakDetailView: View {
                         .font(Theme.Typography.callout)
                         .foregroundStyle(Theme.Colors.warning)
                     if let deadline = streakDeadline {
-                        Text("Streak.Status.ReadByToKeep \(formatTime(deadline))")
+                        Text(
+                            String.localizedStringWithFormat(
+                                String(localized: "Streak.Status.ReadByToKeep %@"),
+                                formatTime(deadline)
+                            )
+                        )
                             .font(Theme.Typography.caption)
                             .foregroundStyle(Theme.Colors.secondaryText)
                     }
@@ -166,7 +181,12 @@ struct StreakDetailView: View {
                         .font(Theme.Typography.callout)
                         .foregroundStyle(Theme.Colors.error)
                     if let missedDay = missedDayDate {
-                        Text("Streak.Status.MissedOn \(formatDate(missedDay))")
+                        Text(
+                            String.localizedStringWithFormat(
+                                String(localized: "Streak.Status.MissedOn %@"),
+                                formatDate(missedDay)
+                            )
+                        )
                             .font(Theme.Typography.caption)
                             .foregroundStyle(Theme.Colors.secondaryText)
                     }
@@ -210,9 +230,19 @@ struct StreakDetailView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
             switch pardonEligibility {
             case .available(let missedDay, let deadline):
-                Text("Streak.Protection.MissedOn \(formatDate(missedDay))")
+                Text(
+                    String.localizedStringWithFormat(
+                        String(localized: "Streak.Protection.MissedOn %@"),
+                        formatDate(missedDay)
+                    )
+                )
                     .font(Theme.Typography.callout)
-                Text("Streak.Protection.AvailableUntil \(formatTime(deadline))")
+                Text(
+                    String.localizedStringWithFormat(
+                        String(localized: "Streak.Protection.AvailableUntil %@"),
+                        formatTime(deadline)
+                    )
+                )
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
 
@@ -239,13 +269,23 @@ struct StreakDetailView: View {
             case .cooldown(let nextAvailable):
                 Text("Streak.Protection.Cooldown")
                     .font(Theme.Typography.callout)
-                Text("Streak.Protection.NextAvailable \(formatDate(nextAvailable))")
+                Text(
+                    String.localizedStringWithFormat(
+                        String(localized: "Streak.Protection.NextAvailable %@"),
+                        formatDate(nextAvailable)
+                    )
+                )
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
             case .expired(let missedDay):
                 Text("Streak.Protection.Expired")
                     .font(Theme.Typography.callout)
-                Text("Streak.Protection.MissedOn \(formatDate(missedDay))")
+                Text(
+                    String.localizedStringWithFormat(
+                        String(localized: "Streak.Protection.MissedOn %@"),
+                        formatDate(missedDay)
+                    )
+                )
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
             case .notNeeded:

@@ -188,7 +188,7 @@ struct QuickProgressStepper: View {
                         HStack(spacing: 4) {
                             Text(
                                 String.localizedStringWithFormat(
-                                    String(localized: "of %lld"),
+                                    localized("of %lld", locale: locale),
                                     total
                                 )
                             )
@@ -202,7 +202,7 @@ struct QuickProgressStepper: View {
 
                                 Text(
                                     String.localizedStringWithFormat(
-                                        String(localized: "%lld left"),
+                                        localized("%lld left", locale: locale),
                                         total - book.currentPage
                                     )
                                 )
@@ -246,7 +246,12 @@ struct QuickProgressStepper: View {
                     saveProgress()
                 } label: {
                     HStack(spacing: Theme.Spacing.xs) {
-                        Text(pendingPages > 0 ? "Save +\(pendingPages) pages" : "Save \(pendingPages) pages")
+                        Text(
+                            String.localizedStringWithFormat(
+                                localized(pendingPages > 0 ? "Save +%lld pages" : "Save %lld pages", locale: locale),
+                                pendingPages
+                            )
+                        )
                         Image(systemName: "checkmark")
                     }
                     .font(Theme.Typography.headline)
@@ -270,7 +275,7 @@ struct QuickProgressStepper: View {
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .toolbar {
             ToolbarItem(placement: .keyboard) {
-                Button("Done") {
+                Button(localized("Done", locale: locale)) {
                     commitPageEdit()
                 }
             }
@@ -309,12 +314,12 @@ struct QuickProgressStepper: View {
                 }
             }
         } message: {
-            Text(
-                String.localizedStringWithFormat(
-                    String(localized: "You've reached the last page of %@. Would you like to mark it as finished?"),
-                    book.title
-                )
-            )
+                    Text(
+                        String.localizedStringWithFormat(
+                            localized("You've reached the last page of %@. Would you like to mark it as finished?", locale: locale),
+                            book.title
+                        )
+                    )
         }
         .onAppear {
             if shouldShowEditTooltip {

@@ -13,6 +13,7 @@ struct ManualBookEntryView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     @Query private var profiles: [UserProfile]
     @Query private var books: [Book]
     @Binding var selectedTab: Int
@@ -279,20 +280,20 @@ struct ManualBookEntryView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
-                Text("Reading Progress")
+                Text(localized("Reading Progress", locale: locale))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.Colors.text)
             }
             .padding(.leading, 2)
 
-            Text("Update your current page and total pages.")
+            Text(localized("Update your current page and total pages.", locale: locale))
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .padding(.leading, 2)
 
             HStack(spacing: 10) {
                 CompactNumberField(
-                    title: "Current Page",
+                    title: localized("Current Page", locale: locale),
                     value: $currentPage,
                     icon: "bookmark.fill",
                     focused: $focusedField,
@@ -300,7 +301,7 @@ struct ManualBookEntryView: View {
                 )
 
                 CompactNumberField(
-                    title: "Total Pages",
+                    title: localized("Total Pages", locale: locale),
                     value: Binding(
                         get: { Int(totalPages) ?? 0 },
                         set: { totalPages = $0 == 0 ? "" : "\($0)" }
@@ -317,7 +318,7 @@ struct ManualBookEntryView: View {
                     HStack {
                         Text(
                             String.localizedStringWithFormat(
-                                String(localized: "%lld%% Complete"),
+                                localized("%lld%% Complete", locale: locale),
                                 Int(progress)
                             )
                         )
@@ -328,7 +329,7 @@ struct ManualBookEntryView: View {
 
                         Text(
                             String.localizedStringWithFormat(
-                                String(localized: "%lld pages left"),
+                                localized("%lld pages left", locale: locale),
                                 max(0, total - currentPage)
                             )
                         )
@@ -442,7 +443,7 @@ struct ManualBookEntryView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 20)
 
-                Text("Publishing Details")
+                Text(localized("Publishing Details", locale: locale))
                     .font(Theme.Typography.headline)
                     .foregroundStyle(Theme.Colors.text)
             }
@@ -450,25 +451,25 @@ struct ManualBookEntryView: View {
 
             VStack(spacing: 12) {
                 ModernTextField(
-                    title: "Publisher",
+                    title: localized("Publisher", locale: locale),
                     text: $publisher,
                     icon: "building.2.fill",
-                    placeholder: "Optional",
+                    placeholder: localized("Optional", locale: locale),
                     focused: $focusedField,
                     field: .publisher
                 )
 
                 ModernTextField(
-                    title: "Published Date",
+                    title: localized("Published Date", locale: locale),
                     text: $publishedDate,
                     icon: "calendar",
-                    placeholder: "e.g., 2024",
+                    placeholder: localized("e.g., 2024", locale: locale),
                     focused: $focusedField,
                     field: .publishedDate
                 )
 
                 ModernTextField(
-                    title: "Language",
+                    title: localized("Language", locale: locale),
                     text: $language,
                     icon: "globe",
                     placeholder: "e.g., English",
