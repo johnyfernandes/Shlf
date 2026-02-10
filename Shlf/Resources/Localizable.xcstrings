@@ -44609,6 +44609,7 @@
       }
     },
     "Streak.LongestChain %lld" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -44956,6 +44957,7 @@
       }
     },
     "Streak.Status.KeepGoingBy %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -45018,6 +45020,7 @@
       }
     },
     "Streak.Status.MissedOn %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -45034,6 +45037,7 @@
       }
     },
     "Streak.Status.ReadByToKeep %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

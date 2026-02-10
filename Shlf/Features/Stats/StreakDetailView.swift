@@ -129,9 +129,10 @@ struct StreakDetailView: View {
                         .foregroundStyle(Theme.Colors.warning)
 
                     Text(
-                        String.localizedStringWithFormat(
-                            String(localized: "Streak.LongestChain %lld"),
-                            profile.longestStreak
+                        String(
+                            format: localized("Streak.LongestChain %lld", locale: locale),
+                            locale: locale,
+                            arguments: [profile.longestStreak]
                         )
                     )
                     .font(Theme.Typography.callout)
@@ -154,9 +155,10 @@ struct StreakDetailView: View {
                         .font(Theme.Typography.callout)
                     if let deadline = streakDeadline {
                         Text(
-                            String.localizedStringWithFormat(
-                                String(localized: "Streak.Status.KeepGoingBy %@"),
-                                formatTime(deadline)
+                            String(
+                                format: localized("Streak.Status.KeepGoingBy %@", locale: locale),
+                                locale: locale,
+                                arguments: [formatTime(deadline)]
                             )
                         )
                             .font(Theme.Typography.caption)
@@ -168,9 +170,10 @@ struct StreakDetailView: View {
                         .foregroundStyle(Theme.Colors.warning)
                     if let deadline = streakDeadline {
                         Text(
-                            String.localizedStringWithFormat(
-                                String(localized: "Streak.Status.ReadByToKeep %@"),
-                                formatTime(deadline)
+                            String(
+                                format: localized("Streak.Status.ReadByToKeep %@", locale: locale),
+                                locale: locale,
+                                arguments: [formatTime(deadline)]
                             )
                         )
                             .font(Theme.Typography.caption)
@@ -182,9 +185,10 @@ struct StreakDetailView: View {
                         .foregroundStyle(Theme.Colors.error)
                     if let missedDay = missedDayDate {
                         Text(
-                            String.localizedStringWithFormat(
-                                String(localized: "Streak.Status.MissedOn %@"),
-                                formatDate(missedDay)
+                            String(
+                                format: localized("Streak.Status.MissedOn %@", locale: locale),
+                                locale: locale,
+                                arguments: [formatDate(missedDay)]
                             )
                         )
                             .font(Theme.Typography.caption)
