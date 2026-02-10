@@ -375,7 +375,11 @@ struct BookPreviewView: View {
                     )
                 }
             } catch {
+                #if DEBUG
                 print("Failed to fetch best edition: \(error)")
+                #else
+                AppLogger.logError(error, context: "Fetch best edition", logger: AppLogger.network)
+                #endif
             }
         }
     }
@@ -512,7 +516,11 @@ struct BookPreviewView: View {
                 onDismiss()
             }
         } catch {
+            #if DEBUG
             print("Error checking for duplicates: \(error)")
+            #else
+            AppLogger.logError(error, context: "Check duplicates", logger: AppLogger.network)
+            #endif
             showDuplicateAlert = true
         }
     }
@@ -537,7 +545,9 @@ struct BookPreviewView: View {
             ),
             selectedTab: .constant(1),
             onDismiss: {
+                #if DEBUG
                 print("Dismissed")
+                #endif
             }
         )
     }

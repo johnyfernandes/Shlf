@@ -132,7 +132,9 @@ struct DataScannerRepresentable: UIViewControllerRepresentable {
         // Start scanning immediately
         try? scanner.startScanning()
 
+        #if DEBUG
         print("✅ Scanner initialized with Coordinator delegate")
+        #endif
 
         return scanner
     }
@@ -147,7 +149,9 @@ struct DataScannerRepresentable: UIViewControllerRepresentable {
         init(onScan: @escaping (String) -> Void) {
             self.onScan = onScan
             super.init()
+            #if DEBUG
             print("✅ Coordinator created")
+            #endif
         }
 
         func dataScanner(
@@ -155,25 +159,33 @@ struct DataScannerRepresentable: UIViewControllerRepresentable {
             didAdd addedItems: [RecognizedItem],
             allItems: [RecognizedItem]
         ) {
+            #if DEBUG
             print("📱 Delegate called: didAdd \(addedItems.count) items")
+            #endif
 
             // Process first barcode immediately
             for item in addedItems {
                 if case .barcode(let barcode) = item,
                    let payloadString = barcode.payloadStringValue {
+                    #if DEBUG
                     print("✅ Detected barcode: \(payloadString)")
+                    #endif
 
                     // Validate ISBN format
                     let cleanBarcode = payloadString.replacingOccurrences(of: "-", with: "")
 
                     if cleanBarcode.count == 10 || cleanBarcode.count == 13,
                        cleanBarcode.allSatisfy({ $0.isNumber || $0 == "X" }) {
+                        #if DEBUG
                         print("✅ Valid ISBN: \(cleanBarcode)")
+                        #endif
                         dataScanner.stopScanning()
                         onScan(cleanBarcode)
                         return
                     } else {
+                        #if DEBUG
                         print("⚠️ Invalid ISBN format: \(payloadString)")
+                        #endif
                     }
                 }
             }
@@ -183,11 +195,15 @@ struct DataScannerRepresentable: UIViewControllerRepresentable {
             _ dataScanner: DataScannerViewController,
             didTapOn item: RecognizedItem
         ) {
+            #if DEBUG
             print("📱 Delegate called: didTapOn")
+            #endif
 
             if case .barcode(let barcode) = item,
                let payloadString = barcode.payloadStringValue {
+                #if DEBUG
                 print("✅ Tapped barcode: \(payloadString)")
+                #endif
 
                 let cleanBarcode = payloadString.replacingOccurrences(of: "-", with: "")
 
@@ -200,7 +216,9 @@ struct DataScannerRepresentable: UIViewControllerRepresentable {
         }
 
         deinit {
+            #if DEBUG
             print("❌ Coordinator deallocated")
+            #endif
         }
     }
 }
@@ -237,6 +255,8 @@ private struct ScanGuidanceOverlay: View {
 
 #Preview {
     BarcodeScannerView { isbn in
+        #if DEBUG
         print("Scanned ISBN: \(isbn)")
+        #endif
     }
 }

@@ -1636,7 +1636,11 @@ struct BookDetailView: View {
         do {
             try modelContext.save()
         } catch {
+            #if DEBUG
             print("Failed to delete book: \(error.localizedDescription)")
+            #else
+            AppLogger.logError(error, context: "Delete book", logger: AppLogger.database)
+            #endif
             return
         }
 
@@ -1660,7 +1664,11 @@ struct BookDetailView: View {
         do {
             try SessionManager.deleteSession(session, in: modelContext)
         } catch {
+            #if DEBUG
             print("Failed to delete session: \(error.localizedDescription)")
+            #else
+            AppLogger.logError(error, context: "Delete session", logger: AppLogger.database)
+            #endif
         }
     }
 }

@@ -258,7 +258,11 @@ struct PaywallView: View {
                 }
                 dismiss()
             } catch {
+                #if DEBUG
                 print("Purchase failed: \(error)")
+                #else
+                AppLogger.logError(error, context: "Paywall purchase", logger: AppLogger.network)
+                #endif
             }
             isPurchasing = false
         }

@@ -1029,7 +1029,11 @@ struct StatsView: View {
             do {
                 try modelContext.save()
             } catch {
+                #if DEBUG
                 print("Failed to mark achievement as viewed: \(error.localizedDescription)")
+                #else
+                AppLogger.logError(error, context: "Mark achievement viewed", logger: AppLogger.database)
+                #endif
             }
         }
     }

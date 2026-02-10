@@ -339,7 +339,11 @@ final class AddBookViewModel {
             let bookInfo = try await bookAPI.fetchBook(isbn: isbn)
             return bookInfo
         } catch {
+            #if DEBUG
             print("Failed to fetch book info: \(error)")
+            #else
+            AppLogger.logError(error, context: "Fetch book info", logger: AppLogger.network)
+            #endif
             return nil
         }
     }

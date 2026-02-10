@@ -103,7 +103,11 @@ struct ShlfApp: App {
                         try container.mainContext.save()
                         WidgetDataExporter.exportSnapshot(modelContext: container.mainContext)
                     } catch {
+                        #if DEBUG
                         print("Failed to save on background: \(error)")
+                        #else
+                        AppLogger.logError(error, context: "Background save", logger: AppLogger.database)
+                        #endif
                     }
                 }
 

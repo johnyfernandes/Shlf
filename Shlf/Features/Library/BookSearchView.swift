@@ -212,7 +212,11 @@ struct BookSearchView: View {
             }
         } catch {
             // Real error - keep cache but show current results
+            #if DEBUG
             print("Search error: \(error)")
+            #else
+            AppLogger.logError(error, context: "Book search", logger: AppLogger.network)
+            #endif
             await MainActor.run {
                 isSearching = false
                 // Don't clear searchResults or cache - keep what we have
@@ -313,7 +317,9 @@ struct BookSearchResultRow: View {
     BookSearchView(
         selectedTab: .constant(1),
         onDismissAll: {
+            #if DEBUG
             print("Dismissed all")
+            #endif
         },
         showsDoneButton: true
     )

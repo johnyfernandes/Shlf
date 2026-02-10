@@ -76,7 +76,11 @@ final class StoreKitService {
                 }
                 lastLoadError = "Products unavailable. Check App Store Connect or network."
             } catch {
+                #if DEBUG
                 print("Failed to load products (attempt \(attempt)/3): \(error)")
+                #else
+                AppLogger.logError(error, context: "StoreKit load products attempt \(attempt)", logger: AppLogger.network)
+                #endif
                 lastLoadError = error.localizedDescription
 
                 if attempt < 3 {
@@ -88,7 +92,11 @@ final class StoreKitService {
         }
 
         // All retries failed - products will remain empty
+        #if DEBUG
         print("All product loading attempts failed")
+        #else
+        AppLogger.logWarning("All StoreKit product loading attempts failed", logger: AppLogger.network)
+        #endif
     }
 
     @MainActor
@@ -142,7 +150,11 @@ final class StoreKitService {
                     await self.updatePurchasedProducts()
                     await transaction.finish()
                 } catch {
+                    #if DEBUG
                     print("Transaction verification failed: \(error)")
+                    #else
+                    AppLogger.logError(error, context: "Transaction verification", logger: AppLogger.network)
+                    #endif
                 }
             }
         }
@@ -159,7 +171,11 @@ final class StoreKitService {
                     purchasedIDs.insert(transaction.productID)
                 }
             } catch {
+                #if DEBUG
                 print("Failed to verify transaction: \(error)")
+                #else
+                AppLogger.logError(error, context: "Transaction verify", logger: AppLogger.network)
+                #endif
             }
         }
 
