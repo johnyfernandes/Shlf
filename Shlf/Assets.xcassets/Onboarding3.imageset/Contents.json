@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "Onboarding​Step3​-​Light.png",
+      "filename" : "OnboardingStep3-Light.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
@@ -12,7 +12,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "Onboarding​Step3​-​Dark.png",
+      "filename" : "OnboardingStep3-Dark.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
