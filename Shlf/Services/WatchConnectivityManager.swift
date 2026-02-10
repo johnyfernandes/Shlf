@@ -569,11 +569,16 @@ class WatchConnectivityManager: NSObject {
             let booksData = try JSONEncoder().encode(bookTransfers)
             let sessionsData = try JSONEncoder().encode(sessionTransfers)
 
-            // Use updateApplicationContext for guaranteed delivery
-            try WCSession.default.updateApplicationContext([
+            var context: [String: Any] = [
                 "books": booksData,
                 "sessions": sessionsData
-            ])
+            ]
+            if let languageOverride = UserDefaults.standard.string(forKey: "developerLanguageOverride") {
+                context[Self.languageOverrideKey] = languageOverride
+            }
+
+            // Use updateApplicationContext for guaranteed delivery
+            try WCSession.default.updateApplicationContext(context)
             Self.logger.info("Sent \(bookTransfers.count) books and \(sessionTransfers.count) sessions to Watch")
         } catch {
             Self.logger.error("Failed to sync to Watch: \(error)")
