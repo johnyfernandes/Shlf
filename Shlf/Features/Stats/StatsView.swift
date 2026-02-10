@@ -741,7 +741,9 @@ struct StatsView: View {
                         ReadingHeatmapChart(sessions: statSessions, period: profile.heatmapPeriod)
                     }
                 }
-                .padding(20)
+                .padding(.horizontal, Theme.Spacing.lg)
+                .padding(.top, 0)
+                .padding(.bottom, Theme.Spacing.md)
                 .background(
                     ZStack {
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
