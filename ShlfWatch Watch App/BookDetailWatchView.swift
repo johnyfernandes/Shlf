@@ -108,7 +108,12 @@ struct BookDetailWatchView: View {
                             Text(book.currentPage, format: .number)
                                 .font(.system(size: 32, weight: .bold, design: .rounded))
 
-                            Text("/ \(totalPages, format: .number)")
+                            Text(
+                                String.localizedStringWithFormat(
+                                    String(localized: "Watch.PagesOfTotal"),
+                                    totalPages
+                                )
+                            )
                                 .font(.system(size: 12, weight: .medium, design: .rounded))
                                 .foregroundStyle(.secondary)
                         }
@@ -241,7 +246,7 @@ struct BookDetailWatchView: View {
                         Label {
                             Text(
                                 String.localizedStringWithFormat(
-                                    String(localized: "View Quotes (%lld)"),
+                                    String(localized: "Watch.ViewQuotesCount"),
                                     quotes.count
                                 )
                             )
@@ -365,7 +370,7 @@ struct AddPagesWatchView: View {
         VStack(spacing: 0) {
             Spacer()
 
-            Text("Adjust Pages")
+            Text("Watch.AdjustPages")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .padding(.bottom, 8)
@@ -396,7 +401,7 @@ struct AddPagesWatchView: View {
                 Button {
                     applyAndDismiss()
                 } label: {
-                    Text("Apply")
+                    Text("Watch.Apply")
                         .foregroundStyle(intAmount > 0 ? themeColor.onColor(for: colorScheme) : .white)
                 }
                 .buttonStyle(.borderedProminent)

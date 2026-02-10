@@ -129,7 +129,7 @@ struct DeveloperSettingsWatchView: View {
                         .foregroundStyle(.secondary)
                     Text(
                         String.localizedStringWithFormat(
-                            String(localized: "Books %lld · Sessions %lld"),
+                            String(localized: "Watch.BooksSessions"),
                             summary.bookCount,
                             summary.sessionCount
                         )

@@ -115,7 +115,7 @@ struct ErrorStateView: View {
                 .font(.system(size: 40))
                 .foregroundStyle(.red)
 
-            Text("Unable to Start")
+            Text("Watch.UnableToStart")
                 .font(.headline)
 
             Text(error.localizedDescription)

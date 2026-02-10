@@ -768,13 +768,13 @@ struct MarkPositionSheet: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            Text("Mark Position")
+            Text("Watch.MarkPosition")
                 .font(.footnote.weight(.semibold))
 
             // Page & Line in compact layout
             HStack(spacing: 16) {
                 VStack(spacing: 2) {
-                    Text("Page")
+                    Text("Watch.Page")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                     Text(page, format: .number)
@@ -786,7 +786,7 @@ struct MarkPositionSheet: View {
                     .frame(height: 30)
 
                 VStack(spacing: 2) {
-                    Text("Line")
+                    Text("Watch.Line")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                     if lineNumber == 0 {
@@ -819,7 +819,7 @@ struct MarkPositionSheet: View {
                 onSave()
                 dismiss()
             } label: {
-                Text("Save")
+                Text("Watch.Save")
                     .font(.footnote.bold())
                     .frame(maxWidth: .infinity)
                     .foregroundStyle(themeColor.onColor(for: colorScheme))

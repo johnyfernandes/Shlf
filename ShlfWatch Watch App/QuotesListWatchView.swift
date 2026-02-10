@@ -29,7 +29,7 @@ struct QuotesListWatchView: View {
                             if let page = quote.pageNumber {
                 Text(
                     String.localizedStringWithFormat(
-                        String(localized: "Page %lld"),
+                        String(localized: "Watch.PageNumber"),
                         page
                     )
                 )
@@ -82,7 +82,7 @@ struct QuoteDetailWatchView: View {
                         Image(systemName: "book.pages")
             Text(
                 String.localizedStringWithFormat(
-                    String(localized: "Page %lld"),
+                    String(localized: "Watch.PageNumber"),
                     page
                 )
             )
@@ -105,7 +105,7 @@ struct QuoteDetailWatchView: View {
                     Divider()
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Personal Note")
+                        Text("Watch.PersonalNote")
                             .font(.caption)
                             .foregroundStyle(.secondary)
 

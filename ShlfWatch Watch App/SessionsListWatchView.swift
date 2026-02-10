@@ -201,7 +201,7 @@ struct SessionRowWatch: View {
                 Spacer()
                 Text(
                     String.localizedStringWithFormat(
-                        String(localized: "%lld XP"),
+                        String(localized: "Watch.XPFormat"),
                         session.xpEarned
                     )
                 )

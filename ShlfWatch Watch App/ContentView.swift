@@ -82,7 +82,7 @@ struct ContentView: View {
                                 HStack(spacing: 4) {
                                     Text(
                                         String.localizedStringWithFormat(
-                                            String(localized: "%lld pages"),
+                                            String(localized: "Watch.PagesCount"),
                                             session.pagesRead
                                         )
                                     )
@@ -196,7 +196,7 @@ struct BookRowWatch: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(
                             String.localizedStringWithFormat(
-                                String(localized: "%lld/%lld"),
+                                String(localized: "Watch.PagesProgress"),
                                 book.currentPage,
                                 totalPages
                             )
