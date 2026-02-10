@@ -11,6 +11,7 @@ import SwiftData
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.locale) private var locale
     @Query(sort: \Book.title) private var allBooks: [Book]
     @Query private var profiles: [UserProfile]
     @Query private var activeSessions: [ActiveReadingSession]
@@ -154,6 +155,7 @@ struct ContentView: View {
                 .toolbar { settingsToolbar }
             }
         }
+        .id(locale.identifier)
         .tint(currentThemeColor.color)
         .environment(\.themeColor, currentThemeColor)
     }
