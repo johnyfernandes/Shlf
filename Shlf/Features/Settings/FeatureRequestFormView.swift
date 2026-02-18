@@ -29,50 +29,67 @@ struct FeatureRequestFormView: View {
 
     var body: some View {
         Form {
-            Section("FeatureRequests.Form.TitleSection") {
-                TextField("FeatureRequests.Form.TitlePlaceholder", text: $title, axis: .vertical)
-                    .textInputAutocapitalization(.sentences)
+            Section {
+                TextField(text: $title, axis: .vertical) {
+                    Text(verbatim: localized("FeatureRequests.Form.TitlePlaceholder", locale: locale))
+                }
+                .textInputAutocapitalization(.sentences)
+            } header: {
+                Text(verbatim: localized("FeatureRequests.Form.TitleSection", locale: locale))
             }
 
-            Section("FeatureRequests.Form.DescriptionSection") {
+            Section {
                 TextEditor(text: $description)
                     .frame(minHeight: 140)
-                Text("FeatureRequests.Form.DescriptionHint")
+                Text(verbatim: localized("FeatureRequests.Form.DescriptionHint", locale: locale))
                     .font(.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
+            } header: {
+                Text(verbatim: localized("FeatureRequests.Form.DescriptionSection", locale: locale))
             }
 
-            Section("FeatureRequests.Form.CategorySection") {
-                Picker("FeatureRequests.Form.CategoryPicker", selection: $category) {
+            Section {
+                Picker(selection: $category) {
                     ForEach(FeatureRequestCategory.allCases) { option in
                         Text(option.localizedTitle(locale: locale))
                             .tag(option)
                     }
+                } label: {
+                    Text(verbatim: localized("FeatureRequests.Form.CategoryPicker", locale: locale))
                 }
+            } header: {
+                Text(verbatim: localized("FeatureRequests.Form.CategorySection", locale: locale))
             }
         }
-        .navigationTitle("FeatureRequests.Form.Title")
+        .navigationTitle(Text(verbatim: localized("FeatureRequests.Form.Title", locale: locale)))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                Button("Common.Cancel") {
+                Button {
                     onComplete(false)
                     dismiss()
+                } label: {
+                    Text(verbatim: localized("Common.Cancel", locale: locale))
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                Button("FeatureRequests.Form.Submit") {
+                Button {
                     Task { await submit() }
+                } label: {
+                    Text(verbatim: localized("FeatureRequests.Form.Submit", locale: locale))
                 }
                 .disabled(!isValid || isSubmitting)
             }
         }
         .tint(themeColor.color)
-        .alert("FeatureRequests.Error.Title", isPresented: Binding(
+        .alert(Text(verbatim: localized("FeatureRequests.Error.Title", locale: locale)), isPresented: Binding(
             get: { errorMessage != nil },
             set: { _ in errorMessage = nil }
         )) {
-            Button("Common.OK", role: .cancel) {}
+            Button(role: .cancel) {
+            } label: {
+                Text(verbatim: localized("Common.OK", locale: locale))
+            }
         } message: {
             Text(errorMessage ?? "")
         }

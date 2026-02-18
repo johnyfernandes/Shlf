@@ -410,7 +410,7 @@ struct LevelDetailView: View {
                     .padding(.bottom, 40)
                 }
             }
-            .navigationTitle("Level.Title")
+            .navigationTitle(Text(verbatim: localized("Level.Title", locale: locale)))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

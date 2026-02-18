@@ -27,15 +27,17 @@ struct FeatureRequestsView: View {
         List {
             Section {
                 VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                    Text("FeatureRequests.Description")
+                    Text(verbatim: localized("FeatureRequests.Description", locale: locale))
                         .font(.subheadline)
                         .foregroundStyle(Theme.Colors.secondaryText)
 
-                    Picker("FeatureRequests.Sort", selection: $sortOption) {
+                    Picker(selection: $sortOption) {
                         ForEach(FeatureSortOption.allCases) { option in
                             Text(option.localizedTitle(locale: locale))
                                 .tag(option)
                         }
+                    } label: {
+                        Text(verbatim: localized("FeatureRequests.Sort", locale: locale))
                     }
                     .pickerStyle(.menu)
                 }
@@ -64,7 +66,7 @@ struct FeatureRequestsView: View {
                             if isLoading {
                                 ProgressView()
                             } else {
-                                Text("FeatureRequests.LoadMore")
+                                Text(verbatim: localized("FeatureRequests.LoadMore", locale: locale))
                                     .font(.subheadline)
                             }
                             Spacer()
@@ -73,7 +75,7 @@ struct FeatureRequestsView: View {
                 }
             }
         }
-        .navigationTitle("FeatureRequests.Title")
+        .navigationTitle(Text(verbatim: localized("FeatureRequests.Title", locale: locale)))
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
@@ -89,11 +91,14 @@ struct FeatureRequestsView: View {
                 ProgressView()
             }
         }
-        .alert("FeatureRequests.Error.Title", isPresented: Binding(
+        .alert(Text(verbatim: localized("FeatureRequests.Error.Title", locale: locale)), isPresented: Binding(
             get: { errorMessage != nil },
             set: { _ in errorMessage = nil }
         )) {
-            Button("Common.OK", role: .cancel) {}
+            Button(role: .cancel) {
+            } label: {
+                Text(verbatim: localized("Common.OK", locale: locale))
+            }
         } message: {
             Text(errorMessage ?? "")
         }

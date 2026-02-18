@@ -12,9 +12,23 @@ import SwiftUI
 // MARK: - Localization helper (respects in-app language override)
 func localized(_ key: String, locale: Locale) -> String {
     if let bundle = Bundle.localizedBundle(for: locale) {
-        return bundle.localizedString(forKey: key, value: nil, table: nil)
+        let localizedValue = bundle.localizedString(forKey: key, value: nil, table: nil)
+        if localizedValue != key {
+            return localizedValue
+        }
     }
-    return Bundle.main.localizedString(forKey: key, value: nil, table: nil)
+    let fallbackValue = Bundle.main.localizedString(forKey: key, value: nil, table: nil)
+    if fallbackValue != key {
+        return fallbackValue
+    }
+    if let enPath = Bundle.main.path(forResource: "en", ofType: "lproj"),
+       let enBundle = Bundle(path: enPath) {
+        let enValue = enBundle.localizedString(forKey: key, value: nil, table: nil)
+        if enValue != key {
+            return enValue
+        }
+    }
+    return key
 }
 
 private extension Bundle {

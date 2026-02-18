@@ -45,7 +45,7 @@ struct FeatureRequestDetailView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(Theme.Spacing.lg)
         }
-        .navigationTitle("FeatureRequests.DetailTitle")
+        .navigationTitle(Text(verbatim: localized("FeatureRequests.DetailTitle", locale: locale)))
         .navigationBarTitleDisplayMode(.inline)
     }
 

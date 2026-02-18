@@ -31,53 +31,68 @@ struct FeedbackView: View {
 
     var body: some View {
         Form {
-            Section("Feedback.Form.Category") {
-                Picker("Feedback.Form.Category", selection: $category) {
+            Section {
+                Picker(selection: $category) {
                     ForEach(FeedbackCategory.allCases) { option in
                         Text(option.localizedTitle(locale: locale))
                             .tag(option)
                     }
+                } label: {
+                    Text(verbatim: localized("Feedback.Form.Category", locale: locale))
                 }
+            } header: {
+                Text(verbatim: localized("Feedback.Form.Category", locale: locale))
             }
 
-            Section("Feedback.Form.Message") {
+            Section {
                 TextEditor(text: $message)
                     .frame(minHeight: 160)
 
-                Text("Feedback.Form.Limit")
+                Text(verbatim: localized("Feedback.Form.Limit", locale: locale))
                     .font(.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
+            } header: {
+                Text(verbatim: localized("Feedback.Form.Message", locale: locale))
             }
 
-            Section("Feedback.Form.Rating") {
+            Section {
                 RatingPicker(selected: $rating)
+            } header: {
+                Text(verbatim: localized("Feedback.Form.Rating", locale: locale))
             }
         }
-        .navigationTitle("Feedback.Title")
+        .navigationTitle(Text(verbatim: localized("Feedback.Title", locale: locale)))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Feedback.Form.Submit") {
+                Button {
                     Task { await submit() }
+                } label: {
+                    Text(verbatim: localized("Feedback.Form.Submit", locale: locale))
                 }
                 .disabled(!isValid || isSubmitting)
             }
         }
         .tint(themeColor.color)
-        .alert("Feedback.Error.Title", isPresented: Binding(
+        .alert(Text(verbatim: localized("Feedback.Error.Title", locale: locale)), isPresented: Binding(
             get: { errorMessage != nil },
             set: { _ in errorMessage = nil }
         )) {
-            Button("Common.OK", role: .cancel) {}
+            Button(role: .cancel) {
+            } label: {
+                Text(verbatim: localized("Common.OK", locale: locale))
+            }
         } message: {
             Text(errorMessage ?? "")
         }
-        .alert("Feedback.Success.Title", isPresented: $showSuccess) {
-            Button("Common.OK") {
+        .alert(Text(verbatim: localized("Feedback.Success.Title", locale: locale)), isPresented: $showSuccess) {
+            Button {
                 dismiss()
+            } label: {
+                Text(verbatim: localized("Common.OK", locale: locale))
             }
         } message: {
-            Text("Feedback.Success.Message")
+            Text(verbatim: localized("Feedback.Success.Message", locale: locale))
         }
     }
 
@@ -107,6 +122,7 @@ struct FeedbackView: View {
 
 private struct RatingPicker: View {
     @Binding var selected: Int?
+    @Environment(\.locale) private var locale
 
     var body: some View {
         HStack(spacing: Theme.Spacing.sm) {
@@ -123,8 +139,10 @@ private struct RatingPicker: View {
             Spacer()
 
             if selected != nil {
-                Button("Common.Clear") {
+                Button {
                     selected = nil
+                } label: {
+                    Text(verbatim: localized("Common.Clear", locale: locale))
                 }
                 .font(.caption)
                 .foregroundStyle(Theme.Colors.secondaryText)
