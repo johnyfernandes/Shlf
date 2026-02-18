@@ -181,6 +181,7 @@ struct ReadingHeatmapChart: View {
 
                 Spacer()
             }
+            .padding(.bottom, 6)
 
             // Heatmap
             ZStack(alignment: .topLeading) {
@@ -244,7 +245,7 @@ struct ReadingHeatmapChart: View {
                             .frame(width: 12, height: cellSize)
                     }
                 }
-                .padding(.top, 4)
+                .padding(.top, 8)
             }
 
             // Legend
@@ -268,6 +269,7 @@ struct ReadingHeatmapChart: View {
                 Spacer()
             }
         }
+        .padding(.top, Theme.Spacing.md)
         .sheet(item: $selectedDate) { identifiableDate in
             LazyView(DayDetailView(date: identifiableDate.date, sessions: sessions))
                 .presentationDetents([.medium, .large])

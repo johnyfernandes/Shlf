@@ -59,7 +59,6 @@ struct LogSessionWatchView: View {
     @State private var startPage: Int
     @State private var currentPage: Int
     @State private var elapsedTime: TimeInterval = 0
-    @State private var timer: Timer?
     @State private var showActiveSessionAlert = false
     @State private var pendingActiveSession: ActiveReadingSession?
     @State private var debounceTask: Task<Void, Never>?
@@ -79,10 +78,12 @@ struct LogSessionWatchView: View {
             VStack(spacing: 16) {
                 // Timer Display
                 VStack(spacing: 4) {
-                    Text(timeString)
-                        .font(.system(size: 48, weight: .bold, design: .rounded))
-                        .foregroundStyle(effectiveIsPaused ? Color.orange : themeColor.color)
-                        .monospacedDigit()
+                    TimelineView(.periodic(from: .now, by: 1)) { context in
+                        Text(formattedTime(for: currentElapsedSeconds(at: context.date)))
+                            .font(.system(size: 48, weight: .bold, design: .rounded))
+                            .foregroundStyle(effectiveIsPaused ? Color.orange : themeColor.color)
+                            .monospacedDigit()
+                    }
 
                     Text(isActive ? (effectiveIsPaused ? "Watch.Paused" : "Watch.ReadingInProgress") : "Watch.Ready")
                         .font(.caption)
@@ -315,18 +316,7 @@ struct LogSessionWatchView: View {
             loadExistingActiveSession()
         }
         .onDisappear {
-            timer?.invalidate()
-            timer = nil
             debounceTask?.cancel()
-        }
-        .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { date in
-            // Keep elapsed time synced from the model to avoid drift
-            guard isActive else { return }
-            if let activeSession = activeSessionForBook {
-                elapsedTime = activeSession.elapsedTime(at: date)
-            } else if !effectiveIsPaused && timer == nil {
-                elapsedTime += 1
-            }
         }
         .alert("Watch.ActiveSessionFound", isPresented: $showActiveSessionAlert) {
             Button("Cancel", role: .cancel) {
@@ -366,19 +356,19 @@ struct LogSessionWatchView: View {
     private var xpEarned: Int {
         estimatedXP(
             pagesRead: pagesRead,
-            durationMinutes: max(1, Int(currentElapsedSeconds / 60))
+            durationMinutes: max(1, Int(currentElapsedSeconds(at: Date()) / 60))
         )
     }
 
-    private var timeString: String {
-        let minutes = Int(currentElapsedSeconds) / 60
-        let seconds = Int(currentElapsedSeconds) % 60
-        return String(format: "%02d:%02d", minutes, seconds)
+    private func formattedTime(for seconds: TimeInterval) -> String {
+        let minutes = Int(seconds) / 60
+        let secs = Int(seconds) % 60
+        return String(format: "%02d:%02d", minutes, secs)
     }
 
-    private var currentElapsedSeconds: TimeInterval {
+    private func currentElapsedSeconds(at date: Date) -> TimeInterval {
         if let activeSession = activeSessionForBook {
-            return activeSession.elapsedTime(at: Date())
+            return activeSession.elapsedTime(at: date)
         }
         return elapsedTime
     }
@@ -396,11 +386,7 @@ struct LogSessionWatchView: View {
         isPaused = activeSession.isPaused
         elapsedTime = activeSession.elapsedTime(at: Date())
 
-        // Start timer if not paused
         isActive = true
-        if !isPaused {
-            timer = makeTickingTimer()
-        }
 
         WatchConnectivityManager.logger.info("⌚️ Loaded active session from \(activeSession.sourceDevice): \(activeSession.pagesRead) pages")
     }
@@ -440,9 +426,6 @@ struct LogSessionWatchView: View {
         startPage = book.currentPage
         currentPage = book.currentPage
         elapsedTime = 0
-
-        // Start timer
-        timer = makeTickingTimer()
 
         // Create active session
         let activeSession = ActiveReadingSession(
@@ -530,16 +513,12 @@ struct LogSessionWatchView: View {
     private func stopSession() {
         guard let startDate = startDate else {
             WatchConnectivityManager.logger.error("No start date - session not started")
-            timer?.invalidate()
-            timer = nil
             dismiss()
             return
         }
 
         guard pagesRead > 0 else {
             WatchConnectivityManager.logger.warning("No pages read - session not saved")
-            timer?.invalidate()
-            timer = nil
             dismiss()
             return
         }
@@ -552,12 +531,8 @@ struct LogSessionWatchView: View {
             modelContext.delete(activeSession)
         }
 
-        // Stop timer
-        timer?.invalidate()
-        timer = nil
-
         let endDate = Date()
-        let durationMinutes = max(1, Int(currentElapsedSeconds / 60))
+        let durationMinutes = max(1, Int(currentElapsedSeconds(at: endDate) / 60))
 
         // Create session
         let session = ReadingSession(
@@ -722,24 +697,12 @@ struct LogSessionWatchView: View {
     }
 
     private func resetActiveSessionState() {
-        timer?.invalidate()
-        timer = nil
         isActive = false
         isPaused = false
         startDate = nil
         elapsedTime = 0
         startPage = book.currentPage
         currentPage = book.currentPage
-    }
-
-    private func makeTickingTimer() -> Timer {
-        let newTimer = Timer(timeInterval: 1.0, repeats: true) { _ in
-            if !effectiveIsPaused {
-                elapsedTime += 1
-            }
-        }
-        RunLoop.main.add(newTimer, forMode: .common)
-        return newTimer
     }
 }
 
