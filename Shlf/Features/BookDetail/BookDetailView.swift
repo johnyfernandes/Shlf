@@ -128,13 +128,21 @@ struct BookDetailView: View {
                         Button {
                             markAsFinished()
                         } label: {
-                            Label("Mark Finished", systemImage: "checkmark.circle")
+                            Label {
+                                Text(verbatim: localized("BookDetail.MarkFinished", locale: locale))
+                            } icon: {
+                                Image(systemName: "checkmark.circle")
+                            }
                         }
 
                         Button {
                             updateReadingStatus(to: .didNotFinish)
                         } label: {
-                            Label("Mark as DNF", systemImage: "xmark.circle")
+                            Label {
+                                Text(verbatim: localized("BookDetail.MarkAsDNF", locale: locale))
+                            } icon: {
+                                Image(systemName: "xmark.circle")
+                            }
                         }
 
                         Divider()
@@ -144,7 +152,11 @@ struct BookDetailView: View {
                         Button {
                             showAddQuote = true
                         } label: {
-                            Label("Add Quote", systemImage: "quote.bubble")
+                            Label {
+                                Text(verbatim: localized("BookDetail.AddQuote", locale: locale))
+                            } icon: {
+                                Image(systemName: "quote.bubble")
+                            }
                         }
 
                         Divider()
@@ -153,20 +165,32 @@ struct BookDetailView: View {
                     Button {
                         showShareSheet = true
                     } label: {
-                        Label("Share", systemImage: "square.and.arrow.up")
+                        Label {
+                            Text(verbatim: localized("BookDetail.Share", locale: locale))
+                        } icon: {
+                            Image(systemName: "square.and.arrow.up")
+                        }
                     }
 
                     Button {
                         showEditBook = true
                     } label: {
-                        Label("Edit Book", systemImage: "pencil.line")
+                        Label {
+                            Text(verbatim: localized("BookDetail.EditBook", locale: locale))
+                        } icon: {
+                            Image(systemName: "pencil.line")
+                        }
                     }
 
                     if canChangeEdition {
                         Button {
                             showChangeEdition = true
                         } label: {
-                            Label("Change Edition", systemImage: "books.vertical")
+                            Label {
+                                Text(verbatim: localized("BookDetail.ChangeEdition", locale: locale))
+                            } icon: {
+                                Image(systemName: "books.vertical")
+                            }
                         }
                     }
 
@@ -174,14 +198,22 @@ struct BookDetailView: View {
                         Button {
                             showBookDetailCustomization = true
                         } label: {
-                            Label("Customize Book Details", systemImage: "slider.horizontal.3")
+                            Label {
+                                Text(verbatim: localized("BookDetail.CustomizeBookDetails", locale: locale))
+                            } icon: {
+                                Image(systemName: "slider.horizontal.3")
+                            }
                         }
                     }
 
                     Button(role: .destructive) {
                         showDeleteAlert = true
                     } label: {
-                        Label("Delete Book", systemImage: "trash")
+                        Label {
+                            Text(verbatim: localized("BookDetail.DeleteBook", locale: locale))
+                        } icon: {
+                            Image(systemName: "trash")
+                        }
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
@@ -235,15 +267,21 @@ struct BookDetailView: View {
                 SubjectPickerView(profile: profile, selectedSubjects: $selectedSubjects)
             }
         }
-        .alert("Delete Book?", isPresented: $showDeleteAlert) {
-            Button("Delete", role: .destructive) {
+        .alert(Text(verbatim: localized("BookDetail.DeleteBook.Title", locale: locale)), isPresented: $showDeleteAlert) {
+            Button(role: .destructive) {
                 deleteBook()
+            } label: {
+                Text(verbatim: localized("Common.Delete", locale: locale))
             }
-            Button("Cancel", role: .cancel) {}
+            Button(role: .cancel) {
+            } label: {
+                Text(verbatim: localized("Common.Cancel", locale: locale))
+            }
         } message: {
                 Text(
                     String.localizedStringWithFormat(
-                        localized("This will permanently delete %@ and all reading sessions.", locale: locale),
+                        localized("BookDetail.DeleteBook.Message %@",
+                                  locale: locale),
                         book.title
                     )
                 )
@@ -283,49 +321,64 @@ struct BookDetailView: View {
             bookStatsRange = newRange
             bookStatsRangeOffset = 0
         }
-        .alert("Change Reading Status?", isPresented: $showStatusChangeAlert) {
-            Button("Change Status", role: .destructive) {
+        .alert(Text(verbatim: localized("BookDetail.ChangeStatus.Title", locale: locale)), isPresented: $showStatusChangeAlert) {
+            Button(role: .destructive) {
                 if let status = pendingStatus {
                     updateReadingStatus(to: status)
                 }
                 pendingStatus = nil
+            } label: {
+                Text(verbatim: localized("BookDetail.ChangeStatus.Confirm", locale: locale))
             }
-            Button("Cancel", role: .cancel) {
+            Button(role: .cancel) {
                 pendingStatus = nil
+            } label: {
+                Text(verbatim: localized("Common.Cancel", locale: locale))
             }
         } message: {
             if pendingStatus != nil {
                 Text(
                     String.localizedStringWithFormat(
-                        localized("You're on page %lld. Your progress will be saved and automatically restored when you return to \"Currently Reading\".", locale: locale),
+                        localized("BookDetail.ChangeStatus.Message %lld", locale: locale),
                         book.currentPage
                     )
                 )
             }
         }
-        .alert("Delete Session?", isPresented: $showDeleteSessionAlert) {
-            Button("Delete", role: .destructive) {
+        .alert(Text(verbatim: localized("BookDetail.DeleteSession.Title", locale: locale)), isPresented: $showDeleteSessionAlert) {
+            Button(role: .destructive) {
                 if let session = sessionToDelete {
                     deleteSession(session)
                 }
                 sessionToDelete = nil
+            } label: {
+                Text(verbatim: localized("Common.Delete", locale: locale))
             }
-            Button("Cancel", role: .cancel) {
+            Button(role: .cancel) {
                 sessionToDelete = nil
+            } label: {
+                Text(verbatim: localized("Common.Cancel", locale: locale))
             }
         } message: {
-            Text(localized("This removes the session and updates stats. If it was your latest session, your current page will roll back to the previous one.", locale: locale))
+            Text(verbatim: localized("BookDetail.DeleteSession.Message", locale: locale))
         }
-        .confirmationDialog("Finish Book", isPresented: $showFinishOptions, titleVisibility: .visible) {
-            Button("Finished Before Tracking") {
+        .confirmationDialog(Text(verbatim: localized("BookDetail.FinishBook.Title", locale: locale)), isPresented: $showFinishOptions, titleVisibility: .visible) {
+            Button {
                 updateReadingStatus(to: .finished)
+            } label: {
+                Text(verbatim: localized("BookDetail.FinishBook.Exclude", locale: locale))
             }
-            Button("Count This Finish") {
+            Button {
                 showFinishLog = true
+            } label: {
+                Text(verbatim: localized("BookDetail.FinishBook.Log", locale: locale))
             }
-            Button("Cancel", role: .cancel) {}
+            Button(role: .cancel) {
+            } label: {
+                Text(verbatim: localized("Common.Cancel", locale: locale))
+            }
         } message: {
-            Text("No tracked sessions yet. You can exclude this finish from stats, or log it now.")
+            Text(verbatim: localized("BookDetail.FinishBook.Message", locale: locale))
         }
         .sheet(isPresented: $showFinishLog) {
             FinishBookLogView(book: book) {
@@ -359,9 +412,9 @@ struct BookDetailView: View {
                 } else {
                     emptySectionCard(
                         icon: "text.alignleft",
-                        title: "No description yet",
-                        message: "Add a description to see it here.",
-                        actionTitle: "Add description"
+                        title: localized("BookDetail.Empty.Description.Title", locale: locale),
+                        message: localized("BookDetail.Empty.Description.Message", locale: locale),
+                        actionTitle: localized("BookDetail.Empty.Description.Action", locale: locale)
                     ) {
                         showEditBook = true
                     }
@@ -373,9 +426,9 @@ struct BookDetailView: View {
                 } else {
                     emptySectionCard(
                         icon: "bookmark",
-                        title: "No saved position",
-                        message: "Log a session and save your last position.",
-                        actionTitle: "Log session"
+                        title: localized("BookDetail.Empty.LastPosition.Title", locale: locale),
+                        message: localized("BookDetail.Empty.LastPosition.Message", locale: locale),
+                        actionTitle: localized("BookDetail.Empty.LastPosition.Action", locale: locale)
                     ) {
                         showLogSession = true
                     }
@@ -387,9 +440,9 @@ struct BookDetailView: View {
                 } else {
                     emptySectionCard(
                         icon: "quote.bubble",
-                        title: "No quotes yet",
-                        message: "Save a quote from your next session.",
-                        actionTitle: "Add quote"
+                        title: localized("BookDetail.Empty.Quotes.Title", locale: locale),
+                        message: localized("BookDetail.Empty.Quotes.Message", locale: locale),
+                        actionTitle: localized("BookDetail.Empty.Quotes.Action", locale: locale)
                     ) {
                         showAddQuote = true
                     }
@@ -401,9 +454,9 @@ struct BookDetailView: View {
                 } else {
                     emptySectionCard(
                         icon: "note.text",
-                        title: "No notes yet",
-                        message: "Add your personal notes about this book.",
-                        actionTitle: "Add notes"
+                        title: localized("BookDetail.Empty.Notes.Title", locale: locale),
+                        message: localized("BookDetail.Empty.Notes.Message", locale: locale),
+                        actionTitle: localized("BookDetail.Empty.Notes.Action", locale: locale)
                     ) {
                         showEditBook = true
                     }
@@ -415,9 +468,9 @@ struct BookDetailView: View {
                 } else {
                     emptySectionCard(
                         icon: "tag",
-                        title: "No subjects yet",
-                        message: "Add genres or topics to see them here.",
-                        actionTitle: "Add subjects"
+                        title: localized("BookDetail.Empty.Subjects.Title", locale: locale),
+                        message: localized("BookDetail.Empty.Subjects.Message", locale: locale),
+                        actionTitle: localized("BookDetail.Empty.Subjects.Action", locale: locale)
                     ) {
                         selectedSubjects = book.subjects ?? []
                         showSubjectPicker = true
@@ -437,9 +490,9 @@ struct BookDetailView: View {
                 } else {
                     emptySectionCard(
                         icon: "clock.arrow.circlepath",
-                        title: "No sessions yet",
-                        message: "Log your first session to build a history.",
-                        actionTitle: "Log session"
+                        title: localized("BookDetail.Empty.Sessions.Title", locale: locale),
+                        message: localized("BookDetail.Empty.Sessions.Message", locale: locale),
+                        actionTitle: localized("BookDetail.Empty.Sessions.Action", locale: locale)
                     ) {
                         showLogSession = true
                     }
@@ -483,7 +536,10 @@ struct BookDetailView: View {
                 HStack(spacing: 4) {
                     Image(systemName: "bookmark.fill")
                         .font(.caption2)
-                    Text(String.localizedStringWithFormat(localized("Saved at page %lld", locale: locale), saved))
+                    Text(String.localizedStringWithFormat(
+                        localized("BookDetail.SavedAtPageFormat %lld", locale: locale),
+                        saved
+                    ))
                         .font(.caption2.weight(.medium))
                 }
                 .foregroundStyle(.orange)
@@ -518,12 +574,12 @@ struct BookDetailView: View {
 
                 if let activeSession = activeSessions.first {
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(localized("Active Session", locale: locale))
+                        Text(verbatim: localized("BookDetail.ActiveSession", locale: locale))
                             .font(.subheadline.weight(.semibold))
 
                         Text(
                             String.localizedStringWithFormat(
-                                localized("%@ • Started at page %lld", locale: locale),
+                                localized("BookDetail.ActiveSession.DetailFormat %@ %lld", locale: locale),
                                 activeSession.sourceDevice,
                                 activeSession.currentPage
                             )
@@ -591,11 +647,11 @@ struct BookDetailView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
-                Text(localized("Add total pages", locale: locale))
+                Text(verbatim: localized("BookDetail.AddTotalPages.Title", locale: locale))
                     .font(.headline)
             }
 
-            Text(localized("Add pages to track progress and sessions.", locale: locale))
+            Text(verbatim: localized("BookDetail.AddTotalPages.Message", locale: locale))
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
