@@ -155,18 +155,28 @@ struct SettingsView: View {
                         }
                     }
 
-                    Section("Feedback") {
+                    Section {
                         NavigationLink {
                             FeedbackView()
                         } label: {
-                            Label(localized("Send Feedback", locale: locale), systemImage: "bubble.left.and.text.bubble.right")
+                            Label {
+                                Text(verbatim: localized("Settings.SendFeedback", locale: locale))
+                            } icon: {
+                                Image(systemName: "bubble.left.and.text.bubble.right")
+                            }
                         }
 
                         NavigationLink {
                             FeatureRequestsView()
                         } label: {
-                            Label("Feature Requests", systemImage: "lightbulb")
+                            Label {
+                                Text(verbatim: localized("FeatureRequests.Title", locale: locale))
+                            } icon: {
+                                Image(systemName: "lightbulb")
+                            }
                         }
+                    } header: {
+                        Text(verbatim: localized("Feedback.Title", locale: locale))
                     }
 
                     Section("Data") {
