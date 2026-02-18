@@ -35,205 +35,21 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                    proSection
-
-                    Section("Appearance") {
-                        NavigationLink {
-                            ThemeColorSettingsView(profile: profile)
-                        } label: {
-                            Label {
-                                Text("Theme Color")
-                            } icon: {
-                                Image(systemName: "paintbrush.fill")
-                                    .foregroundStyle(profile.themeColor.gradient)
-                            }
-                        }
-
-                        NavigationLink {
-                            AppIconSettingsView(profile: profile)
-                        } label: {
-                            Label("App Icon", systemImage: "app")
-                        }
-                    }
-
-                    Section("Reading") {
-                        NavigationLink {
-                            ReadingPreferencesView(profile: profile)
-                        } label: {
-                            Label("Reading Progress", systemImage: "book")
-                        }
-
-                        NavigationLink {
-                            SessionSettingsView(profile: profile)
-                        } label: {
-                            Label("Sessions", systemImage: "timer")
-                        }
-
-                        NavigationLink {
-                            StreakSettingsView(profile: profile)
-                        } label: {
-                            Label("Streaks", systemImage: "flame.fill")
-                        }
-                    }
-
-                    Section("Sync & Integrations") {
-                        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                            Toggle("iCloud Sync", isOn: Binding(
-                                get: { profile.cloudSyncEnabled },
-                                set: { handleCloudSyncToggle($0) }
-                            ))
-                            .disabled(!isProUser || isMigratingCloud)
-                            .confirmationDialog("Use iCloud Data?", isPresented: $showCloudChoiceDialog, titleVisibility: .visible) {
-                                Button("Use iCloud Data") {
-                                    enableCloudUsingRemoteData()
-                                }
-                                Button("Replace iCloud with This iPhone", role: .destructive) {
-                                    migrateLocalToCloud()
-                                }
-                                Button("Cancel", role: .cancel) {}
-                            } message: {
-                                Text(cloudChoiceMessage)
-                            }
-
-                            cloudStatusInline
-                        }
-
-                        NavigationLink {
-                            GoodreadsImportView(profile: profile)
-                        } label: {
-                            Label("Goodreads", systemImage: "books.vertical")
-                        }
-
-                        NavigationLink {
-                            KindleImportView(profile: profile)
-                        } label: {
-                            Label("Kindle", systemImage: "book.closed")
-                        }
-                    }
-
-                    notificationsSection
-
-                    Section("Library") {
-                        NavigationLink {
-                            HomeCardSettingsView(profile: profile)
-                        } label: {
-                            Label("Home Screen", systemImage: "square.grid.3x3")
-                        }
-
-                        NavigationLink {
-                            BookDetailCustomizationView(profile: profile)
-                        } label: {
-                            Label("Book Details", systemImage: "slider.horizontal.3")
-                        }
-
-                        NavigationLink {
-                            SubjectsSettingsView(profile: profile)
-                        } label: {
-                            Label("Subjects", systemImage: "tag.fill")
-                        }
-                    }
-
-                    Section("Stats") {
-                        NavigationLink {
-                            BookStatsSettingsView(profile: profile)
-                        } label: {
-                            Label("Book Stats", systemImage: "chart.bar.xaxis")
-                        }
-
-                        NavigationLink {
-                            StatsSettingsView()
-                        } label: {
-                            Label("Stats", systemImage: "chart.xyaxis.line")
-                        }
-                    }
-
-                    Section("Devices") {
-                        NavigationLink {
-                            WatchSettingsView()
-                        } label: {
-                            Label("Apple Watch", systemImage: "applewatch")
-                        }
-                    }
-
-                    Section {
-                        NavigationLink {
-                            FeedbackView()
-                        } label: {
-                            Label {
-                                Text(verbatim: localized("Settings.SendFeedback", locale: locale))
-                            } icon: {
-                                Image(systemName: "bubble.left.and.text.bubble.right")
-                            }
-                        }
-
-                        NavigationLink {
-                            FeatureRequestsView()
-                        } label: {
-                            Label {
-                                Text(verbatim: localized("FeatureRequests.Title", locale: locale))
-                            } icon: {
-                                Image(systemName: "lightbulb")
-                            }
-                        }
-                    } header: {
-                        Text(verbatim: localized("Feedback.Title", locale: locale))
-                    }
-
-                    Section("Data") {
-                        NavigationLink {
-                            DataManagementView()
-                        } label: {
-                            Label("Data Management", systemImage: "folder")
-                        }
-                    }
-
+                proSection
+                appearanceSection
+                readingSection
+                syncSection
+                notificationsSection
+                librarySection
+                statsSection
+                devicesSection
+                feedbackSection
+                dataSection
                 #if DEBUG
-                Section("Developer") {
-                    NavigationLink {
-                        DeveloperSettingsView()
-                    } label: {
-                        Label("Developer", systemImage: "hammer.fill")
-                    }
-                    }
+                developerSection
                 #endif
-
-                    Section(localized("App", locale: locale)) {
-                        NavigationLink {
-                            AboutView()
-                        } label: {
-                            Label("About", systemImage: "info.circle")
-                        }
-
-                        Button {
-                            showOnboarding = true
-                        } label: {
-                            Label("Onboarding", systemImage: "sparkles")
-                        }
-
-                        if let url = URL(string: "https://shlf.app") {
-                            Link(destination: url) {
-                                Label("Visit shlf.app", systemImage: "safari")
-                            }
-                        } else {
-                            Label("Visit shlf.app", systemImage: "safari")
-                                .foregroundStyle(Theme.Colors.secondaryText)
-                        }
-
-                        Button {
-                            requestReview()
-                        } label: {
-                            Label("Rate Shlf", systemImage: "star")
-                        }
-                    }
-
-                Section {
-                    HStack {
-                        Text("Version")
-                        Spacer()
-                        Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0")
-                            .foregroundStyle(Theme.Colors.secondaryText)
-                    }
-                }
+                appSection
+                versionSection
             }
             .alert("Notifications.StreakReminder.Focus.InfoTitle", isPresented: $showFocusInfo) {
                 Button("Notifications.StreakReminder.Focus.InfoDismiss", role: .cancel) {}
@@ -242,14 +58,16 @@ struct SettingsView: View {
             }
             .labelStyle(SettingsLabelStyle())
             .tint(profile.themeColor.color)
-            .navigationTitle("Settings")
+            .navigationTitle(Text(verbatim: localized("Settings.Title", locale: locale)))
             .overlay {
                 if isMigratingCloud {
                     ZStack {
                         Color.black.opacity(0.2)
                             .ignoresSafeArea()
 
-                        ProgressView("Preparing iCloud Sync...")
+                        ProgressView {
+                            Text(verbatim: localized("Settings.PreparingICloudSync", locale: locale))
+                        }
                             .padding(.horizontal, 20)
                             .padding(.vertical, 16)
                             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -262,26 +80,37 @@ struct SettingsView: View {
             .fullScreenCover(isPresented: $showOnboarding) {
                 OnboardingView(isPresented: $showOnboarding)
             }
-            .alert("Restore Complete", isPresented: $showRestoreAlert) {
-                Button("OK") {}
-            } message: {
-                Text("Your purchases have been restored.")
-            }
-            .alert("Restart Required", isPresented: $showCloudRestartAlert) {
-                Button("Restart Now", role: .destructive) {
-                    exit(0)
+            .alert(Text(verbatim: localized("Settings.RestoreComplete", locale: locale)), isPresented: $showRestoreAlert) {
+                Button {
+                } label: {
+                    Text(verbatim: localized("Common.OK", locale: locale))
                 }
-                Button("Later") {}
             } message: {
-                Text("iCloud Sync will finish switching after you restart the app.")
+                Text(verbatim: localized("Settings.RestoreComplete.Message", locale: locale))
             }
-            .alert("iCloud Sync Error", isPresented: Binding(
+            .alert(Text(verbatim: localized("Settings.RestartRequired", locale: locale)), isPresented: $showCloudRestartAlert) {
+                Button(role: .destructive) {
+                    exit(0)
+                } label: {
+                    Text(verbatim: localized("Settings.RestartNow", locale: locale))
+                }
+                Button {
+                } label: {
+                    Text(verbatim: localized("Settings.Later", locale: locale))
+                }
+            } message: {
+                Text(verbatim: localized("Settings.RestartRequired.Message", locale: locale))
+            }
+            .alert(Text(verbatim: localized("Settings.iCloudSyncError", locale: locale)), isPresented: Binding(
                 get: { cloudMigrationError != nil },
                 set: { _ in cloudMigrationError = nil }
             )) {
-                Button("OK") {}
+                Button {
+                } label: {
+                    Text(verbatim: localized("Common.OK", locale: locale))
+                }
             } message: {
-                Text(cloudMigrationError ?? "Unknown error.")
+                Text(cloudMigrationError ?? localized("Settings.UnknownError", locale: locale))
             }
             .task {
                 await storeKit.loadProducts()
@@ -292,6 +121,338 @@ struct SettingsView: View {
                     profile.isProUser = storeKit.isProUser
                     try? modelContext.save()
                 }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var appearanceSection: some View {
+        Section {
+            NavigationLink {
+                ThemeColorSettingsView(profile: profile)
+            } label: {
+                Label {
+                    Text(verbatim: localized("Settings.ThemeColor", locale: locale))
+                } icon: {
+                    Image(systemName: "paintbrush.fill")
+                        .foregroundStyle(profile.themeColor.gradient)
+                }
+            }
+
+            NavigationLink {
+                AppIconSettingsView(profile: profile)
+            } label: {
+                Label {
+                    Text(verbatim: localized("Settings.AppIcon", locale: locale))
+                } icon: {
+                    Image(systemName: "app")
+                }
+            }
+        } header: {
+            Text(verbatim: localized("Settings.Appearance", locale: locale))
+        }
+    }
+
+    @ViewBuilder
+    private var readingSection: some View {
+        Section {
+            NavigationLink {
+                ReadingPreferencesView(profile: profile)
+            } label: {
+                Label {
+                    Text(verbatim: localized("Settings.ReadingProgress", locale: locale))
+                } icon: {
+                    Image(systemName: "book")
+                }
+            }
+
+            NavigationLink {
+                SessionSettingsView(profile: profile)
+            } label: {
+                Label {
+                    Text(verbatim: localized("Settings.Sessions", locale: locale))
+                } icon: {
+                    Image(systemName: "timer")
+                }
+            }
+
+            NavigationLink {
+                StreakSettingsView(profile: profile)
+            } label: {
+                Label {
+                    Text(verbatim: localized("Settings.Streaks", locale: locale))
+                } icon: {
+                    Image(systemName: "flame.fill")
+                }
+            }
+        } header: {
+            Text(verbatim: localized("Settings.Reading", locale: locale))
+        }
+    }
+
+    @ViewBuilder
+    private var syncSection: some View {
+        Section {
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                Toggle(isOn: Binding(
+                    get: { profile.cloudSyncEnabled },
+                    set: { handleCloudSyncToggle($0) }
+                )) {
+                    Text(verbatim: localized("Settings.iCloudSync", locale: locale))
+                }
+                .disabled(!isProUser || isMigratingCloud)
+                .confirmationDialog(Text(verbatim: localized("Settings.iCloud.ChoiceTitle", locale: locale)), isPresented: $showCloudChoiceDialog, titleVisibility: .visible) {
+                    Button {
+                        enableCloudUsingRemoteData()
+                    } label: {
+                        Text(verbatim: localized("Settings.iCloud.UseData", locale: locale))
+                    }
+                    Button(role: .destructive) {
+                        migrateLocalToCloud()
+                    } label: {
+                        Text(verbatim: localized("Settings.iCloud.ReplaceWithDevice", locale: locale))
+                    }
+                    Button(role: .cancel) {
+                    } label: {
+                        Text(verbatim: localized("Common.Cancel", locale: locale))
+                    }
+                } message: {
+                    Text(cloudChoiceMessage)
+                }
+
+                cloudStatusInline
+            }
+
+            NavigationLink {
+                GoodreadsImportView(profile: profile)
+            } label: {
+                Label {
+                    Text(verbatim: localized("Settings.Goodreads", locale: locale))
+                } icon: {
+                    Image(systemName: "books.vertical")
+                }
+            }
+
+            NavigationLink {
+                KindleImportView(profile: profile)
+            } label: {
+                Label {
+                    Text(verbatim: localized("Settings.Kindle", locale: locale))
+                } icon: {
+                    Image(systemName: "book.closed")
+                }
+            }
+        } header: {
+            Text(verbatim: localized("Settings.SyncIntegrations", locale: locale))
+        }
+    }
+
+    @ViewBuilder
+    private var librarySection: some View {
+        Section {
+            NavigationLink {
+                HomeCardSettingsView(profile: profile)
+            } label: {
+                Label {
+                    Text(verbatim: localized("Settings.HomeScreen", locale: locale))
+                } icon: {
+                    Image(systemName: "square.grid.3x3")
+                }
+            }
+
+            NavigationLink {
+                BookDetailCustomizationView(profile: profile)
+            } label: {
+                Label {
+                    Text(verbatim: localized("Settings.BookDetails", locale: locale))
+                } icon: {
+                    Image(systemName: "slider.horizontal.3")
+                }
+            }
+
+            NavigationLink {
+                SubjectsSettingsView(profile: profile)
+            } label: {
+                Label {
+                    Text(verbatim: localized("Settings.Subjects", locale: locale))
+                } icon: {
+                    Image(systemName: "tag.fill")
+                }
+            }
+        } header: {
+            Text(verbatim: localized("Settings.Library", locale: locale))
+        }
+    }
+
+    @ViewBuilder
+    private var statsSection: some View {
+        Section {
+            NavigationLink {
+                BookStatsSettingsView(profile: profile)
+            } label: {
+                Label {
+                    Text(verbatim: localized("Settings.BookStats", locale: locale))
+                } icon: {
+                    Image(systemName: "chart.bar.xaxis")
+                }
+            }
+
+            NavigationLink {
+                StatsSettingsView()
+            } label: {
+                Label {
+                    Text(verbatim: localized("Settings.Stats", locale: locale))
+                } icon: {
+                    Image(systemName: "chart.xyaxis.line")
+                }
+            }
+        } header: {
+            Text(verbatim: localized("Settings.Stats", locale: locale))
+        }
+    }
+
+    @ViewBuilder
+    private var devicesSection: some View {
+        Section {
+            NavigationLink {
+                WatchSettingsView()
+            } label: {
+                Label {
+                    Text(verbatim: localized("Settings.AppleWatch", locale: locale))
+                } icon: {
+                    Image(systemName: "applewatch")
+                }
+            }
+        } header: {
+            Text(verbatim: localized("Settings.Devices", locale: locale))
+        }
+    }
+
+    @ViewBuilder
+    private var feedbackSection: some View {
+        Section {
+            NavigationLink {
+                FeedbackView()
+            } label: {
+                Label {
+                    Text(verbatim: localized("Settings.SendFeedback", locale: locale))
+                } icon: {
+                    Image(systemName: "bubble.left.and.text.bubble.right")
+                }
+            }
+
+            NavigationLink {
+                FeatureRequestsView()
+            } label: {
+                Label {
+                    Text(verbatim: localized("FeatureRequests.Title", locale: locale))
+                } icon: {
+                    Image(systemName: "lightbulb")
+                }
+            }
+        } header: {
+            Text(verbatim: localized("Feedback.Title", locale: locale))
+        }
+    }
+
+    @ViewBuilder
+    private var dataSection: some View {
+        Section {
+            NavigationLink {
+                DataManagementView()
+            } label: {
+                Label {
+                    Text(verbatim: localized("Settings.DataManagement", locale: locale))
+                } icon: {
+                    Image(systemName: "folder")
+                }
+            }
+        } header: {
+            Text(verbatim: localized("Settings.Data", locale: locale))
+        }
+    }
+
+    #if DEBUG
+    @ViewBuilder
+    private var developerSection: some View {
+        Section {
+            NavigationLink {
+                DeveloperSettingsView()
+            } label: {
+                Label {
+                    Text(verbatim: localized("Settings.Developer", locale: locale))
+                } icon: {
+                    Image(systemName: "hammer.fill")
+                }
+            }
+        } header: {
+            Text(verbatim: localized("Settings.Developer", locale: locale))
+        }
+    }
+    #endif
+
+    @ViewBuilder
+    private var appSection: some View {
+        Section {
+            NavigationLink {
+                AboutView()
+            } label: {
+                Label {
+                    Text(verbatim: localized("Settings.About", locale: locale))
+                } icon: {
+                    Image(systemName: "info.circle")
+                }
+            }
+
+            Button {
+                showOnboarding = true
+            } label: {
+                Label {
+                    Text(verbatim: localized("Settings.Onboarding", locale: locale))
+                } icon: {
+                    Image(systemName: "sparkles")
+                }
+            }
+
+            if let url = URL(string: "https://shlf.app") {
+                Link(destination: url) {
+                    Label {
+                        Text(verbatim: localized("Settings.VisitWebsite", locale: locale))
+                    } icon: {
+                        Image(systemName: "safari")
+                    }
+                }
+            } else {
+                Label {
+                    Text(verbatim: localized("Settings.VisitWebsite", locale: locale))
+                } icon: {
+                    Image(systemName: "safari")
+                }
+                .foregroundStyle(Theme.Colors.secondaryText)
+            }
+
+            Button {
+                requestReview()
+            } label: {
+                Label {
+                    Text(verbatim: localized("Settings.RateShlf", locale: locale))
+                } icon: {
+                    Image(systemName: "star")
+                }
+            }
+        } header: {
+            Text(verbatim: localized("Settings.AppSection", locale: locale))
+        }
+    }
+
+    @ViewBuilder
+    private var versionSection: some View {
+        Section {
+            HStack {
+                Text(verbatim: localized("Settings.Version", locale: locale))
+                Spacer()
+                Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0")
+                    .foregroundStyle(Theme.Colors.secondaryText)
             }
         }
     }
@@ -347,7 +508,7 @@ struct SettingsView: View {
             case .error(let message):
                 cloudMigrationError = message
             case .checking, .unknown:
-                cloudMigrationError = "Unable to check iCloud status right now."
+                cloudMigrationError = localized("Settings.UnableToCheckICloudStatus", locale: locale)
             }
         }
     }
@@ -426,31 +587,33 @@ struct SettingsView: View {
     private var cloudStatusInline: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
             if !isProUser {
-                Text("Available with Shlf Pro")
+                Text(verbatim: localized("Settings.AvailableWithPro", locale: locale))
             } else {
                 switch cloudStatus {
                 case .checking:
                     HStack(spacing: Theme.Spacing.xs) {
                         ProgressView()
                             .controlSize(.small)
-                        Text("Checking iCloud data...")
+                        Text(verbatim: localized("Settings.CheckingICloudData", locale: locale))
                     }
                 case .available(let snapshot):
-                    Text(profile.cloudSyncEnabled ? "Sync is on" : "iCloud data found")
+                    Text(profile.cloudSyncEnabled
+                         ? localized("Settings.SyncIsOn", locale: locale)
+                         : localized("Settings.iCloudDataFound", locale: locale))
                         .foregroundStyle(Theme.Colors.success)
                     if let lastActivity = snapshot.lastActivity {
                         Text(
                             String.localizedStringWithFormat(
-                                String(localized: "Last activity %@"),
+                                localized("Settings.LastActivityFormat", locale: locale),
                                 formatDate(lastActivity)
                             )
                         )
                     }
                 case .empty:
-                    Text("No iCloud data yet")
-                    Text("Your data will upload from this iPhone.")
+                    Text(verbatim: localized("Settings.NoICloudDataYet", locale: locale))
+                    Text(verbatim: localized("Settings.DataWillUploadFromDevice", locale: locale))
                 case .error:
-                    Text("Unable to check iCloud data")
+                    Text(verbatim: localized("Settings.UnableToCheckICloudData", locale: locale))
                         .foregroundStyle(Theme.Colors.warning)
                 case .unknown:
                     EmptyView()
@@ -465,11 +628,15 @@ struct SettingsView: View {
     private var cloudChoiceMessage: String {
         if case .available(let snapshot) = cloudStatus {
             if let lastActivity = snapshot.lastActivity {
-                return "We found iCloud data from \(formatDate(lastActivity)). Choose which data to keep."
+                return String(
+                    format: localized("Settings.ChoiceMessageWithDate", locale: locale),
+                    locale: locale,
+                    arguments: [formatDate(lastActivity)]
+                )
             }
-            return "We found iCloud data. Choose which data to keep."
+            return localized("Settings.ChoiceMessageFound", locale: locale)
         }
-        return "Choose which data to keep."
+        return localized("Settings.ChoiceMessageDefault", locale: locale)
     }
 
     private func formatDate(_ date: Date) -> String {
@@ -489,12 +656,12 @@ struct SettingsView: View {
                     )
                     .padding(.trailing, Theme.Spacing.xs)
 
-                    Text("Shlf Pro")
+                    Text(verbatim: localized("Settings.ProTitle", locale: locale))
                         .font(Theme.Typography.headline)
 
                     Spacer()
 
-                    Text("Active")
+                    Text(verbatim: localized("Settings.ProActive", locale: locale))
                         .font(Theme.Typography.caption)
                         .foregroundStyle(Theme.Colors.success)
                         .padding(.horizontal, Theme.Spacing.sm)
@@ -519,11 +686,11 @@ struct SettingsView: View {
                                     fallbackTint: themeColor.color
                                 )
 
-                                Text("Upgrade to Pro")
+                                Text(verbatim: localized("Settings.UpgradeToPro", locale: locale))
                                     .font(Theme.Typography.headline)
                             }
 
-                            Text("Unlimited books & features")
+                            Text(verbatim: localized("Settings.UnlimitedBooksFeatures", locale: locale))
                                 .font(Theme.Typography.caption)
                                 .foregroundStyle(Theme.Colors.secondaryText)
                         }
@@ -536,7 +703,7 @@ struct SettingsView: View {
                     }
                 }
 
-                Button("Restore Purchases") {
+                Button {
                     Task {
                         await storeKit.restorePurchases()
                         showRestoreAlert = true
@@ -545,6 +712,8 @@ struct SettingsView: View {
                         profile.isProUser = storeKit.isProUser
                         try? modelContext.save()
                     }
+                } label: {
+                    Text(verbatim: localized("Settings.RestorePurchases", locale: locale))
                 }
             }
         }
