@@ -40,12 +40,12 @@ struct HomeView: View {
         return new
     }
 
-    private var greeting: LocalizedStringKey {
+    private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
-        case 0..<12: return "Good Morning"
-        case 12..<17: return "Good Afternoon"
-        default: return "Good Evening"
+        case 0..<12: return localized("Home.Greeting.Morning", locale: locale)
+        case 12..<17: return localized("Home.Greeting.Afternoon", locale: locale)
+        default: return localized("Home.Greeting.Evening", locale: locale)
         }
     }
 
@@ -135,7 +135,7 @@ struct HomeView: View {
                                         isEditingCards = false
                                     }
                                 } label: {
-                                    Text(localized("Done", locale: locale))
+                                    Text(verbatim: localized("Common.Done", locale: locale))
                                         .font(.body.weight(.semibold))
                                         .foregroundStyle(themeColor.color)
                                 }
@@ -144,7 +144,11 @@ struct HomeView: View {
                                     Button {
                                         showHomeCustomization = true
                                     } label: {
-                                        Label(localized("Customize Home Screen", locale: locale), systemImage: "slider.horizontal.3")
+                                        Label {
+                                            Text(verbatim: localized("Home.CustomizeHomeScreen", locale: locale))
+                                        } icon: {
+                                            Image(systemName: "slider.horizontal.3")
+                                        }
                                     }
 
                                     Button {
@@ -152,13 +156,21 @@ struct HomeView: View {
                                             isEditingCards = true
                                         }
                                     } label: {
-                                        Label(localized("Edit Cards", locale: locale), systemImage: "square.grid.3x3")
+                                        Label {
+                                            Text(verbatim: localized("Home.EditCards", locale: locale))
+                                        } icon: {
+                                            Image(systemName: "square.grid.3x3")
+                                        }
                                     }
 
                                     Button {
                                         showSettings = true
                                     } label: {
-                                        Label(localized("Settings", locale: locale), systemImage: "gearshape")
+                                        Label {
+                                            Text(verbatim: localized("Settings.Title", locale: locale))
+                                        } icon: {
+                                            Image(systemName: "gearshape")
+                                        }
                                     }
                                 } label: {
                                     Image(systemName: "ellipsis.circle")
@@ -205,7 +217,7 @@ struct HomeView: View {
 
     private var heroSection: some View {
         HStack(spacing: Theme.Spacing.xs) {
-            Text(greeting)
+            Text(verbatim: greeting)
                 .font(.title3)
                 .fontWeight(.semibold)
                 .foregroundStyle(Theme.Colors.text)
@@ -214,7 +226,7 @@ struct HomeView: View {
                 .font(.title3)
                 .foregroundStyle(Theme.Colors.tertiaryText)
 
-            Text(localized("Ready to read?", locale: locale))
+            Text(verbatim: localized("Home.ReadyToRead", locale: locale))
                 .font(.title3)
                 .foregroundStyle(Theme.Colors.secondaryText)
 
@@ -297,9 +309,9 @@ struct HomeView: View {
 
             EmptyStateView(
                 icon: "book.pages",
-                title: "No Books Reading",
-                message: "Start your reading journey by adding your first book",
-                actionTitle: "Add Book",
+                title: localized("Home.EmptyReading.Title", locale: locale),
+                message: localized("Home.EmptyReading.Message", locale: locale),
+                actionTitle: localized("Home.EmptyReading.Action", locale: locale),
                 action: { showAddBook = true }
             )
 
@@ -313,7 +325,7 @@ struct HomeView: View {
     private var currentlyReadingSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             HStack {
-            Text(localized("Currently Reading", locale: locale))
+            Text(verbatim: localized("Home.CurrentlyReading", locale: locale))
                     .sectionHeader()
 
                 Spacer()
@@ -378,7 +390,7 @@ struct CurrentlyReadingCard: View {
 
                             Text(
                                 String.localizedStringWithFormat(
-                                    localized("/ %lld pages", locale: locale),
+                                    localized("Home.PagesOfTotalFormat %lld", locale: locale),
                                     totalPages
                                 )
                             )
