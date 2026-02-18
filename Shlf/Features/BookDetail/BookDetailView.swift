@@ -412,9 +412,9 @@ struct BookDetailView: View {
                 } else {
                     emptySectionCard(
                         icon: "text.alignleft",
-                        title: localized("BookDetail.Empty.Description.Title", locale: locale),
-                        message: localized("BookDetail.Empty.Description.Message", locale: locale),
-                        actionTitle: localized("BookDetail.Empty.Description.Action", locale: locale)
+                        title: "BookDetail.Empty.Description.Title",
+                        message: "BookDetail.Empty.Description.Message",
+                        actionTitle: "BookDetail.Empty.Description.Action"
                     ) {
                         showEditBook = true
                     }
@@ -426,9 +426,9 @@ struct BookDetailView: View {
                 } else {
                     emptySectionCard(
                         icon: "bookmark",
-                        title: localized("BookDetail.Empty.LastPosition.Title", locale: locale),
-                        message: localized("BookDetail.Empty.LastPosition.Message", locale: locale),
-                        actionTitle: localized("BookDetail.Empty.LastPosition.Action", locale: locale)
+                        title: "BookDetail.Empty.LastPosition.Title",
+                        message: "BookDetail.Empty.LastPosition.Message",
+                        actionTitle: "BookDetail.Empty.LastPosition.Action"
                     ) {
                         showLogSession = true
                     }
@@ -440,9 +440,9 @@ struct BookDetailView: View {
                 } else {
                     emptySectionCard(
                         icon: "quote.bubble",
-                        title: localized("BookDetail.Empty.Quotes.Title", locale: locale),
-                        message: localized("BookDetail.Empty.Quotes.Message", locale: locale),
-                        actionTitle: localized("BookDetail.Empty.Quotes.Action", locale: locale)
+                        title: "BookDetail.Empty.Quotes.Title",
+                        message: "BookDetail.Empty.Quotes.Message",
+                        actionTitle: "BookDetail.Empty.Quotes.Action"
                     ) {
                         showAddQuote = true
                     }
@@ -454,9 +454,9 @@ struct BookDetailView: View {
                 } else {
                     emptySectionCard(
                         icon: "note.text",
-                        title: localized("BookDetail.Empty.Notes.Title", locale: locale),
-                        message: localized("BookDetail.Empty.Notes.Message", locale: locale),
-                        actionTitle: localized("BookDetail.Empty.Notes.Action", locale: locale)
+                        title: "BookDetail.Empty.Notes.Title",
+                        message: "BookDetail.Empty.Notes.Message",
+                        actionTitle: "BookDetail.Empty.Notes.Action"
                     ) {
                         showEditBook = true
                     }
@@ -468,9 +468,9 @@ struct BookDetailView: View {
                 } else {
                     emptySectionCard(
                         icon: "tag",
-                        title: localized("BookDetail.Empty.Subjects.Title", locale: locale),
-                        message: localized("BookDetail.Empty.Subjects.Message", locale: locale),
-                        actionTitle: localized("BookDetail.Empty.Subjects.Action", locale: locale)
+                        title: "BookDetail.Empty.Subjects.Title",
+                        message: "BookDetail.Empty.Subjects.Message",
+                        actionTitle: "BookDetail.Empty.Subjects.Action"
                     ) {
                         selectedSubjects = book.subjects ?? []
                         showSubjectPicker = true
@@ -490,9 +490,9 @@ struct BookDetailView: View {
                 } else {
                     emptySectionCard(
                         icon: "clock.arrow.circlepath",
-                        title: localized("BookDetail.Empty.Sessions.Title", locale: locale),
-                        message: localized("BookDetail.Empty.Sessions.Message", locale: locale),
-                        actionTitle: localized("BookDetail.Empty.Sessions.Action", locale: locale)
+                        title: "BookDetail.Empty.Sessions.Title",
+                        message: "BookDetail.Empty.Sessions.Message",
+                        actionTitle: "BookDetail.Empty.Sessions.Action"
                     ) {
                         showLogSession = true
                     }
