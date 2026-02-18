@@ -12,9 +12,12 @@ struct EmptyStateView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     let icon: String
-    let title: LocalizedStringKey
-    let message: LocalizedStringKey
-    let actionTitle: LocalizedStringKey?
+    let titleKey: LocalizedStringKey?
+    let messageKey: LocalizedStringKey?
+    let actionTitleKey: LocalizedStringKey?
+    let titleString: String?
+    let messageString: String?
+    let actionTitleString: String?
     let action: (() -> Void)?
 
     init(
@@ -25,9 +28,29 @@ struct EmptyStateView: View {
         action: (() -> Void)? = nil
     ) {
         self.icon = icon
-        self.title = title
-        self.message = message
-        self.actionTitle = actionTitle
+        self.titleKey = title
+        self.messageKey = message
+        self.actionTitleKey = actionTitle
+        self.titleString = nil
+        self.messageString = nil
+        self.actionTitleString = nil
+        self.action = action
+    }
+
+    init(
+        icon: String,
+        title: String,
+        message: String,
+        actionTitle: String? = nil,
+        action: (() -> Void)? = nil
+    ) {
+        self.icon = icon
+        self.titleKey = nil
+        self.messageKey = nil
+        self.actionTitleKey = nil
+        self.titleString = title
+        self.messageString = message
+        self.actionTitleString = actionTitle
         self.action = action
     }
 
@@ -49,25 +72,41 @@ struct EmptyStateView: View {
             }
 
             VStack(spacing: Theme.Spacing.xs) {
-                Text(title)
-                    .font(Theme.Typography.title2)
-                    .foregroundStyle(Theme.Colors.text)
+                Group {
+                    if let titleString {
+                        Text(verbatim: titleString)
+                    } else if let titleKey {
+                        Text(titleKey)
+                    }
+                }
+                .font(Theme.Typography.title2)
+                .foregroundStyle(Theme.Colors.text)
 
-                Text(message)
-                    .font(Theme.Typography.callout)
-                    .foregroundStyle(Theme.Colors.secondaryText)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, Theme.Spacing.lg)
+                Group {
+                    if let messageString {
+                        Text(verbatim: messageString)
+                    } else if let messageKey {
+                        Text(messageKey)
+                    }
+                }
+                .font(Theme.Typography.callout)
+                .foregroundStyle(Theme.Colors.secondaryText)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, Theme.Spacing.lg)
             }
 
-            if let actionTitle, let action {
+            if let action {
                 Button(action: action) {
                     HStack(spacing: Theme.Spacing.xs) {
                         Image(systemName: "plus.circle.fill")
                             .font(.body)
 
-                        Text(actionTitle)
+                        if let actionTitleString {
+                            Text(verbatim: actionTitleString)
+                        } else if let actionTitleKey {
+                            Text(actionTitleKey)
+                        }
                     }
                     .primaryButton(color: themeColor.color, foreground: themeColor.onColor(for: colorScheme))
                 }
