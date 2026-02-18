@@ -70,9 +70,9 @@ struct LibraryView: View {
             .navigationDestination(for: Book.self) { book in
                 BookDetailView(book: book)
             }
-            .navigationTitle("Library")
+            .navigationTitle(Text(verbatim: localized("Library.Title", locale: locale)))
             .navigationBarTitleDisplayMode(.large)
-            .searchable(text: $searchText, prompt: "Search by title or author")
+            .searchable(text: $searchText, prompt: Text(verbatim: localized("Library.SearchPrompt", locale: locale)))
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     HStack(spacing: Theme.Spacing.sm) {
@@ -80,7 +80,11 @@ struct LibraryView: View {
                             Button {
                                 showLibraryShare = true
                             } label: {
-                                Label(localized("Share Library", locale: locale), systemImage: "square.and.arrow.up")
+                                Label {
+                                    Text(verbatim: localized("Library.ShareLibrary", locale: locale))
+                                } icon: {
+                                    Image(systemName: "square.and.arrow.up")
+                                }
                             }
                         } label: {
                             Image(systemName: "ellipsis.circle")
@@ -114,7 +118,7 @@ struct LibraryView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: Theme.Spacing.sm) {
                 FilterChip(
-                    title: "All",
+                    title: "Library.Filter.All",
                     count: allBooks.count,
                     isSelected: selectedFilter == nil,
                     action: {
@@ -154,16 +158,16 @@ struct LibraryView: View {
             if searchText.isEmpty {
                 EmptyStateView(
                     icon: "books.vertical.fill",
-                    title: "No Books Yet",
-                    message: "Add your first book to start building your library",
-                    actionTitle: "Add Book",
+                    title: localized("Library.Empty.Title", locale: locale),
+                    message: localized("Library.Empty.Message", locale: locale),
+                    actionTitle: localized("Library.Empty.Action", locale: locale),
                     action: { showAddBook = true }
                 )
             } else {
                 EmptyStateView(
                     icon: "magnifyingglass",
-                    title: "No Results",
-                    message: "Try searching with a different title or author"
+                    title: localized("Library.EmptySearch.Title", locale: locale),
+                    message: localized("Library.EmptySearch.Message", locale: locale)
                 )
             }
 
@@ -177,7 +181,7 @@ struct LibraryView: View {
     private var booksSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             HStack {
-                let headerTitle: LocalizedStringKey = selectedFilter?.displayNameKey ?? "All Books"
+                let headerTitle: LocalizedStringKey = selectedFilter?.displayNameKey ?? "Library.AllBooks"
                 Text(headerTitle)
                     .sectionHeader()
 
@@ -281,7 +285,7 @@ struct BookRow: View {
 
                             Text(
                                 String.localizedStringWithFormat(
-                                    localized("/ %lld pages", locale: locale),
+                                    localized("Library.PagesOfTotalFormat %lld", locale: locale),
                                     totalPages
                                 )
                             )
