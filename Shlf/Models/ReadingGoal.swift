@@ -19,7 +19,25 @@ func localized(_ key: String, locale: Locale) -> String {
 
 private extension Bundle {
     static func localizedBundle(for locale: Locale) -> Bundle? {
-        let candidates = [locale.identifier, locale.shlfLanguageCode].compactMap { $0 }
+        var candidates: [String] = []
+        let identifier = locale.identifier
+        candidates.append(identifier)
+
+        let normalizedIdentifier = identifier.replacingOccurrences(of: "_", with: "-")
+        if normalizedIdentifier != identifier {
+            candidates.append(normalizedIdentifier)
+        }
+
+        if let languageCode = locale.shlfLanguageCode {
+            candidates.append(languageCode)
+            if #available(iOS 16.0, *), let region = locale.region?.identifier {
+                candidates.append("\(languageCode)-\(region)")
+            }
+            if languageCode == "pt" {
+                candidates.append("pt-PT")
+            }
+        }
+
         for identifier in candidates {
             if let path = Bundle.main.path(forResource: identifier, ofType: "lproj"),
                let bundle = Bundle(path: path) {
