@@ -11,6 +11,7 @@ import SwiftData
 struct SessionSettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     @Bindable var profile: UserProfile
     @State private var showCustomHoursInput = false
     @State private var customHours: String = ""
@@ -46,13 +47,13 @@ struct SessionSettingsView: View {
             }
             .scrollIndicators(.hidden)
         }
-        .navigationTitle("Sessions")
+        .navigationTitle("SessionSettings.Title")
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Custom Duration", isPresented: $showCustomHoursInput) {
-            TextField("Hours", text: $customHours)
+        .alert("SessionSettings.CustomDuration.Title", isPresented: $showCustomHoursInput) {
+            TextField("SessionSettings.CustomDuration.Hours", text: $customHours)
                 .keyboardType(.numberPad)
-            Button("Cancel", role: .cancel) {}
-            Button("Set") {
+            Button("Common.Cancel", role: .cancel) {}
+            Button("Common.Set") {
                 if let hours = Int(customHours), hours > 0 && hours <= 168 {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                         profile.autoEndSessionHours = hours
@@ -60,16 +61,19 @@ struct SessionSettingsView: View {
                     do {
                         try modelContext.save()
                     } catch {
-                        saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
+                        saveErrorMessage = String.localizedStringWithFormat(
+                            localized("SessionSettings.SaveErrorFormat", locale: locale),
+                            error.localizedDescription
+                        )
                         showSaveError = true
                     }
                 }
             }
         } message: {
-            Text("Enter the number of hours after which inactive sessions should auto-end (1-168 hours)")
+            Text("SessionSettings.CustomDuration.Message")
         }
-        .alert("Save Error", isPresented: $showSaveError) {
-            Button("OK") {}
+        .alert("SessionSettings.SaveErrorTitle", isPresented: $showSaveError) {
+            Button("Common.OK") {}
         } message: {
             Text(saveErrorMessage)
         }
@@ -96,11 +100,11 @@ struct SessionSettingsView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
-                Text("About")
+                Text("SessionSettings.AboutTitle")
                     .font(.headline)
             }
 
-            Text("Configure how reading sessions are managed and displayed across your devices.")
+            Text("SessionSettings.AboutDescription")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -117,17 +121,17 @@ struct SessionSettingsView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
-                Text("Auto-End Sessions")
+                Text("SessionSettings.AutoEnd.Title")
                     .font(.headline)
             }
 
             VStack(spacing: 12) {
-                Toggle("Auto-End Inactive Sessions", isOn: $profile.autoEndSessionEnabled)
+                Toggle("SessionSettings.AutoEnd.Toggle", isOn: $profile.autoEndSessionEnabled)
                     .tint(themeColor.color)
                     .padding(12)
                     .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
 
-                Text("Automatically end reading sessions after a period of inactivity")
+                Text("SessionSettings.AutoEnd.Description")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -146,7 +150,7 @@ struct SessionSettingsView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
-                Text("Auto-End After")
+                Text("SessionSettings.AutoEnd.After")
                     .font(.headline)
             }
 
@@ -158,7 +162,10 @@ struct SessionSettingsView: View {
                             do {
                                 try modelContext.save()
                             } catch {
-                                saveErrorMessage = "Failed to save: \(error.localizedDescription)"
+                                saveErrorMessage = String.localizedStringWithFormat(
+                                    localized("SessionSettings.SaveErrorFormat", locale: locale),
+                                    error.localizedDescription
+                                )
                                 showSaveError = true
                             }
                         }
@@ -194,7 +201,7 @@ struct SessionSettingsView: View {
                     customHours = "\(profile.autoEndSessionHours)"
                 } label: {
                     HStack(spacing: 12) {
-                        Text("Custom")
+                        Text("SessionSettings.Custom")
                             .font(.subheadline)
                             .foregroundStyle(.primary)
 
@@ -240,16 +247,16 @@ struct SessionSettingsView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
-                Text("Session Display")
+                Text("SessionSettings.Display.Title")
                     .font(.headline)
             }
 
             VStack(spacing: 12) {
                 Toggle(isOn: $profile.hideAutoSessionsIPhone) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Hide Quick Sessions on iPhone")
+                        Text("SessionSettings.Display.HideQuick")
                             .font(.subheadline)
-                        Text("Only show timer-based sessions in reading history")
+                        Text("SessionSettings.Display.HideQuick.Detail")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -258,7 +265,10 @@ struct SessionSettingsView: View {
                     do {
                         try modelContext.save()
                     } catch {
-                        saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
+                        saveErrorMessage = String.localizedStringWithFormat(
+                            localized("SessionSettings.SaveErrorFormat", locale: locale),
+                            error.localizedDescription
+                        )
                         showSaveError = true
                         profile.hideAutoSessionsIPhone = oldValue
                     }
@@ -267,7 +277,7 @@ struct SessionSettingsView: View {
                 .padding(12)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
 
-                Text("Quick sessions are created when you tap +1, +5, etc. Timer sessions are created using the reading timer. To control Apple Watch sessions, go to Watch Settings.")
+                Text("SessionSettings.Display.Footer")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -286,11 +296,11 @@ struct SessionSettingsView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
-                Text("How It Works")
+                Text("SessionSettings.HowItWorks.Title")
                     .font(.headline)
             }
 
-            Text("Active sessions sync between your iPhone and Apple Watch. If a session is inactive for the specified duration, it will automatically end and save your progress.")
+            Text("SessionSettings.HowItWorks.Description")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -300,7 +310,7 @@ struct SessionSettingsView: View {
     }
 
     private func hoursLabel(_ hours: Int) -> String {
-        String.localizedStringWithFormat(String(localized: "%lld hours"), hours)
+        String.localizedStringWithFormat(localized("SessionSettings.HoursFormat", locale: locale), hours)
     }
 }
 
