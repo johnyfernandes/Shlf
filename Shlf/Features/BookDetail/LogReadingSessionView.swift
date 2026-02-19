@@ -170,23 +170,23 @@ struct LogReadingSessionView: View {
                     syncEndPageText(with: actualEndPage)
                 }
             }
-            .navigationTitle("Log Session")
+            .navigationTitle("LogSession.Title")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .keyboard) {
-                    Button("Done") {
+                    Button("Common.Done") {
                         hideKeyboard()
                     }
                 }
 
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(hasUnsavedData ? "Minimize" : "Cancel") {
+                    Button(hasUnsavedData ? "Common.Minimize" : "Common.Cancel") {
                         dismiss()
                     }
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button("Common.Save") {
                         saveSession()
                     }
                     .disabled(pagesRead <= 0 || (useTimer && timerStartTime != nil && !isPaused))
@@ -195,7 +195,7 @@ struct LogReadingSessionView: View {
                 if hasUnsavedData {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Menu {
-                            Button("Discard Session", role: .destructive) {
+                            Button("LogSession.Discard.Action", role: .destructive) {
                                 showDiscardAlert = true
                             }
                         } label: {
@@ -206,16 +206,16 @@ struct LogReadingSessionView: View {
                     }
                 }
             }
-            .alert("Discard Session?", isPresented: $showDiscardAlert) {
-                Button("Keep Editing", role: .cancel) {}
-                Button("Discard", role: .destructive) {
+            .alert("LogSession.Discard.Title", isPresented: $showDiscardAlert) {
+                Button("LogSession.Discard.KeepEditing", role: .cancel) {}
+                Button("Common.Discard", role: .destructive) {
                     discardSession()
                 }
             } message: {
-                Text("This will end the timer and discard your session progress.")
+                Text("LogSession.Discard.Message")
             }
-            .alert(localized("Save Error", locale: locale), isPresented: $showSaveError) {
-                Button(localized("OK", locale: locale)) {}
+            .alert("LogSession.SaveError.Title", isPresented: $showSaveError) {
+                Button("Common.OK") {}
             } message: {
                 Text(saveErrorMessage)
             }
@@ -224,11 +224,11 @@ struct LogReadingSessionView: View {
                     activeSessionSnapshot = true
                 }
             }
-            .alert("Active Session Found", isPresented: $showActiveSessionAlert) {
-                Button("Cancel", role: .cancel) {
+            .alert("LogSession.ActiveSession.Title", isPresented: $showActiveSessionAlert) {
+                Button("Common.Cancel", role: .cancel) {
                     pendingActiveSession = nil
                 }
-                Button("End & Start New", role: .destructive) {
+                Button("LogSession.ActiveSession.EndStart", role: .destructive) {
                     if let existing = pendingActiveSession {
                         endExistingSessionAndStartNew(existing)
                     }
@@ -238,13 +238,13 @@ struct LogReadingSessionView: View {
                    let bookTitle = existing.book?.title {
                     Text(
                         String.localizedStringWithFormat(
-                            String(localized: "There's an active session for \"%@\" started on %@. End it and start a new one?"),
+                            localized("LogSession.ActiveSession.MessageFormat %@ %@", locale: locale),
                             bookTitle,
                             existing.sourceDevice
                         )
                     )
                 } else {
-                    Text("There's already an active reading session. End it and start a new one?")
+                    Text("LogSession.ActiveSession.GenericMessage")
                 }
             }
             .sheet(isPresented: $showAddQuote) {
@@ -255,7 +255,7 @@ struct LogReadingSessionView: View {
 
     private var progressCard: some View {
         sessionCard {
-            cardHeader(title: localized("Reading Progress", locale: locale), icon: "book.pages")
+            cardHeader(title: "LogSession.ReadingProgress", icon: "book.pages")
 
             HStack(spacing: 12) {
                 progressValueChip(title: "LogSession.From", value: "\(actualStartPage)")
@@ -266,7 +266,7 @@ struct LogReadingSessionView: View {
                 Image(systemName: "book.pages")
                     .foregroundStyle(themeColor.color)
 
-                Text("Pages Read")
+                Text("BookDetail.PagesRead")
                     .font(.subheadline.weight(.semibold))
 
                 Spacer()
@@ -284,21 +284,21 @@ struct LogReadingSessionView: View {
 
     private var durationCard: some View {
         sessionCard {
-            cardHeader(title: localized("Duration", locale: locale), icon: "timer")
+            cardHeader(title: "LogSession.Duration", icon: "timer")
 
             VStack(spacing: 12) {
                 if activeSessionForBook == nil {
-                    Toggle("Use Timer", isOn: $useTimer)
+                    Toggle("LogSession.UseTimer", isOn: $useTimer)
                         .tint(themeColor.color)
                 }
 
                 if let session = activeSessionForBook {
                     VStack(spacing: 12) {
-                        statusPill(text: session.isPaused ? "Paused" : "Reading...", isPaused: session.isPaused)
+                        statusPill(text: session.isPaused ? "LogSession.Status.Paused" : "LogSession.Status.Reading", isPaused: session.isPaused)
 
                         Text(
                             String.localizedStringWithFormat(
-                                String(localized: "Session.StartedOn %@"),
+                                localized("LogSession.Active.StartedOnFormat %@", locale: locale),
                                 session.sourceDevice
                             )
                         )
@@ -308,7 +308,7 @@ struct LogReadingSessionView: View {
                         ActiveSessionTimerView(activeSession: session)
 
                         HStack(spacing: 10) {
-                            Button(session.isPaused ? "Resume" : "Pause") {
+                            Button(session.isPaused ? "LogSession.Action.Resume" : "LogSession.Action.Pause") {
                                 Haptics.selection()
                                 session.isPaused.toggle()
                                 if session.isPaused {
@@ -328,7 +328,7 @@ struct LogReadingSessionView: View {
                             .buttonStyle(.bordered)
                             .tint(themeColor.color)
 
-                            Button("Finish Session") {
+                            Button("LogSession.Action.FinishSession") {
                                 finishActiveSession(session)
                             }
                             .buttonStyle(.borderedProminent)
@@ -340,12 +340,12 @@ struct LogReadingSessionView: View {
                 } else if useTimer {
                     if let startTime = timerStartTime {
                         VStack(spacing: 12) {
-                            statusPill(text: isPaused ? "Paused" : "Reading...", isPaused: isPaused)
+                            statusPill(text: isPaused ? "LogSession.Status.Paused" : "LogSession.Status.Reading", isPaused: isPaused)
 
                             TimerView(startTime: startTime, isPaused: isPaused, pausedElapsedTime: pausedElapsedTime)
 
                             HStack(spacing: 10) {
-                                Button(isPaused ? "Resume" : "Pause") {
+                                Button(isPaused ? "LogSession.Action.Resume" : "LogSession.Action.Pause") {
                                     if isPaused {
                                         resumeTimer()
                                     } else {
@@ -355,7 +355,7 @@ struct LogReadingSessionView: View {
                                 .buttonStyle(.bordered)
                                 .tint(themeColor.color)
 
-                            Button("Finish Session") {
+                            Button("LogSession.Action.FinishSession") {
                                 finishSession()
                             }
                                 .buttonStyle(.borderedProminent)
@@ -368,7 +368,7 @@ struct LogReadingSessionView: View {
                         Button {
                             startTimer()
                         } label: {
-                            Text("Start Timer")
+                            Text("LogSession.Action.StartTimer")
                                 .font(Theme.Typography.headline)
                                 .foregroundStyle(themeColor.onColor(for: colorScheme))
                                 .frame(maxWidth: .infinity)
@@ -402,11 +402,11 @@ struct LogReadingSessionView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
-                Text("Reading Position")
+                Text("LogSession.Position.Title")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.Colors.text)
 
-                Text("Optional")
+                Text("Common.Optional")
                     .font(.caption2.weight(.medium))
                     .foregroundStyle(Theme.Colors.secondaryText)
 
@@ -414,7 +414,7 @@ struct LogReadingSessionView: View {
             }
 
             VStack(spacing: 12) {
-                Toggle("Save reading position", isOn: $shouldSavePosition)
+                Toggle("LogSession.Position.SaveToggle", isOn: $shouldSavePosition)
                     .tint(themeColor.color)
                     .onChange(of: shouldSavePosition) { _, newValue in
                         if newValue {
@@ -429,9 +429,9 @@ struct LogReadingSessionView: View {
 
                 if shouldSavePosition {
                     HStack {
-                        Text("Page")
+                        Text("Common.Page")
                         Spacer()
-                        TextField("Page", value: $positionPage, format: .number)
+                        TextField("Common.Page", value: $positionPage, format: .number)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
                             .frame(minWidth: 80, alignment: .trailing)
@@ -439,15 +439,15 @@ struct LogReadingSessionView: View {
                     }
 
                     HStack {
-                        Text("Line")
+                        Text("Common.Line")
                         Spacer()
-                        TextField("Line (optional)", text: $positionLineText)
+                        TextField("LogSession.Position.LineOptional", text: $positionLineText)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
                             .frame(minWidth: 80, alignment: .trailing)
                     }
 
-                    TextField("Note (optional)", text: $positionNote, axis: .vertical)
+                    TextField("Common.NoteOptional", text: $positionNote, axis: .vertical)
                         .lineLimit(2...4)
                 }
             }
@@ -456,12 +456,12 @@ struct LogReadingSessionView: View {
 
     private var quoteCard: some View {
         sessionCard {
-            cardHeader(title: localized("Save Quote", locale: locale), icon: "quote.bubble")
+            cardHeader(title: "LogSession.SaveQuote", icon: "quote.bubble")
 
             Button {
                 showAddQuote = true
             } label: {
-                Label("Add Quote from this Session", systemImage: "quote.bubble")
+                Label("LogSession.AddQuoteFromSession", systemImage: "quote.bubble")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
@@ -471,9 +471,9 @@ struct LogReadingSessionView: View {
 
     private var sessionDetailsCard: some View {
         sessionCard {
-            cardHeader(title: localized("Session Details", locale: locale), icon: "calendar")
+            cardHeader(title: "LogSession.SessionDetails", icon: "calendar")
 
-            DatePicker("Session Date", selection: $sessionDate, displayedComponents: [.date, .hourAndMinute])
+            DatePicker("LogSession.SessionDate", selection: $sessionDate, displayedComponents: [.date, .hourAndMinute])
                 .tint(themeColor.color)
         }
     }
@@ -484,7 +484,7 @@ struct LogReadingSessionView: View {
                 Image(systemName: "star.fill")
                     .foregroundStyle(xpGradient)
 
-                Text("Estimated XP")
+                Text("BookDetail.EstimatedXP")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(xpGradient)
 
@@ -498,7 +498,7 @@ struct LogReadingSessionView: View {
         }
     }
 
-    private func cardHeader(title: String, icon: String) -> some View {
+    private func cardHeader(title: LocalizedStringKey, icon: String) -> some View {
         HStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.caption.weight(.semibold))
@@ -540,7 +540,7 @@ struct LogReadingSessionView: View {
                 .foregroundStyle(Theme.Colors.secondaryText)
 
             HStack(spacing: 6) {
-                TextField("End", text: text)
+                TextField("LogSession.ToPlaceholder", text: text)
                     .keyboardType(.numberPad)
                     .font(.title3.weight(.semibold))
                     .multilineTextAlignment(.leading)
@@ -624,9 +624,9 @@ struct LogReadingSessionView: View {
 
     private var endPageTooltip: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Tap here!")
+            Text("LogSession.Tooltip.Title")
                 .font(.caption.weight(.bold))
-            Text(localized("Tap here to edit your last page for this session.", locale: locale))
+            Text("LogSession.Tooltip.Message")
                 .font(.caption2)
                 .fixedSize(horizontal: false, vertical: true)
         }
