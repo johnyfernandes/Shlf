@@ -21,7 +21,7 @@ struct EditGoalView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Goal") {
+                Section("Goals.Section.Goal") {
                     HStack {
                         Label(goal.type.displayNameKey, systemImage: goal.type.icon)
                         Spacer()
@@ -33,12 +33,12 @@ struct EditGoalView: View {
                     .font(Theme.Typography.headline)
                 }
 
-                Section("Progress") {
+                Section("Goals.Section.Progress") {
                     VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                         HStack {
                             Text(
                                 String.localizedStringWithFormat(
-                                    String(localized: "%lld / %lld %@"),
+                                    localized("Goals.ProgressValueFormat", locale: locale),
                                     goal.currentValue,
                                     goal.targetValue,
                                     goal.type.unitText(locale: locale)
@@ -50,7 +50,7 @@ struct EditGoalView: View {
 
                             Text(
                                 String.localizedStringWithFormat(
-                                    String(localized: "%lld%%"),
+                                    localized("Goals.PercentFormat", locale: locale),
                                     Int(goal.progressPercentage)
                                 )
                             )
@@ -63,61 +63,72 @@ struct EditGoalView: View {
                     }
 
                     Stepper(value: $goal.currentValue, in: 0...goal.targetValue) {
-                        Text("\(String(localized: "Current Progress")): \(goal.currentValue)")
+                        Text(
+                            String.localizedStringWithFormat(
+                                localized("Goals.CurrentProgressFormat", locale: locale),
+                                goal.currentValue
+                            )
+                        )
                     }
                     .font(Theme.Typography.body)
                 }
 
-                Section("Target") {
+                Section("Goals.Target") {
                     Stepper(value: $goal.targetValue, in: max(1, goal.currentValue)...1000) {
-                        Text("\(String(localized: "Target", locale: locale)): \(goal.targetValue) \(goal.type.unitText(locale: locale))")
+                        Text(
+                            String.localizedStringWithFormat(
+                                localized("Goals.TargetFormat", locale: locale),
+                                goal.targetValue,
+                                goal.type.unitText(locale: locale)
+                            )
+                        )
                     }
                     .font(Theme.Typography.body)
                 }
 
-                Section("Timeline") {
+                Section("Goals.Section.Timeline") {
                     HStack {
-                        Text("Start Date")
+                        Text("Goals.StartDate")
                         Spacer()
                         Text(goal.startDate, style: .date)
                             .foregroundStyle(Theme.Colors.secondaryText)
                     }
 
-                    DatePicker("End Date", selection: $goal.endDate, in: goal.startDate..., displayedComponents: .date)
+                    DatePicker("Goals.EndDate", selection: $goal.endDate, in: goal.startDate..., displayedComponents: .date)
 
                     if let daysLeft = Calendar.current.dateComponents([.day], from: Date(), to: goal.endDate).day {
                         HStack {
-                            Text(goal.type.isDaily ? "Daily Reset" : "Days Remaining")
+                            Text(goal.type.isDaily ? "Goals.DailyReset" : "Goals.DaysRemaining")
                             Spacer()
                             if goal.type.isDaily {
-                                Text("Resets at midnight")
+                                Text("Goals.ResetsAtMidnight")
                                     .foregroundStyle(themeColor.color)
                             } else if daysLeft >= 0 {
                                 Text(
                                     String.localizedStringWithFormat(
-                                        String(localized: "%lld days"),
+                                        localized("Goals.DaysFormat", locale: locale),
                                         daysLeft
                                     )
                                 )
                                     .foregroundStyle(themeColor.color)
                             } else {
-                                Text("Expired")
+                                Text("Goals.Expired")
                                     .foregroundStyle(Theme.Colors.error)
                             }
                         }
                     }
                 }
 
-                Section("Status") {
-                    Toggle("Mark as Completed", isOn: $goal.isCompleted)
+                Section("Goals.Section.Status") {
+                    Toggle("Goals.MarkCompleted", isOn: $goal.isCompleted)
                 }
 
             }
-            .navigationTitle("Edit Goal")
+            .navigationTitle("Goals.EditTitle")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
+                    Button("Common.Done") {
                         // Persist manual adjustment relative to auto-tracked baseline
                         let tracker = GoalTracker(modelContext: modelContext)
                         let baseValue = tracker.baseProgress(for: goal, profile: profile)
@@ -134,7 +145,7 @@ struct EditGoalView: View {
                         Button(role: .destructive) {
                             showDeleteAlert = true
                         } label: {
-                            Label("Delete Goal", systemImage: "trash")
+                            Label("Goals.Delete", systemImage: "trash")
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
@@ -143,13 +154,13 @@ struct EditGoalView: View {
                     }
                 }
             }
-            .alert("Delete Goal?", isPresented: $showDeleteAlert) {
-                Button("Delete", role: .destructive) {
+            .alert("Goals.Delete.Title", isPresented: $showDeleteAlert) {
+                Button("Common.Delete", role: .destructive) {
                     deleteGoal()
                 }
-                Button("Cancel", role: .cancel) { }
+                Button("Common.Cancel", role: .cancel) { }
             } message: {
-                Text("This will permanently delete this goal and cannot be undone.")
+                Text("Goals.Delete.Message")
             }
         }
     }

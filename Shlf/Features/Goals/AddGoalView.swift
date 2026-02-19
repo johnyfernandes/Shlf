@@ -44,8 +44,8 @@ struct AddGoalView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Goal Type") {
-                    Picker("Type", selection: $selectedType) {
+                Section("Goals.Type") {
+                    Picker("Goals.Type", selection: $selectedType) {
                         ForEach(availableGoalTypes, id: \.self) { type in
                             Label(type.displayNameKey, systemImage: type.icon)
                                 .tag(type)
@@ -55,15 +55,15 @@ struct AddGoalView: View {
                     .tint(themeColor.color)
                 }
 
-                Section("Target") {
+                Section("Goals.Target") {
                     Stepper(value: $targetValue, in: 1...1000) {
                         Text("\(targetValue) \(selectedType.unitText(locale: locale))")
                     }
                     .font(Theme.Typography.body)
                 }
 
-                Section("Duration") {
-                    Picker("Duration", selection: $duration) {
+                Section("Goals.Duration") {
+                    Picker("Goals.Duration", selection: $duration) {
                         ForEach(GoalDuration.allCases, id: \.self) { duration in
                             Text(duration.displayNameKey).tag(duration)
                         }
@@ -71,10 +71,10 @@ struct AddGoalView: View {
                     .pickerStyle(.segmented)
 
                     if duration == .custom {
-                        DatePicker("End Date", selection: $customEndDate, in: Date()..., displayedComponents: .date)
+                        DatePicker("Goals.EndDate", selection: $customEndDate, in: Date()..., displayedComponents: .date)
                     } else {
                         HStack {
-                            Text("Ends on")
+                            Text("Goals.EndsOn")
                                 .foregroundStyle(Theme.Colors.secondaryText)
                             Spacer()
                             Text(endDate, style: .date)
@@ -86,7 +86,7 @@ struct AddGoalView: View {
 
                 Section {
                     VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                        Text("Preview")
+                        Text("Goals.Preview")
                             .font(Theme.Typography.headline)
                             .foregroundStyle(Theme.Colors.text)
 
@@ -98,17 +98,17 @@ struct AddGoalView: View {
                     }
                 }
             }
-            .navigationTitle("New Goal")
+            .navigationTitle("Goals.NewTitle")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button("Common.Cancel") {
                         dismiss()
                     }
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Create") {
+                    Button("Goals.Create") {
                         createGoal()
                     }
                     .disabled(targetValue < 1)
@@ -167,7 +167,7 @@ struct GoalPreviewCard: View {
 
                 Text(
                     String.localizedStringWithFormat(
-                        String(localized: "%lld%%"),
+                        localized("Goals.PercentFormat %lld", locale: locale),
                         0
                     )
                 )
@@ -181,7 +181,7 @@ struct GoalPreviewCard: View {
             HStack {
                 Text(
                     String.localizedStringWithFormat(
-                        String(localized: "0 / %lld %@"),
+                        localized("Goals.ProgressFormat %lld %@", locale: locale),
                         targetValue,
                         type.unitText(locale: locale)
                     )
@@ -192,13 +192,13 @@ struct GoalPreviewCard: View {
                 Spacer()
 
                 if type.isDaily {
-                    Text("Resets at midnight")
+                    Text("Goals.ResetsAtMidnight")
                         .font(Theme.Typography.caption)
                         .foregroundStyle(Theme.Colors.tertiaryText)
                 } else {
                     Text(
                         String.localizedStringWithFormat(
-                            String(localized: "%lld days left"),
+                            localized("Goals.DaysLeftFormat %lld", locale: locale),
                             daysRemaining
                         )
                     )
@@ -221,11 +221,11 @@ enum GoalDuration: String, CaseIterable {
 
     var displayNameKey: LocalizedStringKey {
         switch self {
-        case .week: return "Week"
-        case .month: return "Month"
-        case .quarter: return "Quarter"
-        case .year: return "Year"
-        case .custom: return "Custom"
+        case .week: return "GoalDuration.Week"
+        case .month: return "GoalDuration.Month"
+        case .quarter: return "GoalDuration.Quarter"
+        case .year: return "GoalDuration.Year"
+        case .custom: return "GoalDuration.Custom"
         }
     }
 }
