@@ -246,7 +246,7 @@ private struct ShareHeaderView: View {
 
     var body: some View {
         HStack(spacing: 12 * scale) {
-            Label("Shlf", systemImage: "books.vertical.fill")
+            Label("Share.Card.Brand", systemImage: "books.vertical.fill")
                 .font(.system(size: 16 * scale, weight: .semibold, design: .rounded))
                 .foregroundStyle(textColor)
 
