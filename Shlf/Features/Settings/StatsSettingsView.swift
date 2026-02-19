@@ -10,6 +10,7 @@ import SwiftData
 
 struct StatsSettingsView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.locale) private var locale
     @Query private var profiles: [UserProfile]
     @State private var showSaveError = false
     @State private var saveErrorMessage = ""
@@ -47,11 +48,11 @@ struct StatsSettingsView: View {
                                 .foregroundStyle(profile?.themeColor.color ?? Theme.Colors.accent)
                                 .frame(width: 16)
 
-                            Text("About")
+                            Text("StatsSettings.AboutTitle")
                                 .font(.headline)
                         }
 
-                        Text("Customize how your reading statistics are displayed.")
+                        Text("StatsSettings.AboutDescription")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -68,7 +69,7 @@ struct StatsSettingsView: View {
                                     .foregroundStyle(profile.themeColor.color)
                                     .frame(width: 16)
 
-                                Text("Reading Activity Graph")
+                                Text("StatsSettings.ActivityGraphTitle")
                                     .font(.headline)
                             }
 
@@ -84,7 +85,10 @@ struct StatsSettingsView: View {
                                             do {
                                                 try modelContext.save()
                                             } catch {
-                                                saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
+                                                saveErrorMessage = String.localizedStringWithFormat(
+                                                    localized("StatsSettings.SaveErrorFormat", locale: locale),
+                                                    error.localizedDescription
+                                                )
                                                 showSaveError = true
                                             }
                                         }
@@ -140,7 +144,7 @@ struct StatsSettingsView: View {
                                         .foregroundStyle(profile.themeColor.color)
                                         .frame(width: 16)
 
-                                    Text("Time Period")
+                                    Text("StatsSettings.TimePeriodTitle")
                                         .font(.headline)
                                 }
 
@@ -156,7 +160,10 @@ struct StatsSettingsView: View {
                                                 do {
                                                     try modelContext.save()
                                                 } catch {
-                                                    saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
+                                                    saveErrorMessage = String.localizedStringWithFormat(
+                                                        localized("StatsSettings.SaveErrorFormat", locale: locale),
+                                                        error.localizedDescription
+                                                    )
                                                     showSaveError = true
                                                 }
                                             }
@@ -211,10 +218,10 @@ struct StatsSettingsView: View {
             }
             .scrollIndicators(.hidden)
         }
-        .navigationTitle("Stats")
+        .navigationTitle("StatsSettings.Title")
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Save Error", isPresented: $showSaveError) {
-            Button("OK") {}
+        .alert("StatsSettings.SaveErrorTitle", isPresented: $showSaveError) {
+            Button("Common.OK") {}
         } message: {
             Text(saveErrorMessage)
         }
