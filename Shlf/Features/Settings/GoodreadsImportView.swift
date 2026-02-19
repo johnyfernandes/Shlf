@@ -111,8 +111,8 @@ struct GoodreadsImportView: View {
                 showError = true
             }
         }
-        .alert("Import Error", isPresented: $showError) {
-            Button("OK") {}
+        .alert("GoodreadsImport.Error.Title", isPresented: $showError) {
+            Button("Common.OK") {}
         } message: {
             Text(LocalizedStringKey(errorMessage))
         }
@@ -122,15 +122,15 @@ struct GoodreadsImportView: View {
         .sheet(isPresented: $showUpgradeSheet) {
             PaywallView()
         }
-        .alert("Disconnect Goodreads", isPresented: $showDisconnectAlert) {
-            Button("Cancel", role: .cancel) {}
-            Button("Disconnect", role: .destructive) {
+        .alert("GoodreadsImport.Disconnect.Title", isPresented: $showDisconnectAlert) {
+            Button("Common.Cancel", role: .cancel) {}
+            Button("GoodreadsImport.Disconnect.Action", role: .destructive) {
                 forceGoodreadsDisconnected = true
                 coordinator.disconnect()
                 storedGoodreadsConnected = false
             }
         } message: {
-            Text("Disconnecting will remove the Goodreads session from this device. You can reconnect anytime.")
+            Text("GoodreadsImport.Disconnect.Message")
         }
         .onAppear {
             Task {
@@ -182,7 +182,7 @@ struct GoodreadsImportView: View {
                     .foregroundStyle(.secondary)
             }
 
-            Text("Keep this screen open while we import.")
+            Text("GoodreadsImport.Progress.KeepOpen")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -200,7 +200,7 @@ struct GoodreadsImportView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
-                Text("Import from Goodreads")
+                Text("GoodreadsImport.Automated.Title")
                     .font(.headline)
 
                 Spacer()
@@ -208,7 +208,7 @@ struct GoodreadsImportView: View {
                 connectionPill
             }
 
-            Text("We'll import your library using Goodreads' official export. If Goodreads blocks it, you can upload the export CSV.")
+            Text("GoodreadsImport.Automated.Description")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
@@ -221,13 +221,15 @@ struct GoodreadsImportView: View {
                 }
             } label: {
                 let isSyncing = showCoordinatorProgress || isParsing || isImporting
-                let primaryTitle: LocalizedStringKey = displayConnected ? "Sync now" : "Import from Goodreads"
+                let primaryTitle: LocalizedStringKey = displayConnected
+                ? "GoodreadsImport.Automated.SyncNow"
+                : "GoodreadsImport.Automated.Title"
                 HStack(spacing: 10) {
                     if isSyncing {
                         ProgressView()
                             .tint(themeColor.onColor(for: colorScheme))
                     }
-                    Text(isSyncing ? "Syncing..." : primaryTitle)
+                    Text(isSyncing ? "GoodreadsImport.Automated.Syncing" : primaryTitle)
                 }
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(themeColor.onColor(for: colorScheme))
@@ -241,7 +243,7 @@ struct GoodreadsImportView: View {
                 HStack(spacing: 6) {
                     ProgressView()
                         .scaleEffect(0.85)
-                    Text("Syncing...")
+                    Text("GoodreadsImport.Automated.Syncing")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -251,7 +253,7 @@ struct GoodreadsImportView: View {
                 Button {
                     showDisconnectAlert = true
                 } label: {
-                    Text("Disconnect Goodreads")
+                    Text("GoodreadsImport.Automated.Disconnect")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -279,7 +281,9 @@ struct GoodreadsImportView: View {
                     .fill(connected ? Color.green : Color.secondary)
                     .frame(width: 7, height: 7)
             }
-            let statusText: LocalizedStringKey = connected ? "Connected" : "Not Connected"
+            let statusText: LocalizedStringKey = connected
+            ? "GoodreadsImport.Connection.Connected"
+            : "GoodreadsImport.Connection.NotConnected"
             Text(statusText)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(connected ? Color.green : Color.secondary)
@@ -325,18 +329,18 @@ struct GoodreadsImportView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
-                Text("Manual CSV upload")
+                Text("GoodreadsImport.Manual.Title")
                     .font(.headline)
             }
 
-            Text("Goodreads -> My Books -> Export Library -> Download CSV -> Upload here")
+            Text("GoodreadsImport.Manual.Instructions")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
             Button {
                 showImporter = true
             } label: {
-                Text("Upload CSV")
+                Text("GoodreadsImport.Manual.Upload")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(themeColor.color)
             }
@@ -351,7 +355,7 @@ struct GoodreadsImportView: View {
             if isParsing {
                 HStack(spacing: 8) {
                     ProgressView()
-                    Text(localized("Parsing CSV...", locale: locale))
+                    Text("GoodreadsImport.Status.Parsing")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -375,13 +379,13 @@ struct GoodreadsImportView: View {
             if let result {
                 Divider()
 
-                Text(localized("Import Complete", locale: locale))
+                Text("GoodreadsImport.Status.Complete")
                     .font(.headline)
 
                 summaryRow(
                     title: Text(
                         String.localizedStringWithFormat(
-                            localized("Imported %lld books", locale: locale),
+                            localized("GoodreadsImport.Result.Imported %lld", locale: locale),
                             result.importedCount
                         )
                     )
@@ -390,7 +394,7 @@ struct GoodreadsImportView: View {
                     summaryRow(
                         title: Text(
                             String.localizedStringWithFormat(
-                                localized("Updated %lld books", locale: locale),
+                                localized("GoodreadsImport.Result.Updated %lld", locale: locale),
                                 result.updatedCount
                             )
                         )
@@ -400,7 +404,7 @@ struct GoodreadsImportView: View {
                     summaryRow(
                         title: Text(
                             String.localizedStringWithFormat(
-                                localized("Skipped %lld rows", locale: locale),
+                                localized("GoodreadsImport.Result.Skipped %lld", locale: locale),
                                 result.skippedCount
                             )
                         )
@@ -410,19 +414,19 @@ struct GoodreadsImportView: View {
                     summaryRow(
                         title: Text(
                             String.localizedStringWithFormat(
-                                localized("Created %lld imported sessions", locale: locale),
+                                localized("GoodreadsImport.Result.CreatedSessions %lld", locale: locale),
                                 result.createdSessions
                             )
                         )
                     )
                 }
                 if result.reachedFreeLimit {
-                    summaryRow(title: Text(localized("Stopped at free limit", locale: locale)))
+                    summaryRow(title: Text("GoodreadsImport.Result.StoppedAtFreeLimit"))
 
                     Button {
                         showUpgradeSheet = true
                     } label: {
-                        Text(localized("Upgrade to Pro", locale: locale))
+                        Text("Common.UpgradeToPro")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(themeColor.color)
                     }
@@ -445,7 +449,7 @@ struct GoodreadsImportView: View {
 
                                     Text(
                                         String.localizedStringWithFormat(
-                                            localized("Importing %lld of %lld books", locale: locale),
+                                            localized("GoodreadsImport.Progress.Importing %lld %lld", locale: locale),
                                             current,
                                             total
                                         )
@@ -456,7 +460,7 @@ struct GoodreadsImportView: View {
             if let title = importProgressTitle, !title.isEmpty {
                 Text(
                     String.localizedStringWithFormat(
-                        localized("Adding %@", locale: locale),
+                        localized("GoodreadsImport.Progress.Adding %@", locale: locale),
                         title
                     )
                 )
@@ -475,7 +479,7 @@ struct GoodreadsImportView: View {
 
                                     Text(
                                         String.localizedStringWithFormat(
-                                            localized("Fetching descriptions %lld of %lld", locale: locale),
+                                            localized("GoodreadsImport.Progress.FetchingDescriptions %lld %lld", locale: locale),
                                             current,
                                             total
                                         )
@@ -486,7 +490,7 @@ struct GoodreadsImportView: View {
             if let title = descriptionProgressTitle, !title.isEmpty {
                 Text(
                     String.localizedStringWithFormat(
-                        localized("Adding description for %@", locale: locale),
+                        localized("GoodreadsImport.Progress.AddingDescription %@", locale: locale),
                         title
                     )
                 )
