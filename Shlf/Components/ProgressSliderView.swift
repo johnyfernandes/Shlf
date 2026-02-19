@@ -290,19 +290,19 @@ struct ProgressSliderView: View {
                         if currentPage > book.currentPage {
                             Text(
                                 String.localizedStringWithFormat(
-                                    localized("Save +%lld pages", locale: locale),
+                                    localized("Progress.SavePlusFormat %lld", locale: locale),
                                     currentPage - book.currentPage
                                 )
                             )
                         } else if currentPage < book.currentPage {
                             Text(
                                 String.localizedStringWithFormat(
-                                    localized("Save %lld pages", locale: locale),
+                                    localized("Progress.SaveFormat %lld", locale: locale),
                                     currentPage - book.currentPage
                                 )
                             )
                         } else {
-                            Text(localized("No changes", locale: locale))
+                            Text(localized("Progress.NoChanges", locale: locale))
                         }
                         Image(systemName: "checkmark")
                     }
@@ -318,7 +318,7 @@ struct ProgressSliderView: View {
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .toolbar {
             ToolbarItem(placement: .keyboard) {
-                Button(localized("Done", locale: locale)) {
+                Button("Common.Done") {
                     commitPageEdit()
                 }
             }
@@ -347,8 +347,8 @@ struct ProgressSliderView: View {
         .onTapGesture {
             dismissEditTooltip()
         }
-        .alert("Finished Reading?", isPresented: $showFinishAlert) {
-            Button("Mark as Finished") {
+        .alert("Progress.Finish.Title", isPresented: $showFinishAlert) {
+            Button("Progress.Finish.MarkFinished") {
                 let pagesRead = currentPage - book.currentPage
 
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.75)) {
@@ -364,10 +364,10 @@ struct ProgressSliderView: View {
 
                 onSave(pagesRead)
             }
-            Button("Keep Reading") {
+            Button("Progress.Finish.KeepReading") {
                 applyProgressUpdate()
             }
-            Button("Cancel", role: .cancel) {
+            Button("Common.Cancel", role: .cancel) {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                     showSaveButton = false
                 }
@@ -375,7 +375,7 @@ struct ProgressSliderView: View {
         } message: {
                     Text(
                         String.localizedStringWithFormat(
-                            localized("You've reached the last page of %@. Would you like to mark it as finished?", locale: locale),
+                            localized("Progress.Finish.Message", locale: locale),
                             book.title
                         )
                     )

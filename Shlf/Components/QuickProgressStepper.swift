@@ -192,7 +192,7 @@ struct QuickProgressStepper: View {
                         HStack(spacing: 4) {
                             Text(
                                 String.localizedStringWithFormat(
-                                    localized("%lld%%", locale: locale),
+                                    localized("Progress.PercentFormat %lld", locale: locale),
                                     percent
                                 )
                             )
@@ -206,7 +206,7 @@ struct QuickProgressStepper: View {
 
                                 Text(
                                     String.localizedStringWithFormat(
-                                        localized("%lld left", locale: locale),
+                                        localized("Progress.LeftFormat %lld", locale: locale),
                                         remaining
                                     )
                                 )
@@ -252,7 +252,7 @@ struct QuickProgressStepper: View {
                     HStack(spacing: Theme.Spacing.xs) {
                         Text(
                             String.localizedStringWithFormat(
-                                localized(pendingPages > 0 ? "Save +%lld pages" : "Save %lld pages", locale: locale),
+                                localized(pendingPages > 0 ? "Progress.SavePlusFormat %lld" : "Progress.SaveFormat %lld", locale: locale),
                                 pendingPages
                             )
                         )
@@ -279,7 +279,7 @@ struct QuickProgressStepper: View {
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .toolbar {
             ToolbarItem(placement: .keyboard) {
-                Button(localized("Done", locale: locale)) {
+                Button("Common.Done") {
                     commitPageEdit()
                 }
             }
@@ -289,8 +289,8 @@ struct QuickProgressStepper: View {
                 showSaveButton = newValue != 0
             }
         }
-        .alert("Finished Reading?", isPresented: $showFinishAlert) {
-            Button("Mark as Finished") {
+        .alert("Progress.Finish.Title", isPresented: $showFinishAlert) {
+            Button("Progress.Finish.MarkFinished") {
                 let pagesRead = pendingPages
 
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.75)) {
@@ -308,10 +308,10 @@ struct QuickProgressStepper: View {
 
                 onSave(pagesRead)
             }
-            Button("Keep Reading") {
+            Button("Progress.Finish.KeepReading") {
                 applyProgressUpdate()
             }
-            Button("Cancel", role: .cancel) {
+            Button("Common.Cancel", role: .cancel) {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                     pendingPages = 0
                     showSaveButton = false
@@ -320,7 +320,7 @@ struct QuickProgressStepper: View {
         } message: {
                     Text(
                         String.localizedStringWithFormat(
-                            localized("You've reached the last page of %@. Would you like to mark it as finished?", locale: locale),
+                            localized("Progress.Finish.Message", locale: locale),
                             book.title
                         )
                     )
@@ -340,9 +340,9 @@ struct QuickProgressStepper: View {
 
     private var editTooltipView: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(localized("Tap here!", locale: locale))
+            Text(localized("Progress.Tooltip.Title", locale: locale))
                 .font(.caption.weight(.bold))
-            Text(localized("Tap here to edit your last page for this session.", locale: locale))
+            Text(localized("Progress.Tooltip.Message", locale: locale))
                 .font(.caption2)
                 .fixedSize(horizontal: false, vertical: true)
         }
