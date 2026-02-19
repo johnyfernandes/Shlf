@@ -51,12 +51,12 @@ struct BarcodeScanQueueView: View {
     private var addButtonTitle: String {
         if canAddCount == 1 {
             return String.localizedStringWithFormat(
-                String(localized: "Add %lld Book"),
+                String(localized: "Library.ScanQueue.Add.Single"),
                 canAddCount
             )
         }
         return String.localizedStringWithFormat(
-            String(localized: "Add %lld Books"),
+            String(localized: "Library.ScanQueue.Add.Plural"),
             canAddCount
         )
     }
@@ -74,15 +74,15 @@ struct BarcodeScanQueueView: View {
                         .font(.system(size: 60))
                         .foregroundStyle(Theme.Colors.tertiaryText)
 
-                    Text("Scanner Not Available")
+                    Text("Library.Scanner.NotAvailable.Title")
                         .font(Theme.Typography.title2)
 
-                    Text("Barcode scanning is not supported on this device")
+                    Text("Library.Scanner.NotAvailable.Message")
                         .font(Theme.Typography.body)
                         .foregroundStyle(Theme.Colors.secondaryText)
                         .multilineTextAlignment(.center)
 
-                    Button("Close") {
+                    Button("Common.Close") {
                         dismiss()
                     }
                     .primaryButton(color: themeColor.color, foreground: themeColor.onColor(for: colorScheme))
@@ -97,7 +97,7 @@ struct BarcodeScanQueueView: View {
                         .tint(.white)
                         .scaleEffect(1.1)
 
-                    Text("Initializing Camera...")
+                    Text("Library.Scanner.Initializing")
                         .font(Theme.Typography.caption)
                         .foregroundStyle(.white.opacity(0.9))
                 }
@@ -146,13 +146,13 @@ struct BarcodeScanQueueView: View {
         .onDisappear {
             overlayTask?.cancel()
         }
-        .alert("Upgrade Required", isPresented: $showUpgradeAlert) {
-            Button("Upgrade to Pro") {
+        .alert("Library.ManualEntry.Upgrade.Title", isPresented: $showUpgradeAlert) {
+            Button("Common.UpgradeToPro") {
                 showUpgradeSheet = true
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Common.Cancel", role: .cancel) {}
         } message: {
-            Text("You've reached the limit of 5 books. Upgrade to Pro for unlimited books.")
+            Text("Library.ManualEntry.Upgrade.Message")
         }
         .sheet(isPresented: $showUpgradeSheet) {
             PaywallView()
@@ -162,12 +162,12 @@ struct BarcodeScanQueueView: View {
     private var queuePanel: some View {
         VStack(spacing: 12) {
             HStack {
-                Text("Scan ISBNs")
+                Text("Library.ScanQueue.Title")
                     .font(.headline)
                 Spacer()
                 Text(
                     String.localizedStringWithFormat(
-                        String(localized: "Scanned %lld"),
+                        String(localized: "Library.ScanQueue.ScannedFormat"),
                         queue.count
                     )
                 )
@@ -180,11 +180,11 @@ struct BarcodeScanQueueView: View {
 
             if queue.isEmpty {
                 VStack(spacing: 6) {
-                    Text("No scans yet")
+                    Text("Library.ScanQueue.Empty.Title")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.primary)
 
-                    Text("Point your camera at a barcode to queue books.")
+                    Text("Library.ScanQueue.Empty.Message")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -455,12 +455,12 @@ private enum ScanQueueStatus {
 
     var displayLabel: LocalizedStringKey {
         switch self {
-        case .fetching: return "Fetching details…"
-        case .ready: return "Ready to add"
-        case .duplicate: return "Already in library"
-        case .failed: return "Not found"
-        case .added: return "Added"
-        case .limitReached: return "Free limit reached"
+        case .fetching: return "Library.ScanQueue.Status.Fetching"
+        case .ready: return "Library.ScanQueue.Status.Ready"
+        case .duplicate: return "Library.ScanQueue.Status.Duplicate"
+        case .failed: return "Library.ScanQueue.Status.Failed"
+        case .added: return "Library.ScanQueue.Status.Added"
+        case .limitReached: return "Library.ScanQueue.Status.LimitReached"
         }
     }
 
@@ -547,7 +547,7 @@ private struct ScanGuidanceOverlay: View {
             }
             .frame(width: 260, height: 150)
 
-            Text("Scan ISBN Barcode")
+            Text("Library.ScanQueue.ScanPrompt")
                 .font(Theme.Typography.caption)
                 .foregroundStyle(.white)
                 .padding(.horizontal, 12)

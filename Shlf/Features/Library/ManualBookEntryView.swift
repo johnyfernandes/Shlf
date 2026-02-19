@@ -108,7 +108,7 @@ struct ManualBookEntryView: View {
                 .scrollDismissesKeyboard(.interactively)
             }
             .background(Theme.Colors.background)
-            .navigationTitle("Manual Entry")
+            .navigationTitle("Library.ManualEntry.Title")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -119,7 +119,7 @@ struct ManualBookEntryView: View {
                             dismiss()
                         }
                     } label: {
-                        Text("Cancel")
+                        Text("Common.Cancel")
                             .fontWeight(.medium)
                     }
                 }
@@ -128,7 +128,7 @@ struct ManualBookEntryView: View {
                     Button {
                         saveBook()
                     } label: {
-                        Text("Add Book")
+                        Text("Library.ManualEntry.AddBook")
                             .fontWeight(.semibold)
                     }
                     .tint(themeColor.color)
@@ -148,21 +148,21 @@ struct ManualBookEntryView: View {
                     }
                 }
             }
-            .alert("Discard Entry?", isPresented: $showDiscardAlert) {
-                Button("Discard", role: .destructive) {
+            .alert("Library.ManualEntry.Discard.Title", isPresented: $showDiscardAlert) {
+                Button("Common.Discard", role: .destructive) {
                     dismiss()
                 }
-                Button("Keep Editing", role: .cancel) {}
+                Button("Library.ManualEntry.Discard.KeepEditing", role: .cancel) {}
             } message: {
-                Text("Are you sure you want to discard this book entry?")
+                Text("Library.ManualEntry.Discard.Message")
             }
-            .alert("Upgrade Required", isPresented: $showUpgradeAlert) {
-                Button("Upgrade to Pro") {
+            .alert("Library.ManualEntry.Upgrade.Title", isPresented: $showUpgradeAlert) {
+                Button("Common.UpgradeToPro") {
                     showUpgradeSheet = true
                 }
-                Button("Cancel", role: .cancel) {}
+                Button("Common.Cancel", role: .cancel) {}
             } message: {
-                Text("You've reached the limit of 5 books. Upgrade to Pro for unlimited books.")
+                Text("Library.ManualEntry.Upgrade.Message")
             }
             .sheet(isPresented: $showUpgradeSheet) {
                 PaywallView()
@@ -202,7 +202,7 @@ struct ManualBookEntryView: View {
                                 .font(.system(size: 40))
                                 .foregroundStyle(themeColor.color.opacity(0.6))
 
-                            Text("Add Cover")
+                            Text("Library.ManualEntry.AddCover")
                                 .font(.caption2)
                                 .foregroundStyle(themeColor.color.opacity(0.6))
                         }
@@ -242,28 +242,28 @@ struct ManualBookEntryView: View {
     private var essentialInfoSection: some View {
         VStack(spacing: 16) {
             ModernTextField(
-                title: "Title",
+                title: localized("Library.ManualEntry.Field.Title", locale: locale),
                 text: $title,
                 icon: "text.alignleft",
-                placeholder: "Enter book title",
+                placeholder: localized("Library.ManualEntry.Field.Title.Placeholder", locale: locale),
                 focused: $focusedField,
                 field: .title
             )
 
             ModernTextField(
-                title: "Author",
+                title: localized("Library.ManualEntry.Field.Author", locale: locale),
                 text: $author,
                 icon: "person.fill",
-                placeholder: "Enter author name",
+                placeholder: localized("Library.ManualEntry.Field.Author.Placeholder", locale: locale),
                 focused: $focusedField,
                 field: .author
             )
 
             ModernTextField(
-                title: "ISBN",
+                title: localized("Library.ManualEntry.Field.ISBN", locale: locale),
                 text: $isbn,
                 icon: "barcode",
-                placeholder: "Optional",
+                placeholder: localized("Common.Optional", locale: locale),
                 focused: $focusedField,
                 field: .isbn
             )
@@ -280,20 +280,20 @@ struct ManualBookEntryView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
-                Text(localized("Reading Progress", locale: locale))
+                Text(localized("Library.ManualEntry.Progress.Title", locale: locale))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.Colors.text)
             }
             .padding(.leading, 2)
 
-            Text(localized("Update your current page and total pages.", locale: locale))
+            Text(localized("Library.ManualEntry.Progress.Message", locale: locale))
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .padding(.leading, 2)
 
             HStack(spacing: 10) {
                 CompactNumberField(
-                    title: localized("Current Page", locale: locale),
+                    title: localized("Library.ManualEntry.Progress.CurrentPage", locale: locale),
                     value: $currentPage,
                     icon: "bookmark.fill",
                     focused: $focusedField,
@@ -301,7 +301,7 @@ struct ManualBookEntryView: View {
                 )
 
                 CompactNumberField(
-                    title: localized("Total Pages", locale: locale),
+                    title: localized("Library.ManualEntry.Progress.TotalPages", locale: locale),
                     value: Binding(
                         get: { Int(totalPages) ?? 0 },
                         set: { totalPages = $0 == 0 ? "" : "\($0)" }
@@ -318,7 +318,7 @@ struct ManualBookEntryView: View {
                     HStack {
                         Text(
                             String.localizedStringWithFormat(
-                                localized("%lld%% Complete", locale: locale),
+                                localized("Library.ManualEntry.Progress.CompleteFormat %lld", locale: locale),
                                 Int(progress)
                             )
                         )
@@ -329,7 +329,7 @@ struct ManualBookEntryView: View {
 
                         Text(
                             String.localizedStringWithFormat(
-                                localized("%lld pages left", locale: locale),
+                                localized("Library.ManualEntry.Progress.PagesLeftFormat %lld", locale: locale),
                                 max(0, total - currentPage)
                             )
                         )
@@ -351,7 +351,7 @@ struct ManualBookEntryView: View {
     private var typeStatusSection: some View {
         VStack(spacing: 16) {
             OutlineMenuField(
-                title: "Book Type",
+                title: "Library.ManualEntry.BookType",
                 icon: "books.vertical.fill",
                 selection: $bookType,
                 label: {
@@ -369,7 +369,7 @@ struct ManualBookEntryView: View {
             }
 
             OutlineMenuField(
-                title: "Reading Status",
+                title: "Library.ManualEntry.ReadingStatus",
                 icon: "book.fill",
                 selection: $readingStatus,
                 label: {
@@ -388,10 +388,10 @@ struct ManualBookEntryView: View {
 
             if readingStatus == .finished {
                 VStack(alignment: .leading, spacing: 8) {
-                    Toggle("Exclude from stats & XP", isOn: $excludeFromStats)
+                    Toggle("Library.ManualEntry.ExcludeFromStats", isOn: $excludeFromStats)
                         .tint(themeColor.color)
 
-                    Text("Use this for books finished before you started tracking.")
+                    Text("Library.ManualEntry.ExcludeFromStats.Help")
                         .font(.caption)
                         .foregroundStyle(Theme.Colors.tertiaryText)
                 }
@@ -405,7 +405,7 @@ struct ManualBookEntryView: View {
 
     private var ratingCompactSection: some View {
         VStack(spacing: 8) {
-            Text("Rating")
+            Text("Library.ManualEntry.Rating")
                 .font(.caption.weight(.medium))
                 .foregroundStyle(Theme.Colors.secondaryText)
 
@@ -443,7 +443,7 @@ struct ManualBookEntryView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 20)
 
-                Text(localized("Publishing Details", locale: locale))
+                Text(localized("Library.ManualEntry.PublishingDetails", locale: locale))
                     .font(Theme.Typography.headline)
                     .foregroundStyle(Theme.Colors.text)
             }
@@ -451,28 +451,28 @@ struct ManualBookEntryView: View {
 
             VStack(spacing: 12) {
                 ModernTextField(
-                    title: localized("Publisher", locale: locale),
+                    title: localized("Library.ManualEntry.Publisher", locale: locale),
                     text: $publisher,
                     icon: "building.2.fill",
-                    placeholder: localized("Optional", locale: locale),
+                    placeholder: localized("Common.Optional", locale: locale),
                     focused: $focusedField,
                     field: .publisher
                 )
 
                 ModernTextField(
-                    title: localized("Published Date", locale: locale),
+                    title: localized("Library.ManualEntry.PublishedDate", locale: locale),
                     text: $publishedDate,
                     icon: "calendar",
-                    placeholder: localized("e.g., 2024", locale: locale),
+                    placeholder: localized("Library.ManualEntry.PublishedDate.Placeholder", locale: locale),
                     focused: $focusedField,
                     field: .publishedDate
                 )
 
                 ModernTextField(
-                    title: localized("Language", locale: locale),
+                    title: localized("Library.ManualEntry.Language", locale: locale),
                     text: $language,
                     icon: "globe",
-                    placeholder: "e.g., English",
+                    placeholder: localized("Library.ManualEntry.Language.Placeholder", locale: locale),
                     focused: $focusedField,
                     field: .language
                 )
@@ -490,7 +490,7 @@ struct ManualBookEntryView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 20)
 
-                Text("Description")
+                Text("Library.ManualEntry.Description")
                     .font(Theme.Typography.headline)
                     .foregroundStyle(Theme.Colors.text)
             }
@@ -498,7 +498,7 @@ struct ManualBookEntryView: View {
 
             ZStack(alignment: .topLeading) {
                 if bookDescription.isEmpty && focusedField != .description {
-                    Text("Add a brief description of the book...")
+                    Text("Library.ManualEntry.Description.Placeholder")
                         .font(Theme.Typography.body)
                         .foregroundStyle(Theme.Colors.tertiaryText)
                         .padding(.horizontal, 16)
@@ -528,14 +528,14 @@ struct ManualBookEntryView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 20)
 
-                Text("Subjects")
+                Text("Library.ManualEntry.Subjects")
                     .font(Theme.Typography.headline)
                     .foregroundStyle(Theme.Colors.text)
             }
             .padding(.leading, 4)
 
             if selectedSubjects.isEmpty {
-                Text("Add genres or topics to organize this book.")
+                Text("Library.ManualEntry.Subjects.Help")
                     .font(Theme.Typography.subheadline)
                     .foregroundStyle(Theme.Colors.secondaryText)
             } else {
@@ -557,7 +557,7 @@ struct ManualBookEntryView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "slider.horizontal.3")
                         .font(.caption)
-                    Text(selectedSubjects.isEmpty ? "Add subjects" : "Edit subjects")
+                    Text(selectedSubjects.isEmpty ? "Library.ManualEntry.Subjects.Add" : "Library.ManualEntry.Subjects.Edit")
                         .font(.caption.weight(.semibold))
                 }
                 .foregroundStyle(themeColor.color)
@@ -582,7 +582,7 @@ struct ManualBookEntryView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 20)
 
-                Text("Personal Notes")
+                Text("Library.ManualEntry.Notes")
                     .font(Theme.Typography.headline)
                     .foregroundStyle(Theme.Colors.text)
             }
@@ -590,7 +590,7 @@ struct ManualBookEntryView: View {
 
             ZStack(alignment: .topLeading) {
                 if notes.isEmpty && focusedField != .notes {
-                    Text("Add your personal thoughts and notes...")
+                    Text("Library.ManualEntry.Notes.Placeholder")
                         .font(Theme.Typography.body)
                         .foregroundStyle(Theme.Colors.tertiaryText)
                         .padding(.horizontal, 16)

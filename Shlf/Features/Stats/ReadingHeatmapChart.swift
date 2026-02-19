@@ -104,7 +104,7 @@ struct ReadingHeatmapChart: View {
         let todayDate = Date()
         switch period {
         case .last12Weeks:
-            return Text("Last 12 Weeks")
+            return Text("Heatmap.Period.Last12Weeks")
         case .currentMonth:
             return Text(todayDate, format: .dateTime.month(.wide).year())
         case .currentYear:
@@ -250,7 +250,7 @@ struct ReadingHeatmapChart: View {
 
             // Legend
             HStack(spacing: 8) {
-                Text("Less")
+                Text("Heatmap.Legend.Less")
                     .font(.system(size: 9))
                     .foregroundStyle(Theme.Colors.tertiaryText)
 
@@ -262,7 +262,7 @@ struct ReadingHeatmapChart: View {
                     }
                 }
 
-                Text("More")
+                Text("Heatmap.Legend.More")
                     .font(.system(size: 9))
                     .foregroundStyle(Theme.Colors.tertiaryText)
 
@@ -368,7 +368,7 @@ struct DayDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
+                    Button("Common.Done") {
                         dismiss()
                     }
                     .foregroundStyle(themeColor.color)
@@ -388,7 +388,7 @@ struct DayDetailView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
-                Text("Reading Summary")
+                Text("Heatmap.DayDetail.Summary.Title")
                     .font(.headline)
             }
 
@@ -430,7 +430,7 @@ struct DayDetailView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
-                Text("Books Read")
+                Text("Heatmap.DayDetail.BooksRead.Title")
                     .font(.headline)
             }
 
@@ -483,8 +483,8 @@ struct DayDetailView: View {
     private var emptyDayCard: some View {
         InlineEmptyStateView(
             icon: "calendar",
-            title: "No sessions logged",
-            message: "Log a session to see details for this day."
+            title: "Heatmap.DayDetail.Empty.Title",
+            message: "Heatmap.DayDetail.Empty.Message"
         )
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)

@@ -36,7 +36,7 @@ struct BookDetailCustomizationView: View {
             backgroundGradient
             contentView
         }
-        .navigationTitle(localized("Book Details", locale: locale))
+        .navigationTitle(localized("BookDetailCustomization.Title", locale: locale))
         .navigationBarTitleDisplayMode(.inline)
         .environment(\.editMode, $editMode)
         .toolbar {
@@ -44,8 +44,8 @@ struct BookDetailCustomizationView: View {
                 editButton
             }
         }
-        .alert(localized("Save Error", locale: locale), isPresented: $showSaveError) {
-            Button(localized("OK", locale: locale)) {}
+        .alert(localized("Common.SaveError", locale: locale), isPresented: $showSaveError) {
+            Button(localized("Common.OK", locale: locale)) {}
         } message: {
             Text(saveErrorMessage)
         }
@@ -90,11 +90,11 @@ struct BookDetailCustomizationView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
-                Text(localized("About", locale: locale))
+                Text(localized("BookDetailCustomization.About.Title", locale: locale))
                     .font(.headline)
             }
 
-            Text(localized("Customize which sections appear on book detail pages and their order. Drag to reorder sections.", locale: locale))
+            Text(localized("BookDetailCustomization.About.Body", locale: locale))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -112,7 +112,7 @@ struct BookDetailCustomizationView: View {
                         .foregroundStyle(themeColor.color)
                         .frame(width: 16)
 
-                    Text("Sections")
+                    Text(localized("BookDetailCustomization.Sections.Title", locale: locale))
                         .font(.headline)
                 }
 
@@ -196,7 +196,7 @@ struct BookDetailCustomizationView: View {
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: "arrow.counterclockwise")
-                Text("Reset to Default")
+                Text(localized("BookDetailCustomization.Reset", locale: locale))
             }
             .font(.headline)
             .foregroundStyle(themeColor.color)
@@ -218,11 +218,11 @@ struct BookDetailCustomizationView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
-                Text("Book Stats")
+                Text(localized("BookDetailCustomization.BookStats.Title", locale: locale))
                     .font(.headline)
             }
 
-            Text("Customize which stats appear on each book and the default range.")
+            Text(localized("BookDetailCustomization.BookStats.Body", locale: locale))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
@@ -230,7 +230,7 @@ struct BookDetailCustomizationView: View {
                 BookStatsSettingsView(profile: profile)
             } label: {
                 HStack(spacing: 8) {
-                    Text("Customize Book Stats")
+                    Text(localized("BookDetailCustomization.BookStats.CTA", locale: locale))
                         .font(.subheadline.weight(.semibold))
 
                     Image(systemName: "chevron.right")
@@ -256,7 +256,7 @@ struct BookDetailCustomizationView: View {
                 editMode = editMode == .active ? .inactive : .active
             }
         } label: {
-            Text(editMode == .active ? "Done" : "Edit")
+            Text(editMode == .active ? localized("Common.Done", locale: locale) : localized("Common.Edit", locale: locale))
                 .fontWeight(.semibold)
                 .foregroundStyle(themeColor.color)
         }
@@ -303,7 +303,8 @@ struct BookDetailCustomizationView: View {
                     do {
                         try modelContext.save()
                     } catch {
-                        saveErrorMessage = "Failed to save: \(error.localizedDescription)"
+                        let format = localized("Common.FailedToSave", locale: locale)
+                        saveErrorMessage = String(format: format, error.localizedDescription)
                         showSaveError = true
                     }
                 }
@@ -376,7 +377,8 @@ struct BookDetailCustomizationView: View {
             do {
                 try modelContext.save()
             } catch {
-                saveErrorMessage = "Failed to reset: \(error.localizedDescription)"
+                let format = localized("Common.FailedToReset", locale: locale)
+                saveErrorMessage = String(format: format, error.localizedDescription)
                 showSaveError = true
             }
         }
@@ -419,7 +421,7 @@ struct SectionDropDelegate: DropDelegate {
         }
         .modelContainer(for: [UserProfile.self, Book.self], inMemory: true)
     } else {
-        Text("No profile")
+        Text(localized("Common.NoProfile", locale: .current))
             .modelContainer(for: [UserProfile.self, Book.self], inMemory: true)
     }
 }

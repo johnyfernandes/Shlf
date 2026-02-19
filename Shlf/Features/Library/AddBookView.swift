@@ -37,7 +37,7 @@ struct AddBookView: View {
     var body: some View {
         NavigationStack(path: $navigationPath) {
             searchOptionsView
-                .navigationTitle("Add Book")
+                .navigationTitle("Library.AddBook.Title")
                 .navigationBarTitleDisplayMode(.inline)
                 .navigationDestination(for: BookInfo.self) { bookInfo in
                     BookPreviewView(
@@ -50,7 +50,7 @@ struct AddBookView: View {
                 }
                 .toolbar {
                     ToolbarItem(placement: .confirmationAction) {
-                        Button("Done") {
+                        Button("Common.Done") {
                             dismiss()
                         }
                         .foregroundStyle(themeColor.color)
@@ -83,13 +83,13 @@ struct AddBookView: View {
                     }
                 )
             }
-            .alert("Upgrade Required", isPresented: $viewModel.showUpgradeAlert) {
-                Button("Upgrade to Pro") {
+            .alert("Library.ManualEntry.Upgrade.Title", isPresented: $viewModel.showUpgradeAlert) {
+                Button("Common.UpgradeToPro") {
                     showUpgradeSheet = true
                 }
-                Button("Cancel", role: .cancel) {}
+                Button("Common.Cancel", role: .cancel) {}
             } message: {
-                Text("You've reached the limit of 5 books. Upgrade to Pro for unlimited books.")
+                Text("Library.ManualEntry.Upgrade.Message")
             }
             .sheet(isPresented: $showUpgradeSheet) {
                 PaywallView()
@@ -132,12 +132,12 @@ struct AddBookView: View {
                             .padding(.top, 24)
 
                         VStack(spacing: 8) {
-                            Text("Add a Book")
+                            Text("Library.AddBook.Hero.Title")
                                 .font(.title2)
                                 .fontWeight(.bold)
                                 .foregroundStyle(Theme.Colors.text)
 
-                            Text("Choose how you'd like to add your book")
+                            Text("Library.AddBook.Hero.Subtitle")
                                 .font(.subheadline)
                                 .foregroundStyle(Theme.Colors.secondaryText)
                                 .multilineTextAlignment(.center)
@@ -166,11 +166,11 @@ struct AddBookView: View {
                                 }
 
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text("Search for a Book")
+                                    Text("Library.AddBook.Search.Title")
                                         .font(.headline)
                                         .foregroundStyle(Theme.Colors.text)
 
-                                    Text("Find by title, author, or ISBN")
+                                    Text("Library.AddBook.Search.Subtitle")
                                         .font(.subheadline)
                                         .foregroundStyle(Theme.Colors.secondaryText)
                                 }
@@ -213,11 +213,11 @@ struct AddBookView: View {
                                 }
 
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text("Scan Barcode")
+                                    Text("Library.AddBook.Scan.Title")
                                         .font(.headline)
                                         .foregroundStyle(Theme.Colors.text)
 
-                                    Text("Use your camera to scan ISBN")
+                                    Text("Library.AddBook.Scan.Subtitle")
                                         .font(.subheadline)
                                         .foregroundStyle(Theme.Colors.secondaryText)
                                 }
@@ -258,11 +258,11 @@ struct AddBookView: View {
                                 }
 
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text("Manual Entry")
+                                    Text("Library.AddBook.Manual.Title")
                                         .font(.headline)
                                         .foregroundStyle(Theme.Colors.text)
 
-                                    Text("Enter book details yourself")
+                                    Text("Library.AddBook.Manual.Subtitle")
                                         .font(.subheadline)
                                         .foregroundStyle(Theme.Colors.secondaryText)
                                 }

@@ -73,9 +73,9 @@ struct BookSearchView: View {
                         VStack {
                             Spacer()
                             ContentUnavailableView {
-                                Label("No Results", systemImage: "magnifyingglass")
+                                Label("Library.Search.Empty.Title", systemImage: "magnifyingglass")
                             } description: {
-                                Text("Try searching with a different title, author, or ISBN")
+                                Text("Library.Search.Empty.Message")
                             }
                             Spacer()
                         }
@@ -83,9 +83,9 @@ struct BookSearchView: View {
                         VStack {
                             Spacer()
                             ContentUnavailableView {
-                                Label("Search for Books", systemImage: "books.vertical")
+                                Label("Library.Search.Prompt.Title", systemImage: "books.vertical")
                             } description: {
-                                Text("Find books by title, author, or ISBN")
+                                Text("Library.Search.Prompt.Message")
                             }
                             Spacer()
                         }
@@ -111,9 +111,9 @@ struct BookSearchView: View {
                         }
                     }
                 }
-                .navigationTitle("Search Books")
+                .navigationTitle("Library.Search.Title")
                 .navigationBarTitleDisplayMode(.large)
-                .searchable(text: $searchText, prompt: "Title, author, or ISBN")
+                .searchable(text: $searchText, prompt: "Library.Search.Prompt")
                 .searchFocused($isSearchFocused)
                 .onAppear {
                     isSearchFocused = true
@@ -139,7 +139,7 @@ struct BookSearchView: View {
                 .toolbar {
                     if showsDoneButton {
                         ToolbarItem(placement: .confirmationAction) {
-                            Button("Done") {
+                            Button("Common.Done") {
                                 dismiss()
                             }
                             .foregroundStyle(themeColor.color)

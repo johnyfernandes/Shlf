@@ -32,15 +32,15 @@ struct BarcodeScannerView: View {
                         .font(.system(size: 60))
                         .foregroundStyle(Theme.Colors.tertiaryText)
 
-                    Text("Scanner Not Available")
+                    Text("Library.Scanner.NotAvailable.Title")
                         .font(Theme.Typography.title2)
 
-                    Text("Barcode scanning is not supported on this device")
+                    Text("Library.Scanner.NotAvailable.Message")
                         .font(Theme.Typography.body)
                         .foregroundStyle(Theme.Colors.secondaryText)
                         .multilineTextAlignment(.center)
 
-                    Button("Close") {
+                    Button("Common.Close") {
                         dismiss()
                     }
                     .primaryButton(color: themeColor.color, foreground: themeColor.onColor(for: colorScheme))
@@ -56,7 +56,7 @@ struct BarcodeScannerView: View {
                         .tint(.white)
                         .scaleEffect(1.1)
 
-                    Text("Initializing Camera...")
+                    Text("Library.Scanner.Initializing")
                         .font(Theme.Typography.caption)
                         .foregroundStyle(.white.opacity(0.9))
                 }
@@ -243,7 +243,7 @@ private struct ScanGuidanceOverlay: View {
             }
             .frame(width: 260, height: 150)
 
-            Text("Scan ISBN Barcode")
+            Text("Library.ScanQueue.ScanPrompt")
                 .font(Theme.Typography.caption)
                 .foregroundStyle(.white)
                 .padding(.horizontal, 12)

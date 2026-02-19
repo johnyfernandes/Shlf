@@ -99,7 +99,7 @@ struct BookPreviewView: View {
                                         .foregroundStyle(themeColor.color)
                                         .frame(width: 16)
 
-                                    Text("About")
+                                    Text("Library.BookPreview.About")
                                         .font(.headline)
                                 }
 
@@ -158,7 +158,7 @@ struct BookPreviewView: View {
                                         .foregroundStyle(themeColor.color)
                                         .frame(width: 16)
 
-                                    Text("Subjects")
+                                    Text("Library.BookPreview.Subjects")
                                         .font(.headline)
                                 }
 
@@ -182,12 +182,12 @@ struct BookPreviewView: View {
                         VStack(spacing: 0) {
                             // Book Type
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("Book Type")
+                                Text("Library.BookPreview.BookType")
                                     .font(.caption.weight(.medium))
                                     .foregroundStyle(.secondary)
                                     .textCase(.uppercase)
 
-                                Picker("Type", selection: $bookType) {
+                                Picker("Library.BookPreview.Type", selection: $bookType) {
                                     ForEach(BookType.allCases, id: \.self) { type in
                                         Label(type.displayNameKey, systemImage: type.icon)
                                             .tag(type)
@@ -202,7 +202,7 @@ struct BookPreviewView: View {
 
                             // Reading Status
                             Menu {
-                                Picker("Status", selection: $readingStatus) {
+                                Picker("Library.BookPreview.Status", selection: $readingStatus) {
                                     ForEach(ReadingStatus.allCases, id: \.self) { status in
                                         Label(status.displayNameKey, systemImage: status.icon)
                                             .tag(status)
@@ -210,7 +210,7 @@ struct BookPreviewView: View {
                                 }
                             } label: {
                                 HStack(spacing: 12) {
-                                    Text("Reading Status")
+                                    Text("Library.BookPreview.ReadingStatus")
                                         .font(.body)
                                         .foregroundStyle(.primary)
 
@@ -238,7 +238,7 @@ struct BookPreviewView: View {
                                     .padding(.leading, 16)
 
                                 HStack {
-                                    Text("Current Page")
+                                    Text("Library.BookPreview.CurrentPage")
                                         .font(.body)
                                         .foregroundStyle(.primary)
 
@@ -254,7 +254,7 @@ struct BookPreviewView: View {
 
                                         Text(
                                             String.localizedStringWithFormat(
-                                                String(localized: "/ %lld"),
+                                                String(localized: "Library.BookPreview.TotalPagesFormat"),
                                                 totalPages
                                             )
                                         )
@@ -270,10 +270,10 @@ struct BookPreviewView: View {
                                     .padding(.leading, 16)
 
                                 VStack(alignment: .leading, spacing: 8) {
-                                    Toggle("Exclude from stats & XP", isOn: $excludeFromStats)
+                                    Toggle("Library.ManualEntry.ExcludeFromStats", isOn: $excludeFromStats)
                                         .tint(themeColor.color)
 
-                                    Text("Use this for books finished before you started tracking.")
+                                    Text("Library.ManualEntry.ExcludeFromStats.Help")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                 }
@@ -292,7 +292,7 @@ struct BookPreviewView: View {
                                         .tint(themeColor.onColor(for: colorScheme))
                                 } else {
                                     Image(systemName: "plus.circle.fill")
-                                    Text("Add to Library")
+                                    Text("Library.BookPreview.AddToLibrary")
                                 }
                             }
                             .font(.headline)
@@ -327,30 +327,30 @@ struct BookPreviewView: View {
                 .disabled(isLoading)
             }
         }
-        .alert("Upgrade Required", isPresented: $showUpgradeAlert) {
-            Button("Upgrade to Pro") {
+        .alert("Library.ManualEntry.Upgrade.Title", isPresented: $showUpgradeAlert) {
+            Button("Common.UpgradeToPro") {
                 showUpgradeSheet = true
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Common.Cancel", role: .cancel) {}
         } message: {
-            Text("You've reached the limit of 5 books. Upgrade to Pro for unlimited books.")
+            Text("Library.ManualEntry.Upgrade.Message")
         }
         .sheet(isPresented: $showUpgradeSheet) {
             PaywallView()
         }
-        .alert("Book Already in Library", isPresented: $showDuplicateAlert) {
-            Button("Cancel", role: .cancel) {}
+        .alert("Library.BookPreview.Duplicate.Title", isPresented: $showDuplicateAlert) {
+            Button("Common.Cancel", role: .cancel) {}
         } message: {
             if let existing = existingBook {
                 Text(
                     String.localizedStringWithFormat(
-                        String(localized: "You already have \"%@\" by %@ in your library."),
+                        String(localized: "Library.BookPreview.Duplicate.MessageFormat"),
                         existing.title,
                         existing.author
                     )
                 )
             } else {
-                Text("This book is already in your library.")
+                Text("Library.BookPreview.Duplicate.Message")
             }
         }
         .task {
