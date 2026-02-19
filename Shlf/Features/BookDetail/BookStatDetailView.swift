@@ -56,7 +56,7 @@ struct BookStatDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
+                    Button("Common.Done") {
                         dismiss()
                     }
                     .foregroundStyle(themeColor.color)
@@ -109,7 +109,7 @@ struct BookStatDetailView: View {
 
     private var chartCard: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text(localized("Activity", locale: locale))
+            Text("BookStatDetail.Activity")
                 .font(.headline)
 
             ReadingActivityChart(sessions: summary.sessions)
@@ -127,7 +127,7 @@ struct BookStatDetailView: View {
 
     private var sessionsCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(localized("Recent Sessions", locale: locale))
+            Text("BookStatDetail.RecentSessions")
                 .font(.headline)
 
             VStack(spacing: 10) {
@@ -149,9 +149,9 @@ struct BookStatDetailView: View {
         VStack(alignment: .leading, spacing: 8) {
             InlineEmptyStateView(
                 icon: "chart.bar.xaxis",
-                title: LocalizedStringKey(localized("No activity yet", locale: locale)),
-                message: LocalizedStringKey(localized("Log your first session to unlock detailed stats for this book.", locale: locale)),
-                actionTitle: onPrimaryAction == nil ? nil : LocalizedStringKey(localized("Log session", locale: locale))
+                title: "BookStatDetail.Empty.Title",
+                message: "BookStatDetail.Empty.Message",
+                actionTitle: onPrimaryAction == nil ? nil : "BookStatDetail.Empty.Action"
             ) {
                 dismiss()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
@@ -173,8 +173,8 @@ struct BookStatDetailView: View {
         case .pagesPercent:
             let unit = unitText(
                 value: summary.totalPagesRead,
-                singularKey: "page",
-                pluralKey: "pages"
+                singularKey: "BookDetail.Stats.PageSingular",
+                pluralKey: "BookDetail.Stats.PagePlural"
             )
             let base = "\(formatNumber(summary.totalPagesRead)) \(unit)"
             var attributed = AttributedString(base)
@@ -189,14 +189,14 @@ struct BookStatDetailView: View {
                 .foregroundStyle(accent)
         case .sessionCount:
             return Text(
-                "\(formatNumber(summary.sessionCount)) \(unitText(value: summary.sessionCount, singularKey: "session", pluralKey: "sessions"))"
+                "\(formatNumber(summary.sessionCount)) \(unitText(value: summary.sessionCount, singularKey: "BookDetail.Stats.SessionSingular", pluralKey: "BookDetail.Stats.SessionPlural"))"
             )
             .foregroundStyle(accent)
         case .averagePages:
-            return Text("\(formatNumber(summary.averagePagesPerSession)) \(localized("pages/session", locale: locale))")
+            return Text("\(formatNumber(summary.averagePagesPerSession)) \(localized("BookStatDetail.PagesPerSession", locale: locale))")
                 .foregroundStyle(accent)
         case .averageSpeed:
-            return Text("\(formatNumber(summary.averagePagesPerHour)) \(localized("pages/hour", locale: locale))")
+            return Text("\(formatNumber(summary.averagePagesPerHour)) \(localized("BookStatDetail.PagesPerHour", locale: locale))")
                 .foregroundStyle(accent)
         case .longestSession:
             if summary.longestSessionMinutes > 0 {
@@ -204,12 +204,12 @@ struct BookStatDetailView: View {
                     .foregroundStyle(accent)
             }
             return Text(
-                "\(formatNumber(summary.longestSessionPages)) \(unitText(value: summary.longestSessionPages, singularKey: "page", pluralKey: "pages"))"
+                "\(formatNumber(summary.longestSessionPages)) \(unitText(value: summary.longestSessionPages, singularKey: "BookDetail.Stats.PageSingular", pluralKey: "BookDetail.Stats.PagePlural"))"
             )
                 .foregroundStyle(accent)
         case .streak:
             return Text(
-                "\(formatNumber(summary.streakDays)) \(unitText(value: summary.streakDays, singularKey: "day", pluralKey: "days"))"
+                "\(formatNumber(summary.streakDays)) \(unitText(value: summary.streakDays, singularKey: "BookDetail.Stats.DaySingular", pluralKey: "BookDetail.Stats.DayPlural"))"
             )
                 .foregroundStyle(accent)
         case .daysSinceLast:
@@ -218,14 +218,14 @@ struct BookStatDetailView: View {
                 return Text(relative)
                     .foregroundStyle(accent)
             }
-            return Text(localized("No reads yet", locale: locale))
+            return Text(verbatim: localized("BookDetail.Stats.NoReadsYet", locale: locale))
                 .foregroundStyle(accent)
         case .firstLastDate:
             if let first = summary.firstReadDate, let last = summary.lastReadDate {
                 return Text(verbatim: "\(formatDate(first)) – \(formatDate(last))")
                     .foregroundStyle(accent)
             }
-            return Text(localized("No dates yet", locale: locale))
+            return Text(verbatim: localized("BookStatDetail.NoDatesYet", locale: locale))
                 .foregroundStyle(accent)
         }
     }
@@ -235,11 +235,15 @@ struct BookStatDetailView: View {
             let hours = minutes / 60
             let mins = minutes % 60
             if mins == 0 {
-                return String.localizedStringWithFormat(String(localized: "%lldh"), hours)
+                return String.localizedStringWithFormat(localized("BookDetail.Duration.HoursShortFormat %lld", locale: locale), hours)
             }
-            return String.localizedStringWithFormat(String(localized: "%lldh %lldm"), hours, mins)
+            return String.localizedStringWithFormat(
+                localized("BookDetail.Duration.HoursMinutesShortFormat %lld %lld", locale: locale),
+                hours,
+                mins
+            )
         }
-        return String.localizedStringWithFormat(String(localized: "%lldm"), minutes)
+        return String.localizedStringWithFormat(localized("BookDetail.Duration.MinutesShortFormat %lld", locale: locale), minutes)
     }
 
     private func formatDate(_ date: Date) -> String {
