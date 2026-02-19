@@ -3252,7 +3252,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Errungenschaften"
+            "value": "Erfolge"
           }
         },
         "en": {
@@ -3270,7 +3270,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Succès"
+            "value": "Réussites"
           }
         },
         "pt-BR": {
@@ -3397,7 +3397,7 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Objetivos ativos"
+            "value": "Metas ativas"
           }
         },
         "pt-PT": {
@@ -6248,7 +6248,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Media"
+            "value": "Promedio"
           }
         },
         "fr": {
@@ -6682,6 +6682,7 @@
       }
     },
     "Best day %lld min • Avg %lld min/day": {
+      "extractionState": "stale",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -6722,6 +6723,7 @@
       }
     },
     "Best day %lld pages • Avg %lld per day": {
+      "extractionState": "stale",
       "localizations": {
         "de": {
           "stringUnit": {
@@ -11593,7 +11595,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bücher beendet"
+            "value": "Beendete Bücher"
           }
         },
         "en": {
@@ -11617,13 +11619,13 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Livros terminados"
+            "value": "Livros concluídos"
           }
         },
         "pt-PT": {
           "stringUnit": {
             "state": "translated",
-            "value": "Livros terminados"
+            "value": "Livros concluídos"
           }
         }
       }
@@ -15156,25 +15158,25 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Completado"
+            "value": "Completados"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Terminé"
+            "value": "Terminés"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Concluído"
+            "value": "Concluídas"
           }
         },
         "pt-PT": {
           "stringUnit": {
             "state": "translated",
-            "value": "Concluído"
+            "value": "Concluídos"
           }
         }
       }
@@ -21358,25 +21360,25 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Caducado"
+            "value": "Caducados"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Expiré"
+            "value": "Expirés"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Expirado"
+            "value": "Expiradas"
           }
         },
         "pt-PT": {
           "stringUnit": {
             "state": "translated",
-            "value": "Expirado"
+            "value": "Expirados"
           }
         }
       }
@@ -21722,13 +21724,13 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Más rápido"
+            "value": "Más rápida"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Plus rapide"
+            "value": "La plus rapide"
           }
         },
         "pt-BR": {
@@ -23759,7 +23761,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Schließe ein Buch ab, um es hier zu sehen."
+            "value": "Beende ein Buch, um es hier zu sehen."
           }
         },
         "en": {
@@ -23777,13 +23779,13 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Termine un livre pour le voir ici."
+            "value": "Terminez un livre pour le voir ici."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Termina um livro para o veres aqui."
+            "value": "Conclua um livro para vê-lo aqui."
           }
         },
         "pt-PT": {
@@ -25087,7 +25089,7 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Objetivos"
+            "value": "Metas"
           }
         },
         "pt-PT": {
@@ -25128,13 +25130,13 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Os objetivos são Pro"
+            "value": "Metas são Pro"
           }
         },
         "pt-PT": {
           "stringUnit": {
             "state": "translated",
-            "value": "Os objetivos são Pro"
+            "value": "Objetivos são Pro"
           }
         }
       }
@@ -32220,19 +32222,19 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Enregistre une session pour remplir ton calendrier."
+            "value": "Enregistrez une session pour remplir votre calendrier."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Regista uma sessão para preencher o calendário."
+            "value": "Registre uma sessão para preencher seu calendário."
           }
         },
         "pt-PT": {
           "stringUnit": {
             "state": "translated",
-            "value": "Regista uma sessão para preencher o calendário."
+            "value": "Regista uma sessão para preencher o teu calendário."
           }
         }
       }
@@ -34038,7 +34040,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gestionar"
+            "value": "Administrar"
           }
         },
         "fr": {
@@ -34050,7 +34052,7 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gerir"
+            "value": "Gerenciar"
           }
         },
         "pt-PT": {
@@ -36036,7 +36038,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "No hay actividad en este período."
+            "value": "Aún no hay actividad en este rango."
           }
         },
         "fr": {
@@ -36048,13 +36050,13 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ainda não há atividade neste período."
+            "value": "Ainda não há atividade neste intervalo."
           }
         },
         "pt-PT": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ainda não há atividade neste período."
+            "value": "Ainda não há atividade neste intervalo."
           }
         }
       }
@@ -36230,7 +36232,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keine Kategorien in diesem Zeitraum."
+            "value": "Keine Kategorien in diesem Zeitraum erfasst."
           }
         },
         "en": {
@@ -36242,25 +36244,25 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "No hay categorías en este período."
+            "value": "No hay categorías registradas en este rango."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aucune catégorie dans cette période."
+            "value": "Aucune catégorie enregistrée sur cette période."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nenhuma categoria neste período."
+            "value": "Nenhuma categoria registrada neste intervalo."
           }
         },
         "pt-PT": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nenhuma categoria neste período."
+            "value": "Sem categorias registadas neste intervalo."
           }
         }
       }
@@ -36371,7 +36373,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aucune donnée pour l’instant"
+            "value": "Pas encore de données"
           }
         },
         "pt-BR": {
@@ -36563,7 +36565,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keine beendeten Bücher"
+            "value": "Keine abgeschlossenen Bücher"
           }
         },
         "en": {
@@ -36587,13 +36589,13 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nenhum livro terminado"
+            "value": "Nenhum livro concluído"
           }
         },
         "pt-PT": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nenhum livro terminado"
+            "value": "Sem livros concluídos"
           }
         }
       }
@@ -36605,7 +36607,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keine beendeten Bücher in diesem Zeitraum."
+            "value": "Keine abgeschlossenen Bücher in diesem Zeitraum."
           }
         },
         "en": {
@@ -36617,25 +36619,25 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "No hay libros terminados en este período."
+            "value": "No hay libros terminados en este rango."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aucun livre terminé dans cette période."
+            "value": "Aucun livre terminé sur cette période."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nenhum livro terminado neste período."
+            "value": "Nenhum livro concluído neste intervalo."
           }
         },
         "pt-PT": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nenhum livro terminado neste período."
+            "value": "Sem livros concluídos neste intervalo."
           }
         }
       }
@@ -36706,13 +36708,13 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aucun objectif pour l’instant"
+            "value": "Pas encore d'objectifs"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ainda sem objetivos"
+            "value": "Ainda sem metas"
           }
         },
         "pt-PT": {
@@ -37341,7 +37343,7 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sem sessões este mês"
+            "value": "Nenhuma sessão este mês"
           }
         },
         "pt-PT": {
@@ -37649,7 +37651,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keine zeitgesteuerten Sitzungen in diesem Zeitraum."
+            "value": "Keine getimten Sitzungen in diesem Zeitraum."
           }
         },
         "en": {
@@ -37661,25 +37663,25 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "No hay sesiones cronometradas en este período."
+            "value": "No hay sesiones cronometradas en este rango."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aucune session chronométrée dans cette période."
+            "value": "Aucune session chronométrée sur cette période."
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sem sessões cronometradas neste período."
+            "value": "Nenhuma sessão cronometrada neste intervalo."
           }
         },
         "pt-PT": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sem sessões cronometradas neste período."
+            "value": "Sem sessões cronometradas neste intervalo."
           }
         }
       }
@@ -56334,13 +56336,13 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Commence à lire pour voir ton activité"
+            "value": "Commencez à lire pour voir votre activité"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Começa a ler para veres a tua atividade"
+            "value": "Comece a ler para ver sua atividade"
           }
         },
         "pt-PT": {
@@ -56724,6 +56726,88 @@
         }
       }
     },
+    "Stats.Metric.Highlight.Minutes %lld %lld": {
+      "extractionState": "stale",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bester Tag %lld Min • Ø %lld Min/Tag"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Best day %lld min • Avg %lld min/day"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mejor día %lld min • Prom. %lld min/día"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Meilleur jour %lld min • Moy. %lld min/jour"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Melhor dia %lld min • Média %lld min/dia"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Melhor dia %lld min • Média %lld min/dia"
+          }
+        }
+      }
+    },
+    "Stats.Metric.Highlight.Pages %lld %lld": {
+      "extractionState": "stale",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bester Tag %lld Seiten • Ø %lld pro Tag"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Best day %lld pages • Avg %lld per day"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mejor día %lld páginas • Prom. %lld por día"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Meilleur jour %lld pages • Moy. %lld par jour"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Melhor dia %lld páginas • Média %lld por dia"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Melhor dia %lld páginas • Média %lld por dia"
+          }
+        }
+      }
+    },
     "StatsSettings.AboutDescription": {
       "localizations": {
         "de": {
@@ -57034,7 +57118,7 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Estado"
+            "value": "Status"
           }
         },
         "pt-PT": {
@@ -60251,7 +60335,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tippe auf +, um dein erstes Leseziel zu erstellen"
+            "value": "Tippe auf die +-Taste, um dein erstes Leseziel zu erstellen"
           }
         },
         "en": {
@@ -60269,13 +60353,13 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Appuie sur le bouton + pour créer ton premier objectif de lecture"
+            "value": "Touchez le bouton + pour créer votre premier objectif de lecture"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Toca no botão + para criares o teu primeiro objetivo de leitura"
+            "value": "Toque no botão + para criar sua primeira meta de leitura"
           }
         },
         "pt-PT": {
@@ -63126,7 +63210,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Déverrouillé"
+            "value": "Débloqué"
           }
         },
         "pt-BR": {
@@ -63371,19 +63455,19 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mettre à niveau"
+            "value": "Passer à Pro"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Atualizar"
+            "value": "Fazer upgrade"
           }
         },
         "pt-PT": {
           "stringUnit": {
             "state": "translated",
-            "value": "Atualizar"
+            "value": "Fazer upgrade"
           }
         }
       }
@@ -63446,25 +63530,25 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Actualiza para crear metas de lectura personalizadas"
+            "value": "Pásate a Pro para crear objetivos de lectura personalizados"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Passe à Pro pour créer des objectifs de lecture personnalisés"
+            "value": "Passez à Pro pour créer des objectifs de lecture personnalisés"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Atualiza para criares objetivos de leitura personalizados"
+            "value": "Faça upgrade para criar metas de leitura personalizadas"
           }
         },
         "pt-PT": {
           "stringUnit": {
             "state": "translated",
-            "value": "Atualiza para criares objetivos de leitura personalizados"
+            "value": "Faz upgrade para criar objetivos de leitura personalizados"
           }
         }
       }
@@ -63962,7 +64046,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Verwende den Lesetimer, um detaillierte Lesesitzungen zu verfolgen"
+            "value": "Nutze den Lesetimer, um detaillierte Lesesitzungen zu erfassen"
           }
         },
         "en": {
@@ -63980,19 +64064,19 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Utilise le minuteur de lecture pour suivre des sessions détaillées"
+            "value": "Utilisez le minuteur de lecture pour suivre des sessions détaillées"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Usa o temporizador de leitura para acompanhar sessões detalhadas"
+            "value": "Use o temporizador de leitura para registrar sessões detalhadas"
           }
         },
         "pt-PT": {
           "stringUnit": {
             "state": "translated",
-            "value": "Usa o temporizador de leitura para acompanhar sessões detalhadas"
+            "value": "Usa o temporizador de leitura para registar sessões detalhadas"
           }
         }
       }
@@ -70343,6 +70427,126 @@
           "stringUnit": {
             "state": "translated",
             "value": "A tua categoria principal foi"
+          }
+        }
+      }
+    },
+    "Goals.Empty.Title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Goals Set"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sem objetivos definidos"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nenhuma meta definida"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine Ziele festgelegt"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun objectif défini"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay objetivos establecidos"
+          }
+        }
+      }
+    },
+    "Goals.Empty.Message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set reading goals to track your progress"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Define objetivos de leitura para acompanhar o teu progresso"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Defina metas de leitura para acompanhar seu progresso"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Setze Leseziele, um deinen Fortschritt zu verfolgen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Définissez des objectifs de lecture pour suivre vos progrès"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Establece objetivos de lectura para seguir tu progreso"
+          }
+        }
+      }
+    },
+    "Goals.Empty.Action": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add Goal"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adicionar objetivo"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adicionar meta"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ziel hinzufügen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter un objectif"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir objetivo"
           }
         }
       }

@@ -893,7 +893,7 @@ struct StatsView: View {
                             icon: "crown.fill",
                             title: "Goals are Pro",
                             message: "Upgrade to create custom reading goals",
-                            actionTitle: "Upgrade to Pro",
+                            actionTitle: "Common.UpgradeToPro",
                             action: {
                                 showUpgradeSheet = true
                             }
@@ -905,9 +905,9 @@ struct StatsView: View {
                         Spacer()
                         EmptyStateView(
                             icon: "target",
-                            title: "No Goals Set",
-                            message: "Set reading goals to track your progress",
-                            actionTitle: "Add Goal",
+                            title: LocalizedStringKey("Goals.Empty.Title"),
+                            message: LocalizedStringKey("Goals.Empty.Message"),
+                            actionTitle: LocalizedStringKey("Goals.Empty.Action"),
                             action: {
                                 showAddGoal = true
                             }
@@ -1558,13 +1558,25 @@ private struct TrendDetailView: View {
             metricChartCard(
                 valueKeyPath: \.pages,
                 title: "Pages per day",
-                highlight: Text("Best day \(bestDayPages) pages • Avg \(averagePagesPerDay) per day")
+                highlight: Text(
+                    String(
+                        format: localized("Stats.Metric.Highlight.Pages %lld %lld", locale: locale),
+                        locale: locale,
+                        arguments: [bestDayPages, averagePagesPerDay]
+                    )
+                )
             )
         case .minutes:
             metricChartCard(
                 valueKeyPath: \.minutes,
                 title: "Minutes per day",
-                highlight: Text("Best day \(bestDayMinutes) min • Avg \(averageMinutesPerDay) min/day")
+                highlight: Text(
+                    String(
+                        format: localized("Stats.Metric.Highlight.Minutes %lld %lld", locale: locale),
+                        locale: locale,
+                        arguments: [bestDayMinutes, averageMinutesPerDay]
+                    )
+                )
             )
         case .books:
             booksDetailCard
@@ -1591,8 +1603,8 @@ private struct TrendDetailView: View {
             } else {
                 Chart(dailySnapshots) { snapshot in
                     BarMark(
-                        x: .value("Day", snapshot.date, unit: .day),
-                        y: .value("Value", snapshot[keyPath: valueKeyPath])
+                        x: .value(String(localized: "Day"), snapshot.date, unit: .day),
+                        y: .value(String(localized: "Value"), snapshot[keyPath: valueKeyPath])
                     )
                     .foregroundStyle(
                         LinearGradient(
