@@ -394,20 +394,20 @@ struct StatsView: View {
                     .padding(Theme.Spacing.md)
                 }
             }
-            .navigationTitle("Stats")
+            .navigationTitle("Stats.Title")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
                         Button {
                             showShareSheet = true
                         } label: {
-                            Label("Share", systemImage: "square.and.arrow.up")
+                            Label("Common.Share", systemImage: "square.and.arrow.up")
                         }
 
                         Button {
                             showSettings = true
                         } label: {
-                            Label("Settings", systemImage: "gearshape")
+                            Label("Common.Settings", systemImage: "gearshape")
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
@@ -487,7 +487,7 @@ struct StatsView: View {
     private var calendarSection: some View {
         let cellSize: CGFloat = 46
         return VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-            Text("Calendar")
+            Text("Stats.Calendar.Title")
                 .font(Theme.Typography.title3)
                 .foregroundStyle(Theme.Colors.text)
 
@@ -576,8 +576,8 @@ struct StatsView: View {
                 if !calendarMonthHasData {
                     InlineEmptyStateView(
                         icon: "calendar",
-                        title: "No sessions this month",
-                        message: "Log a session to fill your calendar."
+                        title: "Stats.Calendar.Empty.Title",
+                        message: "Stats.Calendar.Empty.Message"
                     )
                     .padding(.top, Theme.Spacing.sm)
                 }
@@ -596,7 +596,7 @@ struct StatsView: View {
         VStack(spacing: Theme.Spacing.md) {
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Trends")
+                    Text("Stats.Trends.Title")
                         .font(Theme.Typography.title3)
                         .foregroundStyle(Theme.Colors.text)
 
@@ -608,7 +608,7 @@ struct StatsView: View {
                 Spacer()
 
                 Menu {
-                    Picker("Range", selection: $trendsRange) {
+                    Picker("Stats.Trends.Range", selection: $trendsRange) {
                         ForEach(TrendsRange.allCases) { range in
                             Text(range.title)
                                 .tag(range)
@@ -727,7 +727,7 @@ struct StatsView: View {
 
     private var readingChartSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-            Text("Reading Activity")
+            Text("Stats.Activity.Title")
                 .font(Theme.Typography.title3)
                 .foregroundStyle(Theme.Colors.text)
 
@@ -785,14 +785,14 @@ struct StatsView: View {
 
                     Text(
                         String.localizedStringWithFormat(
-                            String(localized: "You've read %lld pages!"),
+                            String(localized: "Stats.Activity.Congrats.Format"),
                             totalPagesRead
                         )
                     )
                         .font(Theme.Typography.headline)
                         .foregroundStyle(Theme.Colors.text)
 
-                    Text("Use the reading timer to track detailed reading sessions")
+                    Text("Stats.Activity.TimerHint")
                         .font(Theme.Typography.caption)
                         .foregroundStyle(Theme.Colors.secondaryText)
                         .multilineTextAlignment(.center)
@@ -804,8 +804,8 @@ struct StatsView: View {
             } else {
                 EmptyStateView(
                     icon: "chart.bar",
-                    title: "No Data Yet",
-                    message: "Start reading to see your activity"
+                    title: "Stats.Activity.Empty.Title",
+                    message: "Stats.Activity.Empty.Message"
                 )
             }
         }
@@ -814,7 +814,7 @@ struct StatsView: View {
     private var achievementsSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             HStack {
-                Text("Achievements")
+                Text("Stats.Achievements.Title")
                     .font(Theme.Typography.title3)
                     .foregroundStyle(Theme.Colors.text)
 
@@ -831,7 +831,7 @@ struct StatsView: View {
                     .foregroundStyle(Theme.Colors.secondaryText)
 
                 if AchievementType.allCases.count > 6 {
-                    Button("View All") {
+                    Button("Common.ViewAll") {
                         showAllAchievements = true
                     }
                     .font(Theme.Typography.callout)
@@ -859,7 +859,7 @@ struct StatsView: View {
     private var goalsSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             HStack {
-                Text("Goals")
+                Text("Goals.Section.Title")
                     .font(Theme.Typography.title3)
                     .foregroundStyle(Theme.Colors.text)
 
@@ -869,7 +869,7 @@ struct StatsView: View {
                     NavigationLink {
                         ManageGoalsView()
                     } label: {
-                        Text("Manage")
+                        Text("Common.Manage")
                             .font(Theme.Typography.callout)
                             .foregroundStyle(themeColor.color)
                     }
@@ -877,7 +877,7 @@ struct StatsView: View {
                     Button {
                         showUpgradeSheet = true
                     } label: {
-                        Text("Upgrade")
+                        Text("Common.Upgrade")
                             .font(Theme.Typography.callout)
                             .foregroundStyle(themeColor.color)
                     }
@@ -891,8 +891,8 @@ struct StatsView: View {
                         Spacer()
                         EmptyStateView(
                             icon: "crown.fill",
-                            title: "Goals are Pro",
-                            message: "Upgrade to create custom reading goals",
+                            title: "Goals.Pro.Title",
+                            message: "Goals.Pro.Message",
                             actionTitle: "Common.UpgradeToPro",
                             action: {
                                 showUpgradeSheet = true
@@ -1058,9 +1058,9 @@ private enum TrendsRange: String, CaseIterable, Identifiable {
 
     var title: LocalizedStringKey {
         switch self {
-        case .last7: return "7 Days"
-        case .last30: return "30 Days"
-        case .year: return "This Year"
+        case .last7: return LocalizedStringKey("Stats.Trends.Range.Last7")
+        case .last30: return LocalizedStringKey("Stats.Trends.Range.Last30")
+        case .year: return LocalizedStringKey("Stats.Trends.Range.Year")
         }
     }
 }
@@ -1077,12 +1077,12 @@ private enum TrendMetric: String, Identifiable {
 
     var title: LocalizedStringKey {
         switch self {
-        case .pages: return "Pages Read"
-        case .minutes: return "Reading Time"
-        case .books: return "Books Finished"
-        case .categories: return "Top Categories"
-        case .streak: return "Streak"
-        case .speed: return "Reading Speed"
+        case .pages: return LocalizedStringKey("Stats.Trend.PagesRead")
+        case .minutes: return LocalizedStringKey("Stats.Trend.ReadingTime")
+        case .books: return LocalizedStringKey("Stats.Trend.BooksFinished")
+        case .categories: return LocalizedStringKey("Stats.Trend.TopCategories")
+        case .streak: return LocalizedStringKey("Stats.Trend.Streak")
+        case .speed: return LocalizedStringKey("Stats.Trend.ReadingSpeed")
         }
     }
 }
@@ -1499,7 +1499,7 @@ private struct TrendDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
+                    Button("Common.Done") {
                         dismiss()
                     }
                     .foregroundStyle(themeColor.color)
@@ -1557,7 +1557,7 @@ private struct TrendDetailView: View {
         case .pages:
             metricChartCard(
                 valueKeyPath: \.pages,
-                title: "Pages per day",
+                title: "Stats.Metric.PagesPerDay",
                 highlight: Text(
                     String(
                         format: localized("Stats.Metric.Highlight.Pages %lld %lld", locale: locale),
@@ -1569,7 +1569,7 @@ private struct TrendDetailView: View {
         case .minutes:
             metricChartCard(
                 valueKeyPath: \.minutes,
-                title: "Minutes per day",
+                title: "Stats.Metric.MinutesPerDay",
                 highlight: Text(
                     String(
                         format: localized("Stats.Metric.Highlight.Minutes %lld %lld", locale: locale),
@@ -1597,14 +1597,14 @@ private struct TrendDetailView: View {
                 .padding(.bottom, Theme.Spacing.xs)
 
             if dailySnapshots.allSatisfy({ $0[keyPath: valueKeyPath] == 0 }) {
-                Text("No activity yet in this range.")
+                Text("Stats.Range.EmptyActivity")
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
             } else {
                 Chart(dailySnapshots) { snapshot in
                     BarMark(
-                        x: .value(String(localized: "Day"), snapshot.date, unit: .day),
-                        y: .value(String(localized: "Value"), snapshot[keyPath: valueKeyPath])
+                        x: .value(String(localized: "Common.Day"), snapshot.date, unit: .day),
+                        y: .value(String(localized: "Common.Value"), snapshot[keyPath: valueKeyPath])
                     )
                     .foregroundStyle(
                         LinearGradient(
@@ -1646,19 +1646,19 @@ private struct TrendDetailView: View {
 
     private var booksDetailCard: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("Books finished")
+            Text("Stats.BooksFinished.Title")
                 .font(Theme.Typography.headline)
                 .foregroundStyle(Theme.Colors.text)
 
             if dailySnapshots.allSatisfy({ $0.finishedBooks == 0 }) {
-                Text("No finished books in this range.")
+                Text("Stats.BooksFinished.Empty")
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
             } else {
                 Chart(dailySnapshots) { snapshot in
                     BarMark(
-                        x: .value("Day", snapshot.date, unit: .day),
-                        y: .value("Books", snapshot.finishedBooks)
+                        x: .value(String(localized: "Common.Day"), snapshot.date, unit: .day),
+                        y: .value(String(localized: "Common.Books"), snapshot.finishedBooks)
                     )
                     .foregroundStyle(accent)
                     .cornerRadius(6)
@@ -1669,8 +1669,8 @@ private struct TrendDetailView: View {
             if finishedBooksInRange.isEmpty {
                 InlineEmptyStateView(
                     icon: "checkmark.seal",
-                    title: "No finished books",
-                    message: "Finish a book to see it here."
+                    title: "Stats.BooksFinished.Empty.Title",
+                    message: "Stats.BooksFinished.Empty.Message"
                 )
             } else {
                 VStack(spacing: 8) {
@@ -1711,12 +1711,12 @@ private struct TrendDetailView: View {
         let maxCount = max(topCategories.map(\.1).max() ?? 0, 1)
 
         return VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("Categories")
+            Text("Stats.Categories.Title")
                 .font(Theme.Typography.headline)
                 .foregroundStyle(Theme.Colors.text)
 
             if topCategories.isEmpty {
-                Text("No categories logged in this range.")
+                Text("Stats.Categories.Empty")
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
             } else {
@@ -1753,26 +1753,26 @@ private struct TrendDetailView: View {
         let fastestText = fastestSessionSpeed > 0 ? String(format: "%.1f", fastestSessionSpeed) : "—"
 
         return VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("Pages per hour")
+            Text("Stats.Speed.Title")
                 .font(Theme.Typography.headline)
                 .foregroundStyle(Theme.Colors.text)
 
             if dailySnapshots.allSatisfy({ $0.speed == 0 }) {
-                Text("No timed sessions in this range.")
+                Text("Stats.Speed.Empty")
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
             } else {
                 Chart(dailySnapshots) { snapshot in
                     LineMark(
-                        x: .value("Day", snapshot.date, unit: .day),
-                        y: .value("Speed", snapshot.speed)
+                        x: .value(String(localized: "Common.Day"), snapshot.date, unit: .day),
+                        y: .value(String(localized: "Common.Speed"), snapshot.speed)
                     )
                     .interpolationMethod(.catmullRom)
                     .foregroundStyle(accent)
 
                     AreaMark(
-                        x: .value("Day", snapshot.date, unit: .day),
-                        y: .value("Speed", snapshot.speed)
+                        x: .value(String(localized: "Common.Day"), snapshot.date, unit: .day),
+                        y: .value(String(localized: "Common.Speed"), snapshot.speed)
                     )
                     .foregroundStyle(
                         LinearGradient(
@@ -1787,7 +1787,7 @@ private struct TrendDetailView: View {
 
             HStack(spacing: Theme.Spacing.md) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Average")
+                    Text("Common.Average")
                         .font(.caption)
                         .foregroundStyle(Theme.Colors.secondaryText)
                     Text(averageText)
@@ -1796,7 +1796,7 @@ private struct TrendDetailView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Fastest")
+                    Text("Common.Fastest")
                         .font(.caption)
                         .foregroundStyle(Theme.Colors.secondaryText)
                     Text(fastestText)
@@ -1832,17 +1832,17 @@ private struct TrendDetailView: View {
     private var summarySuffix: LocalizedStringKey {
         switch metric {
         case .pages:
-            return "pages"
+            return "Common.Pages"
         case .minutes:
-            return "min"
+            return "Common.MinuteAbbrev"
         case .books:
-            return "books"
+            return "Common.Books"
         case .categories:
-            return categoryCounts.isEmpty ? "" : "top category"
+            return categoryCounts.isEmpty ? "" : "Stats.Trend.TopCategoryLabel"
         case .streak:
             return ""
         case .speed:
-            return "pages/hour"
+            return "Stats.Trend.PagesPerHour"
         }
     }
 
@@ -1939,7 +1939,7 @@ struct ReadingActivityChart: View {
             // Header with stats
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Last 7 Days")
+                    Text("Stats.Trends.Range.Last7")
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundStyle(Theme.Colors.text)
@@ -1950,7 +1950,7 @@ struct ReadingActivityChart: View {
                                 .font(.caption2)
                             Text(
                                 String.localizedStringWithFormat(
-                                    String(localized: "%lld total"),
+                                    String(localized: "Stats.Last7Days.TotalFormat"),
                                     totalPages
                                 )
                             )
@@ -1965,7 +1965,12 @@ struct ReadingActivityChart: View {
                         HStack(spacing: 4) {
                             Image(systemName: "chart.bar")
                                 .font(.caption2)
-                            Text("\(Int(averagePages)) \(String(localized: "avg", locale: locale))")
+                            Text(
+                                String.localizedStringWithFormat(
+                                    String(localized: "Stats.Last7Days.AverageFormat"),
+                                    Int(averagePages)
+                                )
+                            )
                                 .font(.caption)
                         }
                         .foregroundStyle(Theme.Colors.secondaryText)
@@ -1978,8 +1983,8 @@ struct ReadingActivityChart: View {
             // Chart
             Chart(last7DaysData, id: \.0) { date, pages in
                 BarMark(
-                    x: .value("Day", date, unit: .day),
-                    y: .value("Pages", pages)
+                    x: .value(String(localized: "Common.Day"), date, unit: .day),
+                    y: .value(String(localized: "Common.Pages"), pages)
                 )
                 .foregroundStyle(
                     LinearGradient(
@@ -2147,7 +2152,7 @@ struct AchievementCard: View {
 
 
                     if let achievement = achievement, achievement.isNew {
-                        Text("New!")
+                        Text("Common.New")
                             .font(.system(size: 9, weight: .bold))
                             .foregroundStyle(themeColor.onColor(for: colorScheme))
                             .padding(.horizontal, 6)
@@ -2225,7 +2230,7 @@ struct AchievementDetailView: View {
     }
 
     private var statusText: LocalizedStringKey {
-        isUnlocked ? "Unlocked" : "Locked"
+        isUnlocked ? "Common.Unlocked" : "Common.Locked"
     }
 
     private var unlockedDateText: String? {
@@ -2278,7 +2283,7 @@ struct AchievementDetailView: View {
                         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
 
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Status")
+                            Text("Common.Status")
                                 .font(.headline)
 
                             HStack {
@@ -2298,7 +2303,7 @@ struct AchievementDetailView: View {
                             if type.isRepeatable {
                                 Text(
                                     String.localizedStringWithFormat(
-                                        String(localized: "Times earned: %lld"),
+                                        String(localized: "Achievements.TimesEarnedFormat"),
                                         progress.repeatCount
                                     )
                                 )
@@ -2311,7 +2316,7 @@ struct AchievementDetailView: View {
                         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
 
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Progress")
+                            Text("Common.Progress")
                                 .font(.headline)
 
                             ProgressView(value: progress.fraction)
@@ -2331,11 +2336,11 @@ struct AchievementDetailView: View {
                     .padding(.bottom, 40)
                 }
             }
-            .navigationTitle("Achievement")
+            .navigationTitle("Stats.Achievement.Title")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
+                    Button("Common.Done") {
                         dismiss()
                     }
                     .foregroundStyle(themeColor.color)
@@ -2375,11 +2380,11 @@ struct AchievementsGridView: View {
                 .padding(.top, 20)
                 .padding(.bottom, 40)
             }
-            .navigationTitle("Achievements")
+            .navigationTitle("Stats.Achievements.Title")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
+                    Button("Common.Done") {
                         dismiss()
                     }
                     .foregroundStyle(themeColor.color)
@@ -2542,7 +2547,7 @@ struct ManageGoalsView: View {
                             GoalRow(goal: goal, profile: profile)
                         }
                     } header: {
-                        Text("Active Goals")
+                        Text("Goals.Section.Active")
                     }
 
                     let completedGoals = visibleGoals.filter { $0.isCompleted }
@@ -2552,7 +2557,7 @@ struct ManageGoalsView: View {
                                 GoalRow(goal: goal, profile: profile)
                             }
                         } header: {
-                            Text("Completed")
+                            Text("Goals.Section.Completed")
                         }
                     }
 
@@ -2563,19 +2568,19 @@ struct ManageGoalsView: View {
                                 GoalRow(goal: goal, profile: profile)
                             }
                         } header: {
-                            Text("Expired")
+                            Text("Goals.Section.Expired")
                         }
                     }
                 } else {
                     ContentUnavailableView(
-                        "No Goals Yet",
+                        "Goals.EmptyList.Title",
                         systemImage: "target",
-                        description: Text("Tap the + button to create your first reading goal")
+                        description: Text("Goals.EmptyList.Message")
                     )
                 }
             }
         }
-        .navigationTitle("Goals")
+        .navigationTitle("Goals.Title")
         .onAppear {
             if let profile = profile {
                 let tracker = GoalTracker(modelContext: modelContext)

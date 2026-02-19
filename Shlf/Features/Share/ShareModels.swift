@@ -16,9 +16,9 @@ enum ShareTemplate: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .book: return "Book"
-        case .wrap: return "Wrap"
-        case .streak: return "Streak"
+        case .book: return String(localized: "Share.Template.Book")
+        case .wrap: return String(localized: "Share.Template.Wrap")
+        case .streak: return String(localized: "Share.Template.Streak")
         }
     }
 }
@@ -31,8 +31,8 @@ enum ShareLayoutStyle: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .classic: return "Classic"
-        case .centered: return "Centered"
+        case .classic: return String(localized: "Share.Layout.Classic")
+        case .centered: return String(localized: "Share.Layout.Centered")
         }
     }
 }
@@ -46,9 +46,9 @@ enum SharePeriod: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .last7: return "Last 7 Days"
-        case .last30: return "Last 30 Days"
-        case .year: return "This Year"
+        case .last7: return String(localized: "Share.Period.Last7")
+        case .last30: return String(localized: "Share.Period.Last30")
+        case .year: return String(localized: "Share.Period.ThisYear")
         }
     }
 
@@ -78,8 +78,8 @@ enum ShareBackgroundStyle: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .paper: return "Paper"
-        case .paperDark: return "Paper Dark"
+        case .paper: return String(localized: "Share.Background.Paper")
+        case .paperDark: return String(localized: "Share.Background.PaperDark")
         }
     }
 }
@@ -101,10 +101,10 @@ enum ShareContentBlock: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .hero: return "Hero"
-        case .quote: return "Quote"
-        case .graph: return "Graph"
-        case .stats: return "Stats"
+        case .hero: return String(localized: "Share.Block.Hero")
+        case .quote: return String(localized: "Share.Block.Quote")
+        case .graph: return String(localized: "Share.Block.Graph")
+        case .stats: return String(localized: "Share.Block.Stats")
         }
     }
 
@@ -126,8 +126,8 @@ enum ShareGraphStyle: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .line: return "Line"
-        case .bars: return "Bars"
+        case .line: return String(localized: "Share.GraphStyle.Line")
+        case .bars: return String(localized: "Share.GraphStyle.Bars")
         }
     }
 }
@@ -141,9 +141,9 @@ enum ShareGraphMetric: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .pages: return "Pages"
-        case .minutes: return "Minutes"
-        case .sessions: return "Sessions"
+        case .pages: return String(localized: "Share.GraphMetric.Pages")
+        case .minutes: return String(localized: "Share.GraphMetric.Minutes")
+        case .sessions: return String(localized: "Share.GraphMetric.Sessions")
         }
     }
 }
@@ -171,21 +171,21 @@ enum LibraryShareFilter: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .all: return "All"
-        case .finished: return "Finished"
-        case .currentlyReading: return "Reading"
-        case .wantToRead: return "Want to Read"
-        case .didNotFinish: return "DNF"
+        case .all: return String(localized: "Share.Library.Filter.All")
+        case .finished: return String(localized: "Share.Library.Filter.Finished")
+        case .currentlyReading: return String(localized: "Share.Library.Filter.Reading")
+        case .wantToRead: return String(localized: "Share.Library.Filter.WantToRead")
+        case .didNotFinish: return String(localized: "Share.Library.Filter.DNF")
         }
     }
 
     var shareTitle: String {
         switch self {
-        case .all: return "My Library"
-        case .finished: return "Finished Books"
-        case .currentlyReading: return "Reading Now"
-        case .wantToRead: return "Want to Read"
-        case .didNotFinish: return "Did Not Finish"
+        case .all: return String(localized: "Share.Library.Title.All")
+        case .finished: return String(localized: "Share.Library.Title.Finished")
+        case .currentlyReading: return String(localized: "Share.Library.Title.ReadingNow")
+        case .wantToRead: return String(localized: "Share.Library.Title.WantToRead")
+        case .didNotFinish: return String(localized: "Share.Library.Title.DidNotFinish")
         }
     }
 
@@ -210,10 +210,10 @@ enum LibraryShareSort: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .recentlyAdded: return "Recently Added"
-        case .title: return "Title"
-        case .author: return "Author"
-        case .progress: return "Progress"
+        case .recentlyAdded: return String(localized: "Share.Library.Sort.RecentlyAdded")
+        case .title: return String(localized: "Share.Library.Sort.Title")
+        case .author: return String(localized: "Share.Library.Sort.Author")
+        case .progress: return String(localized: "Share.Library.Sort.Progress")
         }
     }
 }
@@ -227,9 +227,9 @@ enum LibraryShareGridStyle: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .large: return "Large"
-        case .medium: return "Medium"
-        case .compact: return "Compact"
+        case .large: return String(localized: "Share.Library.Grid.Large")
+        case .medium: return String(localized: "Share.Library.Grid.Medium")
+        case .compact: return String(localized: "Share.Library.Grid.Compact")
         }
     }
 

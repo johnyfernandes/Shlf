@@ -14,6 +14,7 @@ struct ShareSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     @Query private var profiles: [UserProfile]
     @Query private var sessions: [ReadingSession]
     @Query private var books: [Book]
@@ -41,7 +42,7 @@ struct ShareSheetView: View {
     @State private var coverImage: UIImage?
     @State private var showInstagramAlert = false
     @State private var showSaveConfirmation = false
-    @State private var saveResultMessage = "Saved to Photos."
+    @State private var saveResultMessage = String(localized: "Share.SaveResult.Saved")
     @State private var isRendering = false
 
     init(book: Book? = nil, defaultTemplate: ShareTemplate? = nil) {
@@ -175,11 +176,11 @@ struct ShareSheetView: View {
             }
             .environment(\.editMode, .constant(.active))
             .tint(themeColor.color)
-            .navigationTitle("Share")
+            .navigationTitle("Share.Title")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
+                    Button("Common.Done") {
                         dismiss()
                     }
                     .foregroundStyle(themeColor.color)
@@ -197,13 +198,13 @@ struct ShareSheetView: View {
             guard paused, selectedTemplate == .streak else { return }
             selectedTemplate = book == nil ? .wrap : .book
         }
-        .alert("Instagram Not Available", isPresented: $showInstagramAlert) {
-            Button("OK", role: .cancel) {}
+        .alert("Share.InstagramUnavailable.Title", isPresented: $showInstagramAlert) {
+            Button("Common.OK", role: .cancel) {}
         } message: {
-            Text("Install Instagram to share directly to Stories, or use the Share Image button instead.")
+            Text("Share.InstagramUnavailable.Message")
         }
-        .alert("Image Saved", isPresented: $showSaveConfirmation) {
-            Button("OK", role: .cancel) {}
+        .alert("Share.ImageSaved.Title", isPresented: $showSaveConfirmation) {
+            Button("Common.OK", role: .cancel) {}
         } message: {
             Text(saveResultMessage)
         }
@@ -218,7 +219,7 @@ struct ShareSheetView: View {
     }
 
     private var previewSection: some View {
-        Section("Preview") {
+        Section("Share.Section.Preview") {
             previewCard
                 .listRowInsets(EdgeInsets(top: Theme.Spacing.sm, leading: Theme.Spacing.md, bottom: Theme.Spacing.sm, trailing: Theme.Spacing.md))
                 .listRowSeparator(.hidden)
@@ -227,9 +228,9 @@ struct ShareSheetView: View {
     }
 
     private var templateSection: some View {
-        Section("Template") {
+        Section("Share.Section.Template") {
             if availableTemplates.count > 1 {
-                Picker("Template", selection: $selectedTemplate) {
+                Picker("Share.Picker.Template", selection: $selectedTemplate) {
                     ForEach(availableTemplates) { template in
                         Text(template.title).tag(template)
                     }
@@ -238,7 +239,7 @@ struct ShareSheetView: View {
             }
 
             if selectedTemplate == .wrap {
-                Picker("Period", selection: $selectedPeriod) {
+                Picker("Share.Picker.Period", selection: $selectedPeriod) {
                     ForEach(SharePeriod.allCases) { period in
                         Text(period.title).tag(period)
                     }
@@ -249,15 +250,15 @@ struct ShareSheetView: View {
     }
 
     private var appearanceSection: some View {
-        Section("Appearance") {
-            Picker("Background", selection: $selectedBackground) {
+        Section("Share.Section.Appearance") {
+            Picker("Share.Picker.Background", selection: $selectedBackground) {
                 ForEach(ShareBackgroundStyle.allCases) { style in
                     Text(style.title).tag(style)
                 }
             }
             .pickerStyle(.segmented)
 
-            Picker("Layout", selection: $selectedLayout) {
+            Picker("Share.Picker.Layout", selection: $selectedLayout) {
                 ForEach(ShareLayoutStyle.allCases) { layout in
                     Text(layout.title).tag(layout)
                 }
@@ -267,17 +268,17 @@ struct ShareSheetView: View {
     }
 
     private var contentSection: some View {
-        Section("Content") {
+        Section("Share.Section.Content") {
             if selectedTemplate == .book {
-                Toggle("Show cover", isOn: $showCover)
+                Toggle("Share.Toggle.ShowCover", isOn: $showCover)
 
-                Toggle("Show progress ring", isOn: $showProgressRing)
+                Toggle("Share.Toggle.ShowProgressRing", isOn: $showProgressRing)
             }
 
-            Toggle("Show graph", isOn: $showGraph)
+            Toggle("Share.Toggle.ShowGraph", isOn: $showGraph)
 
             if selectedTemplate == .book, hasQuotes {
-                Toggle("Show quote", isOn: $showQuote)
+                Toggle("Share.Toggle.ShowQuote", isOn: $showQuote)
             }
         }
     }
@@ -285,15 +286,15 @@ struct ShareSheetView: View {
     private var graphSection: some View {
         Group {
             if showGraph {
-                Section("Graph") {
-                    Picker("Metric", selection: $selectedGraphMetric) {
+                Section("Share.Section.Graph") {
+                    Picker("Share.Picker.Metric", selection: $selectedGraphMetric) {
                         ForEach(availableGraphMetrics) { metric in
                             Text(metric.title).tag(metric)
                         }
                     }
                     .pickerStyle(.segmented)
 
-                    Picker("Style", selection: $selectedGraphStyle) {
+                    Picker("Share.Picker.Style", selection: $selectedGraphStyle) {
                         ForEach(ShareGraphStyle.allCases) { style in
                             Text(style.title).tag(style)
                         }
@@ -307,8 +308,8 @@ struct ShareSheetView: View {
     private var quoteSection: some View {
         Group {
             if selectedTemplate == .book, hasQuotes, showQuote {
-                Section("Quote") {
-                    Picker("Selection", selection: $selectedQuoteSource) {
+                Section("Share.Section.Quote") {
+                    Picker("Share.Picker.QuoteSelection", selection: $selectedQuoteSource) {
                         ForEach(ShareQuoteSource.allCases) { source in
                             Text(source.title).tag(source)
                         }
@@ -321,16 +322,16 @@ struct ShareSheetView: View {
 
     private var dataSection: some View {
         Section(
-            footer: Text("Imported sessions are excluded from stats by default.")
+            footer: Text("Share.ImportedSessions.Footer")
         ) {
-            Toggle("Include imported sessions", isOn: $includeImportedSessions)
+            Toggle("Share.ImportedSessions.Toggle", isOn: $includeImportedSessions)
         }
     }
 
     private var contentOrderSection: some View {
         Section(
-            header: Text("Content Order"),
-            footer: Text("Drag to reorder. Disabled blocks stay hidden.")
+            header: Text("Share.ContentOrder.Header"),
+            footer: Text("Share.ContentOrder.Footer")
         ) {
             ContentOrderView(
                 order: contentOrderBinding,
@@ -366,30 +367,30 @@ struct ShareSheetView: View {
     }
 
     private var actionsSection: some View {
-        Section("Share") {
+        Section("Share.Section.Share") {
             Button {
                 handleShare(.save)
             } label: {
-                Label("Save Image", systemImage: "square.and.arrow.down")
+                Label("Share.Action.SaveImage", systemImage: "square.and.arrow.down")
             }
             .disabled(isRendering)
 
             Button {
                 handleShare(.instagram)
             } label: {
-                Label("Share to Instagram Story", systemImage: "camera.fill")
+                Label("Share.Action.InstagramStory", systemImage: "camera.fill")
             }
             .disabled(isRendering)
 
             Button {
                 handleShare(.shareSheet)
             } label: {
-                Label("Share Image", systemImage: "square.and.arrow.up")
+                Label("Share.Action.ShareImage", systemImage: "square.and.arrow.up")
             }
             .disabled(isRendering)
 
             if isRendering {
-                ProgressView("Preparing your share...")
+                ProgressView("Share.Progress.Preparing")
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
         }
@@ -491,7 +492,7 @@ struct ShareSheetView: View {
         PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
             guard status == .authorized || status == .limited else {
                 Task { @MainActor in
-                    saveResultMessage = "Allow Photos access to save images."
+                    saveResultMessage = String(localized: "Share.SaveResult.AllowPhotos")
                     showSaveConfirmation = true
                 }
                 return
@@ -502,9 +503,9 @@ struct ShareSheetView: View {
             }) { success, error in
                 Task { @MainActor in
                     if success {
-                        saveResultMessage = "Saved to Photos."
+                        saveResultMessage = String(localized: "Share.SaveResult.Saved")
                     } else {
-                        saveResultMessage = error?.localizedDescription ?? "Couldn't save the image."
+                        saveResultMessage = error?.localizedDescription ?? String(localized: "Share.SaveResult.Failed")
                     }
                     showSaveConfirmation = true
                 }
@@ -521,8 +522,8 @@ private enum ShareQuoteSource: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .latest: return "Latest"
-        case .random: return "Random"
+        case .latest: return String(localized: "Share.QuoteSource.Latest")
+        case .random: return String(localized: "Share.QuoteSource.Random")
         }
     }
 }
@@ -539,12 +540,12 @@ private enum BookStatOption: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .pagesRead: return "Pages Read"
-        case .totalPages: return "Total Pages"
-        case .progressPercent: return "Progress"
-        case .timeRead: return "Time"
-        case .sessions: return "Sessions"
-        case .milestoneDate: return "Milestone"
+        case .pagesRead: return String(localized: "Share.BookStat.PagesRead")
+        case .totalPages: return String(localized: "Share.BookStat.TotalPages")
+        case .progressPercent: return String(localized: "Share.BookStat.Progress")
+        case .timeRead: return String(localized: "Share.BookStat.Time")
+        case .sessions: return String(localized: "Share.BookStat.Sessions")
+        case .milestoneDate: return String(localized: "Share.BookStat.Milestone")
         }
     }
 
@@ -572,12 +573,12 @@ private enum WrapStatOption: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .pages: return "Pages"
-        case .time: return "Time"
-        case .sessions: return "Sessions"
-        case .books: return "Books Finished"
-        case .activeDays: return "Active Days"
-        case .avgPagesPerDay: return "Avg Pages/Day"
+        case .pages: return String(localized: "Share.WrapStat.Pages")
+        case .time: return String(localized: "Share.WrapStat.Time")
+        case .sessions: return String(localized: "Share.WrapStat.Sessions")
+        case .books: return String(localized: "Share.WrapStat.BooksFinished")
+        case .activeDays: return String(localized: "Share.WrapStat.ActiveDays")
+        case .avgPagesPerDay: return String(localized: "Share.WrapStat.AvgPagesPerDay")
         }
     }
 
@@ -605,12 +606,12 @@ private enum StreakStatOption: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .currentStreak: return "Current Streak"
-        case .bestStreak: return "Best Streak"
-        case .pagesToday: return "Pages Today"
-        case .minutesToday: return "Minutes Today"
-        case .sessionsToday: return "Sessions Today"
-        case .activeDays7: return "Active Days (7d)"
+        case .currentStreak: return String(localized: "Share.StreakStat.CurrentStreak")
+        case .bestStreak: return String(localized: "Share.StreakStat.BestStreak")
+        case .pagesToday: return String(localized: "Share.StreakStat.PagesToday")
+        case .minutesToday: return String(localized: "Share.StreakStat.MinutesToday")
+        case .sessionsToday: return String(localized: "Share.StreakStat.SessionsToday")
+        case .activeDays7: return String(localized: "Share.StreakStat.ActiveDays7")
         }
     }
 
@@ -644,17 +645,17 @@ private struct StatSelectorSections<Stat: Hashable & Identifiable>: View {
     var body: some View {
         Section(
             header: statsHeader,
-            footer: Text("Drag to reorder.")
+            footer: Text("Share.Stats.ReorderFooter")
         ) {
             if selected.isEmpty {
-                Text("No stats selected.")
+                Text("Share.Stats.NoneSelected")
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
 
             ForEach(selected, id: \.self) { option in
                 let metadata = options.first { $0.option == option }
                 StatRowView(
-                    title: metadata?.title ?? "Stat",
+                    title: metadata?.title ?? String(localized: "Share.Stats.Fallback"),
                     icon: metadata?.icon ?? "circle",
                     accentColor: accentColor
                 )
@@ -663,8 +664,13 @@ private struct StatSelectorSections<Stat: Hashable & Identifiable>: View {
         }
 
         Section(
-            header: Text("Available"),
-            footer: Text("Choose up to \(maxSelection) stats. Tap to add or remove.")
+            header: Text("Share.Stats.Available"),
+            footer: Text(
+                String.localizedStringWithFormat(
+                    String(localized: "Share.Stats.AvailableFooterFormat"),
+                    maxSelection
+                )
+            )
         ) {
             ForEach(options) { option in
                 let isSelected = selected.contains(option.option)
@@ -689,14 +695,14 @@ private struct StatSelectorSections<Stat: Hashable & Identifiable>: View {
 
     private var statsHeader: some View {
         HStack {
-            Text("Selected")
+            Text("Share.Stats.Selected")
                 .foregroundStyle(Theme.Colors.secondaryText)
 
             Spacer()
 
             Text(
                 String.localizedStringWithFormat(
-                    String(localized: "%lld/%lld"),
+                    String(localized: "Share.Stats.CountFormat"),
                     selected.count,
                     maxSelection
                 )
@@ -803,7 +809,7 @@ private struct ContentOrderRow: View {
                 .foregroundStyle(Theme.Colors.text)
 
             if !isEnabled {
-                Text("Off")
+                Text("Common.Off")
                     .font(.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
@@ -824,7 +830,8 @@ private extension ShareSheetView {
 
     static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d"
+        formatter.locale = .current
+        formatter.setLocalizedDateFormatFromTemplate("MMM d")
         return formatter
     }()
 
@@ -852,12 +859,12 @@ private extension ShareSheetView {
         let hours = safeMinutes / 60
         let mins = safeMinutes % 60
         if hours == 0 {
-            return "\(formatNumber(mins))m"
+            return "\(formatNumber(mins))\(String(localized: "Common.MinuteAbbrev"))"
         }
         if mins == 0 {
-            return "\(formatNumber(hours))h"
+            return "\(formatNumber(hours))\(String(localized: "Common.HourAbbrev"))"
         }
-        return "\(formatNumber(hours))h \(formatNumber(mins))m"
+        return "\(formatNumber(hours))\(String(localized: "Common.HourAbbrev")) \(formatNumber(mins))\(String(localized: "Common.MinuteAbbrev"))"
     }
 
     private func formatDate(_ date: Date) -> String {
@@ -865,14 +872,18 @@ private extension ShareSheetView {
     }
 
     private func formatDateRange(start: Date, end: Date) -> String {
-        "\(formatDate(start)) - \(formatDate(end))"
+        String.localizedStringWithFormat(
+            String(localized: "Common.DateRangeFormat"),
+            formatDate(start),
+            formatDate(end)
+        )
     }
 
     private func makeBookContent() -> ShareCardContent {
         guard let book else {
             return ShareCardContent(
-                title: "Pick a Book",
-                subtitle: "Choose a book to share",
+                title: String(localized: "Share.Book.Empty.Title"),
+                subtitle: String(localized: "Share.Book.Empty.Subtitle"),
                 badge: nil,
                 period: nil,
                 coverImage: nil,
@@ -884,7 +895,7 @@ private extension ShareSheetView {
                 graph: nil,
                 blocks: [],
                 stats: [],
-                footer: "Shared with Shlf"
+                footer: String(localized: "Share.Footer.Shlf")
             )
         }
 
@@ -895,13 +906,28 @@ private extension ShareSheetView {
         let currentPage = max(0, book.currentPage)
         let progress = totalPages > 0 ? Double(currentPage) / Double(totalPages) : nil
         let progressText: String? = totalPages > 0
-            ? "\(formatNumber(currentPage)) / \(formatNumber(totalPages)) pages"
-            : "\(formatNumber(currentPage)) pages"
+            ? String.localizedStringWithFormat(
+                String(localized: "Share.Book.Progress.WithTotalFormat"),
+                formatNumber(currentPage),
+                formatNumber(totalPages)
+            )
+            : String.localizedStringWithFormat(
+                String(localized: "Share.Book.Progress.WithoutTotalFormat"),
+                formatNumber(currentPage)
+            )
 
         let date = book.isFinished ? book.dateFinished : book.dateStarted
-        let dateLabel = book.isFinished ? "Finished" : "Started"
-        let dateValue = date.map(formatDate) ?? "N/A"
-        let period = date.map { "\(dateLabel) \(formatDate($0))" }
+        let dateLabel = book.isFinished
+            ? String(localized: "Share.Book.DateLabel.Finished")
+            : String(localized: "Share.Book.DateLabel.Started")
+        let dateValue = date.map(formatDate) ?? String(localized: "Common.NotAvailable")
+        let period = date.map {
+            String.localizedStringWithFormat(
+                String(localized: "Share.Book.PeriodFormat"),
+                dateLabel,
+                formatDate($0)
+            )
+        }
 
         let graph = showGraph ? bookGraph(for: sessions) : nil
         let quote = (showQuote && hasQuotes) ? bookQuote(for: book) : nil
@@ -933,7 +959,7 @@ private extension ShareSheetView {
             graph: graph,
             blocks: blocks,
             stats: stats,
-            footer: "Shared with Shlf"
+            footer: String(localized: "Share.Footer.Shlf")
         )
     }
 
@@ -970,9 +996,12 @@ private extension ShareSheetView {
         }
 
         return ShareCardContent(
-            title: "Reading Wrap",
+            title: String(localized: "Share.Wrap.Title"),
             subtitle: selectedPeriod.title,
-            badge: "Level \(profile.currentLevel)",
+            badge: String.localizedStringWithFormat(
+                String(localized: "Share.Wrap.Badge.LevelFormat"),
+                profile.currentLevel
+            ),
             period: formatDateRange(start: range.start, end: range.end),
             coverImage: nil,
             progress: nil,
@@ -983,7 +1012,7 @@ private extension ShareSheetView {
             graph: graph,
             blocks: blocks,
             stats: stats,
-            footer: "Shared with Shlf"
+            footer: String(localized: "Share.Footer.Shlf")
         )
     }
 
@@ -1000,7 +1029,11 @@ private extension ShareSheetView {
         let bestStreak = max(profile.longestStreak, profile.currentStreak)
         let progress = bestStreak > 0 ? Double(profile.currentStreak) / Double(bestStreak) : nil
         let progressText = bestStreak > 0
-            ? "\(formatNumber(profile.currentStreak)) / \(formatNumber(bestStreak)) days"
+            ? String.localizedStringWithFormat(
+                String(localized: "Share.Streak.ProgressFormat"),
+                formatNumber(profile.currentStreak),
+                formatNumber(bestStreak)
+            )
             : nil
 
         let graph = showGraph ? streakGraph(for: filteredSessions) : nil
@@ -1020,10 +1053,13 @@ private extension ShareSheetView {
         }
 
         return ShareCardContent(
-            title: "Streak Mode",
-            subtitle: "Keep the fire alive",
-            badge: "\(formatNumber(profile.currentStreak)) day streak",
-            period: "Today",
+            title: String(localized: "Share.Streak.Title"),
+            subtitle: String(localized: "Share.Streak.Subtitle"),
+            badge: String.localizedStringWithFormat(
+                String(localized: "Share.Streak.Badge.DayStreakFormat"),
+                formatNumber(profile.currentStreak)
+            ),
+            period: String(localized: "Common.Today"),
             coverImage: nil,
             progress: progress,
             progressText: progressText,
@@ -1033,7 +1069,7 @@ private extension ShareSheetView {
             graph: graph,
             blocks: blocks,
             stats: stats,
-            footer: "Shared with Shlf"
+            footer: String(localized: "Share.Footer.Shlf")
         )
     }
 }
@@ -1044,7 +1080,10 @@ private extension ShareSheetView {
         let values = graphValues(for: sessions, range: range, metric: selectedGraphMetric)
         let subtitle = graphSubtitle(for: range, bucketed: bucketed)
         return ShareGraph(
-            title: "\(selectedGraphMetric.title) Over Time",
+            title: String.localizedStringWithFormat(
+                String(localized: "Share.Graph.OverTimeFormat"),
+                selectedGraphMetric.title
+            ),
             subtitle: subtitle,
             values: values,
             style: selectedGraphStyle
@@ -1058,7 +1097,7 @@ private extension ShareSheetView {
         let range = (start: start, end: end)
         let values = graphValues(for: sessions, range: range, metric: selectedGraphMetric)
         return ShareGraph(
-            title: "Last 7 Days",
+            title: String(localized: "Share.Graph.Last7Days"),
             subtitle: selectedGraphMetric.title,
             values: values,
             style: selectedGraphStyle
@@ -1081,7 +1120,7 @@ private extension ShareSheetView {
             }
         }
 
-        let title = "Recent Sessions"
+        let title = String(localized: "Share.Graph.RecentSessions")
         let subtitle = selectedGraphMetric.title
         return ShareGraph(title: title, subtitle: subtitle, values: values, style: selectedGraphStyle)
     }
@@ -1159,8 +1198,14 @@ private extension ShareSheetView {
     }
 
     func graphSubtitle(for range: (start: Date, end: Date), bucketed: Bool) -> String {
-        let base = bucketed ? "Weekly totals" : "Daily totals"
-        return "\(base) - \(formatDateRange(start: range.start, end: range.end))"
+        let base = bucketed
+            ? String(localized: "Share.Graph.WeeklyTotals")
+            : String(localized: "Share.Graph.DailyTotals")
+        return String.localizedStringWithFormat(
+            String(localized: "Share.Graph.SubtitleFormat"),
+            base,
+            formatDateRange(start: range.start, end: range.end)
+        )
     }
 
     func shouldBucketWeekly(range: (start: Date, end: Date)) -> Bool {
@@ -1207,7 +1252,10 @@ private extension ShareSheetView {
         guard let quote else { return nil }
         let attribution: String?
         if let page = quote.pageNumber {
-            attribution = "Page \(formatNumber(page))"
+            attribution = String.localizedStringWithFormat(
+                String(localized: "Share.Quote.PageFormat"),
+                formatNumber(page)
+            )
         } else {
             attribution = nil
         }
@@ -1228,10 +1276,10 @@ private extension ShareSheetView {
         case .pagesRead:
             return ShareStatItem(icon: option.icon, label: option.title, value: formatNumber(currentPage))
         case .totalPages:
-            let value = totalPages > 0 ? formatNumber(totalPages) : "N/A"
+            let value = totalPages > 0 ? formatNumber(totalPages) : String(localized: "Common.NotAvailable")
             return ShareStatItem(icon: option.icon, label: option.title, value: value)
         case .progressPercent:
-            let value = progress.map { "\(Int(($0 * 100).rounded()))%" } ?? "N/A"
+            let value = progress.map { "\(Int(($0 * 100).rounded()))%" } ?? String(localized: "Common.NotAvailable")
             return ShareStatItem(icon: option.icon, label: option.title, value: value)
         case .timeRead:
             return ShareStatItem(icon: option.icon, label: option.title, value: formatMinutes(minutesRead))
@@ -1280,9 +1328,23 @@ private extension ShareSheetView {
     ) -> ShareStatItem {
         switch option {
         case .currentStreak:
-            return ShareStatItem(icon: option.icon, label: option.title, value: "\(formatNumber(currentStreak))d")
+            return ShareStatItem(
+                icon: option.icon,
+                label: option.title,
+                value: String.localizedStringWithFormat(
+                    String(localized: "Common.DayAbbrevFormat"),
+                    formatNumber(currentStreak)
+                )
+            )
         case .bestStreak:
-            return ShareStatItem(icon: option.icon, label: option.title, value: "\(formatNumber(bestStreak))d")
+            return ShareStatItem(
+                icon: option.icon,
+                label: option.title,
+                value: String.localizedStringWithFormat(
+                    String(localized: "Common.DayAbbrevFormat"),
+                    formatNumber(bestStreak)
+                )
+            )
         case .pagesToday:
             return ShareStatItem(icon: option.icon, label: option.title, value: formatNumber(max(0, pagesToday)))
         case .minutesToday:
@@ -1290,7 +1352,14 @@ private extension ShareSheetView {
         case .sessionsToday:
             return ShareStatItem(icon: option.icon, label: option.title, value: formatNumber(sessionCount))
         case .activeDays7:
-            return ShareStatItem(icon: option.icon, label: option.title, value: "\(formatNumber(activeDays))d")
+            return ShareStatItem(
+                icon: option.icon,
+                label: option.title,
+                value: String.localizedStringWithFormat(
+                    String(localized: "Common.DayAbbrevFormat"),
+                    formatNumber(activeDays)
+                )
+            )
         }
     }
 
@@ -1334,6 +1403,7 @@ private extension ShareSheetView {
 struct LibraryShareSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     @Query(sort: \Book.dateAdded, order: .reverse) private var allBooks: [Book]
 
     @State private var selectedFilter: LibraryShareFilter = .all
@@ -1348,7 +1418,7 @@ struct LibraryShareSheetView: View {
     @State private var coverImages: [UUID: UIImage] = [:]
     @State private var showInstagramAlert = false
     @State private var showSaveConfirmation = false
-    @State private var saveResultMessage = "Saved to Photos."
+    @State private var saveResultMessage = String(localized: "Share.SaveResult.Saved")
     @State private var isRendering = false
 
     var body: some View {
@@ -1361,11 +1431,11 @@ struct LibraryShareSheetView: View {
                 actionsSection
             }
             .tint(themeColor.color)
-            .navigationTitle("Share Library")
+            .navigationTitle("Share.Library.Title")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
+                    Button("Common.Done") {
                         dismiss()
                     }
                     .foregroundStyle(themeColor.color)
@@ -1375,13 +1445,13 @@ struct LibraryShareSheetView: View {
         .task(id: coverLoadKey) {
             await loadCoverImages()
         }
-        .alert("Instagram Not Available", isPresented: $showInstagramAlert) {
-            Button("OK", role: .cancel) {}
+        .alert("Share.InstagramUnavailable.Title", isPresented: $showInstagramAlert) {
+            Button("Common.OK", role: .cancel) {}
         } message: {
-            Text("Install Instagram to share directly to Stories, or use the Share Image button instead.")
+            Text("Share.InstagramUnavailable.Message")
         }
-        .alert("Image Saved", isPresented: $showSaveConfirmation) {
-            Button("OK", role: .cancel) {}
+        .alert("Share.ImageSaved.Title", isPresented: $showSaveConfirmation) {
+            Button("Common.OK", role: .cancel) {}
         } message: {
             Text(saveResultMessage)
         }
@@ -1396,7 +1466,7 @@ struct LibraryShareSheetView: View {
     }
 
     private var previewSection: some View {
-        Section("Preview") {
+        Section("Share.Library.Section.Preview") {
             previewCard
                 .listRowInsets(EdgeInsets(top: Theme.Spacing.sm, leading: Theme.Spacing.md, bottom: Theme.Spacing.sm, trailing: Theme.Spacing.md))
                 .listRowSeparator(.hidden)
@@ -1405,51 +1475,51 @@ struct LibraryShareSheetView: View {
     }
 
     private var librarySection: some View {
-        Section("Library") {
-            Picker("Filter", selection: $selectedFilter) {
+        Section("Share.Library.Section.Library") {
+            Picker("Share.Library.Picker.Filter", selection: $selectedFilter) {
                 ForEach(LibraryShareFilter.allCases) { filter in
                     Text(filter.title).tag(filter)
                 }
             }
 
-            Picker("Sort", selection: $selectedSort) {
+            Picker("Share.Library.Picker.Sort", selection: $selectedSort) {
                 ForEach(LibraryShareSort.allCases) { sort in
                     Text(sort.title).tag(sort)
                 }
             }
 
-            Toggle("Show count badge", isOn: $showCountBadge)
+            Toggle("Share.Library.Toggle.ShowCountBadge", isOn: $showCountBadge)
         }
     }
 
     private var gridSection: some View {
         Section(
-            header: Text("Grid"),
-            footer: Text("Use compact for dense shelves and large for hero covers.")
+            header: Text("Share.Library.Section.Grid"),
+            footer: Text("Share.Library.Grid.Footer")
         ) {
-            Picker("Grid size", selection: $selectedGrid) {
+            Picker("Share.Library.Picker.GridSize", selection: $selectedGrid) {
                 ForEach(LibraryShareGridStyle.allCases) { style in
                     Text(style.title).tag(style)
                 }
             }
             .pickerStyle(.segmented)
 
-            Toggle("Show titles", isOn: $showTitles)
-            Toggle("Show status icons", isOn: $showStatus)
-            Toggle("Show overflow count", isOn: $showOverflow)
+            Toggle("Share.Library.Toggle.ShowTitles", isOn: $showTitles)
+            Toggle("Share.Library.Toggle.ShowStatusIcons", isOn: $showStatus)
+            Toggle("Share.Library.Toggle.ShowOverflowCount", isOn: $showOverflow)
         }
     }
 
     private var appearanceSection: some View {
-        Section("Appearance") {
-            Picker("Background", selection: $selectedBackground) {
+        Section("Share.Library.Section.Appearance") {
+            Picker("Share.Picker.Background", selection: $selectedBackground) {
                 ForEach(ShareBackgroundStyle.allCases) { style in
                     Text(style.title).tag(style)
                 }
             }
             .pickerStyle(.segmented)
 
-            Picker("Layout", selection: $selectedLayout) {
+            Picker("Share.Picker.Layout", selection: $selectedLayout) {
                 ForEach(ShareLayoutStyle.allCases) { layout in
                     Text(layout.title).tag(layout)
                 }
@@ -1459,30 +1529,30 @@ struct LibraryShareSheetView: View {
     }
 
     private var actionsSection: some View {
-        Section("Share") {
+        Section("Share.Section.Share") {
             Button {
                 handleShare(.save)
             } label: {
-                Label("Save Image", systemImage: "square.and.arrow.down")
+                Label("Share.Action.SaveImage", systemImage: "square.and.arrow.down")
             }
             .disabled(isRendering)
 
             Button {
                 handleShare(.instagram)
             } label: {
-                Label("Share to Instagram Story", systemImage: "camera.fill")
+                Label("Share.Action.InstagramStory", systemImage: "camera.fill")
             }
             .disabled(isRendering)
 
             Button {
                 handleShare(.shareSheet)
             } label: {
-                Label("Share Image", systemImage: "square.and.arrow.up")
+                Label("Share.Action.ShareImage", systemImage: "square.and.arrow.up")
             }
             .disabled(isRendering)
 
             if isRendering {
-                ProgressView("Preparing your share...")
+                ProgressView("Share.Progress.Preparing")
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
         }
@@ -1504,25 +1574,35 @@ struct LibraryShareSheetView: View {
             gridStyle: selectedGrid,
             showTitles: showTitles,
             showStatus: showStatus,
-            footer: "Shared with Shlf"
+            footer: String(localized: "Share.Footer.Shlf")
         )
     }
 
     private var subtitleText: String? {
-        let filterLabel = selectedFilter.title
         let sortLabel = selectedSort.title
-        if filterLabel == "All" {
+        if selectedFilter == .all {
             return sortLabel
         }
-        return "\(filterLabel) • \(sortLabel)"
+        return String.localizedStringWithFormat(
+            String(localized: "Share.Library.Subtitle.Format"),
+            selectedFilter.title,
+            sortLabel
+        )
     }
 
     private var badgeText: String? {
         guard showCountBadge else { return nil }
         let count = filteredBooks.count
-        let countText = formatNumber(count)
-        let noun = count == 1 ? "Book" : "Books"
-        return "\(countText) \(noun)"
+        if count == 1 {
+            return String.localizedStringWithFormat(
+                String(localized: "Share.Library.Badge.CountSingleFormat"),
+                count
+            )
+        }
+        return String.localizedStringWithFormat(
+            String(localized: "Share.Library.Badge.CountPluralFormat"),
+            count
+        )
     }
 
     private var filteredBooks: [Book] {
@@ -1699,7 +1779,7 @@ struct LibraryShareSheetView: View {
         PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
             guard status == .authorized || status == .limited else {
                 Task { @MainActor in
-                    saveResultMessage = "Allow Photos access to save images."
+                    saveResultMessage = String(localized: "Share.SaveResult.AllowPhotos")
                     showSaveConfirmation = true
                 }
                 return
@@ -1710,9 +1790,9 @@ struct LibraryShareSheetView: View {
             }) { success, error in
                 Task { @MainActor in
                     if success {
-                        saveResultMessage = "Saved to Photos."
+                        saveResultMessage = String(localized: "Share.SaveResult.Saved")
                     } else {
-                        saveResultMessage = error?.localizedDescription ?? "Couldn't save the image."
+                        saveResultMessage = error?.localizedDescription ?? String(localized: "Share.SaveResult.Failed")
                     }
                     showSaveConfirmation = true
                 }

@@ -951,11 +951,11 @@ struct ReadingPreferencesView: View {
                                 .foregroundStyle(themeColor.color)
                                 .frame(width: 16)
 
-                            Text(localized("About", locale: locale))
+                            Text("Settings.Reading.AboutTitle")
                                 .font(.headline)
                         }
 
-                        Text(localized("Customize how you track your reading progress", locale: locale))
+                        Text("Settings.Reading.AboutDescription")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -971,7 +971,7 @@ struct ReadingPreferencesView: View {
                                 .foregroundStyle(themeColor.color)
                                 .frame(width: 16)
 
-                            Text("Tracking Style")
+                            Text("Settings.Reading.TrackingStyle")
                                 .font(.headline)
                         }
 
@@ -983,7 +983,11 @@ struct ReadingPreferencesView: View {
                                     do {
                                         try modelContext.save()
                                     } catch {
-                                        saveErrorMessage = "Failed to save: \(error.localizedDescription)"
+                                        saveErrorMessage = String(
+                                            format: localized("Settings.Reading.SaveErrorFormat", locale: locale),
+                                            locale: locale,
+                                            arguments: [error.localizedDescription]
+                                        )
                                         showSaveError = true
                                     }
                                 }
@@ -995,11 +999,11 @@ struct ReadingPreferencesView: View {
                                         .frame(width: 28)
 
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text(localized("Stepper", locale: locale))
+                                        Text("Settings.Reading.StepperTitle")
                                             .font(.subheadline.weight(.medium))
                                             .foregroundStyle(.primary)
 
-                                        Text(localized("Use +/- buttons to increment page by page", locale: locale))
+                                        Text("Settings.Reading.StepperDescription")
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
                                     }
@@ -1028,7 +1032,11 @@ struct ReadingPreferencesView: View {
                                     do {
                                         try modelContext.save()
                                     } catch {
-                                        saveErrorMessage = "Failed to save: \(error.localizedDescription)"
+                                        saveErrorMessage = String(
+                                            format: localized("Settings.Reading.SaveErrorFormat", locale: locale),
+                                            locale: locale,
+                                            arguments: [error.localizedDescription]
+                                        )
                                         showSaveError = true
                                     }
                                 }
@@ -1040,11 +1048,11 @@ struct ReadingPreferencesView: View {
                                         .frame(width: 28)
 
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text(localized("Slider", locale: locale))
+                                        Text("Settings.Reading.SliderTitle")
                                             .font(.subheadline.weight(.medium))
                                             .foregroundStyle(.primary)
 
-                                        Text(localized("Drag the slider to quickly jump to any page", locale: locale))
+                                        Text("Settings.Reading.SliderDescription")
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
                                     }
@@ -1079,16 +1087,16 @@ struct ReadingPreferencesView: View {
                                     .foregroundStyle(themeColor.color)
                                     .frame(width: 16)
 
-                                Text("Slider Options")
+                                Text("Settings.Reading.SliderOptionsTitle")
                                     .font(.headline)
                             }
 
                             Toggle(isOn: $profile.showSliderButtons) {
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text("Show +/- Buttons")
+                                    Text("Settings.Reading.ShowButtonsTitle")
                                         .font(.subheadline.weight(.medium))
 
-                                    Text("Add increment/decrement buttons alongside the slider")
+                                    Text("Settings.Reading.ShowButtonsDescription")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                 }
@@ -1098,7 +1106,11 @@ struct ReadingPreferencesView: View {
                                 do {
                                     try modelContext.save()
                                 } catch {
-                                    saveErrorMessage = "Failed to save: \(error.localizedDescription)"
+                                    saveErrorMessage = String(
+                                        format: localized("Settings.Reading.SaveErrorFormat", locale: locale),
+                                        locale: locale,
+                                        arguments: [error.localizedDescription]
+                                    )
                                     showSaveError = true
                                     profile.showSliderButtons = oldValue
                                 }
@@ -1117,11 +1129,11 @@ struct ReadingPreferencesView: View {
                                     .foregroundStyle(themeColor.color)
                                     .frame(width: 16)
 
-                                Text("Pages per Tap")
+                                Text("Settings.Reading.PagesPerTapTitle")
                                     .font(.headline)
                             }
 
-                            Text(localized("When using +/- buttons, this is how many pages to add or remove with each tap", locale: locale))
+                            Text("Settings.Reading.PagesPerTapDescription")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
 
@@ -1167,10 +1179,10 @@ struct ReadingPreferencesView: View {
             }
             .scrollIndicators(.hidden)
         }
-        .navigationTitle("Reading Progress")
+        .navigationTitle("Settings.Reading.Title")
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Save Error", isPresented: $showSaveError) {
-            Button("OK") {}
+        .alert("Settings.Reading.SaveErrorTitle", isPresented: $showSaveError) {
+            Button("Common.OK") {}
         } message: {
             Text(saveErrorMessage)
         }
@@ -1209,13 +1221,13 @@ struct DataManagementView: View {
     var body: some View {
         Form {
             Section {
-                Text("Export your reading data, clear cache, or reset the app.")
+                Text("Settings.Data.Description")
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.Colors.secondaryText)
             }
 
-            Section("Export") {
-                Button("Export Reading Data") {
+            Section("Settings.Data.Export.Section") {
+                Button("Settings.Data.Export.Action") {
                     exportReadingData()
                 }
                 .disabled(isExporting || isResetting)
@@ -1223,15 +1235,15 @@ struct DataManagementView: View {
                 if isExporting {
                     HStack {
                         ProgressView()
-                        Text("Preparing export...")
+                        Text("Settings.Data.Export.InProgress")
                             .font(Theme.Typography.caption)
                             .foregroundStyle(Theme.Colors.secondaryText)
                     }
                 }
             }
 
-            Section("Cache") {
-                Button("Clear Image Cache") {
+            Section("Settings.Data.Cache.Section") {
+                Button("Settings.Data.Cache.Action") {
                     showClearCacheAlert = true
                 }
                 .disabled(isClearing)
@@ -1239,15 +1251,15 @@ struct DataManagementView: View {
                 if isClearing {
                     HStack {
                         ProgressView()
-                        Text("Clearing cache...")
+                        Text("Settings.Data.Cache.InProgress")
                             .font(Theme.Typography.caption)
                             .foregroundStyle(Theme.Colors.secondaryText)
                     }
                 }
             }
 
-            Section("Danger Zone") {
-                Button("Reset App", role: .destructive) {
+            Section("Settings.Data.Danger.Section") {
+                Button("Settings.Data.Danger.Action", role: .destructive) {
                     showResetAlert = true
                 }
                 .disabled(isExporting || isResetting)
@@ -1255,50 +1267,50 @@ struct DataManagementView: View {
                 if isResetting {
                     HStack {
                         ProgressView()
-                        Text("Resetting data...")
+                        Text("Settings.Data.Danger.InProgress")
                             .font(Theme.Typography.caption)
                             .foregroundStyle(Theme.Colors.secondaryText)
                     }
                 }
             }
         }
-        .navigationTitle("Data Management")
-        .alert("Clear Image Cache?", isPresented: $showClearCacheAlert) {
-            Button("Clear", role: .destructive) {
+        .navigationTitle("Settings.Data.Title")
+        .alert("Settings.Data.Cache.AlertTitle", isPresented: $showClearCacheAlert) {
+            Button("Settings.Data.Cache.Confirm", role: .destructive) {
                 clearCache()
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Common.Cancel", role: .cancel) {}
         } message: {
-            Text("This will remove all cached book cover images. They will be downloaded again when needed.")
+            Text("Settings.Data.Cache.Message")
         }
-        .alert("Export Error", isPresented: $showExportError) {
-            Button("OK") {}
+        .alert("Settings.Data.Export.ErrorTitle", isPresented: $showExportError) {
+            Button("Common.OK") {}
         } message: {
             Text(exportErrorMessage)
         }
-        .alert("Reset App?", isPresented: $showResetAlert) {
-            Button("Cancel", role: .cancel) {}
-            Button("Continue", role: .destructive) {
+        .alert("Settings.Data.Danger.AlertTitle", isPresented: $showResetAlert) {
+            Button("Common.Cancel", role: .cancel) {}
+            Button("Settings.Data.Danger.Continue", role: .destructive) {
                 resetConfirmText = ""
                 showResetConfirmAlert = true
             }
         } message: {
-            Text("This will permanently delete your books, sessions, goals, quotes, and streak history from this device. If iCloud Sync is enabled, it also removes them from iCloud.")
+            Text("Settings.Data.Danger.Message")
         }
         .alert("Settings.ResetConfirm.Title", isPresented: $showResetConfirmAlert) {
             TextField("Settings.ResetConfirm.Placeholder", text: $resetConfirmText)
                 .textInputAutocapitalization(.characters)
                 .autocorrectionDisabled(true)
-            Button("Cancel", role: .cancel) {}
-            Button("Reset", role: .destructive) {
+            Button("Common.Cancel", role: .cancel) {}
+            Button("Settings.Data.Danger.ConfirmReset", role: .destructive) {
                 resetApp()
             }
             .disabled(resetConfirmText != "RESET")
         } message: {
             Text("Settings.ResetConfirm.Message")
         }
-        .alert("Reset Error", isPresented: $showResetError) {
-            Button("OK") {}
+        .alert("Settings.Data.Danger.ErrorTitle", isPresented: $showResetError) {
+            Button("Common.OK") {}
         } message: {
             Text(resetErrorMessage)
         }
