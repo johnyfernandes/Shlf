@@ -12,6 +12,7 @@ struct ChangeEditionView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     @Bindable var book: Book
 
     @State private var editions: [EditionInfo] = []
@@ -26,25 +27,25 @@ struct ChangeEditionView: View {
             Group {
                 if book.openLibraryWorkID == nil && book.openLibraryEditionID == nil && (book.isbn ?? "").isEmpty {
                     ContentUnavailableView {
-                        Label("No Editions Available", systemImage: "books.vertical")
+                        Label("ChangeEdition.NoEditionsAvailable", systemImage: "books.vertical")
                     } description: {
-                        Text("This book wasn’t added from Open Library.")
+                        Text("ChangeEdition.NotFromOpenLibrary")
                     } actions: {
-                        Button("Edit Book") {
+                        Button("ChangeEdition.EditBook") {
                             dismiss()
                         }
                         .foregroundStyle(themeColor.color)
                     }
                 } else if isLoading && editions.isEmpty {
-                    ProgressView("Loading Editions...")
+                    ProgressView("ChangeEdition.Loading")
                         .tint(themeColor.color)
                 } else if editions.isEmpty {
                     ContentUnavailableView {
-                        Label("No Editions Found", systemImage: "magnifyingglass")
+                        Label("ChangeEdition.NoEditionsFound", systemImage: "magnifyingglass")
                     } description: {
-                        Text("Open Library didn’t return any editions for this book.")
+                        Text("ChangeEdition.NoEditionsMessage")
                     } actions: {
-                        Button("Try Again") {
+                        Button("Common.TryAgain") {
                             Task { await loadEditions() }
                         }
                         .foregroundStyle(themeColor.color)
@@ -68,11 +69,11 @@ struct ChangeEditionView: View {
                     .listStyle(.plain)
                 }
             }
-            .navigationTitle("Change Edition")
+            .navigationTitle("ChangeEdition.Title")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
+                    Button("Common.Done") {
                         dismiss()
                     }
                     .foregroundStyle(themeColor.color)
@@ -81,11 +82,11 @@ struct ChangeEditionView: View {
             .task {
                 await loadEditions()
             }
-            .alert("Couldn’t Change Edition", isPresented: Binding(
+            .alert("ChangeEdition.Error.Title", isPresented: Binding(
                 get: { errorMessage != nil },
                 set: { if !$0 { errorMessage = nil } }
             )) {
-                Button("OK", role: .cancel) {}
+                Button("Common.OK", role: .cancel) {}
             } message: {
                 Text(errorMessage ?? "")
             }
@@ -107,7 +108,7 @@ struct ChangeEditionView: View {
                 editions = fetched
             }
         } catch {
-            errorMessage = "Open Library is unavailable right now. Please try again."
+            errorMessage = localized("ChangeEdition.Error.OpenLibraryUnavailable", locale: locale)
         }
     }
 
@@ -124,7 +125,7 @@ struct ChangeEditionView: View {
                 dismiss()
             }
         } catch {
-            errorMessage = "Failed to load edition details. Please try again."
+            errorMessage = localized("ChangeEdition.Error.LoadEditionFailed", locale: locale)
         }
     }
 
@@ -148,7 +149,7 @@ struct ChangeEditionView: View {
                 return resolved
             }
         } catch {
-            errorMessage = "Open Library is unavailable right now. Please try again."
+            errorMessage = localized("ChangeEdition.Error.OpenLibraryUnavailable", locale: locale)
         }
 
         if let resolved = await resolveWorkIDFromSearch() {
@@ -173,7 +174,7 @@ struct ChangeEditionView: View {
                 return workID
             }
         } catch {
-            errorMessage = "Open Library is unavailable right now. Please try again."
+            errorMessage = localized("ChangeEdition.Error.OpenLibraryUnavailable", locale: locale)
         }
 
         return nil
@@ -213,6 +214,7 @@ struct ChangeEditionView: View {
 
 private struct EditionRow: View {
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     let edition: EditionInfo
     let isCurrent: Bool
     let isApplying: Bool
@@ -241,7 +243,7 @@ private struct EditionRow: View {
                         Text(verbatim: "•")
                         Text(
                             String.localizedStringWithFormat(
-                                String(localized: "%lld pages"),
+                                localized("ChangeEdition.PagesFormat %lld", locale: locale),
                                 pages
                             )
                         )
@@ -264,7 +266,7 @@ private struct EditionRow: View {
                 ProgressView()
                     .tint(themeColor.color)
             } else if isCurrent {
-                Text("Current")
+                Text(verbatim: localized("ChangeEdition.Current", locale: locale))
                     .font(Theme.Typography.caption2)
                     .foregroundStyle(themeColor.color)
                     .padding(.horizontal, 8)

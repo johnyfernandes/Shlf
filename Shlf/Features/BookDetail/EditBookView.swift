@@ -82,7 +82,7 @@ struct EditBookView: View {
                             dismiss()
                         }
                     } label: {
-                        Text("Cancel")
+                        Text("Common.Cancel")
                             .fontWeight(.medium)
                     }
                 }
@@ -91,7 +91,7 @@ struct EditBookView: View {
                     Button {
                         saveAndDismiss()
                     } label: {
-                        Text("Save")
+                        Text("Common.Save")
                             .fontWeight(.semibold)
                     }
                     .tint(themeColor.color)
@@ -110,13 +110,13 @@ struct EditBookView: View {
                     }
                 }
             }
-            .alert("Discard Changes?", isPresented: $showDiscardAlert) {
-                Button("Discard", role: .destructive) {
+            .alert("EditBook.Discard.Title", isPresented: $showDiscardAlert) {
+                Button("Common.Discard", role: .destructive) {
                     dismiss()
                 }
-                Button("Keep Editing", role: .cancel) {}
+                Button("EditBook.Discard.KeepEditing", role: .cancel) {}
             } message: {
-                Text("You have unsaved changes. Are you sure you want to discard them?")
+                Text("EditBook.Discard.Message")
             }
             .sheet(isPresented: $showSubjectPicker) {
                 if let profile {
@@ -202,7 +202,7 @@ struct EditBookView: View {
                     .font(.system(size: 40))
                     .foregroundStyle(themeColor.color.opacity(0.6))
 
-                Text(localized("Add Cover", locale: locale))
+                Text(verbatim: localized("EditBook.AddCover", locale: locale))
                     .font(.caption2)
                     .foregroundStyle(themeColor.color.opacity(0.6))
             }
@@ -214,33 +214,33 @@ struct EditBookView: View {
     private var essentialInfoSection: some View {
         VStack(spacing: 16) {
             ModernTextField(
-                title: localized("Title", locale: locale),
+                title: localized("EditBook.Title", locale: locale),
                 text: $book.title,
                 icon: "text.alignleft",
-                placeholder: localized("Enter book title", locale: locale),
+                placeholder: localized("EditBook.Title.Placeholder", locale: locale),
                 focused: $focusedField,
                 field: .title
             )
             .onChange(of: book.title) { _, _ in hasUnsavedChanges = true }
 
             ModernTextField(
-                title: localized("Author", locale: locale),
+                title: localized("EditBook.Author", locale: locale),
                 text: $book.author,
                 icon: "person.fill",
-                placeholder: localized("Enter author name", locale: locale),
+                placeholder: localized("EditBook.Author.Placeholder", locale: locale),
                 focused: $focusedField,
                 field: .author
             )
             .onChange(of: book.author) { _, _ in hasUnsavedChanges = true }
 
             ModernTextField(
-                title: localized("ISBN", locale: locale),
+                title: localized("EditBook.ISBN", locale: locale),
                 text: Binding(
                     get: { book.isbn ?? "" },
                     set: { book.isbn = $0.isEmpty ? nil : $0 }
                 ),
                 icon: "barcode",
-                placeholder: localized("Optional", locale: locale),
+                placeholder: localized("Common.Optional", locale: locale),
                 focused: $focusedField,
                 field: .isbn
             )
@@ -258,20 +258,20 @@ struct EditBookView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
-                Text("Reading Progress")
+                Text("EditBook.ReadingProgress")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.Colors.text)
             }
             .padding(.leading, 2)
 
-            Text(localized("Update your current page and total pages.", locale: locale))
+            Text(verbatim: localized("EditBook.Progress.Help", locale: locale))
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .padding(.leading, 2)
 
             HStack(spacing: 10) {
                 CompactNumberField(
-                    title: "Current Page",
+                    title: localized("EditBook.CurrentPage", locale: locale),
                     value: $book.currentPage,
                     icon: "bookmark.fill",
                     focused: $focusedField,
@@ -279,7 +279,7 @@ struct EditBookView: View {
                 )
 
                 CompactNumberField(
-                    title: "Total Pages",
+                    title: localized("EditBook.TotalPages", locale: locale),
                     value: Binding(
                         get: { book.totalPages ?? 0 },
                         set: { book.totalPages = $0 == 0 ? nil : $0 }
@@ -295,9 +295,9 @@ struct EditBookView: View {
                     HStack {
                         Text(
                             String.localizedStringWithFormat(
-                                localized("%lld%% %@", locale: locale),
+                                localized("EditBook.ProgressCompleteFormat %lld %@", locale: locale),
                                 Int(book.progressPercentage),
-                                localized("Complete", locale: locale)
+                                localized("EditBook.Complete", locale: locale)
                             )
                         )
                             .font(.caption)
@@ -307,7 +307,7 @@ struct EditBookView: View {
 
                         Text(
                             String.localizedStringWithFormat(
-                                localized("%lld pages left", locale: locale),
+                                localized("EditBook.PagesLeftFormat %lld", locale: locale),
                                 max(0, total - book.currentPage)
                             )
                         )
@@ -329,7 +329,7 @@ struct EditBookView: View {
     private var typeStatusSection: some View {
         VStack(spacing: 16) {
             OutlineMenuField(
-                title: "Book Type",
+                title: "EditBook.BookType",
                 icon: "books.vertical.fill",
                 selection: $book.bookType,
                 label: {
@@ -348,7 +348,7 @@ struct EditBookView: View {
             .onChange(of: book.bookType) { _, _ in hasUnsavedChanges = true }
 
             OutlineMenuField(
-                title: "Reading Status",
+                title: "EditBook.ReadingStatus",
                 icon: "book.fill",
                 selection: $book.readingStatus,
                 label: {
@@ -372,7 +372,7 @@ struct EditBookView: View {
 
     private var ratingCompactSection: some View {
         VStack(spacing: 8) {
-            Text("Rating")
+            Text("EditBook.Rating")
                 .font(.caption.weight(.medium))
                 .foregroundStyle(Theme.Colors.secondaryText)
 
@@ -411,7 +411,7 @@ struct EditBookView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 20)
 
-                Text(localized("Publishing Details", locale: locale))
+                Text(verbatim: localized("EditBook.PublishingDetails", locale: locale))
                     .font(Theme.Typography.headline)
                     .foregroundStyle(Theme.Colors.text)
             }
@@ -419,37 +419,37 @@ struct EditBookView: View {
 
             VStack(spacing: 12) {
                 ModernTextField(
-                    title: localized("Publisher", locale: locale),
+                    title: localized("EditBook.Publisher", locale: locale),
                     text: Binding(
                         get: { book.publisher ?? "" },
                         set: { book.publisher = $0.isEmpty ? nil : $0 }
                     ),
                     icon: "building.2.fill",
-                    placeholder: localized("Optional", locale: locale),
+                    placeholder: localized("Common.Optional", locale: locale),
                     focused: $focusedField,
                     field: .publisher
                 )
 
                 ModernTextField(
-                    title: localized("Published Date", locale: locale),
+                    title: localized("EditBook.PublishedDate", locale: locale),
                     text: Binding(
                         get: { book.publishedDate ?? "" },
                         set: { book.publishedDate = $0.isEmpty ? nil : $0 }
                     ),
                     icon: "calendar",
-                    placeholder: localized("e.g., 2024", locale: locale),
+                    placeholder: localized("EditBook.PublishedDate.Placeholder", locale: locale),
                     focused: $focusedField,
                     field: .publishedDate
                 )
 
                 ModernTextField(
-                    title: localized("Language", locale: locale),
+                    title: localized("EditBook.Language", locale: locale),
                     text: Binding(
                         get: { book.language ?? "" },
                         set: { book.language = $0.isEmpty ? nil : $0 }
                     ),
                     icon: "globe",
-                    placeholder: localized("e.g., English", locale: locale),
+                    placeholder: localized("EditBook.Language.Placeholder", locale: locale),
                     focused: $focusedField,
                     field: .language
                 )
@@ -467,7 +467,7 @@ struct EditBookView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 20)
 
-                Text(localized("Description", locale: locale))
+                Text(verbatim: localized("EditBook.Description", locale: locale))
                     .font(Theme.Typography.headline)
                     .foregroundStyle(Theme.Colors.text)
             }
@@ -475,7 +475,7 @@ struct EditBookView: View {
 
             ZStack(alignment: .topLeading) {
                 if (book.bookDescription ?? "").isEmpty && focusedField != .description {
-                    Text("Add a brief description of the book...")
+                    Text("EditBook.Description.Placeholder")
                         .font(Theme.Typography.body)
                         .foregroundStyle(Theme.Colors.tertiaryText)
                         .padding(.horizontal, 16)
@@ -509,14 +509,14 @@ struct EditBookView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 20)
 
-                Text("Subjects")
+                Text("EditBook.Subjects")
                     .font(Theme.Typography.headline)
                     .foregroundStyle(Theme.Colors.text)
             }
             .padding(.leading, 4)
 
             if selectedSubjects.isEmpty {
-                Text("Add genres or topics to organize this book.")
+                Text("EditBook.Subjects.Empty")
                     .font(Theme.Typography.subheadline)
                     .foregroundStyle(Theme.Colors.secondaryText)
             } else {
@@ -538,7 +538,7 @@ struct EditBookView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "slider.horizontal.3")
                         .font(.caption)
-                    Text(selectedSubjects.isEmpty ? "Add subjects" : "Edit subjects")
+                    Text(selectedSubjects.isEmpty ? "EditBook.Subjects.Add" : "EditBook.Subjects.Edit")
                         .font(.caption.weight(.semibold))
                 }
                 .foregroundStyle(themeColor.color)
@@ -563,7 +563,7 @@ struct EditBookView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 20)
 
-                Text("Personal Notes")
+                Text("EditBook.PersonalNotes")
                     .font(Theme.Typography.headline)
                     .foregroundStyle(Theme.Colors.text)
             }
@@ -571,7 +571,7 @@ struct EditBookView: View {
 
             ZStack(alignment: .topLeading) {
                 if book.notes.isEmpty && focusedField != .notes {
-                    Text("Add your personal thoughts and notes...")
+                    Text("EditBook.Notes.Placeholder")
                         .font(Theme.Typography.body)
                         .foregroundStyle(Theme.Colors.tertiaryText)
                         .padding(.horizontal, 16)
