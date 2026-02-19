@@ -4097,7 +4097,7 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Adicionar objetivo"
+            "value": "Adicionar meta"
           }
         },
         "pt-PT": {
@@ -36670,13 +36670,13 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nenhum objetivo definido"
+            "value": "Nenhuma meta definida"
           }
         },
         "pt-PT": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nenhum objetivo definido"
+            "value": "Sem objetivos definidos"
           }
         }
       }
@@ -51839,19 +51839,19 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Establece metas de lectura para seguir tu progreso"
+            "value": "Establece objetivos de lectura para seguir tu progreso"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fixe des objectifs de lecture pour suivre tes progrès"
+            "value": "Définissez des objectifs de lecture pour suivre vos progrès"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Define objetivos de leitura para acompanhar o teu progresso"
+            "value": "Defina metas de leitura para acompanhar seu progresso"
           }
         },
         "pt-PT": {
