@@ -41,7 +41,7 @@ struct ActiveSessionAccessoryView: View {
                 // Timer display
                 VStack(alignment: .trailing, spacing: 2) {
                     if session.isPaused {
-                        Text("Paused")
+                        Text("Common.Paused")
                             .font(.caption2.weight(.semibold))
                             .foregroundStyle(.orange)
                     }

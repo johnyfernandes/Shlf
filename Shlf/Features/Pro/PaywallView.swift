@@ -482,7 +482,7 @@ private struct PaywallHeroCard: View {
                         .offset(x: 8, y: -8)
                 }
 
-                Text("Shlf Pro")
+                Text("Paywall.BrandTitle")
                     .font(Theme.Typography.headline)
                     .foregroundStyle(Theme.Colors.text)
 
@@ -537,7 +537,7 @@ private struct ProGlowBadge: View {
     @State private var animate = false
 
     var body: some View {
-        Text("Pro")
+        Text("Common.Pro")
             .font(.caption2.weight(.semibold))
             .foregroundStyle(isLight ? Color.black.opacity(0.85) : .white)
             .padding(.horizontal, 10)

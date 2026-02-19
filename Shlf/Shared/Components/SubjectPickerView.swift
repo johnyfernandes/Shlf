@@ -41,15 +41,15 @@ struct SubjectPickerView: View {
                                     .foregroundStyle(themeColor.color)
                                     .frame(width: 16)
 
-                                Text("Selected")
+                                Text("Subjects.Picker.Selected.Title")
                                     .font(.headline)
                             }
 
                             if selectedSubjects.isEmpty {
                                 InlineEmptyStateView(
                                     icon: "tag",
-                                    title: "No subjects selected",
-                                    message: "Choose from your library or add a new subject."
+                                    title: "Subjects.Picker.Selected.Empty.Title",
+                                    message: "Subjects.Picker.Selected.Empty.Message"
                                 )
                             } else {
                                 FlowLayout(spacing: 8) {
@@ -84,12 +84,12 @@ struct SubjectPickerView: View {
                                     .foregroundStyle(themeColor.color)
                                     .frame(width: 16)
 
-                                Text("Add Subject")
+                                Text("Subjects.Picker.Add.Title")
                                     .font(.headline)
                             }
 
                             HStack(spacing: 12) {
-                                TextField("New subject", text: $newSubject)
+                                TextField("Subjects.Picker.Add.Placeholder", text: $newSubject)
                                     .textInputAutocapitalization(.words)
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 10)
@@ -98,7 +98,7 @@ struct SubjectPickerView: View {
                                 Button {
                                     addNewSubject()
                                 } label: {
-                                    Text("Add")
+                                    Text("Subjects.Picker.Add.Action")
                                         .font(.subheadline.weight(.semibold))
                                         .padding(.horizontal, 12)
                                         .padding(.vertical, 10)
@@ -119,15 +119,15 @@ struct SubjectPickerView: View {
                                     .foregroundStyle(themeColor.color)
                                     .frame(width: 16)
 
-                                Text("All Subjects")
+                                Text("Subjects.Picker.All.Title")
                                     .font(.headline)
                             }
 
                             if profile.subjectLibrary.isEmpty {
                                 InlineEmptyStateView(
                                     icon: "tag",
-                                    title: "No subjects yet",
-                                    message: "Create your first subject to get started."
+                                    title: "Subjects.Picker.All.Empty.Title",
+                                    message: "Subjects.Picker.All.Empty.Message"
                                 )
                             } else {
                                 VStack(spacing: 8) {
@@ -171,11 +171,11 @@ struct SubjectPickerView: View {
                 }
                 .scrollIndicators(.hidden)
             }
-            .navigationTitle("Subjects")
+            .navigationTitle("Subjects.Title")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    Button("Done") {
+                    Button("Common.Done") {
                         finalizeSelection()
                         dismiss()
                     }

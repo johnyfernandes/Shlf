@@ -82,7 +82,7 @@ struct KindleImportView: View {
                     .accessibilityHidden(true)
             }
         }
-        .navigationTitle("Kindle")
+        .navigationTitle("KindleImport.Title")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showWebImport) {
             KindleWebImportView(coordinator: coordinator)
@@ -90,20 +90,20 @@ struct KindleImportView: View {
         .sheet(isPresented: $showUpgradeSheet) {
             PaywallView()
         }
-        .alert("Import Error", isPresented: $showError) {
-            Button("OK") {}
+        .alert("KindleImport.Error.Title", isPresented: $showError) {
+            Button("Common.OK") {}
         } message: {
             Text(LocalizedStringKey(errorMessage))
         }
-        .alert("Disconnect Kindle", isPresented: $showDisconnectAlert) {
-            Button("Cancel", role: .cancel) {}
-            Button("Disconnect", role: .destructive) {
+        .alert("KindleImport.Disconnect.Title", isPresented: $showDisconnectAlert) {
+            Button("Common.Cancel", role: .cancel) {}
+            Button("KindleImport.Disconnect.Action", role: .destructive) {
                 forceKindleDisconnected = true
                 coordinator.disconnect()
                 storedKindleConnected = false
             }
         } message: {
-            Text("Disconnecting will remove the Kindle session from this device. You can reconnect anytime.")
+            Text("KindleImport.Disconnect.Message")
         }
         .onAppear {
             Task {
@@ -148,7 +148,7 @@ struct KindleImportView: View {
                     .foregroundStyle(.secondary)
             }
 
-            Text("Keep this screen open while we import.")
+            Text("KindleImport.Progress.KeepOpen")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -166,7 +166,7 @@ struct KindleImportView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
-                Text("Import from Kindle")
+                Text("KindleImport.Import.Title")
                     .font(.headline)
 
                 Spacer()
@@ -174,11 +174,11 @@ struct KindleImportView: View {
                 connectionPill
             }
 
-            Text("Sign in with your Amazon account and we'll import your Kindle library.")
+            Text("KindleImport.Import.Description")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
-            Text("Kindle only provides your library list. Reading status and dates aren't available.")
+            Text("KindleImport.Import.Disclaimer")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
@@ -191,13 +191,13 @@ struct KindleImportView: View {
                 }
             } label: {
                 let isSyncing = showCoordinatorProgress || isImporting
-                let primaryTitle: LocalizedStringKey = displayConnected ? "Sync now" : "Import from Kindle"
+                let primaryTitle: LocalizedStringKey = displayConnected ? "KindleImport.SyncNow" : "KindleImport.Import.Button"
                 HStack(spacing: 10) {
                     if isSyncing {
                         ProgressView()
                             .tint(themeColor.onColor(for: colorScheme))
                     }
-                    Text(isSyncing ? "Syncing..." : primaryTitle)
+                    Text(isSyncing ? "KindleImport.Syncing" : primaryTitle)
                 }
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(themeColor.onColor(for: colorScheme))
@@ -211,7 +211,7 @@ struct KindleImportView: View {
                 HStack(spacing: 6) {
                     ProgressView()
                         .scaleEffect(0.85)
-                    Text("Syncing...")
+                    Text("KindleImport.Syncing")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -221,7 +221,7 @@ struct KindleImportView: View {
                 Button {
                     showDisconnectAlert = true
                 } label: {
-                    Text("Disconnect Kindle")
+                    Text("KindleImport.Disconnect.Action")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -249,7 +249,7 @@ struct KindleImportView: View {
                     .fill(connected ? Color.green : Color.secondary)
                     .frame(width: 7, height: 7)
             }
-            let statusText: LocalizedStringKey = connected ? "Connected" : "Not Connected"
+            let statusText: LocalizedStringKey = connected ? "Common.Connected" : "Common.NotConnected"
             Text(statusText)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(connected ? Color.green : Color.secondary)
@@ -289,13 +289,13 @@ struct KindleImportView: View {
             if let result {
                 Divider()
 
-                Text(localized("Import Complete", locale: locale))
+                Text(localized("KindleImport.Complete.Title", locale: locale))
                     .font(.headline)
 
                 summaryRow(
                     title: Text(
                         String.localizedStringWithFormat(
-                            localized("Imported %lld books", locale: locale),
+                            localized("KindleImport.Complete.ImportedFormat %lld", locale: locale),
                             result.importedCount
                         )
                     )
@@ -304,19 +304,19 @@ struct KindleImportView: View {
                     summaryRow(
                         title: Text(
                             String.localizedStringWithFormat(
-                                localized("Skipped %lld rows", locale: locale),
+                                localized("KindleImport.Complete.SkippedFormat %lld", locale: locale),
                                 result.skippedCount
                             )
                         )
                     )
                 }
                 if result.reachedFreeLimit {
-                    summaryRow(title: Text(localized("Stopped at free limit", locale: locale)))
+                    summaryRow(title: Text(localized("KindleImport.Complete.FreeLimit", locale: locale)))
 
                     Button {
                         showUpgradeSheet = true
                     } label: {
-                        Text(localized("Upgrade to Pro", locale: locale))
+                        Text(localized("Common.UpgradeToPro", locale: locale))
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(themeColor.color)
                     }
@@ -339,7 +339,7 @@ struct KindleImportView: View {
 
                                     Text(
                                         String.localizedStringWithFormat(
-                                            localized("Importing %lld of %lld books", locale: locale),
+                                            localized("KindleImport.Progress.ImportingFormat %lld %lld", locale: locale),
                                             current,
                                             total
                                         )
@@ -350,7 +350,7 @@ struct KindleImportView: View {
             if let title = importProgressTitle, !title.isEmpty {
                 Text(
                     String.localizedStringWithFormat(
-                        localized("Adding %@", locale: locale),
+                        localized("KindleImport.Progress.AddingFormat %@", locale: locale),
                         title
                     )
                 )

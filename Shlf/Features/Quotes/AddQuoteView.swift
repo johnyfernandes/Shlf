@@ -12,6 +12,7 @@ struct AddQuoteView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
 
     let book: Book
     let prefillPage: Int?
@@ -31,7 +32,7 @@ struct AddQuoteView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Quote Text") {
+                Section("Quotes.Add.QuoteText") {
                     TextEditor(text: $quoteText)
                         .frame(minHeight: 150)
 
@@ -39,7 +40,7 @@ struct AddQuoteView: View {
                         Spacer()
                         Text(
                             String.localizedStringWithFormat(
-                                String(localized: "%lld/%lld"),
+                                localized("Common.CountFormat %lld %lld", locale: locale),
                                 quoteText.count,
                                 maxCharacters
                             )
@@ -49,35 +50,35 @@ struct AddQuoteView: View {
                     }
                 }
 
-                Section("Details") {
+                Section("Quotes.Add.Details") {
                     HStack {
-                        Text("Page Number (optional)")
+                        Text("Quotes.Add.PageNumberOptional")
                         Spacer()
-                        TextField("Page", text: $pageNumber)
+                        TextField("Common.Page", text: $pageNumber)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
                             .frame(width: 80)
                     }
 
-                    Toggle("Mark as Favorite", isOn: $isFavorite)
+                    Toggle("Quotes.Add.MarkFavorite", isOn: $isFavorite)
                 }
 
-                Section("Personal Note (optional)") {
+                Section("Quotes.Add.PersonalNoteOptional") {
                     TextEditor(text: $personalNote)
                         .frame(minHeight: 80)
                 }
             }
-            .navigationTitle("Add Quote")
+            .navigationTitle("Quotes.Add.Title")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button("Common.Cancel") {
                         dismiss()
                     }
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button("Common.Save") {
                         saveQuote()
                     }
                     .disabled(quoteText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || quoteText.count > maxCharacters)

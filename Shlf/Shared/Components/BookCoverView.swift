@@ -60,7 +60,7 @@ struct BookCoverView: View {
                         UIPasteboard.general.image = image
                     }
                 } label: {
-                    Label("Copy Image", systemImage: "doc.on.doc")
+                    Label("Common.CopyImage", systemImage: "doc.on.doc")
                 }
 
                 Button {
@@ -68,7 +68,7 @@ struct BookCoverView: View {
                         UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
                     }
                 } label: {
-                    Label("Save Image", systemImage: "square.and.arrow.down")
+                    Label("Common.SaveImage", systemImage: "square.and.arrow.down")
                 }
             }
         }

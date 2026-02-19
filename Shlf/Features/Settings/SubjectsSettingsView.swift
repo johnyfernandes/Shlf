@@ -11,6 +11,7 @@ import SwiftData
 struct SubjectsSettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     @Bindable var profile: UserProfile
     @Query private var books: [Book]
 
@@ -43,11 +44,11 @@ struct SubjectsSettingsView: View {
                                 .foregroundStyle(themeColor.color)
                                 .frame(width: 16)
 
-                            Text("About")
+                            Text("Subjects.About.Title")
                                 .font(.headline)
                         }
 
-                        Text("Subjects help organize your library and power category stats. Changes here apply to all books.")
+                        Text("Subjects.About.Body")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -62,12 +63,12 @@ struct SubjectsSettingsView: View {
                                 .foregroundStyle(themeColor.color)
                                 .frame(width: 16)
 
-                            Text("Add Subject")
+                            Text("Subjects.Add.Title")
                                 .font(.headline)
                         }
 
                         HStack(spacing: 12) {
-                            TextField("New subject", text: $newSubject)
+                            TextField("Subjects.Add.Placeholder", text: $newSubject)
                                 .textInputAutocapitalization(.words)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 10)
@@ -76,7 +77,7 @@ struct SubjectsSettingsView: View {
                             Button {
                                 addSubject()
                             } label: {
-                                Text("Add")
+                                Text("Subjects.Add.Action")
                                     .font(.subheadline.weight(.semibold))
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 10)
@@ -93,8 +94,8 @@ struct SubjectsSettingsView: View {
                     if profile.subjectLibrary.isEmpty {
                         InlineEmptyStateView(
                             icon: "tag",
-                            title: "No subjects yet",
-                            message: "Add your first subject to start organizing your books."
+                            title: "Subjects.Empty.Title",
+                            message: "Subjects.Empty.Message"
                         )
                         .padding(16)
                         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -107,7 +108,7 @@ struct SubjectsSettingsView: View {
                                         .foregroundStyle(themeColor.color)
                                         .frame(width: 16)
 
-                                    Text("Subjects")
+                                    Text("Subjects.List.Title")
                                         .font(.headline)
                                 }
 
@@ -134,7 +135,12 @@ struct SubjectsSettingsView: View {
                                                 .font(.subheadline.weight(.medium))
                                                 .foregroundStyle(Theme.Colors.text)
 
-                                            Text(String.localizedStringWithFormat(String(localized: "%lld books"), bookCount(for: subject)))
+                                            Text(
+                                                String.localizedStringWithFormat(
+                                                    localized("Subjects.BooksCountFormat %lld", locale: locale),
+                                                    bookCount(for: subject)
+                                                )
+                                            )
                                                 .font(.caption)
                                                 .foregroundStyle(.secondary)
                                         }
@@ -142,10 +148,10 @@ struct SubjectsSettingsView: View {
                                         Spacer()
 
                                         Menu {
-                                            Button("Rename") {
+                                            Button("Common.Rename") {
                                                 beginRename(subject)
                                             }
-                                            Button("Delete", role: .destructive) {
+                                            Button("Common.Delete", role: .destructive) {
                                                 subjectToDelete = subject
                                                 showDeleteAlert = true
                                             }
@@ -170,28 +176,28 @@ struct SubjectsSettingsView: View {
             }
             .scrollIndicators(.hidden)
         }
-        .navigationTitle("Subjects")
+        .navigationTitle("Subjects.Title")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             profile.syncSubjects(from: books)
             saveChanges()
         }
-        .alert("Rename Subject", isPresented: $showRenameAlert) {
-            TextField("Name", text: $renameText)
-            Button("Save") {
+        .alert("Subjects.Rename.Title", isPresented: $showRenameAlert) {
+            TextField("Subjects.Rename.Placeholder", text: $renameText)
+            Button("Common.Save") {
                 applyRename()
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Common.Cancel", role: .cancel) {}
         } message: {
-            Text("This updates every book using this subject.")
+            Text("Subjects.Rename.Message")
         }
-        .alert("Delete Subject?", isPresented: $showDeleteAlert) {
-            Button("Delete", role: .destructive) {
+        .alert("Subjects.Delete.Title", isPresented: $showDeleteAlert) {
+            Button("Common.Delete", role: .destructive) {
                 deleteSubject()
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Common.Cancel", role: .cancel) {}
         } message: {
-            Text("This removes the subject from all books.")
+            Text("Subjects.Delete.Message")
         }
     }
 

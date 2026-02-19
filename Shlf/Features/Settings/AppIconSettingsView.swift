@@ -60,22 +60,22 @@ struct AppIconSettingsView: View {
                                 .foregroundStyle(themeColor.color)
                                 .frame(width: 16)
 
-                            Text("About")
+                            Text("AppIconSettings.About.Title")
                                 .font(.headline)
                         }
 
-                        Text("Choose your app icon. Changes appear immediately on your Home Screen and App Library.")
+                        Text("AppIconSettings.About.Body")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
 
                         if !supportsAlternateIcons {
-                            Text("App icons are not supported on this device.")
+                            Text("AppIconSettings.About.Unsupported")
                                 .font(.subheadline)
                                 .foregroundStyle(Theme.Colors.warning)
                         }
 
                         if !isProUser {
-                            Text("More app icons are available with Shlf Pro.")
+                            Text("AppIconSettings.About.ProNote")
                                 .font(.subheadline)
                                 .foregroundStyle(Theme.Colors.secondaryText)
                         }
@@ -106,15 +106,15 @@ struct AppIconSettingsView: View {
             }
             .scrollIndicators(.hidden)
         }
-        .navigationTitle("App Icon")
+        .navigationTitle("AppIconSettings.Title")
         .navigationBarTitleDisplayMode(.inline)
         .task {
             currentIconName = currentAlternateIconName()
         }
-        .alert("Unable to Change Icon", isPresented: $showError) {
-            Button("OK", role: .cancel) {}
+        .alert("AppIconSettings.Alert.Title", isPresented: $showError) {
+            Button("Common.OK", role: .cancel) {}
         } message: {
-            Text(errorMessage.isEmpty ? "Please try again." : errorMessage)
+            Text(errorMessage.isEmpty ? "AppIconSettings.Alert.Message" : errorMessage)
         }
         .sheet(isPresented: $showUpgradeSheet) {
             PaywallView()
@@ -216,7 +216,7 @@ private struct AppIconOptionView: View {
                     }
 
                     OptionBadge(
-                        text: option.isFree ? "Free" : "Pro",
+                        text: option.isFree ? "Common.Free" : "Common.Pro",
                         icon: option.isFree ? nil : "crown.fill",
                         tint: option.isFree ? Theme.Colors.success : Color.yellow
                     )

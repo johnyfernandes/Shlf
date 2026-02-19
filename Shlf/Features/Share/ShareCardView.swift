@@ -331,7 +331,7 @@ private struct ShareHeroView: View {
 
                     if let progressText {
                         VStack(alignment: .leading, spacing: 6 * scale) {
-                            Text("Progress")
+                            Text("Share.Card.Progress")
                                 .font(.system(size: 12 * scale, weight: .semibold, design: .rounded))
                                 .foregroundStyle(primaryText.opacity(0.6))
 
@@ -989,7 +989,7 @@ private struct LibraryShareOverflowCell: View {
                         .font(.system(size: 18 * metrics.scale, weight: .bold, design: .rounded))
                         .foregroundStyle(primaryText)
 
-                    Text("more")
+                    Text("Share.Card.More")
                         .font(.system(size: 11 * metrics.scale, weight: .semibold, design: .rounded))
                         .foregroundStyle(secondaryText)
                 }
@@ -997,7 +997,7 @@ private struct LibraryShareOverflowCell: View {
             .frame(width: metrics.columnWidth, height: metrics.coverHeight)
 
             if metrics.titleHeight > 0 {
-                Text("More books")
+                Text("Share.Card.MoreBooks")
                     .font(.system(size: 11 * metrics.scale, weight: .semibold, design: .rounded))
                     .foregroundStyle(secondaryText)
                     .frame(maxWidth: .infinity, alignment: isCentered ? .center : .leading)

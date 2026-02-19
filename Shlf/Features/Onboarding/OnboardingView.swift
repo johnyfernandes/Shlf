@@ -248,7 +248,7 @@ private struct OnboardingBottomSheet: View {
                     )
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Options")
+                .accessibilityLabel(Text("Common.Options"))
             }
 
             pageDots
@@ -393,7 +393,7 @@ private struct OnboardingBottomSheet: View {
             HStack(spacing: 8) {
                 if !isProUser {
                     Image(systemName: "lock.fill")
-                    Text("Pro")
+                    Text("Common.Pro")
                         .font(.caption2)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
@@ -515,7 +515,7 @@ private struct OnboardingBottomSheet: View {
                                         lineWidth: 3
                                     )
                             )
-                        Text(isFree ? "Free" : "Pro")
+                        Text(isFree ? "Common.Free" : "Common.Pro")
                             .font(.caption2)
                             .foregroundStyle(isFree ? Theme.Colors.secondaryText : theme.color)
                             .padding(.horizontal, 8)

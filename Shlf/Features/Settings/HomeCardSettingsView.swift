@@ -99,7 +99,7 @@ struct HomeCardSettingsView: View {
                                         .foregroundStyle(themeColor.color)
                                         .frame(width: 16)
 
-                                    Text("Active Cards")
+                                    Text("HomeCards.Active.Title")
                                         .font(.headline)
                                 }
 
@@ -114,7 +114,7 @@ struct HomeCardSettingsView: View {
                             }
 
                             if profile.streaksPaused {
-                                Text("Streak cards are hidden while streaks are paused.")
+                                Text("HomeCards.Active.StreaksPaused")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -156,7 +156,8 @@ struct HomeCardSettingsView: View {
                                                     do {
                                                         try modelContext.save()
                                                     } catch {
-                                                        saveErrorMessage = "Failed to remove card: \(error.localizedDescription)"
+                                                        let format = localized("HomeCards.Error.RemoveCardFormat %@", locale: locale)
+                                                        saveErrorMessage = String(format: format, error.localizedDescription)
                                                         showSaveError = true
                                                     }
                                                 }
@@ -199,7 +200,7 @@ struct HomeCardSettingsView: View {
                                     .foregroundStyle(themeColor.color)
                                     .frame(width: 16)
 
-                                Text("Available Cards")
+                                Text("HomeCards.Available.Title")
                                     .font(.headline)
                             }
 
@@ -216,7 +217,8 @@ struct HomeCardSettingsView: View {
                                                 do {
                                                     try modelContext.save()
                                                 } catch {
-                                                    saveErrorMessage = "Failed to add card: \(error.localizedDescription)"
+                                                    let format = localized("HomeCards.Error.AddCardFormat %@", locale: locale)
+                                                    saveErrorMessage = String(format: format, error.localizedDescription)
                                                     showSaveError = true
                                                 }
                                             }
@@ -241,7 +243,7 @@ struct HomeCardSettingsView: View {
                                             Spacer()
 
                                             if profile.homeCards.count >= 3 {
-                                                Text("Max 3")
+                                                Text("HomeCards.Available.Max")
                                                     .font(.caption)
                                                     .foregroundStyle(.tertiary)
                                             } else {
@@ -264,8 +266,8 @@ struct HomeCardSettingsView: View {
                     } else {
                         InlineEmptyStateView(
                             icon: "checkmark.circle",
-                            title: "All cards added",
-                            message: "Use Edit to reorder your home cards."
+                            title: "HomeCards.Available.Empty.Title",
+                            message: "HomeCards.Available.Empty.Message"
                         )
                         .padding(16)
                         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -283,14 +285,15 @@ struct HomeCardSettingsView: View {
                                 do {
                                     try modelContext.save()
                                 } catch {
-                                    saveErrorMessage = "Failed to remove all cards: \(error.localizedDescription)"
+                                    let format = localized("HomeCards.Error.RemoveAllFormat %@", locale: locale)
+                                    saveErrorMessage = String(format: format, error.localizedDescription)
                                     showSaveError = true
                                 }
                             }
                         } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: "trash")
-                                Text("Remove All Cards")
+                                Text("HomeCards.RemoveAll")
                             }
                             .font(.headline)
                             .foregroundStyle(.white)
@@ -306,7 +309,7 @@ struct HomeCardSettingsView: View {
             }
             .scrollIndicators(.hidden)
         }
-        .navigationTitle("Home Screen")
+        .navigationTitle("HomeCards.Title")
         .navigationBarTitleDisplayMode(.inline)
         .environment(\.editMode, $editMode)
         .toolbar {
@@ -321,15 +324,15 @@ struct HomeCardSettingsView: View {
                             editMode = editMode == .active ? .inactive : .active
                         }
                     } label: {
-                        Text(editMode == .active ? "Done" : "Edit")
+                        Text(editMode == .active ? "Common.Done" : "Common.Edit")
                             .fontWeight(.semibold)
                             .foregroundStyle(themeColor.color)
                     }
                 }
             }
         }
-        .alert("Save Error", isPresented: $showSaveError) {
-            Button("OK") {}
+        .alert("Common.SaveError", isPresented: $showSaveError) {
+            Button("Common.OK") {}
         } message: {
             Text(saveErrorMessage)
         }

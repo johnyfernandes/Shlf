@@ -1083,7 +1083,7 @@ private enum TrendMetric: String, Identifiable {
         case .categories: return LocalizedStringKey("Stats.Trend.TopCategories")
         case .streak: return LocalizedStringKey("Stats.Trend.Streak")
         case .speed: return LocalizedStringKey("Stats.Trend.ReadingSpeed")
-        }
+            }
     }
 }
 

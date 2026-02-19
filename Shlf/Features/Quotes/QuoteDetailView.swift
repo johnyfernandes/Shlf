@@ -12,6 +12,7 @@ struct QuoteDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     @Bindable var quote: Quote
     let book: Book
 
@@ -54,7 +55,7 @@ struct QuoteDetailView: View {
                                 .foregroundStyle(themeColor.color)
                                 .frame(width: 20)
 
-                            Text("Page")
+                            Text("Common.Page")
                                 .font(.caption)
                                 .foregroundStyle(Theme.Colors.secondaryText)
 
@@ -72,7 +73,7 @@ struct QuoteDetailView: View {
                             .foregroundStyle(themeColor.color)
                             .frame(width: 20)
 
-                        Text("Added")
+                        Text("Common.Added")
                             .font(.caption)
                             .foregroundStyle(Theme.Colors.secondaryText)
 
@@ -89,7 +90,7 @@ struct QuoteDetailView: View {
                             .foregroundStyle(themeColor.color)
                             .frame(width: 20)
 
-                        Text("Book")
+                        Text("Common.Book")
                             .font(.caption)
                             .foregroundStyle(Theme.Colors.secondaryText)
 
@@ -107,7 +108,7 @@ struct QuoteDetailView: View {
                 // Personal note
                 if let note = quote.note, !note.isEmpty {
                     VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                        Text("Personal Note")
+                        Text("Quotes.PersonalNote")
                             .font(Theme.Typography.headline)
 
                         Text(note)
@@ -122,7 +123,7 @@ struct QuoteDetailView: View {
             .padding(Theme.Spacing.md)
         }
         .background(Theme.Colors.background)
-        .navigationTitle("Quote")
+        .navigationTitle("Quotes.Detail.Title")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -130,13 +131,13 @@ struct QuoteDetailView: View {
                     Button {
                         shareQuote()
                     } label: {
-                        Label("Share Quote", systemImage: "square.and.arrow.up")
+                        Label("Quotes.Share", systemImage: "square.and.arrow.up")
                     }
 
                     Button(role: .destructive) {
                         showDeleteAlert = true
                     } label: {
-                        Label("Delete Quote", systemImage: "trash")
+                        Label("Quotes.Delete", systemImage: "trash")
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
@@ -145,22 +146,29 @@ struct QuoteDetailView: View {
                 }
             }
         }
-        .alert("Delete Quote?", isPresented: $showDeleteAlert) {
-            Button("Delete", role: .destructive) {
+        .alert("Quotes.Delete.Title", isPresented: $showDeleteAlert) {
+            Button("Common.Delete", role: .destructive) {
                 deleteQuote()
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Common.Cancel", role: .cancel) {}
         } message: {
-            Text("This quote will be permanently deleted.")
+            Text("Quotes.Delete.Message")
         }
     }
 
     private func shareQuote() {
         var shareText = "\"\(quote.text)\"\n\n"
         if let page = quote.pageNumber {
-            shareText += "Page \(page), "
+            shareText += String.localizedStringWithFormat(
+                localized("Quotes.Share.PageFormat %lld", locale: locale),
+                page
+            ) + ", "
         }
-        shareText += "\(book.title) by \(book.author)"
+        shareText += String.localizedStringWithFormat(
+            localized("Quotes.Share.BookByFormat %@ %@", locale: locale),
+            book.title,
+            book.author
+        )
 
         let activityVC = UIActivityViewController(
             activityItems: [shareText],
