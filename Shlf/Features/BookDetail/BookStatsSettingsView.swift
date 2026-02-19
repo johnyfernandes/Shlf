@@ -12,6 +12,7 @@ import UniformTypeIdentifiers
 struct BookStatsSettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     @Bindable var profile: UserProfile
 
     @State private var editMode: EditMode = .inactive
@@ -45,11 +46,11 @@ struct BookStatsSettingsView: View {
                                 .foregroundStyle(themeColor.color)
                                 .frame(width: 16)
 
-                            Text("About")
+                            Text("BookStatsSettings.About.Title")
                                 .font(.headline)
                         }
 
-                        Text("Customize the stats shown on each book. Reorder, hide, or add cards anytime.")
+                        Text("BookStatsSettings.About.Message")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -64,7 +65,7 @@ struct BookStatsSettingsView: View {
                                 .foregroundStyle(themeColor.color)
                                 .frame(width: 16)
 
-                            Text("Default Range")
+                            Text("BookStatsSettings.DefaultRange")
                                 .font(.headline)
                         }
 
@@ -114,17 +115,17 @@ struct BookStatsSettingsView: View {
                                 .foregroundStyle(themeColor.color)
                                 .frame(width: 16)
 
-                            Text("Data Sources")
+                            Text("BookStatsSettings.DataSources")
                                 .font(.headline)
                         }
 
-                        Toggle("Include imported sessions", isOn: $profile.bookStatsIncludeImported)
+                        Toggle("BookStatsSettings.IncludeImported", isOn: $profile.bookStatsIncludeImported)
                             .tint(themeColor.color)
                             .onChange(of: profile.bookStatsIncludeImported) { _, _ in
                                 saveChanges()
                             }
 
-                        Toggle("Include excluded sessions", isOn: $profile.bookStatsIncludeExcluded)
+                        Toggle("BookStatsSettings.IncludeExcluded", isOn: $profile.bookStatsIncludeExcluded)
                             .tint(themeColor.color)
                             .onChange(of: profile.bookStatsIncludeExcluded) { _, _ in
                                 saveChanges()
@@ -143,7 +144,7 @@ struct BookStatsSettingsView: View {
                                         .foregroundStyle(themeColor.color)
                                         .frame(width: 16)
 
-                                    Text("Visible Stats")
+                                    Text("BookStatsSettings.VisibleStats")
                                         .font(.headline)
                                 }
 
@@ -151,7 +152,7 @@ struct BookStatsSettingsView: View {
 
                                 Text(
                                     String.localizedStringWithFormat(
-                                        String(localized: "%lld/%lld"),
+                                        localized("BookStatsSettings.VisibleCountFormat %lld %lld", locale: locale),
                                         profile.bookStatsCards.count,
                                         BookStatsCardType.allCases.count
                                     )
@@ -200,7 +201,7 @@ struct BookStatsSettingsView: View {
                                     .foregroundStyle(themeColor.color)
                                     .frame(width: 16)
 
-                                Text("Available Stats")
+                                Text("BookStatsSettings.AvailableStats")
                                     .font(.headline)
                             }
 
@@ -223,8 +224,8 @@ struct BookStatsSettingsView: View {
                     } else {
                         InlineEmptyStateView(
                             icon: "checkmark.circle",
-                            title: "All stats added",
-                            message: "Use Edit to reorder your stats."
+                            title: "BookStatsSettings.AllStatsAdded",
+                            message: "BookStatsSettings.AllStatsAdded.Message"
                         )
                         .padding(16)
                         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -236,7 +237,7 @@ struct BookStatsSettingsView: View {
             }
             .scrollIndicators(.hidden)
         }
-        .navigationTitle("Book Stats")
+        .navigationTitle("BookStatsSettings.Title")
         .navigationBarTitleDisplayMode(.inline)
         .environment(\.editMode, $editMode)
         .toolbar {
@@ -247,15 +248,15 @@ struct BookStatsSettingsView: View {
                             editMode = editMode == .active ? .inactive : .active
                         }
                     } label: {
-                        Text(editMode == .active ? "Done" : "Edit")
+                        Text(editMode == .active ? "Common.Done" : "Common.Edit")
                             .fontWeight(.semibold)
                             .foregroundStyle(themeColor.color)
                     }
                 }
             }
         }
-        .alert("Save Error", isPresented: $showSaveError) {
-            Button("OK") {}
+        .alert("BookStatsSettings.SaveError.Title", isPresented: $showSaveError) {
+            Button("Common.OK") {}
         } message: {
             Text(saveErrorMessage)
         }
@@ -265,7 +266,10 @@ struct BookStatsSettingsView: View {
         do {
             try modelContext.save()
         } catch {
-            saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
+            saveErrorMessage = String.localizedStringWithFormat(
+                localized("BookStatsSettings.SaveError.MessageFormat %@", locale: locale),
+                error.localizedDescription
+            )
             showSaveError = true
         }
     }
