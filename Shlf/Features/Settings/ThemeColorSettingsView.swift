@@ -10,6 +10,7 @@ import SwiftData
 
 struct ThemeColorSettingsView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.locale) private var locale
     @Bindable var profile: UserProfile
     @State private var showUpgradeSheet = false
 
@@ -82,16 +83,16 @@ struct ThemeColorSettingsView: View {
                                 .foregroundStyle(profile.themeColor.color)
                                 .frame(width: 16)
 
-                            Text("About")
+                            Text("ThemeColorSettings.AboutTitle")
                                 .font(.headline)
                         }
 
-                        Text("Choose your preferred accent color. It will be applied throughout the app and synced to your Apple Watch.")
+                        Text("ThemeColorSettings.AboutDescription")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
 
                         if !isProUser {
-                            Text("More colors are available with Shlf Pro.")
+                            Text("ThemeColorSettings.ProNote")
                                 .font(.subheadline)
                                 .foregroundStyle(Theme.Colors.secondaryText)
                         }
@@ -140,7 +141,7 @@ struct ThemeColorSettingsView: View {
             }
             .scrollIndicators(.hidden)
         }
-        .navigationTitle("Theme Color")
+        .navigationTitle("ThemeColorSettings.Title")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showUpgradeSheet) {
             PaywallView()
@@ -186,7 +187,7 @@ struct ColorOption: View {
                     }
 
                     OptionBadge(
-                        text: isFree ? "Free" : "Pro",
+                        text: isFree ? "ThemeColorSettings.Badge.Free" : "ThemeColorSettings.Badge.Pro",
                         icon: isFree ? nil : "crown.fill",
                         tint: isFree ? Theme.Colors.success : Color.yellow
                     )

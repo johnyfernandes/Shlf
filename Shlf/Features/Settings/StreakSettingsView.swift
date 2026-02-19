@@ -12,6 +12,7 @@ import SwiftData
 struct StreakSettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.themeColor) private var themeColor
+    @Environment(\.locale) private var locale
     @Bindable var profile: UserProfile
     @State private var showSaveError = false
     @State private var saveErrorMessage = ""
@@ -38,11 +39,11 @@ struct StreakSettingsView: View {
                                 .foregroundStyle(themeColor.color)
                                 .frame(width: 16)
 
-                            Text("About")
+                            Text("StreakSettings.AboutTitle")
                                 .font(.headline)
                         }
 
-                        Text("Streaks track consecutive reading days to keep momentum. You can pause them anytime without losing your current streak.")
+                        Text("StreakSettings.AboutDescription")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -57,7 +58,7 @@ struct StreakSettingsView: View {
                                 .foregroundStyle(themeColor.color)
                                 .frame(width: 16)
 
-                            Text("Pause Streaks")
+                            Text("StreakSettings.Pause.Title")
                                 .font(.headline)
                         }
 
@@ -66,10 +67,10 @@ struct StreakSettingsView: View {
                             set: { handlePauseToggle($0) }
                         )) {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Pause streak tracking")
+                                Text("StreakSettings.Pause.Toggle")
                                     .font(.subheadline.weight(.medium))
 
-                                Text("Streak cards, streak goals, and streak achievements are hidden while paused.")
+                                Text("StreakSettings.Pause.Detail")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -84,10 +85,10 @@ struct StreakSettingsView: View {
                 .padding(.bottom, 24)
             }
         }
-        .navigationTitle("Streaks")
+        .navigationTitle("StreakSettings.Title")
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Save Error", isPresented: $showSaveError) {
-            Button("OK") {}
+        .alert("StreakSettings.SaveErrorTitle", isPresented: $showSaveError) {
+            Button("Common.OK") {}
         } message: {
             Text(saveErrorMessage)
         }
@@ -102,7 +103,10 @@ struct StreakSettingsView: View {
             try modelContext.save()
             WatchConnectivityManager.shared.sendProfileSettingsToWatch(profile)
         } catch {
-            saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
+            saveErrorMessage = String.localizedStringWithFormat(
+                localized("StreakSettings.SaveErrorFormat", locale: locale),
+                error.localizedDescription
+            )
             showSaveError = true
         }
     }

@@ -12,6 +12,7 @@ import SwiftData
 
 struct WatchSettingsView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.locale) private var locale
     @Query private var profiles: [UserProfile]
     @StateObject private var connectionObserver = WatchConnectionObserver()
     @State private var showSaveError = false
@@ -57,11 +58,11 @@ struct WatchSettingsView: View {
                                 .foregroundStyle(profile?.themeColor.color ?? Theme.Colors.accent)
                                 .frame(width: 16)
 
-                            Text("About")
+                            Text("WatchSettings.AboutTitle")
                                 .font(.headline)
                         }
 
-                        Text("Track your reading progress on Apple Watch with real-time sync.")
+                        Text("WatchSettings.AboutDescription")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -77,7 +78,7 @@ struct WatchSettingsView: View {
                                 .foregroundStyle(profile?.themeColor.color ?? Theme.Colors.accent)
                                 .frame(width: 16)
 
-                            Text("Connection Status")
+                            Text("WatchSettings.ConnectionStatusTitle")
                                 .font(.headline)
                         }
 
@@ -88,10 +89,10 @@ struct WatchSettingsView: View {
                                     .font(.title2)
 
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text("Apple Watch")
+                                    Text("WatchSettings.Connection.AppleWatch")
                                         .font(.subheadline)
 
-                                    Text(isWatchPaired ? "Paired" : "Not Paired")
+                                    Text(isWatchPaired ? "WatchSettings.Connection.Paired" : "WatchSettings.Connection.NotPaired")
                                         .font(.caption)
                                         .foregroundStyle(isWatchPaired ? Theme.Colors.success : Theme.Colors.tertiaryText)
                                 }
@@ -113,10 +114,10 @@ struct WatchSettingsView: View {
                                         .font(.title2)
 
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text("Watch App")
+                                        Text("WatchSettings.Connection.WatchApp")
                                             .font(.subheadline)
 
-                                        Text(isWatchAppInstalled ? "Installed" : "Not Installed")
+                                        Text(isWatchAppInstalled ? "WatchSettings.Connection.Installed" : "WatchSettings.Connection.NotInstalled")
                                             .font(.caption)
                                             .foregroundStyle(isWatchAppInstalled ? Theme.Colors.success : Theme.Colors.tertiaryText)
                                     }
@@ -137,10 +138,10 @@ struct WatchSettingsView: View {
                                         .font(.title2)
 
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text("Real-Time Sync")
+                                        Text("WatchSettings.Connection.RealTimeSync")
                                             .font(.subheadline)
 
-                                        Text(isWatchReachable ? "Connected" : "Not Connected")
+                                        Text(isWatchReachable ? "WatchSettings.Connection.Connected" : "WatchSettings.Connection.NotConnected")
                                             .font(.caption)
                                             .foregroundStyle(isWatchReachable ? Theme.Colors.success : Theme.Colors.tertiaryText)
                                     }
@@ -158,8 +159,8 @@ struct WatchSettingsView: View {
 
                             if !isWatchPaired || !isWatchAppInstalled {
                                 Text(!isWatchPaired ?
-                                    "Pair your Apple Watch with your iPhone to use Shlf on your wrist." :
-                                    "Install Shlf on your Apple Watch to track reading progress on the go.")
+                                    "WatchSettings.Connection.PairPrompt" :
+                                    "WatchSettings.Connection.InstallPrompt")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -179,7 +180,7 @@ struct WatchSettingsView: View {
                                     .foregroundStyle(profile.themeColor.color)
                                     .frame(width: 16)
 
-                                Text("Progress Display")
+                                Text("WatchSettings.ProgressDisplay.Title")
                                     .font(.headline)
                             }
 
@@ -191,7 +192,10 @@ struct WatchSettingsView: View {
                                             try modelContext.save()
                                             WatchConnectivityManager.shared.sendProfileSettingsToWatch(profile)
                                         } catch {
-                                            saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
+                                            saveErrorMessage = String.localizedStringWithFormat(
+                                                localized("WatchSettings.SaveErrorFormat", locale: locale),
+                                                error.localizedDescription
+                                            )
                                             showSaveError = true
                                         }
                                     }
@@ -203,11 +207,11 @@ struct WatchSettingsView: View {
                                             .frame(width: 28)
 
                                         VStack(alignment: .leading, spacing: 2) {
-                                            Text("Progress Bar")
+                                            Text("WatchSettings.ProgressDisplay.BarTitle")
                                                 .font(.subheadline.weight(.medium))
                                                 .foregroundStyle(.primary)
 
-                                            Text("Show progress as a linear bar")
+                                            Text("WatchSettings.ProgressDisplay.BarDescription")
                                                 .font(.caption)
                                                 .foregroundStyle(.secondary)
                                         }
@@ -239,7 +243,10 @@ struct WatchSettingsView: View {
                                             try modelContext.save()
                                             WatchConnectivityManager.shared.sendProfileSettingsToWatch(profile)
                                         } catch {
-                                            saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
+                                            saveErrorMessage = String.localizedStringWithFormat(
+                                                localized("WatchSettings.SaveErrorFormat", locale: locale),
+                                                error.localizedDescription
+                                            )
                                             showSaveError = true
                                         }
                                     }
@@ -251,11 +258,11 @@ struct WatchSettingsView: View {
                                             .frame(width: 28)
 
                                         VStack(alignment: .leading, spacing: 2) {
-                                            Text("Circular Ring")
+                                            Text("WatchSettings.ProgressDisplay.RingTitle")
                                                 .font(.subheadline.weight(.medium))
                                                 .foregroundStyle(.primary)
 
-                                            Text("Show progress as a circular ring")
+                                            Text("WatchSettings.ProgressDisplay.RingDescription")
                                                 .font(.caption)
                                                 .foregroundStyle(.secondary)
                                         }
@@ -295,7 +302,7 @@ struct WatchSettingsView: View {
                                     .foregroundStyle(profile.themeColor.color)
                                     .frame(width: 16)
 
-                                Text("Session Display")
+                                Text("WatchSettings.SessionDisplay.Title")
                                     .font(.headline)
                             }
 
@@ -308,15 +315,18 @@ struct WatchSettingsView: View {
                                             try modelContext.save()
                                             WatchConnectivityManager.shared.sendProfileSettingsToWatch(profile)
                                         } catch {
-                                            saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
+                                            saveErrorMessage = String.localizedStringWithFormat(
+                                                localized("WatchSettings.SaveErrorFormat", locale: locale),
+                                                error.localizedDescription
+                                            )
                                             showSaveError = true
                                         }
                                     }
                                 )) {
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text("Hide Quick Sessions on Watch")
+                                        Text("WatchSettings.SessionDisplay.HideQuick")
                                             .font(.subheadline)
-                                        Text("Only show timer sessions in Watch session list")
+                                        Text("WatchSettings.SessionDisplay.HideQuickDetail")
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
                                     }
@@ -325,7 +335,7 @@ struct WatchSettingsView: View {
                                 .padding(12)
                                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
 
-                                Text("Control which sessions appear on your Apple Watch. This setting syncs with the Watch app. To control iPhone sessions, go to Sessions.")
+                                Text("WatchSettings.SessionDisplay.Footer")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -345,7 +355,7 @@ struct WatchSettingsView: View {
                                     .foregroundStyle(profile.themeColor.color)
                                     .frame(width: 16)
 
-                                Text("Watch Features")
+                                Text("WatchSettings.Features.Title")
                                     .font(.headline)
                             }
 
@@ -358,15 +368,18 @@ struct WatchSettingsView: View {
                                             try modelContext.save()
                                             WatchConnectivityManager.shared.sendProfileSettingsToWatch(profile)
                                         } catch {
-                                            saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
+                                            saveErrorMessage = String.localizedStringWithFormat(
+                                                localized("WatchSettings.SaveErrorFormat", locale: locale),
+                                                error.localizedDescription
+                                            )
                                             showSaveError = true
                                         }
                                     }
                                 )) {
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text("Mark Reading Position")
+                                        Text("WatchSettings.Features.MarkPosition")
                                             .font(.subheadline)
-                                        Text("Allow marking exact reading position (page + line) from Watch during sessions")
+                                        Text("WatchSettings.Features.MarkPositionDetail")
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
                                     }
@@ -390,7 +403,7 @@ struct WatchSettingsView: View {
                                     .foregroundStyle(profile.themeColor.color)
                                     .frame(width: 16)
 
-                                Text("Watch App UI")
+                                Text("WatchSettings.AppUI.Title")
                                     .font(.headline)
                             }
 
@@ -403,15 +416,18 @@ struct WatchSettingsView: View {
                                             try modelContext.save()
                                             WatchConnectivityManager.shared.sendProfileSettingsToWatch(profile)
                                         } catch {
-                                            saveErrorMessage = "Failed to save setting: \(error.localizedDescription)"
+                                            saveErrorMessage = String.localizedStringWithFormat(
+                                                localized("WatchSettings.SaveErrorFormat", locale: locale),
+                                                error.localizedDescription
+                                            )
                                             showSaveError = true
                                         }
                                     }
                                 )) {
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text("Show Settings on Watch")
+                                        Text("WatchSettings.AppUI.ShowSettings")
                                             .font(.subheadline)
-                                        Text("Hide the settings screen on the Watch if you prefer a simpler experience")
+                                        Text("WatchSettings.AppUI.ShowSettingsDetail")
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
                                     }
@@ -434,19 +450,19 @@ struct WatchSettingsView: View {
                                 .foregroundStyle(profile?.themeColor.color ?? Theme.Colors.accent)
                                 .frame(width: 16)
 
-                            Text("About Watch App")
+                            Text("WatchSettings.AboutApp.Title")
                                 .font(.headline)
                         }
 
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("The Shlf Watch app lets you:")
+                            Text("WatchSettings.AboutApp.Heading")
                                 .font(.subheadline)
                                 .fontWeight(.medium)
 
                             VStack(alignment: .leading, spacing: 6) {
-                                Label("Update reading progress with quick +1 or +5 buttons", systemImage: "plus.circle.fill")
-                                Label("Track currently reading books", systemImage: "book.fill")
-                                Label("Sync instantly with your iPhone", systemImage: "arrow.triangle.2.circlepath")
+                                Label("WatchSettings.AboutApp.Feature.ProgressButtons", systemImage: "plus.circle.fill")
+                                Label("WatchSettings.AboutApp.Feature.TrackBooks", systemImage: "book.fill")
+                                Label("WatchSettings.AboutApp.Feature.InstantSync", systemImage: "arrow.triangle.2.circlepath")
                             }
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -462,10 +478,10 @@ struct WatchSettingsView: View {
             }
             .scrollIndicators(.hidden)
         }
-        .navigationTitle("Apple Watch")
+        .navigationTitle("WatchSettings.Title")
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Save Error", isPresented: $showSaveError) {
-            Button("OK") {}
+        .alert("WatchSettings.SaveErrorTitle", isPresented: $showSaveError) {
+            Button("Common.OK") {}
         } message: {
             Text(saveErrorMessage)
         }
