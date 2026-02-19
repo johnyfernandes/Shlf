@@ -658,7 +658,7 @@ struct BookDetailView: View {
             Button {
                 showEditBook = true
             } label: {
-                Text(localized("Add pages", locale: locale))
+                Text(verbatim: localized("BookDetail.AddTotalPages.Action", locale: locale))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(themeColor.color)
             }
@@ -699,13 +699,13 @@ struct BookDetailView: View {
     private var bookStatsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 10) {
-                Text("Stats")
+                Text("BookDetail.Stats.Title")
                     .font(.headline)
 
                 Spacer()
 
                 Menu {
-                    Picker("Range", selection: $bookStatsRange) {
+                    Picker("BookDetail.Stats.Range", selection: $bookStatsRange) {
                         ForEach(BookStatsRange.allCases) { range in
                             Text(range.titleKey).tag(range)
                         }
@@ -767,9 +767,9 @@ struct BookDetailView: View {
             if bookStatsSummary.sessionCount == 0 {
                 InlineEmptyStateView(
                     icon: "chart.bar.xaxis",
-                    title: "No stats yet",
-                    message: "Log a session to see stats for this book.",
-                    actionTitle: "Log session"
+                    title: "BookDetail.Stats.Empty.Title",
+                    message: "BookDetail.Stats.Empty.Message",
+                    actionTitle: "BookDetail.Stats.Empty.Action"
                 ) {
                     showLogSession = true
                 }
@@ -838,12 +838,12 @@ struct BookDetailView: View {
         let accent = stat.accent.color(themeColor: themeColor)
         switch stat {
         case .pagesPercent:
-            var composed = AttributedString(localized("You read", locale: locale))
+            var composed = AttributedString(localized("BookDetail.Stats.YouRead", locale: locale))
             composed += AttributedString(" ")
             composed += coloredValueWithUnit(
                 value: summary.totalPagesRead,
-                singular: localized("page", locale: locale),
-                plural: localized("pages", locale: locale),
+                singular: localized("BookDetail.Stats.PageSingular", locale: locale),
+                plural: localized("BookDetail.Stats.PagePlural", locale: locale),
                 accent: accent
             )
             if let percent = summary.percentRead {
@@ -854,61 +854,61 @@ struct BookDetailView: View {
             composed += AttributedString(".")
             return Text(composed)
         case .timeRead:
-            var composed = AttributedString(localized("You read for", locale: locale))
+            var composed = AttributedString(localized("BookDetail.Stats.YouReadFor", locale: locale))
             composed += AttributedString(" ")
             composed += coloredText(formatMinutes(summary.totalMinutesRead), color: accent)
             composed += AttributedString(".")
             return Text(composed)
         case .sessionCount:
-            var composed = AttributedString(localized("You logged", locale: locale))
+            var composed = AttributedString(localized("BookDetail.Stats.YouLogged", locale: locale))
             composed += AttributedString(" ")
             composed += coloredValueWithUnit(
                 value: summary.sessionCount,
-                singular: localized("session", locale: locale),
-                plural: localized("sessions", locale: locale),
+                singular: localized("BookDetail.Stats.SessionSingular", locale: locale),
+                plural: localized("BookDetail.Stats.SessionPlural", locale: locale),
                 accent: accent
             )
             composed += AttributedString(".")
             return Text(composed)
         case .averagePages:
-            var composed = AttributedString(localized("Average", locale: locale))
+            var composed = AttributedString(localized("BookDetail.Stats.Average", locale: locale))
             composed += AttributedString(" ")
             composed += coloredText(formatNumber(summary.averagePagesPerSession), color: accent)
             composed += AttributedString(" ")
-            composed += AttributedString(localized("pages per session.", locale: locale))
+            composed += AttributedString(localized("BookDetail.Stats.PagesPerSession", locale: locale))
             return Text(composed)
         case .averageSpeed:
-            var composed = AttributedString(localized("Average", locale: locale))
+            var composed = AttributedString(localized("BookDetail.Stats.Average", locale: locale))
             composed += AttributedString(" ")
             composed += coloredText(formatNumber(summary.averagePagesPerHour), color: accent)
             composed += AttributedString(" ")
-            composed += AttributedString(localized("pages per hour.", locale: locale))
+            composed += AttributedString(localized("BookDetail.Stats.PagesPerHour", locale: locale))
             return Text(composed)
         case .longestSession:
             if summary.longestSessionMinutes > 0 {
-                var composed = AttributedString(localized("Longest session", locale: locale))
+                var composed = AttributedString(localized("BookDetail.Stats.LongestSession", locale: locale))
                 composed += AttributedString(" ")
                 composed += coloredText(formatMinutes(summary.longestSessionMinutes), color: accent)
                 composed += AttributedString(".")
                 return Text(composed)
             }
-            var composed = AttributedString(localized("Longest session", locale: locale))
+            var composed = AttributedString(localized("BookDetail.Stats.LongestSession", locale: locale))
             composed += AttributedString(" ")
             composed += coloredValueWithUnit(
                 value: summary.longestSessionPages,
-                singular: localized("page", locale: locale),
-                plural: localized("pages", locale: locale),
+                singular: localized("BookDetail.Stats.PageSingular", locale: locale),
+                plural: localized("BookDetail.Stats.PagePlural", locale: locale),
                 accent: accent
             )
             composed += AttributedString(".")
             return Text(composed)
         case .streak:
-            var composed = AttributedString(localized("Your book streak was", locale: locale))
+            var composed = AttributedString(localized("BookDetail.Stats.BookStreakWas", locale: locale))
             composed += AttributedString(" ")
             composed += coloredValueWithUnit(
                 value: summary.streakDays,
-                singular: localized("day", locale: locale),
-                plural: localized("days", locale: locale),
+                singular: localized("BookDetail.Stats.DaySingular", locale: locale),
+                plural: localized("BookDetail.Stats.DayPlural", locale: locale),
                 accent: accent
             )
             composed += AttributedString(".")
@@ -916,23 +916,23 @@ struct BookDetailView: View {
         case .daysSinceLast:
             if let lastReadDate = summary.lastReadDate {
                 let (relative, highlightValue) = relativeTimeString(from: lastReadDate, locale: locale)
-                var composed = AttributedString(localized("Last read", locale: locale))
+                var composed = AttributedString(localized("BookDetail.Stats.LastRead", locale: locale))
                 composed += AttributedString(" ")
                 composed += coloredNumberInFormattedString(relative, number: highlightValue, accent: accent)
                 composed += AttributedString(".")
                 return Text(composed)
             }
-            return Text("No reads yet")
+            return Text(verbatim: localized("BookDetail.Stats.NoReadsYet", locale: locale))
         case .firstLastDate:
             if let first = summary.firstReadDate, let last = summary.lastReadDate {
-                var composed = AttributedString(localized("First read", locale: locale))
+                var composed = AttributedString(localized("BookDetail.Stats.FirstRead", locale: locale))
                 composed += AttributedString(" ")
                 composed += coloredText(formatDate(first), color: accent)
                 composed += AttributedString(" • ")
                 composed += coloredText(formatDate(last), color: accent)
                 return Text(composed)
             }
-            return Text(localized("No read dates yet", locale: locale))
+            return Text(verbatim: localized("BookDetail.Stats.NoReadDatesYet", locale: locale))
         }
     }
 
@@ -941,15 +941,19 @@ struct BookDetailView: View {
             let hours = minutes / 60
             let mins = minutes % 60
             if mins == 0 {
-                return String.localizedStringWithFormat(localized("%lldh", locale: locale), hours)
+                return String.localizedStringWithFormat(localized("BookDetail.Duration.HoursShortFormat %lld", locale: locale), hours)
             }
-            return String.localizedStringWithFormat(localized("%lldh %lldm", locale: locale), hours, mins)
+            return String.localizedStringWithFormat(
+                localized("BookDetail.Duration.HoursMinutesShortFormat %lld %lld", locale: locale),
+                hours,
+                mins
+            )
         }
-        return String.localizedStringWithFormat(localized("%lldm", locale: locale), minutes)
+        return String.localizedStringWithFormat(localized("BookDetail.Duration.MinutesShortFormat %lld", locale: locale), minutes)
     }
 
     private func formatDays(_ value: Int) -> String {
-        String.localizedStringWithFormat(localized("%lld days", locale: locale), value)
+        String.localizedStringWithFormat(localized("BookDetail.Duration.DaysFormat %lld", locale: locale), value)
     }
 
     private func formatDate(_ date: Date) -> String {
@@ -1093,7 +1097,7 @@ struct BookDetailView: View {
                 }
                 .frame(width: 54, height: 54)
 
-                Text("Log Session")
+                Text("BookDetail.LogSession")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(Theme.Colors.text)
             }
@@ -1158,7 +1162,7 @@ struct BookDetailView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
-                Text("About")
+                Text("BookDetail.AboutTitle")
                     .font(.headline)
             }
 
@@ -1201,7 +1205,7 @@ struct BookDetailView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
-                Text("Last Position")
+                Text("BookDetail.LastPositionTitle")
                     .font(.headline)
             }
 
@@ -1236,7 +1240,7 @@ struct BookDetailView: View {
                         .foregroundStyle(themeColor.color)
                         .frame(width: 16)
 
-                    Text("Quotes")
+                    Text("BookDetail.QuotesTitle")
                         .font(.headline)
                 }
 
@@ -1289,7 +1293,7 @@ struct BookDetailView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
-                Text("History")
+                Text("BookDetail.HistoryTitle")
                     .font(.headline)
             }
 
@@ -1315,7 +1319,7 @@ struct BookDetailView: View {
                                 sessionToDelete = session
                                 showDeleteSessionAlert = true
                             } label: {
-                                Label("Delete", systemImage: "trash")
+                                Label("Common.Delete", systemImage: "trash")
                             }
                         }
                         .contextMenu {
@@ -1323,7 +1327,7 @@ struct BookDetailView: View {
                                 sessionToDelete = session
                                 showDeleteSessionAlert = true
                             } label: {
-                                Label("Delete Session", systemImage: "trash")
+                                Label("BookDetail.DeleteSession.Action", systemImage: "trash")
                             }
                         }
                         .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 6, trailing: 0))
@@ -1345,9 +1349,9 @@ struct BookDetailView: View {
                         HStack(spacing: 6) {
                             Text(
                                 showAllSessions
-                                ? localized("Show Less", locale: locale)
+                                ? localized("BookDetail.ShowLess", locale: locale)
                                 : String.localizedStringWithFormat(
-                                    localized("Show All (%lld)", locale: locale),
+                                    localized("BookDetail.ShowAllFormat %lld", locale: locale),
                                     sessions.count
                                 )
                             )
@@ -1378,7 +1382,7 @@ struct BookDetailView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
-                Text("Notes")
+                Text("BookDetail.NotesTitle")
                     .font(.headline)
             }
 
@@ -1403,7 +1407,7 @@ struct BookDetailView: View {
                     .foregroundStyle(themeColor.color)
                     .frame(width: 16)
 
-                Text("Subjects")
+                Text("BookDetail.SubjectsTitle")
                     .font(.headline)
 
                 Spacer()
@@ -1412,7 +1416,7 @@ struct BookDetailView: View {
                     selectedSubjects = subjects
                     showSubjectPicker = true
                 } label: {
-                    Text("Edit")
+                    Text("Common.Edit")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(themeColor.color)
                         .padding(.horizontal, 10)
@@ -1444,9 +1448,9 @@ struct BookDetailView: View {
                     HStack(spacing: 6) {
                         Text(
                             showAllSubjects
-                            ? localized("Show Less", locale: locale)
+                            ? localized("BookDetail.ShowLess", locale: locale)
                             : String.localizedStringWithFormat(
-                                localized("Show All (%lld)", locale: locale),
+                                localized("BookDetail.ShowAllFormat %lld", locale: locale),
                                 subjects.count
                             )
                         )
@@ -1484,25 +1488,41 @@ struct BookDetailView: View {
                         .foregroundStyle(themeColor.color)
                         .frame(width: 16)
 
-                    Text(localized("Details", locale: locale))
+                    Text("BookDetail.Metadata.Title")
                         .font(.headline)
                 }
 
                 VStack(spacing: 10) {
                     if let publisher = book.publisher, profile?.showPublisher ?? true {
-                        metadataRow(icon: "building.2.fill", label: localized("Publisher", locale: locale), value: publisher)
+                        metadataRow(
+                            icon: "building.2.fill",
+                            label: localized("BookDetail.Metadata.Publisher", locale: locale),
+                            value: publisher
+                        )
                     }
 
                     if let publishedDate = book.publishedDate, profile?.showPublishedDate ?? true {
-                        metadataRow(icon: "calendar", label: localized("Published Date", locale: locale), value: publishedDate)
+                        metadataRow(
+                            icon: "calendar",
+                            label: localized("BookDetail.Metadata.PublishedDate", locale: locale),
+                            value: publishedDate
+                        )
                     }
 
                     if let language = book.language, profile?.showLanguage ?? true {
-                        metadataRow(icon: "globe", label: localized("Language", locale: locale), value: language)
+                        metadataRow(
+                            icon: "globe",
+                            label: localized("BookDetail.Metadata.Language", locale: locale),
+                            value: language
+                        )
                     }
 
                     if let isbn = book.isbn, profile?.showISBN ?? true {
-                        metadataRow(icon: "barcode", label: localized("ISBN", locale: locale), value: isbn)
+                        metadataRow(
+                            icon: "barcode",
+                            label: localized("BookDetail.Metadata.ISBN", locale: locale),
+                            value: isbn
+                        )
                     }
                 }
             }
@@ -1786,9 +1806,9 @@ struct FinishBookLogView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section(localized("Reading Progress", locale: locale)) {
+                Section("BookDetail.ReadingProgress.Title") {
                     HStack {
-                        Text(localized("From Page", locale: locale))
+                        Text("BookDetail.FromPage")
                         Spacer()
                         Text(verbatim: "0")
                             .foregroundStyle(.secondary)
@@ -1796,7 +1816,7 @@ struct FinishBookLogView: View {
                     }
 
                     HStack {
-                        Text(localized("To Page", locale: locale))
+                        Text("BookDetail.ToPage")
                         Spacer()
                         TextField("0", text: $endPageText)
                             .keyboardType(.numberPad)
@@ -1822,7 +1842,7 @@ struct FinishBookLogView: View {
                         Image(systemName: "book.pages")
                             .foregroundStyle(themeColor.color)
 
-                        Text(localized("Pages Read", locale: locale))
+                        Text("BookDetail.PagesRead")
                         Spacer()
                         Text(pagesRead, format: .number)
                             .font(Theme.Typography.headline)
@@ -1830,15 +1850,15 @@ struct FinishBookLogView: View {
                     }
                 }
 
-                Section(localized("Dates", locale: locale)) {
+                Section("BookDetail.DatesTitle") {
                     DatePicker(
-                        localized("Finished on", locale: locale),
+                        "BookDetail.FinishedOn",
                         selection: $finishDate,
                         in: (useStartDate ? startDate : Date.distantPast)...Date(),
                         displayedComponents: [.date]
                     )
 
-                    Toggle(localized("Add start date", locale: locale), isOn: $useStartDate)
+                    Toggle("BookDetail.AddStartDate", isOn: $useStartDate)
                         .onChange(of: useStartDate) { _, newValue in
                             if newValue, startDate > finishDate {
                                 startDate = finishDate
@@ -1847,20 +1867,20 @@ struct FinishBookLogView: View {
 
                     if useStartDate {
                         DatePicker(
-                            localized("Started on", locale: locale),
+                            "BookDetail.StartedOn",
                             selection: $startDate,
                             in: ...finishDate,
                             displayedComponents: [.date]
                         )
                     }
 
-                    Text(localized("Dates track your reading window. Time spent is separate.", locale: locale))
+                    Text("BookDetail.DatesFootnote")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
-                Section(localized("Time Spent", locale: locale)) {
-                    Toggle(localized("Track time spent", locale: locale), isOn: $includeDuration)
+                Section("BookDetail.TimeSpentTitle") {
+                    Toggle("BookDetail.TrackTimeSpent", isOn: $includeDuration)
                         .onChange(of: includeDuration) { _, newValue in
                             if newValue {
                                 durationMinutes = max(1, lastDurationMinutes)
@@ -1873,7 +1893,7 @@ struct FinishBookLogView: View {
                     if includeDuration {
                         DurationPickerView(minutes: $durationMinutes, maxHours: 99)
                     } else {
-                        Text(localized("This finish will count pages only.", locale: locale))
+                        Text("BookDetail.TimeSpentFootnote")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -1884,7 +1904,7 @@ struct FinishBookLogView: View {
                         Image(systemName: "star.fill")
                             .foregroundStyle(Theme.Colors.xpGradient)
 
-                        Text("Estimated XP")
+                        Text("BookDetail.EstimatedXP")
                         Spacer()
                         Text(verbatim: "+\(estimatedXP)")
                             .font(Theme.Typography.headline)
@@ -1909,24 +1929,24 @@ struct FinishBookLogView: View {
                     syncEndPageText(with: endPage)
                 }
             }
-            .navigationTitle("Log Finish")
+            .navigationTitle("BookDetail.LogFinishTitle")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button("Common.Cancel") {
                         dismiss()
                     }
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button("Common.Save") {
                         saveFinish()
                     }
                     .disabled(pagesRead <= 0)
                 }
 
                 ToolbarItem(placement: .keyboard) {
-                    Button("Done") {
+                    Button("Common.Done") {
                         hideKeyboard()
                     }
                 }
@@ -2060,7 +2080,7 @@ struct ReadingSessionRow: View {
                     if session.isActive {
                         Text(
                             String.localizedStringWithFormat(
-                                localized("Started at page %lld", locale: locale),
+                                localized("BookDetail.Session.StartedAtPageFormat %lld", locale: locale),
                                 session.startPage
                             )
                         )
@@ -2068,7 +2088,7 @@ struct ReadingSessionRow: View {
                     } else {
                         Text(
                             String.localizedStringWithFormat(
-                                localized("From page %lld to page %lld", locale: locale),
+                                localized("BookDetail.Session.FromToPageFormat %lld %lld", locale: locale),
                                 session.startPage,
                                 session.endPage
                             )
@@ -2077,7 +2097,7 @@ struct ReadingSessionRow: View {
                     }
 
                     if session.isImported || !session.countsTowardStats {
-                        Text(localized("Imported", locale: locale))
+                        Text(verbatim: localized("BookDetail.Session.Imported", locale: locale))
                             .font(.caption2.weight(.semibold))
                             .foregroundStyle(.orange)
                             .padding(.horizontal, 6)
@@ -2105,7 +2125,7 @@ struct ReadingSessionRow: View {
 
                     Text(
                         String.localizedStringWithFormat(
-                            localized("%lld min", locale: locale),
+                            localized("BookDetail.Session.MinutesFormat %lld", locale: locale),
                             session.durationMinutes
                         )
                     )
@@ -2118,7 +2138,7 @@ struct ReadingSessionRow: View {
 
             Text(
                 String.localizedStringWithFormat(
-                    localized("%lld XP", locale: locale),
+                    localized("BookDetail.Session.XPFormat %lld", locale: locale),
                     session.xpEarned
                 )
             )
