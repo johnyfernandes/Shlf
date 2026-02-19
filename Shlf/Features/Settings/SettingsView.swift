@@ -827,7 +827,7 @@ private struct AppIconBadgeView: View {
             }
 
             if showBadge {
-                Text("Pro")
+                Text("Common.Pro")
                     .font(.system(size: 7, weight: .semibold))
                     .foregroundStyle(badgeIsLight ? Color.black.opacity(0.85) : .white)
                     .padding(.horizontal, 4)
@@ -867,15 +867,15 @@ struct AboutView: View {
                     .foregroundStyle(themeColor.color)
 
                 VStack(spacing: Theme.Spacing.xs) {
-                    Text("Shlf")
+                    Text("App.Name")
                         .font(Theme.Typography.largeTitle)
 
-                    Text("Your personal reading companion")
+                    Text("Settings.About.Tagline")
                         .font(Theme.Typography.body)
                         .foregroundStyle(Theme.Colors.secondaryText)
                 }
 
-                Text("Shlf helps you track your reading journey, build habits, and stay motivated with gamification. Whether you're reading physical books, ebooks, or listening to audiobooks, Shlf keeps you on track.")
+                Text("Settings.About.Description")
                     .font(Theme.Typography.body)
                     .foregroundStyle(Theme.Colors.secondaryText)
                     .multilineTextAlignment(.center)
@@ -884,28 +884,28 @@ struct AboutView: View {
                 VStack(spacing: Theme.Spacing.sm) {
                     if let url = URL(string: "https://shlf.app/privacy") {
                         Link(destination: url) {
-                            Label("Privacy Policy", systemImage: "hand.raised")
+                            Label("Settings.About.PrivacyPolicy", systemImage: "hand.raised")
                         }
                     } else {
-                        Label("Privacy Policy", systemImage: "hand.raised")
+                        Label("Settings.About.PrivacyPolicy", systemImage: "hand.raised")
                             .foregroundStyle(Theme.Colors.secondaryText)
                     }
 
                     if let url = URL(string: "https://shlf.app/support") {
                         Link(destination: url) {
-                            Label("Support", systemImage: "questionmark.circle")
+                            Label("Settings.About.Support", systemImage: "questionmark.circle")
                         }
                     } else {
-                        Label("Support", systemImage: "questionmark.circle")
+                        Label("Settings.About.Support", systemImage: "questionmark.circle")
                             .foregroundStyle(Theme.Colors.secondaryText)
                     }
 
                     if let url = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/") {
                         Link(destination: url) {
-                            Label("EULA", systemImage: "doc.text")
+                            Label("Settings.About.EULA", systemImage: "doc.text")
                         }
                     } else {
-                        Label("EULA", systemImage: "doc.text")
+                        Label("Settings.About.EULA", systemImage: "doc.text")
                             .foregroundStyle(Theme.Colors.secondaryText)
                     }
                 }
@@ -914,7 +914,7 @@ struct AboutView: View {
             }
             .padding(Theme.Spacing.xl)
         }
-        .navigationTitle("About")
+        .navigationTitle("Settings.About.Title")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
