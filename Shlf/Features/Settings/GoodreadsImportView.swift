@@ -95,7 +95,7 @@ struct GoodreadsImportView: View {
                     .accessibilityHidden(true)
             }
         }
-        .navigationTitle("Goodreads")
+        .navigationTitle("GoodreadsImport.Title")
         .navigationBarTitleDisplayMode(.inline)
         .fileImporter(
             isPresented: $showImporter,
